@@ -48,8 +48,8 @@ importers:
         specifier: ^0.8.18
         version: 0.8.18
       partykit:
-        specifier: ^0.0.107
-        version: 0.0.107
+        specifier: ^0.0.108
+        version: 0.0.108
       partysocket:
         specifier: ^1.0.1
         version: 1.0.1
@@ -59,7 +59,7 @@ importers:
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.4.13
-        version: 0.4.13(@vitest/runner@1.6.0)(@vitest/snapshot@1.6.0)(vitest@1.5.3(@types/node@20.14.9))
+        version: 0.4.13(@cloudflare/workers-types@4.20240718.0)(@vitest/runner@1.6.0)(@vitest/snapshot@1.6.0)(vitest@1.5.3(@types/node@20.14.9))
       '@eslint/js':
         specifier: ^9.6.0
         version: 9.6.0
@@ -119,7 +119,7 @@ importers:
         version: 1.5.3(@types/node@20.14.9)
       wrangler:
         specifier: ^3.65.1
-        version: 3.65.1
+        version: 3.65.1(@cloudflare/workers-types@4.20240718.0)
 
 packages:
 
@@ -305,22 +305,10 @@ packages:
       '@vitest/snapshot': 1.3.x - 1.5.x
       vitest: 1.3.x - 1.5.x
 
-  '@cloudflare/workerd-darwin-64@1.20240610.1':
-    resolution: {integrity: sha512-YanZ1iXgMGaUWlleB5cswSE6qbzyjQ8O7ENWZcPAcZZ6BfuL7q3CWi0t9iM1cv2qx92rRztsRTyjcfq099++XQ==}
-    engines: {node: '>=16'}
-    cpu: [x64]
-    os: [darwin]
-
   '@cloudflare/workerd-darwin-64@1.20240718.0':
     resolution: {integrity: sha512-BsPZcSCgoGnufog2GIgdPuiKicYTNyO/Dp++HbpLRH+yQdX3x4aWx83M+a0suTl1xv76dO4g9aw7SIB6OSgIyQ==}
     engines: {node: '>=16'}
     cpu: [x64]
-    os: [darwin]
-
-  '@cloudflare/workerd-darwin-arm64@1.20240610.1':
-    resolution: {integrity: sha512-bRe/y/LKjIgp3L2EHjc+CvoCzfHhf4aFTtOBkv2zW+VToNJ4KlXridndf7LvR9urfsFRRo9r4TXCssuKaU+ypQ==}
-    engines: {node: '>=16'}
-    cpu: [arm64]
     os: [darwin]
 
   '@cloudflare/workerd-darwin-arm64@1.20240718.0':
@@ -329,22 +317,10 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
-  '@cloudflare/workerd-linux-64@1.20240610.1':
-    resolution: {integrity: sha512-2zDcadR7+Gs9SjcMXmwsMji2Xs+yASGNA2cEHDuFc4NMUup+eL1mkzxc/QzvFjyBck98e92rBjMZt2dVscpGKg==}
-    engines: {node: '>=16'}
-    cpu: [x64]
-    os: [linux]
-
   '@cloudflare/workerd-linux-64@1.20240718.0':
     resolution: {integrity: sha512-LJ/k3y47pBcjax0ee4K+6ZRrSsqWlfU4lbU8Dn6u5tSC9yzwI4YFNXDrKWInB0vd7RT3w4Yqq1S6ZEbfRrqVUg==}
     engines: {node: '>=16'}
     cpu: [x64]
-    os: [linux]
-
-  '@cloudflare/workerd-linux-arm64@1.20240610.1':
-    resolution: {integrity: sha512-7y41rPi5xmIYJN8CY+t3RHnjLL0xx/WYmaTd/j552k1qSr02eTE2o/TGyWZmGUC+lWnwdPQJla0mXbvdqgRdQg==}
-    engines: {node: '>=16'}
-    cpu: [arm64]
     os: [linux]
 
   '@cloudflare/workerd-linux-arm64@1.20240718.0':
@@ -353,20 +329,14 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  '@cloudflare/workerd-windows-64@1.20240610.1':
-    resolution: {integrity: sha512-B0LyT3DB6rXHWNptnntYHPaoJIy0rXnGfeDBM3nEVV8JIsQrx8MEFn2F2jYioH1FkUVavsaqKO/zUosY3tZXVA==}
-    engines: {node: '>=16'}
-    cpu: [x64]
-    os: [win32]
-
   '@cloudflare/workerd-windows-64@1.20240718.0':
     resolution: {integrity: sha512-YpCRvvT47XanFum7C3SedOZKK6BfVhqmwdAAVAQFyc4gsCdegZo0JkUkdloC/jwuWlbCACOG2HTADHOqyeolzQ==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
 
-  '@cloudflare/workers-types@4.20240614.0':
-    resolution: {integrity: sha512-fnV3uXD1Hpq5EWnY7XYb+smPcjzIoUFiZpTSV/Tk8qKL3H+w6IqcngZwXQBZ/2U/DwYkDilXHW3FfPhnyD7FZA==}
+  '@cloudflare/workers-types@4.20240718.0':
+    resolution: {integrity: sha512-7RqxXIM9HyhjfZ9ztXjITuc7mL0w4s+zXgypqKmMuvuObC3DgXutJ3bOYbQ+Ss5QbywrzWSNMlmGdL/ldg/yZg==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -1244,8 +1214,8 @@ packages:
     resolution: {integrity: sha512-4pP0EV3iTsexDx+8PPGAKCQpd/6hsQBaQhqWzU4hqKPHN5epPsxKbvUTIiYIHTxaKt6/kEaqPBpu/ufvfbrRzw==}
     engines: {node: '>=16.0.0'}
 
-  '@storacha/one-webcrypto@https://codeload.github.com/web3-storage/one-webcrypto/tar.gz/9e029e2fd477bd95bb80abd3553bbac704ccc7a6':
-    resolution: {tarball: https://codeload.github.com/web3-storage/one-webcrypto/tar.gz/9e029e2fd477bd95bb80abd3553bbac704ccc7a6}
+  '@storacha/one-webcrypto@git+https://git@github.com:web3-storage/one-webcrypto.git#9e029e2fd477bd95bb80abd3553bbac704ccc7a6':
+    resolution: {commit: 9e029e2fd477bd95bb80abd3553bbac704ccc7a6, repo: git@github.com:web3-storage/one-webcrypto.git, type: git}
     version: 1.0.1
 
   '@types/better-sqlite3@7.6.11':
@@ -2224,11 +2194,6 @@ packages:
     resolution: {integrity: sha512-z0yWI+4FDrrweS8Zmt4Ej5HdJmky15+L2e6Wgn3+iK5fWzb6T3fhNFq2+MeTRb064c6Wr4N/wv0DzQTjNzHNGQ==}
     engines: {node: '>=10'}
 
-  miniflare@3.20240610.0:
-    resolution: {integrity: sha512-J6aXmkII5gcq+kC4TurxKiR4rC++apPST/K8P/YjqoQQgrJ+NRPacBhf6iVh8R3ujnXYXaq+Ae+gm+LM0XHK/w==}
-    engines: {node: '>=16.13'}
-    hasBin: true
-
   miniflare@3.20240718.0:
     resolution: {integrity: sha512-TKgSeyqPBeT8TBLxbDJOKPWlq/wydoJRHjAyDdgxbw59N6wbP8JucK6AU1vXCfu21eKhrEin77ssXOpbfekzPA==}
     engines: {node: '>=16.13'}
@@ -2397,8 +2362,8 @@ packages:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
 
-  partykit@0.0.107:
-    resolution: {integrity: sha512-MRSXRRuJXFC3RlBqVHpR7vYj3cDHNjJzrwjOKG3eidg4sADTmlaTNsz/8iKAPVY1WOhADtx/XMYNi4JbK/bahA==}
+  partykit@0.0.108:
+    resolution: {integrity: sha512-fT6Zd3qyFe7amcUXzAW7L08UusxjHGzpvnJTUMg9L1E8Qq4PUdBVmo4PcuNvaJno3Uw/vHYKAHT4V/q5B9lt2w==}
     hasBin: true
 
   partysocket@1.0.1:
@@ -2976,11 +2941,6 @@ packages:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
 
-  workerd@1.20240610.1:
-    resolution: {integrity: sha512-Rtut5GrsODQMh6YU43b9WZ980Wd05Ov1/ds88pT/SoetmXFBvkBzdRfiHiATv+azmGX8KveE0i/Eqzk/yI01ug==}
-    engines: {node: '>=16'}
-    hasBin: true
-
   workerd@1.20240718.0:
     resolution: {integrity: sha512-w7lOLRy0XecQTg/ujTLWBiJJuoQvzB3CdQ6/8Wgex3QxFhV9Pbnh3UbwIuUfMw3OCCPQc4o7y+1P+mISAgp6yg==}
     engines: {node: '>=16'}
@@ -3546,7 +3506,7 @@ snapshots:
     dependencies:
       mime: 3.0.0
 
-  '@cloudflare/vitest-pool-workers@0.4.13(@vitest/runner@1.6.0)(@vitest/snapshot@1.6.0)(vitest@1.5.3(@types/node@20.14.9))':
+  '@cloudflare/vitest-pool-workers@0.4.13(@cloudflare/workers-types@4.20240718.0)(@vitest/runner@1.6.0)(@vitest/snapshot@1.6.0)(vitest@1.5.3(@types/node@20.14.9))':
     dependencies:
       '@vitest/runner': 1.6.0
       '@vitest/snapshot': 1.6.0
@@ -3557,7 +3517,7 @@ snapshots:
       miniflare: 3.20240718.0
       semver: 7.6.2
       vitest: 1.5.3(@types/node@20.14.9)
-      wrangler: 3.65.1
+      wrangler: 3.65.1(@cloudflare/workers-types@4.20240718.0)
       zod: 3.23.8
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
@@ -3565,37 +3525,22 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@cloudflare/workerd-darwin-64@1.20240610.1':
-    optional: true
-
   '@cloudflare/workerd-darwin-64@1.20240718.0':
-    optional: true
-
-  '@cloudflare/workerd-darwin-arm64@1.20240610.1':
     optional: true
 
   '@cloudflare/workerd-darwin-arm64@1.20240718.0':
     optional: true
 
-  '@cloudflare/workerd-linux-64@1.20240610.1':
-    optional: true
-
   '@cloudflare/workerd-linux-64@1.20240718.0':
-    optional: true
-
-  '@cloudflare/workerd-linux-arm64@1.20240610.1':
     optional: true
 
   '@cloudflare/workerd-linux-arm64@1.20240718.0':
     optional: true
 
-  '@cloudflare/workerd-windows-64@1.20240610.1':
-    optional: true
-
   '@cloudflare/workerd-windows-64@1.20240718.0':
     optional: true
 
-  '@cloudflare/workers-types@4.20240614.0': {}
+  '@cloudflare/workers-types@4.20240718.0': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
@@ -4372,7 +4317,7 @@ snapshots:
       '@smithy/types': 3.3.0
       tslib: 2.6.3
 
-  '@storacha/one-webcrypto@https://codeload.github.com/web3-storage/one-webcrypto/tar.gz/9e029e2fd477bd95bb80abd3553bbac704ccc7a6': {}
+  '@storacha/one-webcrypto@git+https://git@github.com:web3-storage/one-webcrypto.git#9e029e2fd477bd95bb80abd3553bbac704ccc7a6': {}
 
   '@types/better-sqlite3@7.6.11':
     dependencies:
@@ -4620,7 +4565,7 @@ snapshots:
       bigint-mod-arith: 3.3.1
       conf: 11.0.2
       multiformats: 12.1.3
-      one-webcrypto: '@storacha/one-webcrypto@https://codeload.github.com/web3-storage/one-webcrypto/tar.gz/9e029e2fd477bd95bb80abd3553bbac704ccc7a6'
+      one-webcrypto: '@storacha/one-webcrypto@git+https://git@github.com:web3-storage/one-webcrypto.git#9e029e2fd477bd95bb80abd3553bbac704ccc7a6'
       p-defer: 4.0.1
       type-fest: 4.22.1
       uint8arrays: 4.0.10
@@ -5609,25 +5554,6 @@ snapshots:
 
   mimic-response@3.1.0: {}
 
-  miniflare@3.20240610.0:
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      acorn: 8.12.1
-      acorn-walk: 8.3.3
-      capnp-ts: 0.7.0
-      exit-hook: 2.2.1
-      glob-to-regexp: 0.4.1
-      stoppable: 1.1.0
-      undici: 5.28.4
-      workerd: 1.20240610.1
-      ws: 8.17.1
-      youch: 3.3.3
-      zod: 3.23.8
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
   miniflare@3.20240718.0:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
@@ -5789,12 +5715,12 @@ snapshots:
     dependencies:
       callsites: 3.1.0
 
-  partykit@0.0.107:
+  partykit@0.0.108:
     dependencies:
-      '@cloudflare/workers-types': 4.20240614.0
+      '@cloudflare/workers-types': 4.20240718.0
       clipboardy: 4.0.0
       esbuild: 0.21.5
-      miniflare: 3.20240610.0
+      miniflare: 3.20240718.0
       yoga-wasm-web: 0.3.3
     optionalDependencies:
       fsevents: 2.3.3
@@ -6371,14 +6297,6 @@ snapshots:
 
   word-wrap@1.2.5: {}
 
-  workerd@1.20240610.1:
-    optionalDependencies:
-      '@cloudflare/workerd-darwin-64': 1.20240610.1
-      '@cloudflare/workerd-darwin-arm64': 1.20240610.1
-      '@cloudflare/workerd-linux-64': 1.20240610.1
-      '@cloudflare/workerd-linux-arm64': 1.20240610.1
-      '@cloudflare/workerd-windows-64': 1.20240610.1
-
   workerd@1.20240718.0:
     optionalDependencies:
       '@cloudflare/workerd-darwin-64': 1.20240718.0
@@ -6387,7 +6305,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20240718.0
       '@cloudflare/workerd-windows-64': 1.20240718.0
 
-  wrangler@3.65.1:
+  wrangler@3.65.1(@cloudflare/workers-types@4.20240718.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.3.4
       '@esbuild-plugins/node-globals-polyfill': 0.2.3(esbuild@0.17.19)
@@ -6406,6 +6324,7 @@ snapshots:
       unenv: unenv-nightly@1.10.0-1717606461.a117952
       xxhash-wasm: 1.0.2
     optionalDependencies:
+      '@cloudflare/workers-types': 4.20240718.0
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil

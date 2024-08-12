@@ -84,7 +84,7 @@
     "idb": "^8.0.0",
     "multiformats": "^13.2.2",
     "node-sqlite3-wasm": "^0.8.18",
-    "partykit": "^0.0.107",
+    "partykit": "^0.0.108",
     "partysocket": "^1.0.1",
     "uuidv7": "^1.0.1"
   }
