@@ -1,5 +1,5 @@
 import { describe } from "vitest";
-import { fireproof, rt } from "@fireproof/core";
+import { fireproof, rt, Database} from "@fireproof/core";
 import { connectionFactory } from "./connection-from-store";
 // import { registerS3StoreProtocol } from "./s3/s3-gateway";
 import { URI } from "@adviser/cement";
@@ -31,16 +31,17 @@ describe("connector", () => {
   afterAll(() => {
     // unreg();
   });
-  it("once", async () => {
+  it("hangme", async () => {
     await testInner(url)
-  });
-  it("twice", async () => {
-    await testInner(url)
+
+    // make fireproof forget previous instances
+    Database.databases.clear()
+
     await testInner(url)
   });
 });
 
-async function testInner(url) {
+async function testInner(url: URI) {
   console.log("--1")
   const wdb = fireproof("my-database", {
     store: {
