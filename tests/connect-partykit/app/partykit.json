@@ -3,7 +3,7 @@
   "name": "app",
   "main": "src/server.ts",
   "parties": {
-    "fireproof": "../../src/server.ts"
+    "fireproof": "../../../src/connect-partykit/server.ts"
   },
   "compatibilityDate": "2024-01-18",
   "serve": {

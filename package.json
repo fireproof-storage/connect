@@ -82,10 +82,14 @@
     "better-sqlite3": "^11.1.2",
     "cross-fetch": "^4.0.0",
     "idb": "^8.0.0",
+    "install": "^0.13.0",
+    "js-base64": "^3.7.7",
     "multiformats": "^13.2.2",
     "node-sqlite3-wasm": "^0.8.18",
+    "npm": "^10.8.2",
     "partykit": "^0.0.107",
     "partysocket": "^1.0.1",
-    "uuidv7": "^1.0.1"
+    "uuidv7": "^1.0.1",
+    "ws": "^8.18.0"
   }
 }
