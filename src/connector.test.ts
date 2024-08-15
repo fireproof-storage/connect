@@ -4,7 +4,7 @@ import { connectionFactory } from "./connection-from-store";
 // import { registerS3StoreProtocol } from "./s3/s3-gateway";
 
 import { URI } from "@adviser/cement";
-import {registerPartyKitStoreProtocol} from "./connect-partykit/partykit-gateway";
+import { registerPartyKitStoreProtocol } from "./connect-partykit/partykit-gateway";
 
 // describe("connector", () => {
 //   // let unreg: () => void;
@@ -89,16 +89,12 @@ import {registerPartyKitStoreProtocol} from "./connect-partykit/partykit-gateway
 // });
 
 describe("partykit", () => {
-
   let url: URI;
 
   beforeAll(async () => {
     await rt.SysContainer.start();
     registerPartyKitStoreProtocol();
-    url = URI.from("partykit://localhost:1999")
-       .build()
-       .setParam("room", "test")
-       .URI();
+    url = URI.from("partykit://localhost:1999").build().setParam("room", "test").URI();
     //url = URI.from("file://./dist/connect_to?storekey=@bla@")
   });
 
@@ -107,7 +103,7 @@ describe("partykit", () => {
   });
 
   it("should", async () => {
-    let db = fireproof("test")
+    let db = fireproof("test");
     const connection = await connectionFactory(url);
     await connection.connect_X(db.blockstore);
 
@@ -116,5 +112,4 @@ describe("partykit", () => {
     // wait a while
     await new Promise((res) => setTimeout(res, 1000));
   });
-
 });
