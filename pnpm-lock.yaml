@@ -90,6 +90,9 @@ importers:
       '@types/node':
         specifier: ^20.14.6
         version: 20.14.9
+      '@types/ws':
+        specifier: ^8.5.12
+        version: 8.5.12
       '@typescript-eslint/typescript-estree':
         specifier: ^7.15.0
         version: 7.15.0(typescript@5.5.4)
@@ -1289,6 +1292,9 @@ packages:
 
   '@types/retry@0.12.2':
     resolution: {integrity: sha512-XISRgDJ2Tc5q4TRqvgJtzsRkFYNJzZrhTdtMoGVBttwzzQJkPnS3WWTFc7kuDRoPtPakl+T+OfdEUjYJj7Jbow==}
+
+  '@types/ws@8.5.12':
+    resolution: {integrity: sha512-3tPRkv1EtkDpzlgyKyI8pGsGZAGPEaXeu0DOj5DI25Ja91bdAYddYHbADRYVrZMRbfW+1l5YwXVDKohDJNQxkQ==}
 
   '@typescript-eslint/eslint-plugin@8.0.0':
     resolution: {integrity: sha512-STIZdwEQRXAHvNUS6ILDf5z3u95Gc8jzywunxSNqX00OooIemaaNIA0vEgynJlycL5AjabYLLrIyHd4iazyvtg==}
@@ -4497,6 +4503,10 @@ snapshots:
   '@types/retry@0.12.1': {}
 
   '@types/retry@0.12.2': {}
+
+  '@types/ws@8.5.12':
+    dependencies:
+      '@types/node': 20.14.9
 
   '@typescript-eslint/eslint-plugin@8.0.0(@typescript-eslint/parser@8.0.0(eslint@9.6.0)(typescript@5.5.4))(eslint@9.6.0)(typescript@5.5.4)':
     dependencies:

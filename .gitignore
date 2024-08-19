@@ -1,5 +1,6 @@
 # Files
 .vscode
+.idea
 .DS_Store
 .eslintcache
 pail.car
@@ -24,3 +25,6 @@ smoke/react/package.json
 
 # Local Netlify folder
 .netlify
+
+# Local PartyKit
+.partykit

@@ -1,6 +1,6 @@
-import PartySocket from "partysocket";
-import { Logger, Result, URI } from "@adviser/cement";
-import { bs, rt, ensureLogger, exception2Result, exceptionWrapper, NotFoundError } from "@fireproof/core";
+import PartySocket, { PartySocketOptions } from "partysocket";
+import { Result, URI } from "@adviser/cement";
+import { bs, rt, ensureLogger, exception2Result, exceptionWrapper, NotFoundError, Logger } from "@fireproof/core";
 import { EventBlock, decodeEventBlock } from "@web3-storage/pail/clock";
 import { MemoryBlockstore } from "@web3-storage/pail/block";
 import { EventView } from "@web3-storage/pail/clock/api";
@@ -18,6 +18,8 @@ export class PartyKitGateway implements bs.Gateway {
   party: PartySocket | null;
   parents: CarClockHead = [];
   eventBlocks = new MemoryBlockstore();
+
+  name: string | undefined;
 
   messagePromise: Promise<Uint8Array[]>;
   messageResolve?: (value: Uint8Array[] | PromiseLike<Uint8Array[]>) => void;
@@ -41,13 +43,21 @@ export class PartyKitGateway implements bs.Gateway {
     const ret = url.build().defParam("version", "v0.1-partykit").URI();
 
     const room = url.getParam("room");
+    this.name = url.getParam("logname");
     console.log(`starting with ${room}`);
-    this.party = new PartySocket({
+
+    let partySockOpts: PartySocketOptions = {
       party: "fireproof",
       host: url.host,
       room: room,
-      WebSocket: rt.SysContainer.websocket(),
-    });
+    };
+
+    if (rt.SysContainer.runtime().isNodeIsh) {
+      const { WebSocket } = await import("ws");
+      partySockOpts.WebSocket = WebSocket;
+    }
+
+    this.party = new PartySocket(partySockOpts);
 
     const ready = new Promise<void>((resolve, reject) => {
       this.party?.addEventListener("open", () => {
@@ -59,6 +69,7 @@ export class PartyKitGateway implements bs.Gateway {
     console.log("party open for business");
 
     this.party.addEventListener("message", (event: MessageEvent<string>) => {
+      console.log("got partykit message", this.name);
       const afn = async () => {
         const base64String = event.data;
         const uint8ArrayBuffer = Base64.toUint8Array(base64String);
@@ -80,6 +91,7 @@ export class PartyKitGateway implements bs.Gateway {
       void afn();
     });
 
+    this.logger.Debug().Url(ret).Msg("return");
     return Result.Ok(ret);
   }
 
@@ -148,7 +160,8 @@ export class PartyKitGateway implements bs.Gateway {
           const key = url.getParam("key");
           const host = url.host;
           const room = url.getParam("room");
-          let uploadUrl = `${host}/parties/fireproof/${room}?car=${key}`;
+          let uploadUrl = `http://${host}/parties/fireproof/${room}?car=${key}`;
+          console.log("getting to url", uploadUrl);
           const response = await fetch(uploadUrl, { method: "GET" });
           if (response.status === 404) {
             throw new Error("Failure in downloading data!");
@@ -159,6 +172,7 @@ export class PartyKitGateway implements bs.Gateway {
           break;
         case "meta":
           const datas = await this.messagePromise;
+          console.log("get meta returning", datas[0]);
           return Result.Ok(datas[0]); // WTF?
           break;
       }
@@ -196,18 +210,4 @@ export class PartyKitTestStore implements bs.TestGateway {
     this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer).Msg("got");
     return buffer.Ok();
   }
-}
-
-export function registerPartyKitStoreProtocol(protocol = "partykit:", overrideBaseURL?: string) {
-  return bs.registerStoreProtocol({
-    protocol,
-    overrideBaseURL,
-    gateway: async (logger) => {
-      return new PartyKitGateway(logger);
-    },
-    test: async (logger: Logger) => {
-      const gateway = new PartyKitGateway(logger);
-      return new PartyKitTestStore(gateway, logger);
-    },
-  });
 }
