@@ -1,9 +1,8 @@
-import { registerPartyKitStoreProtocol } from "./src/connect-partykit/partykit-store.ts";
+import { registerPartyKitStoreProtocol } from "./src/connect-partykit/partykit-store";
 import { URI } from "@adviser/cement";
 
 registerPartyKitStoreProtocol();
 const url = URI.from("partykit://localhost:1999").build();
-url.setParam("room", "test");
 const toSet = {
   FP_STORAGE_URL: url.toString(),
 };

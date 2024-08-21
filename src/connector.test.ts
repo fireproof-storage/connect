@@ -1,10 +1,9 @@
 import { describe } from "vitest";
-import { fireproof, rt } from "@fireproof/core";
+import {fireproof, ensureSuperThis, SuperThis, SuperThisOpts, rt} from "@fireproof/core";
 import { connectionFactory } from "./connection-from-store";
-// import { registerS3StoreProtocol } from "./s3/s3-gateway";
+import { URI, runtimeFn, MockLogger } from "@adviser/cement";
+import { registerPartyKitStoreProtocol } from "./connect-partykit/partykit-store";
 
-import { URI, runtimeFn } from "@adviser/cement";
-import { registerPartyKitStoreProtocol } from "./connect-partykit/partykit-gateway";
 
 // describe("connector", () => {
 //   // let unreg: () => void;
@@ -89,104 +88,103 @@ import { registerPartyKitStoreProtocol } from "./connect-partykit/partykit-gatew
 // });
 
 describe("partykit", () => {
-  it("should", async () => {});
+  let url: URI;
+  let aliceURL: URI;
+  let bobURL: URI;
+
+  let messagePromise: Promise<void>;
+  let messageResolve: (value: void | PromiseLike<void>) => void;
+
+  const sthis = mockSuperThis();
+
+  const configA = {
+    store: {
+      stores: {
+        base: storageURL(sthis).build().setParam("storekey", "zTvTPEPQRWij8rfb3FrFqBm"),
+      },
+    },
+  };
+
+  const configB = {
+    store: {
+      stores: {
+        base: storageURL(sthis).build().setParam("storekey", "zTvTPEPQRWij8rfb3FrFqBm"),
+      },
+    },
+  };
+
+  beforeAll(async () => {
+    await sthis.start();
+    registerPartyKitStoreProtocol();
+    url = URI.from("partykit://localhost:1999").build().setParam("storkey", "zTvTPEPQRWij8rfb3FrFqBm").URI();
+    //url = URI.from("file://./dist/connect_to?storekey=@bla@")
+
+    aliceURL = url.build().setParam("logname", "alice").URI();
+    bobURL = url.build().setParam("logname", "bob").URI();
+
+    // const sysfs = await rt.getFileSystem(URI.from("file:///"));
+    // await sysfs.rm('/Users/mschoch/.fireproof/v0.19-file/alice', { recursive: true }).catch(() => {
+    //   /* */
+    // });
+  });
+
+  afterAll(() => {
+    // unreg();
+  });
+
+  it("should", async () => {
+    let alice = fireproof("alice", configA);
+    const connection = await connectionFactory(aliceURL, sthis);
+    await connection.connect_X(alice.blockstore);
+
+    let bob = fireproof("bob", configB);
+    const connectionBob = await connectionFactory(bobURL, sthis);
+    await connectionBob.connect_X(bob.blockstore);
+
+
+    const messagePromise = new Promise<void>((resolve) => {
+      messageResolve = resolve
+    })
+
+    bob.subscribe(docs => {
+      console.log("bob sees docs")
+      messageResolve()
+    }, true)
+
+
+    await alice.put({ _id: `foo`, hello: `bar` });
+
+    //console.log('waiting for alice to clear')
+
+
+
+    // wait for alice WAL to clear
+    await (await alice.blockstore.loader?.WALStore())?.processQueue.waitIdle();
+
+    // wait a while
+    await new Promise((res) => setTimeout(res, 3000));
+
+    console.log('about to force refresh bob remote')
+    //await bob.blockstore.loader?.remoteMetaStore?.load('main')
+    await connectionBob.loader?.remoteMetaStore?.load('main')
+    //
+    // console.log('about to force refresh bob remote');
+    //
+    // await (await bob.blockstore.loader?.WALStore())?.process()
+
+    const all = await bob.allDocs()
+    console.log("bob all rows len", all.rows.length)
+
+    console.log('waiting for bob to see')
+    // wait for bob to see message
+    await messagePromise
+
+
+    // wait a while
+    //await new Promise((res) => setTimeout(res, 1000));
+  });
 });
 
-// describe("partykit", () => {
-//   let url: URI;
-//   let aliceURL: URI;
-//   let bobURL: URI;
-//
-//   let messagePromise: Promise<void>;
-//   let messageResolve: (value: void | PromiseLike<void>) => void;
-//
-//   const configA = {
-//     store: {
-//       stores: {
-//         base: storageURL().build().setParam("storekey", "zTvTPEPQRWij8rfb3FrFqBm"),
-//       },
-//     },
-//   };
-//
-//   const configB = {
-//     store: {
-//       stores: {
-//         base: storageURL().build().setParam("storekey", "zTvTPEPQRWij8rfb3FrFqBm"),
-//       },
-//     },
-//   };
-//
-//   beforeAll(async () => {
-//     await rt.SysContainer.start();
-//     registerPartyKitStoreProtocol();
-//     url = URI.from("partykit://localhost:1999").build().setParam("storkey", "zTvTPEPQRWij8rfb3FrFqBm").setParam("room", "test").URI();
-//     //url = URI.from("file://./dist/connect_to?storekey=@bla@")
-//
-//     aliceURL = url.build().setParam("logname", "alice").URI();
-//     bobURL = url.build().setParam("logname", "bob").URI();
-//
-//     const sysfs = await rt.getFileSystem(URI.from("file:///"));
-//     await sysfs.rm('/Users/mschoch/.fireproof/v0.19-file/alice', { recursive: true }).catch(() => {
-//       /* */
-//     });
-//   });
-//
-//   afterAll(() => {
-//     // unreg();
-//   });
-//
-//   it("should", async () => {
-//     let alice = fireproof("alice", configA);
-//     const connection = await connectionFactory(aliceURL);
-//     await connection.connect_X(alice.blockstore);
-//
-//     let bob = fireproof("bob", configB);
-//     const connectionBob = await connectionFactory(bobURL);
-//     await connectionBob.connect_X(bob.blockstore);
-//
-//
-//     let messagePromise = new Promise<void>((resolve, reject) => {
-//       messageResolve = resolve
-//     })
-//
-//     bob.subscribe(docs => {
-//       console.log("bob sees docs")
-//       messageResolve()
-//     }, true)
-//
-//
-//     await alice.put({ _id: `foo`, hello: `bar` });
-//
-//     //console.log('waiting for alice to clear')
-//
-//
-//
-//     // wait for alice WAL to clear
-//     (await alice.blockstore.loader?.WALStore())?.processQueue.waitIdle();
-//
-//     // wait a while
-//     await new Promise((res) => setTimeout(res, 3000));
-//
-//     console.log('about to force refresh bob remote')
-//     await bob.blockstore.loader?.remoteMetaStore?.load('main')
-//
-//     console.log('about to force refresh bob remote');
-//
-//     await (await bob.blockstore.loader?.WALStore())?.process()
-//
-//     let all = await bob.allDocs()
-//     console.log("bob all rows len", all.rows.length)
-//
-//     console.log('waiting for bob to see')
-//     // wait for bob to see message
-//     await messagePromise
-//
-//
-//     // wait a while
-//     //await new Promise((res) => setTimeout(res, 1000));
-//   });
-// });
-//
 // export function storageURL(): URI {
 //   const old = rt.SysContainer.env.get("FP_STORAGE_URL");
 //   if (runtimeFn().isBrowser) {
@@ -194,3 +192,25 @@ describe("partykit", () => {
 //   }
 //   return URI.merge(`./dist/env`, old);
 // }
+
+export function storageURL(sthis: SuperThis): URI {
+  const old = sthis.env.get("FP_STORAGE_URL");
+  let merged: URI;
+  if (runtimeFn().isBrowser) {
+    merged = URI.merge(`indexdb://fp`, old, "indexdb:");
+  } else {
+    merged = URI.merge(`./dist/env`, old);
+  }
+  return merged;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function mockSuperThis(sthis?: Partial<SuperThisOpts>): SuperThis {
+  const mockLog = MockLogger();
+  return ensureSuperThis({
+    logger: mockLog.logger,
+    ctx: {
+      logCollector: mockLog.logCollector,
+    },
+  });
+}

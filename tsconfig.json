@@ -108,6 +108,12 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
   "include": ["src/**/*", "tests/**/*"],
+  "exclude": [
+    "src/sql/*",
+    "src/s3/*",
+    "src/connect-ipfs/*",
+    "src/connect-ucan/*",
+    "src/connector.flat.ts"],
   "typeRoots": ["ts-types", "node_modules/@types"],
   "ts-node": {
     "compilerOptions": {

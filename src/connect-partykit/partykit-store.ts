@@ -1,4 +1,4 @@
-import { bs, Logger } from "@fireproof/core";
+import { bs, SuperThis } from "@fireproof/core";
 import { PartyKitGateway, PartyKitTestStore } from "./partykit-gateway";
 
 export function registerPartyKitStoreProtocol(protocol = "partykit:", overrideBaseURL?: string) {
@@ -8,9 +8,9 @@ export function registerPartyKitStoreProtocol(protocol = "partykit:", overrideBa
     gateway: async (logger) => {
       return new PartyKitGateway(logger);
     },
-    test: async (logger: Logger) => {
-      const gateway = new PartyKitGateway(logger);
-      return new PartyKitTestStore(gateway, logger);
+    test: async (sthis: SuperThis) => {
+      const gateway = new PartyKitGateway(sthis);
+      return new PartyKitTestStore(gateway, sthis);
     },
   });
 }
