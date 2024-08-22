@@ -46,6 +46,7 @@ export default class Server implements Party.Server {
       return ok();
     }
 
+    const destroyPrefix = url.searchParams.get("destroyPrefix");
     if (request.method === 'PUT') {
       const buffer = await request.arrayBuffer();
       if (buffer) {
@@ -53,6 +54,23 @@ export default class Server implements Party.Server {
         return json({ ok: true }, 201);
       }
       return json({ ok: false, message: "missing body" }, 400);
+    } else if ( request.method === 'DELETE' && destroyPrefix === "true") {
+      console.log(`DESTROYING PREFIX - ${path}`)
+      const keys = [...(await this.party.storage.list({prefix: path})).keys()];
+      for (const key of keys) {
+        const ok = await this.party.storage.delete(key)
+        if (!ok) {
+          console.log(`error deleting during destroy: ${key}`)
+        }
+        // for now ignoring errors in an attempt to keep going
+      }
+      return json({ ok: true }, 200);
+    } else if ( request.method === 'DELETE') {
+      const ok = await this.party.storage.delete(path, {allowUnconfirmed: false})
+      if (ok) {
+        return json({ ok: true }, 200); // probably should be 204 No Content
+      }
+      return json({ error: `error deleting ${path}` }, 400);
     } else if (request.method === 'GET') {
       const carArrayBuffer = (await this.party.storage.get(path)) as Uint8Array;
       if (carArrayBuffer) {
