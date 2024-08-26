@@ -110,7 +110,7 @@ export class PartyKitGateway implements bs.Gateway {
     const delPrefix = dirname(this.getFilePath(url.Ok()));
     this.logger.Debug().Url(uri.asURL()).Str("target", delPrefix).Msg("destroy");
     const done = await fetch(`${delPrefix}?destroyPrefix=true`, { method: 'DELETE' })
-    if (!done.ok) throw new Error(`failed to delete ${deleteUrl} ` + done.statusText)
+    if (!done.ok) throw new Error(`failed to delete ${delPrefix} ` + done.statusText)
     return Result.Ok(undefined);
   }
 }
