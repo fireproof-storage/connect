@@ -2,28 +2,8 @@ import type { RunResult, Statement } from "better-sqlite3";
 import { DBConnection, DataRecord, DataSQLStore } from "../../types.js";
 import { V0_19BS3Connection } from "./better-sqlite3/sqlite-connection.js";
 import { KeyedResolvOnce, Logger, Result, URI } from "@adviser/cement";
-import { ensureSqliteVersionx } from "./sqlite-ensure-version.js";
-import { ensureLogger, exception2Result, getStore } from "@fireproof/core";
-
-// export class DataSQLRecordBuilder {
-//   readonly dataRecord: DataRecord;
-//   constructor(dataRecord: DataRecord) {
-//     this.dataRecord = dataRecord;
-//   }
-
-//   static fromUploadParams(data: Uint8Array, params: bs.UploadDataFnParams): DataSQLRecordBuilder {
-//     return new DataSQLRecordBuilder({
-//       name: params.name,
-//       car: params.car,
-//       data: data,
-//       updated_at: new Date(),
-//     });
-//   }
-
-//   build(): DataRecord {
-//     return this.dataRecord;
-//   }
-// }
+import { ensureSqliteVersion } from "./sqlite-ensure-version.js";
+import { ensureSuperLog, exception2Result, getStore, SuperThis } from "@fireproof/core";
 
 interface SQLiteDataRecord {
   name: string;
@@ -35,13 +15,15 @@ interface SQLiteDataRecord {
 export class V0_19_SqliteDataStore implements DataSQLStore {
   readonly dbConn: V0_19BS3Connection;
   readonly logger: Logger;
-  constructor(dbConn: DBConnection) {
+  readonly sthis: SuperThis;
+  constructor(sthis: SuperThis, dbConn: DBConnection) {
     this.dbConn = dbConn as V0_19BS3Connection;
-    this.logger = ensureLogger(dbConn.opts, "V0_19_SqliteDataStore");
+    this.sthis = ensureSuperLog(sthis, "V0_19_SqliteDataStore", { url: dbConn.opts.url });
+    this.logger = this.sthis.logger;
   }
 
   table(url: URI): string {
-    return getStore(url, this.logger, (...x: string[]) => x.join("_")).name;
+    return getStore(url, this.sthis, (...x: string[]) => x.join("_")).name;
   }
 
   readonly #createTable = new KeyedResolvOnce();
@@ -90,7 +72,7 @@ export class V0_19_SqliteDataStore implements DataSQLStore {
     this.logger.Debug().Msg("start-connect");
     await this.dbConn.connect();
     this.logger.Debug().Msg("start-connected");
-    const ret = await ensureSqliteVersionx(url, this.dbConn);
+    const ret = await ensureSqliteVersion(this.sthis, url, this.dbConn);
     this.logger.Debug().Url(ret).Msg("start-set-version");
     return ret;
   }

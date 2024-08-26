@@ -2,8 +2,8 @@ import type { RunResult, Statement } from "better-sqlite3";
 import { DBConnection, MetaRecord, MetaRecordKey, MetaSQLStore } from "../../types.js";
 import { V0_19BS3Connection } from "./better-sqlite3/sqlite-connection.js";
 import { KeyedResolvOnce, Logger, Result, URI } from "@adviser/cement";
-import { ensureSqliteVersionx } from "./sqlite-ensure-version.js";
-import { ensureLogger, exception2Result, getStore } from "@fireproof/core";
+import { ensureSqliteVersion } from "./sqlite-ensure-version.js";
+import { ensureSuperLog, exception2Result, getStore, SuperThis } from "@fireproof/core";
 
 // export class MetaSQLRecordBuilder {
 //   readonly record: MetaRecord;
@@ -57,21 +57,22 @@ interface SQLiteMetaRecord {
 export class V0_19_SqliteMetaStore implements MetaSQLStore {
   readonly dbConn: V0_19BS3Connection;
   readonly logger: Logger;
-  constructor(dbConn: DBConnection) {
+  readonly sthis: SuperThis;
+  constructor(sthis: SuperThis, dbConn: DBConnection) {
     this.dbConn = dbConn as V0_19BS3Connection;
-    this.logger = ensureLogger(dbConn.opts, "V0_19_SqliteMetaStore");
-    this.logger.Debug().Msg("constructor");
+    this.sthis = ensureSuperLog(sthis, "V0_19_SqliteMetaStore", { url: dbConn.opts.url });
+    this.logger = this.sthis.logger;
   }
   async startx(url: URI): Promise<URI> {
     this.logger.Debug().Url(url).Msg("starting");
     await this.dbConn.connect();
-    const ret = await ensureSqliteVersionx(url, this.dbConn);
+    const ret = await ensureSqliteVersion(this.sthis, url, this.dbConn);
     this.logger.Debug().Url(ret).Msg("started");
     return ret;
   }
 
   table(url: URI): string {
-    return getStore(url, this.logger, (...x: string[]) => x.join("_")).name;
+    return getStore(url, this.sthis, (...x: string[]) => x.join("_")).name;
   }
 
   readonly #createTable = new KeyedResolvOnce();

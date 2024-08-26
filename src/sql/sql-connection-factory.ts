@@ -1,4 +1,4 @@
-import { ensureLogger } from "@fireproof/core";
+import { ensureLogger, SuperThis } from "@fireproof/core";
 import { DBConnection, SQLOpts } from "./types.js";
 import { v0_19sqliteConnectionFactory } from "./v0.19/sqlite_factory.js";
 import { URI } from "@adviser/cement";
@@ -8,15 +8,12 @@ export interface SQLConnectionResult {
   readonly url: URI;
 }
 
-export function SQLConnectionFactoryx(url: URI, opts: Partial<SQLOpts> = {}): Promise<SQLConnectionResult> {
-  const logger = ensureLogger(opts, "SQLFactory");
+export function SQLConnectionFactoryx(sthis: SuperThis, url: URI, opts: Partial<SQLOpts> = {}): Promise<SQLConnectionResult> {
+  const logger = ensureLogger(sthis, "SQLFactory");
   switch (url.protocol) {
     case "sqlite:":
       logger.Debug().Str("databaseURL", url.toString()).Msg("connecting to sqlite");
-      return v0_19sqliteConnectionFactory(url, {
-        ...opts,
-        logger,
-      });
+      return v0_19sqliteConnectionFactory(sthis, url, { ...opts });
     default:
       throw logger
         .Error()

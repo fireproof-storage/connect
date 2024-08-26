@@ -1,4 +1,4 @@
-import { bs, ensureLogger } from "@fireproof/core";
+import { bs, ensureLogger, ensureSuperThis } from "@fireproof/core";
 import { Client } from "@web3-storage/w3up-client";
 import { decodeEventBlock } from "@web3-storage/pail/clock";
 import { DID, Proof } from "@ucanto/interface";
@@ -66,7 +66,7 @@ export class ConnectUCAN extends bs.ConnectionBase {
   readonly pubsub: () => void;
 
   constructor(params: ConnectUCANParams) {
-    super(URI.from("ucan://xxx"), ensureLogger({}, "ConnectUCAN"));
+    super(URI.from("ucan://xxx"), ensureLogger(ensureSuperThis(), "ConnectUCAN"));
     this.params = params;
     this.pubsub = function () {
       return;

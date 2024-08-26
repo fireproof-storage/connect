@@ -3,7 +3,7 @@ import type { Database } from "node-sqlite3-wasm";
 import { KeyedResolvOnce, ResolveOnce, URI } from "@adviser/cement";
 
 import { SQLOpts } from "../../../types.js";
-import { rt } from "@fireproof/core";
+import { ensureSuperLog, SuperThis } from "@fireproof/core";
 import { ensureSQLOpts } from "../../../ensurer.js";
 import { Sqlite3Connection, TasteHandler } from "../../sqlite_factory.js";
 
@@ -38,11 +38,12 @@ export class V0_19NSWConnection extends Sqlite3Connection {
     return this._client as Database;
   }
 
-  constructor(url: URI, opts: Partial<SQLOpts>) {
-    super(url, ensureSQLOpts(url, opts, "V0_19NSWConnection", { url }), new NSWTaste());
+  constructor(_sthis: SuperThis, url: URI, opts: Partial<SQLOpts>) {
+    const sthis = ensureSuperLog(_sthis, "V0_19NSWConnection", { url });
+    super(sthis, url, ensureSQLOpts(sthis, url, opts), new NSWTaste());
   }
   async connect(): Promise<void> {
-    let fName = this.url.toString().replace("sqlite://", "").replace(/\?.*$/, "");
+    let fName = this.url.pathname
     if (!fName) {
       throw this.logger.Error().Str("url", this.url.toString()).Msg("filename is empty").AsError();
     }
@@ -52,7 +53,7 @@ export class V0_19NSWConnection extends Sqlite3Connection {
     // }
     const hasName = this.url.getParam("name");
     if (hasName) {
-      fName = rt.SysContainer.join(fName, hasName);
+      fName = this.sthis.pathOps.join(fName, hasName);
       if (!fName.endsWith(".sqlite")) {
         fName += ".sqlite";
       }
@@ -65,7 +66,7 @@ export class V0_19NSWConnection extends Sqlite3Connection {
         return sql.Database;
       });
       if (hasName) {
-        await rt.SysContainer.mkdir(rt.SysContainer.dirname(fName), { recursive: true });
+        await (await this.fs()).mkdir(this.sthis.pathOps.dirname(fName), { recursive: true });
       }
       const db = new Sqlite3Database(fName, {
         // verbose: console.log,

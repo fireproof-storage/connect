@@ -1,21 +1,21 @@
-import { Logger } from "@fireproof/core";
+import { Logger, SuperThis, SysFileSystem, rt } from "@fireproof/core";
 import { DataSQLStore, DBConnection, MetaSQLStore, SQLOpts, WalSQLStore } from "../types";
-import { URI } from "@adviser/cement";
+import { ResolveOnce, URI } from "@adviser/cement";
 import { SQLConnectionResult } from "../sql-connection-factory";
 
-export async function v0_19sqliteWalFactory(db: DBConnection): Promise<WalSQLStore> {
+export async function v0_19sqliteWalFactory(sthis: SuperThis, db: DBConnection): Promise<WalSQLStore> {
   const { V0_19_Sqlite_WalStore } = await import("./sqlite/sqlite-wal-store.js");
-  return new V0_19_Sqlite_WalStore(db);
+  return new V0_19_Sqlite_WalStore(sthis, db);
 }
 
-export async function v0_19sqliteDataFactory(db: DBConnection): Promise<DataSQLStore> {
+export async function v0_19sqliteDataFactory(sthis: SuperThis, db: DBConnection): Promise<DataSQLStore> {
   const { V0_19_SqliteDataStore } = await import("./sqlite/sqlite-data-store.js");
-  return new V0_19_SqliteDataStore(db);
+  return new V0_19_SqliteDataStore(sthis, db);
 }
 
-export async function v0_19sqliteMetaFactory(db: DBConnection): Promise<MetaSQLStore> {
+export async function v0_19sqliteMetaFactory(sthis: SuperThis, db: DBConnection): Promise<MetaSQLStore> {
   const { V0_19_SqliteMetaStore } = await import("./sqlite/sqlite-meta-store.js");
-  return new V0_19_SqliteMetaStore(db);
+  return new V0_19_SqliteMetaStore(sthis, db);
 }
 
 // export interface Sqlite3Statement {
@@ -42,23 +42,31 @@ export abstract class Sqlite3Connection implements DBConnection {
   readonly logger: Logger;
   readonly opts: SQLOpts;
   readonly url: URI;
+  readonly sthis: SuperThis;
 
-  constructor(url: URI, opts: SQLOpts, taste: TasteHandler) {
+  constructor(sthis: SuperThis, url: URI, opts: SQLOpts, taste: TasteHandler) {
+    this.sthis = sthis;
     this.url = url;
-    this.logger = opts.logger;
+    this.logger = sthis.logger;
     this.opts = opts;
     this.taste = taste;
   }
   abstract connect(): Promise<void>;
+  private readonly _fs = new ResolveOnce<SysFileSystem>();
+  async fs(): Promise<SysFileSystem> {
+    return this._fs.once(async () => {
+      return rt.getFileSystem(URI.from("file:///"));
+    })
+  }
 }
 
-export async function v0_19sqliteConnectionFactory(url: URI, opts: Partial<SQLOpts>): Promise<SQLConnectionResult> {
+export async function v0_19sqliteConnectionFactory(sthis: SuperThis, url: URI, opts: Partial<SQLOpts>): Promise<SQLConnectionResult> {
   const upUrl = url.build().defParam("taste", "better-sqlite3").URI();
   switch (upUrl.getParam("taste")) {
     case "node-sqlite3-wasm": {
       const { V0_19NSWConnection } = await import("./sqlite/node-sqlite3-wasm/sqlite-connection.js");
       return {
-        dbConn: new V0_19NSWConnection(upUrl, opts),
+        dbConn: new V0_19NSWConnection(sthis, upUrl, opts),
         url: upUrl.build().setParam("taste", "node-sqlite3-wasm").URI(),
       };
     }
@@ -66,7 +74,7 @@ export async function v0_19sqliteConnectionFactory(url: URI, opts: Partial<SQLOp
     default: {
       const { V0_19BS3Connection } = await import("./sqlite/better-sqlite3/sqlite-connection.js");
       return {
-        dbConn: new V0_19BS3Connection(upUrl, opts),
+        dbConn: new V0_19BS3Connection(sthis, upUrl, opts),
         url: upUrl.build().setParam("taste", "better-sqlite3").URI(),
       };
     }

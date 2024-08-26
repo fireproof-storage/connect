@@ -1,8 +1,9 @@
-import { fireproof } from "@fireproof/core";
+import { ensureSuperThis, fireproof } from "@fireproof/core";
 import { connectionFactory } from "./connection-from-store";
 import { URI } from "@adviser/cement";
 
 async function main() {
+    const sthis = ensureSuperThis();
     const url = URI.from("file://./dist/connect_to?storekey=@bla@")
     console.log("--1")
     const wdb = fireproof("my-database", {
@@ -14,7 +15,7 @@ async function main() {
     });
     // db.connect("s3://testbucket/connector");
     console.log("--2")
-    const connection = await connectionFactory(url);
+    const connection = await connectionFactory(sthis, url);
     console.log("--3")
     await connection.connect_X(wdb.blockstore);
 
@@ -49,7 +50,7 @@ async function main() {
             stores: {
                 base: url
                 ,
-                useEncryptedBlockstore: true
+                // useEncryptedBlockstore: true
             },
         },
     });

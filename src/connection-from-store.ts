@@ -8,7 +8,6 @@ import { bs, ensureLogger, SuperThis } from "@fireproof/core";
 // }
 
 export class ConnectionFromStore extends bs.ConnectionBase {
-  sthis: SuperThis
   stores?: {
     readonly data: bs.DataStore;
     readonly meta: bs.MetaStore;
@@ -17,12 +16,15 @@ export class ConnectionFromStore extends bs.ConnectionBase {
   // readonly urlData: URI;
   // readonly urlMeta: URI;
 
-  constructor(url: URI, sthis: SuperThis) {
+  readonly sthis: SuperThis;
+  constructor(sthis: SuperThis, url: URI) {
     const logger = ensureLogger(sthis, "ConnectionFromStore", {
       url: () => url.toString(),
+      "this": 1,
+      log: 1
     });
     super(url, logger);
-    this.sthis = sthis
+    this.sthis = sthis;
     // this.urlData = url;
     // this.urlMeta = url;
   }
@@ -44,13 +46,9 @@ export class ConnectionFromStore extends bs.ConnectionBase {
       sthis: this.sthis,
     } as bs.Loadable;
 
-    const srds = await storeRuntime.makeDataStore(loader)
-    const d = await bs.ensureStart(srds, this.logger)
-    const srms = await storeRuntime.makeMetaStore(loader)
-    const m = await bs.ensureStart(srms, this.logger)
     this.stores = {
-      data: d,
-      meta: m,
+      data: await storeRuntime.makeDataStore(loader),
+      meta: await storeRuntime.makeMetaStore(loader)
     };
     // await this.stores.data.start();
     // await this.stores.meta.start();
@@ -59,7 +57,6 @@ export class ConnectionFromStore extends bs.ConnectionBase {
   }
 }
 
-export async function connectionFactory(iurl: CoerceURI, sthis: SuperThis): Promise<bs.ConnectionBase> {
-  //const logger = ensureLogger(sthis, "connectionFactory");
-  return new ConnectionFromStore(URI.from(iurl), sthis);
+export async function connectionFactory(sthis: SuperThis, iurl: CoerceURI): Promise<bs.ConnectionBase> {
+  return new ConnectionFromStore(sthis, URI.from(iurl));
 }

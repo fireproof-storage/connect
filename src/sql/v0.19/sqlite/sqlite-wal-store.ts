@@ -2,8 +2,8 @@ import type { RunResult, Statement } from "better-sqlite3";
 import { DBConnection, WalKey, WalRecord, WalSQLStore } from "../../types.js";
 import { V0_19BS3Connection } from "./better-sqlite3/sqlite-connection.js";
 import { KeyedResolvOnce, Logger, Result, URI } from "@adviser/cement";
-import { ensureSqliteVersionx } from "./sqlite-ensure-version.js";
-import { ensureLogger, exception2Result, getStore } from "@fireproof/core";
+import { ensureSqliteVersion } from "./sqlite-ensure-version.js";
+import { ensureSuperLog, exception2Result, getStore, SuperThis } from "@fireproof/core";
 
 export class WalSQLRecordBuilder {
   readonly #record: WalRecord;
@@ -31,23 +31,22 @@ interface SQLiteWalRecord {
 export class V0_19_Sqlite_WalStore implements WalSQLStore {
   readonly dbConn: V0_19BS3Connection;
   readonly logger: Logger;
-  readonly textEncoder: TextEncoder;
-  constructor(dbConn: DBConnection) {
+  readonly sthis: SuperThis;
+  constructor(sthis: SuperThis, dbConn: DBConnection) {
     this.dbConn = dbConn as V0_19BS3Connection;
-    this.textEncoder = dbConn.opts.textEncoder;
-    this.logger = ensureLogger(dbConn.opts, "V0_19_Sqlite_WalStore");
-    this.logger.Debug().Msg("constructor");
+    this.sthis = ensureSuperLog(sthis, "V0_19_Sqlite_WalStore", { url: dbConn.opts.url });
+    this.logger = this.sthis.logger
   }
   async startx(url: URI): Promise<URI> {
     this.logger.Debug().Msg("start");
     await this.dbConn.connect();
-    const ret = await ensureSqliteVersionx(url, this.dbConn);
+    const ret = await ensureSqliteVersion(this.sthis, url, this.dbConn);
     this.logger.Debug().Url(ret).Msg("started");
     return ret;
   }
 
   table(url: URI): string {
-    return getStore(url, this.logger, (...x: string[]) => x.join("_")).name;
+    return getStore(url, this.sthis, (...x: string[]) => x.join("_")).name;
   }
 
   readonly #createTable = new KeyedResolvOnce();
@@ -102,7 +101,7 @@ export class V0_19_Sqlite_WalStore implements WalSQLStore {
 
   async insert(url: URI, ose: WalRecord): Promise<RunResult> {
     const wal = WalSQLRecordBuilder.fromRecord(ose).build();
-    const bufState = this.dbConn.taste.toBlob(this.textEncoder.encode(JSON.stringify(wal.state)));
+    const bufState = this.dbConn.taste.toBlob(this.sthis.txt.encode(JSON.stringify(wal.state)));
     return this.insertStmt(url).then((i) =>
       i.run(
         this.dbConn.taste.quoteTemplate({

@@ -1,12 +1,12 @@
 import { V0_19BS3Connection } from "./better-sqlite3/sqlite-connection";
 import { V0_19SQL_VERSION } from "../version";
 import { ResolveOnce, URI } from "@adviser/cement";
-import { ensureLogger } from "@fireproof/core";
+import { ensureLogger, SuperThis } from "@fireproof/core";
 
 const once = new ResolveOnce<string>();
-export async function ensureSqliteVersionx(url: URI, dbConn: V0_19BS3Connection) {
+export async function ensureSqliteVersion(sthis: SuperThis, url: URI, dbConn: V0_19BS3Connection) {
   const version = await once.once(async () => {
-    const logger = ensureLogger(dbConn.opts, "ensureSqliteVersion", {
+    const logger = ensureLogger(sthis, "ensureSqliteVersion", {
       version: V0_19SQL_VERSION,
       url: dbConn.url.toString(),
     });

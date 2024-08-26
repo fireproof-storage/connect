@@ -4,14 +4,16 @@ import { Logger, ResolveOnce, Result, URI } from "@adviser/cement";
 import { SQLConnectionFactoryx } from "./sql-connection-factory.js";
 import { DataSQLStore, MetaSQLStore, WalSQLStore } from "./types.js";
 import { DataStoreFactory, MetaStoreFactory, WalStoreFactory } from "./store-version-factory.js";
-import { ensureLogger, exception2Result, exceptionWrapper, getKey, getName, bs, NotFoundError } from "@fireproof/core";
+import { exception2Result, exceptionWrapper, getKey, getName, bs, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
 
 export class SQLWalGateway implements bs.Gateway {
   readonly storeType = "wal";
   readonly logger: Logger;
+  readonly sthis: SuperThis;
   walSQLStore: WalSQLStore = {} as WalSQLStore;
-  constructor(logger: Logger) {
-    this.logger = ensureLogger(logger, "SQLWalGateway");
+  constructor(_sthis: SuperThis) {
+    this.sthis = ensureSuperLog(_sthis, "SQLWalGateway");
+    this.logger = this.sthis.logger;
   }
 
   buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {
@@ -22,8 +24,8 @@ export class SQLWalGateway implements bs.Gateway {
   async start(baseUrl: URI): Promise<Result<URI>> {
     return exception2Result(async () => {
       this.logger.Debug().Url(baseUrl).Msg("start");
-      const conn = await SQLConnectionFactoryx(baseUrl);
-      const ws = await WalStoreFactory(conn.dbConn);
+      const conn = await SQLConnectionFactoryx(this.sthis, baseUrl);
+      const ws = await WalStoreFactory(this.sthis, conn.dbConn);
       const upUrl = await ws.startx(conn.url);
       this.walSQLStore = ws;
       this.logger.Debug().Url(upUrl).Msg("started");
@@ -40,7 +42,7 @@ export class SQLWalGateway implements bs.Gateway {
   async put(url: URI, body: Uint8Array): Promise<Result<void>> {
     return exception2Result(async () => {
       const branch = getKey(url, this.logger);
-      const name = getName(url, this.logger);
+      const name = getName(this.sthis, url);
       await this.walSQLStore.insert(url, {
         state: body,
         updated_at: new Date(),
@@ -52,7 +54,7 @@ export class SQLWalGateway implements bs.Gateway {
   async get(url: URI): Promise<bs.GetResult> {
     return exceptionWrapper(async () => {
       const branch = getKey(url, this.logger);
-      const name = getName(url, this.logger);
+      const name = getName(this.sthis, url);
       const record = await this.walSQLStore.select(url, { name, branch });
       if (record.length === 0) {
         return Result.Err(new NotFoundError(`not found ${name} ${branch}`));
@@ -63,7 +65,7 @@ export class SQLWalGateway implements bs.Gateway {
   async delete(url: URI): Promise<Result<void>> {
     return exception2Result(async () => {
       const branch = getKey(url, this.logger);
-      const name = getName(url, this.logger);
+      const name = getName(this.sthis, url);
       await this.walSQLStore.delete(url, { name, branch });
     });
   }
@@ -72,9 +74,11 @@ export class SQLWalGateway implements bs.Gateway {
 export class SQLMetaGateway implements bs.Gateway {
   readonly storeType = "meta";
   readonly logger: Logger;
+  readonly sthis: SuperThis;
   metaSQLStore: MetaSQLStore = {} as MetaSQLStore;
-  constructor(logger: Logger) {
-    this.logger = ensureLogger(logger, "SQLMetaGateway");
+  constructor(sthis: SuperThis) {
+    this.sthis = ensureSuperLog(sthis, "SQLMetaGateway");
+    this.logger = this.sthis.logger;
   }
 
   buildUrl(url: URI, key: string): Promise<Result<URI>> {
@@ -84,8 +88,8 @@ export class SQLMetaGateway implements bs.Gateway {
   async start(baseUrl: URI): Promise<Result<URI>> {
     return exception2Result(async () => {
       this.logger.Debug().Url(baseUrl).Msg("start");
-      const conn = await SQLConnectionFactoryx(baseUrl);
-      const ws = await MetaStoreFactory(conn.dbConn);
+      const conn = await SQLConnectionFactoryx(this.sthis, baseUrl);
+      const ws = await MetaStoreFactory(this.sthis, conn.dbConn);
       const upUrl = await ws.startx(conn.url);
       this.metaSQLStore = ws;
       this.logger.Debug().Url(upUrl).Msg("started");
@@ -102,7 +106,7 @@ export class SQLMetaGateway implements bs.Gateway {
   async put(url: URI, body: Uint8Array): Promise<Result<void>> {
     return exception2Result(async () => {
       const branch = getKey(url, this.logger);
-      const name = getName(url, this.logger);
+      const name = getName(this.sthis, url);
       await this.metaSQLStore.insert(url, {
         meta: body,
         updated_at: new Date(),
@@ -114,7 +118,7 @@ export class SQLMetaGateway implements bs.Gateway {
   async get(url: URI): Promise<bs.GetResult> {
     return exceptionWrapper(async () => {
       const branch = getKey(url, this.logger);
-      const name = getName(url, this.logger);
+      const name = getName(this.sthis, url);
       const record = await this.metaSQLStore.select(url, {
         name,
         branch,
@@ -128,7 +132,7 @@ export class SQLMetaGateway implements bs.Gateway {
   async delete(url: URI): Promise<Result<void>> {
     return exception2Result(async () => {
       const branch = getKey(url, this.logger);
-      const name = getName(url, this.logger);
+      const name = getName(this.sthis, url);
       await this.metaSQLStore.delete(url, {
         name,
         branch,
@@ -139,9 +143,11 @@ export class SQLMetaGateway implements bs.Gateway {
 
 export class SQLDataGateway implements bs.Gateway {
   readonly logger: Logger;
+  readonly sthis: SuperThis;
   dataSQLStore: DataSQLStore = {} as DataSQLStore;
-  constructor(logger: Logger) {
-    this.logger = ensureLogger(logger, "SQLDataGateway");
+  constructor(sthis: SuperThis) {
+    this.sthis = ensureSuperLog(sthis, "SQLDataGateway");
+    this.logger = this.sthis.logger
   }
 
   buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {
@@ -151,9 +157,9 @@ export class SQLDataGateway implements bs.Gateway {
   async start(baseUrl: URI): Promise<Result<URI>> {
     return exception2Result(async () => {
       this.logger.Debug().Url(baseUrl).Msg("pre-sql-connection");
-      const conn = await SQLConnectionFactoryx(baseUrl);
+      const conn = await SQLConnectionFactoryx(this.sthis, baseUrl);
       this.logger.Debug().Url(baseUrl).Msg("post-sql-connection");
-      const ws = await DataStoreFactory(conn.dbConn);
+      const ws = await DataStoreFactory(this.sthis, conn.dbConn);
       this.logger.Debug().Url(conn.url).Msg("post-data-store-factory");
       const upUrl = await ws.startx(conn.url);
       this.dataSQLStore = ws;
@@ -171,7 +177,7 @@ export class SQLDataGateway implements bs.Gateway {
   async put(url: URI, body: Uint8Array): Promise<Result<void>> {
     return exception2Result(async () => {
       const cid = getKey(url, this.logger);
-      const name = getName(url, this.logger);
+      const name = getName(this.sthis, url);
       await this.dataSQLStore.insert(url, {
         data: body,
         updated_at: new Date(),
@@ -201,16 +207,17 @@ export class SQLDataGateway implements bs.Gateway {
 
 export class SQLTestStore implements bs.TestGateway {
   readonly logger: Logger;
-  constructor(ilogger: Logger) {
-    const logger = ensureLogger(ilogger, "SQLTestStore");
-    this.logger = logger;
+  readonly sthis: SuperThis;
+  constructor(sthis: SuperThis) {
+    this.sthis = ensureSuperLog(sthis, "SQLTestStore");
+    this.logger = this.sthis.logger;
   }
   async get(url: URI, key: string): Promise<Uint8Array> {
-    const conn = await SQLConnectionFactoryx(url);
-    const name = getName(url, this.logger);
+    const conn = await SQLConnectionFactoryx(this.sthis, url);
+    const name = getName(this.sthis, url);
     switch (url.getParam("store")) {
       case "wal": {
-        const sqlStore = await WalStoreFactory(conn.dbConn);
+        const sqlStore = await WalStoreFactory(this.sthis, conn.dbConn);
         const surl = await sqlStore.startx(url);
         const records = await sqlStore.select(surl, {
           name,
@@ -219,7 +226,7 @@ export class SQLTestStore implements bs.TestGateway {
         return records[0].state;
       }
       case "meta": {
-        const sqlStore = await MetaStoreFactory(conn.dbConn);
+        const sqlStore = await MetaStoreFactory(this.sthis, conn.dbConn);
         const surl = await sqlStore.startx(url);
         const records = await sqlStore.select(surl, {
           name,
@@ -228,7 +235,7 @@ export class SQLTestStore implements bs.TestGateway {
         return records[0].meta;
       }
       case "data": {
-        const sqlStore = await DataStoreFactory(conn.dbConn);
+        const sqlStore = await DataStoreFactory(this.sthis, conn.dbConn);
         const surl = await sqlStore.startx(url);
         const records = await sqlStore.select(surl, key);
         return records[0].data;
@@ -241,8 +248,10 @@ export class SQLTestStore implements bs.TestGateway {
 
 class SQLStoreGateway implements bs.Gateway {
   readonly logger: Logger;
-  constructor(logger: Logger) {
-    this.logger = ensureLogger(logger, "SQLStoreGateway");
+  readonly sthis: SuperThis;
+  constructor(sthis: SuperThis) {
+    this.sthis = ensureSuperLog(sthis, "SQLStoreGateway");
+    this.logger = this.sthis.logger;
   }
 
   async buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {
@@ -275,15 +284,15 @@ class SQLStoreGateway implements bs.Gateway {
     switch (store) {
       case "wal":
         return this.walGateway.once(async () => {
-          return new SQLWalGateway(this.logger);
+          return new SQLWalGateway(this.sthis);
         });
       case "meta":
         return this.metaGateway.once(async () => {
-          return new SQLMetaGateway(this.logger);
+          return new SQLMetaGateway(this.sthis);
         });
       case "data":
         return this.dataGateway.once(async () => {
-          return new SQLDataGateway(this.logger);
+          return new SQLDataGateway(this.sthis);
         });
       default:
         throw this.logger.Error().Str("store", store).Msg(`Method not implemented`);

@@ -1,4 +1,4 @@
-import { ensureLogger, type Logger } from "@fireproof/core";
+import { ensureSuperLog, SuperThis } from "@fireproof/core";
 import { SQLOpts, SQLTableNames, DefaultSQLTableNames, SQLGestalt } from "./types";
 import { URI } from "@adviser/cement";
 
@@ -30,17 +30,7 @@ function ensureTableNames(url: URI, opts?: Partial<SQLOpts>): SQLTableNames {
   };
 }
 
-const textEncoder = new TextEncoder();
-function ensureTextEncoder(opts?: Partial<SQLOpts>): TextEncoder {
-  return opts?.textEncoder || textEncoder;
-}
-
-const textDecoder = new TextDecoder();
-function ensureTextDecoder(opts?: Partial<SQLOpts>): TextDecoder {
-  return opts?.textDecoder || textDecoder;
-}
-
-function url2sqlFlavor(url: URI, logger: Logger): SQLGestalt {
+function url2sqlFlavor(sthis: SuperThis, url: URI): SQLGestalt {
   const flavor = url.protocol.replace(/:.*$/, "");
   switch (flavor) {
     case "sqlite":
@@ -50,23 +40,18 @@ function url2sqlFlavor(url: URI, logger: Logger): SQLGestalt {
         taste: url.getParam("taste"),
       };
     default:
-      throw logger.Error().Str("flavor", flavor).Msg("unsupported protocol").AsError();
+      throw sthis.logger.Error().Str("flavor", flavor).Msg("unsupported protocol").AsError();
   }
 }
 
 export function ensureSQLOpts(
+  sthis: SuperThis,
   url: URI,
   opts: Partial<SQLOpts>,
-  componentName: string,
-  ctx?: Record<string, unknown>
 ): SQLOpts {
-  const logger = ensureLogger(opts, componentName, ctx);
   return {
     url,
-    sqlGestalt: url2sqlFlavor(url, logger),
+    sqlGestalt: url2sqlFlavor(sthis, url),
     tableNames: ensureTableNames(url, opts),
-    logger,
-    textEncoder: ensureTextEncoder(opts),
-    textDecoder: ensureTextDecoder(opts),
   };
 }

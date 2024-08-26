@@ -1,7 +1,9 @@
-import { Logger, Result, URI } from "@adviser/cement";
+import { Result, URI } from "@adviser/cement";
+import { SysFileSystem } from "@fireproof/core";
 
 export interface DBConnection {
   connect(): Promise<void>;
+  fs(): Promise<SysFileSystem>
   readonly opts: SQLOpts;
 }
 
@@ -42,9 +44,6 @@ export interface SQLOpts {
   readonly url: URI;
   readonly sqlGestalt: SQLGestalt;
   readonly tableNames: SQLTableNames;
-  readonly logger: Logger;
-  readonly textEncoder: TextEncoder;
-  readonly textDecoder: TextDecoder;
 }
 
 export interface WalKey {

@@ -1,15 +1,16 @@
 import { describe } from "vitest";
-import {fireproof, ensureSuperThis, SuperThis, SuperThisOpts, rt} from "@fireproof/core";
+import { ensureSuperThis, fireproof, SuperThis, SuperThisOpts, ConfigOpts } from "@fireproof/core";
 import { connectionFactory } from "./connection-from-store";
+// import { registerS3StoreProtocol } from "./s3/s3-gateway";
 import { URI, runtimeFn, MockLogger } from "@adviser/cement";
 import { registerPartyKitStoreProtocol } from "./connect-partykit/partykit-store";
-
 
 // describe("connector", () => {
 //   // let unreg: () => void;
 //   let url: URI;
+//   const sthis = ensureSuperThis();
 //   beforeAll(async () => {
-//     await rt.SysContainer.start();
+//     await sthis.start();
 //     // unreg = registerS3StoreProtocol();
 //     // url = URI.from("s3://testbucket/connector")
 //     //   .build()
@@ -35,7 +36,7 @@ import { registerPartyKitStoreProtocol } from "./connect-partykit/partykit-store
 //     });
 //     // db.connect("s3://testbucket/connector");
 //     console.log("--2")
-//     const connection = await connectionFactory(url);
+//     const connection = await connectionFactory(sthis, url);
 //     console.log("--3")
 //     await connection.connect_X(wdb.blockstore);
 //
@@ -61,6 +62,7 @@ import { registerPartyKitStoreProtocol } from "./connect-partykit/partykit-store
 //     console.log("--6")
 //     expect(docs.rows.length).toBeGreaterThanOrEqual(count);
 //     (await wdb.blockstore.loader?.WALStore())?.processQueue.waitIdle();
+//     await new Promise((res) => setTimeout(res, 1000));
 //     // console.log("--7")
 //     await wdb.blockstore.destroy();
 //     // console.log("--8")
@@ -69,13 +71,12 @@ import { registerPartyKitStoreProtocol } from "./connect-partykit/partykit-store
 //       store: {
 //         stores: {
 //           base: url,
-//           useEncryptedBlockstore: true
 //         },
 //       },
 //     });
 //     console.log("--9")
 //     const rdocs = await rdb.allDocs();
-//     // console.log("--10", rdocs)
+//     // // console.log("--10", rdocs)
 //     expect(rdocs.rows.length).toBeGreaterThanOrEqual(count);
 //     for (let i = 0; i < count; i++) {
 //       expect(await rdb.get<{ hello: string }>(`key${i}:${ran}`)).toEqual({
@@ -92,29 +93,33 @@ describe("partykit", () => {
   let aliceURL: URI;
   let bobURL: URI;
 
+  let configA: ConfigOpts;
+  let configB: ConfigOpts;
+
   let messagePromise: Promise<void>;
   let messageResolve: (value: void | PromiseLike<void>) => void;
 
-  const sthis = mockSuperThis();
 
-  const configA = {
-    store: {
-      stores: {
-        base: storageURL(sthis).build().setParam("storekey", "zTvTPEPQRWij8rfb3FrFqBm"),
-      },
-    },
-  };
-
-  const configB = {
-    store: {
-      stores: {
-        base: storageURL(sthis).build().setParam("storekey", "zTvTPEPQRWij8rfb3FrFqBm"),
-      },
-    },
-  };
-
+  const sthis = ensureSuperThis();
   beforeAll(async () => {
     await sthis.start();
+
+    configA = {
+      store: {
+        stores: {
+          base: storageURL(sthis).build().setParam("storekey", "zTvTPEPQRWij8rfb3FrFqBm"),
+        },
+      },
+    };
+
+    configB = {
+      store: {
+        stores: {
+          base: storageURL(sthis).build().setParam("storekey", "zTvTPEPQRWij8rfb3FrFqBm"),
+        },
+      },
+    };
+
     registerPartyKitStoreProtocol();
     url = URI.from("partykit://localhost:1999").build().setParam("storkey", "zTvTPEPQRWij8rfb3FrFqBm").URI();
     //url = URI.from("file://./dist/connect_to?storekey=@bla@")
@@ -133,16 +138,16 @@ describe("partykit", () => {
   });
 
   it("should", async () => {
-    let alice = fireproof("alice", configA);
-    const connection = await connectionFactory(aliceURL, sthis);
+    const alice = fireproof("alice", configA);
+    const connection = await connectionFactory(sthis, aliceURL);
     await connection.connect_X(alice.blockstore);
 
-    let bob = fireproof("bob", configB);
-    const connectionBob = await connectionFactory(bobURL, sthis);
+    const bob = fireproof("bob", configB);
+    const connectionBob = await connectionFactory(sthis, bobURL);
     await connectionBob.connect_X(bob.blockstore);
 
 
-    const messagePromise = new Promise<void>((resolve) => {
+    messagePromise = new Promise<void>((resolve) => {
       messageResolve = resolve
     })
 

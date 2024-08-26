@@ -1,4 +1,4 @@
-import { fireproof, rt } from "@fireproof/core";
+import { ensureSuperThis, fireproof, SysFileSystem, rt } from "@fireproof/core";
 import { registerSqliteStoreProtocol } from "./gateway-sql";
 import { V0_19SQL_VERSION } from "./v0.19/version";
 import { URI } from "@adviser/cement";
@@ -8,6 +8,8 @@ describe("sqlite", () => {
   function my_app() {
     return _my_app;
   }
+  const sthis = ensureSuperThis()
+  let fsx: SysFileSystem
 
   function params(store: string, taste: string) {
     return Object.entries({
@@ -24,7 +26,8 @@ describe("sqlite", () => {
   let base: string;
 
   beforeAll(async () => {
-    await rt.SysContainer.start();
+    await sthis.start();
+    fsx = await rt.getFileSystem(URI.from("file:///"));
     registerSqliteStoreProtocol();
     const url = URI.from(process.env.FP_STORAGE_URL || "dummy://");
     taste = url.getParam("taste") || "better-sqlite3";
@@ -33,8 +36,8 @@ describe("sqlite", () => {
 
   it("sqlite path", async () => {
     let dbFile = base.replace(/\?.*$/, "").replace(/^sqlite:\/\//, "");
-    dbFile = rt.SysContainer.join(dbFile, `${my_app()}.sqlite`);
-    await rt.SysContainer.rm(dbFile, { recursive: true }).catch(() => {
+    dbFile = sthis.pathOps.join(dbFile, `${my_app()}.sqlite`);
+    await fsx.rm(dbFile, { recursive: true }).catch(() => {
       /* */
     });
 
@@ -47,7 +50,7 @@ describe("sqlite", () => {
     });
     // console.log(`>>>>>>>>>>>>>>>file-path`)
     await db.put({ name: "my-app" });
-    expect((await rt.SysContainer.stat(dbFile)).isFile()).toBeTruthy();
+    expect((await fsx.stat(dbFile)).isFile()).toBeTruthy();
     expect(db.name).toBe(my_app());
     const carStore = await db.blockstore.loader?.carStore();
     for (const [k, v] of params("data", taste)) {
