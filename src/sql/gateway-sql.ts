@@ -4,7 +4,16 @@ import { Logger, ResolveOnce, Result, URI } from "@adviser/cement";
 import { SQLConnectionFactoryx } from "./sql-connection-factory.js";
 import { DataSQLStore, MetaSQLStore, WalSQLStore } from "./types.js";
 import { DataStoreFactory, MetaStoreFactory, WalStoreFactory } from "./store-version-factory.js";
-import { exception2Result, exceptionWrapper, getKey, getName, bs, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
+import {
+  exception2Result,
+  exceptionWrapper,
+  getKey,
+  getName,
+  bs,
+  NotFoundError,
+  SuperThis,
+  ensureSuperLog,
+} from "@fireproof/core";
 
 export class SQLWalGateway implements bs.Gateway {
   readonly storeType = "wal";
@@ -147,7 +156,7 @@ export class SQLDataGateway implements bs.Gateway {
   dataSQLStore: DataSQLStore = {} as DataSQLStore;
   constructor(sthis: SuperThis) {
     this.sthis = ensureSuperLog(sthis, "SQLDataGateway");
-    this.logger = this.sthis.logger
+    this.logger = this.sthis.logger;
   }
 
   buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {

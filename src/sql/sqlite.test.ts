@@ -8,8 +8,8 @@ describe("sqlite", () => {
   function my_app() {
     return _my_app;
   }
-  const sthis = ensureSuperThis()
-  let fsx: SysFileSystem
+  const sthis = ensureSuperThis();
+  let fsx: SysFileSystem;
 
   function params(store: string, taste: string) {
     return Object.entries({

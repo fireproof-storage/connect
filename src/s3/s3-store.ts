@@ -2,8 +2,8 @@ import { bs, SuperThis } from "@fireproof/core";
 import { S3_VERSION, S3Gateway, S3TestStore } from "./s3-gateway";
 
 export interface versionUnregister {
-  (): void
-  readonly version: string
+  (): void;
+  readonly version: string;
 }
 
 export function registerS3StoreProtocol(protocol = "s3:", overrideBaseURL?: string): versionUnregister {
@@ -19,9 +19,9 @@ export function registerS3StoreProtocol(protocol = "s3:", overrideBaseURL?: stri
         const gateway = new S3Gateway(sthis);
         return new S3TestStore(sthis, gateway);
       },
-    })
+    });
     _f.version = S3_VERSION;
     return _f;
-  })()
-  return unreg
+  })();
+  return unreg;
 }

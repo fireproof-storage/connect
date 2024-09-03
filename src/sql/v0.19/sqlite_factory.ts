@@ -56,11 +56,15 @@ export abstract class Sqlite3Connection implements DBConnection {
   async fs(): Promise<SysFileSystem> {
     return this._fs.once(async () => {
       return rt.getFileSystem(URI.from("file:///"));
-    })
+    });
   }
 }
 
-export async function v0_19sqliteConnectionFactory(sthis: SuperThis, url: URI, opts: Partial<SQLOpts>): Promise<SQLConnectionResult> {
+export async function v0_19sqliteConnectionFactory(
+  sthis: SuperThis,
+  url: URI,
+  opts: Partial<SQLOpts>
+): Promise<SQLConnectionResult> {
   const upUrl = url.build().defParam("taste", "better-sqlite3").URI();
   switch (upUrl.getParam("taste")) {
     case "node-sqlite3-wasm": {

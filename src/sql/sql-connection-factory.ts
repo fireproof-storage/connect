@@ -8,7 +8,11 @@ export interface SQLConnectionResult {
   readonly url: URI;
 }
 
-export function SQLConnectionFactoryx(sthis: SuperThis, url: URI, opts: Partial<SQLOpts> = {}): Promise<SQLConnectionResult> {
+export function SQLConnectionFactoryx(
+  sthis: SuperThis,
+  url: URI,
+  opts: Partial<SQLOpts> = {}
+): Promise<SQLConnectionResult> {
   const logger = ensureLogger(sthis, "SQLFactory");
   switch (url.protocol) {
     case "sqlite:":

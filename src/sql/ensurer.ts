@@ -1,4 +1,4 @@
-import { ensureSuperLog, SuperThis } from "@fireproof/core";
+import { SuperThis } from "@fireproof/core";
 import { SQLOpts, SQLTableNames, DefaultSQLTableNames, SQLGestalt } from "./types";
 import { URI } from "@adviser/cement";
 
@@ -44,11 +44,7 @@ function url2sqlFlavor(sthis: SuperThis, url: URI): SQLGestalt {
   }
 }
 
-export function ensureSQLOpts(
-  sthis: SuperThis,
-  url: URI,
-  opts: Partial<SQLOpts>,
-): SQLOpts {
+export function ensureSQLOpts(sthis: SuperThis, url: URI, opts: Partial<SQLOpts>): SQLOpts {
   return {
     url,
     sqlGestalt: url2sqlFlavor(sthis, url),

@@ -3,7 +3,7 @@ import { SysFileSystem } from "@fireproof/core";
 
 export interface DBConnection {
   connect(): Promise<void>;
-  fs(): Promise<SysFileSystem>
+  fs(): Promise<SysFileSystem>;
   readonly opts: SQLOpts;
 }
 

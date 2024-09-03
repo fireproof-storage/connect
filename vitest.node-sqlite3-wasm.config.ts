@@ -7,8 +7,8 @@ export default defineConfig({
   test: {
     name: "node-sqlite3-wasm",
     exclude: [
-	"node_modules/@fireproof/core/tests/react/**",
-	"node_modules/@fireproof/core/tests/fireproof/config.test.ts"
+      "node_modules/@fireproof/core/tests/react/**",
+      "node_modules/@fireproof/core/tests/fireproof/config.test.ts",
     ],
     include: ["src/store-sql/**/*test.?(c|m)[jt]s?(x)", "node_modules/@fireproof/core/tests/**/*test.?(c|m)[jt]s?(x)"],
     globals: true,
