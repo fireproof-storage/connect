@@ -43,7 +43,7 @@ export class V0_19NSWConnection extends Sqlite3Connection {
     super(sthis, url, ensureSQLOpts(sthis, url, opts), new NSWTaste());
   }
   async connect(): Promise<void> {
-    let fName = this.url.pathname
+    let fName = this.url.pathname;
     if (!fName) {
       throw this.logger.Error().Str("url", this.url.toString()).Msg("filename is empty").AsError();
     }

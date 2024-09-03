@@ -20,8 +20,8 @@ export class ConnectionFromStore extends bs.ConnectionBase {
   constructor(sthis: SuperThis, url: URI) {
     const logger = ensureLogger(sthis, "ConnectionFromStore", {
       url: () => url.toString(),
-      "this": 1,
-      log: 1
+      this: 1,
+      log: 1,
     });
     super(url, logger);
     this.sthis = sthis;
@@ -47,7 +47,7 @@ export class ConnectionFromStore extends bs.ConnectionBase {
 
     this.stores = {
       data: await storeRuntime.makeDataStore(loader),
-      meta: await storeRuntime.makeMetaStore(loader)
+      meta: await storeRuntime.makeMetaStore(loader),
     };
     // await this.stores.data.start();
     // await this.stores.meta.start();

@@ -35,7 +35,7 @@ export class V0_19_Sqlite_WalStore implements WalSQLStore {
   constructor(sthis: SuperThis, dbConn: DBConnection) {
     this.dbConn = dbConn as V0_19BS3Connection;
     this.sthis = ensureSuperLog(sthis, "V0_19_Sqlite_WalStore", { url: dbConn.opts.url });
-    this.logger = this.sthis.logger
+    this.logger = this.sthis.logger;
   }
   async startx(url: URI): Promise<URI> {
     this.logger.Debug().Msg("start");

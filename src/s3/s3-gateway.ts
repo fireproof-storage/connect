@@ -98,7 +98,7 @@ function getBucket(sthis: SuperThis, url: URI): S3File {
 }
 
 export class S3Gateway implements bs.Gateway {
-  readonly sthis: SuperThis
+  readonly sthis: SuperThis;
   readonly logger: Logger;
   constructor(sthis: SuperThis) {
     this.sthis = ensureSuperLog(sthis, "S3Gateway");
