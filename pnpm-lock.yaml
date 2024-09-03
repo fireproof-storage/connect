@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.2.18
-        version: 0.2.18
+        specifier: ^0.2.22
+        version: 0.2.22
       '@aws-sdk/client-s3':
         specifier: ^3.614.0
         version: 3.614.0
       '@fireproof/core':
-        specifier: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz
-        version: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(react@18.3.1)
+        specifier: 0.19.9-dev-frag
+        version: 0.19.9-dev-frag(react@18.3.1)
       '@netlify/blobs':
         specifier: ^7.4.0
         version: 7.4.0
@@ -117,8 +117,8 @@ importers:
 
 packages:
 
-  '@adviser/cement@0.2.18':
-    resolution: {integrity: sha512-ZYKiEAFvAVqziYMOmWO5NTOlAGBo99wvnrNLcNYTakre93fPYP2CRpWA56ulr7jncnlueUnE0EXh9AjUz9PRSw==}
+  '@adviser/cement@0.2.22':
+    resolution: {integrity: sha512-SsGqnbG3Ef54DSDJMZGJdkYaHerF/xXNWIhFfrHPWNY7jW3hCeWv31wUAOw0mqIbBu2M0MhJODEtTwlqwgPdng==}
     engines: {node: '>=16'}
 
   '@ampproject/remapping@2.3.0':
@@ -821,9 +821,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz':
-    resolution: {integrity: sha512-IgT1vTrtVGZy3EnNFqp3bKyfFE633jsoVu4UFRduBW72BRZ83wzt/WasXeZBcu4o6S7/P6nxMiHN3kqzp+MhKw==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
-    version: 0.0.0-smoke
+  '@fireproof/core@0.19.9-dev-frag':
+    resolution: {integrity: sha512-OziQdEmS953RE+nWAnWm85cr5xiI0Fye2R7O55VXWrxTk2y2ULfXRFOMqfMfxSdy39vuA4jFIq4rgkNBDgVrHw==}
     peerDependencies:
       react: '>=18.0.0'
 
@@ -1664,6 +1663,10 @@ packages:
 
   cborg@4.2.2:
     resolution: {integrity: sha512-A0z7WhnY4HDLrVdnQI4i/OLG3kANHotk5NzDpr2iauf4xrmQPwJCxlbCnIXkVrFtsr8G3omfvvr5oF50i1Zt8g==}
+    hasBin: true
+
+  cborg@4.2.3:
+    resolution: {integrity: sha512-XBFbEJ6WMfn9L7woc2t+EzOxF8vGqddoopKBbrhIvZBt2WIUgSlT8xLmM6Aq1xv8eWt4yOSjwxWjYeuHU3CpJA==}
     hasBin: true
 
   chai@5.1.1:
@@ -3199,7 +3202,7 @@ packages:
 
 snapshots:
 
-  '@adviser/cement@0.2.18': {}
+  '@adviser/cement@0.2.22': {}
 
   '@ampproject/remapping@2.3.0':
     dependencies:
@@ -3994,12 +3997,13 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(react@18.3.1)':
+  '@fireproof/core@0.19.9-dev-frag(react@18.3.1)':
     dependencies:
-      '@adviser/cement': 0.2.18
+      '@adviser/cement': 0.2.22
       '@ipld/car': 5.3.2
       '@ipld/unixfs': 3.0.0
       '@web3-storage/pail': 0.6.0
+      cborg: 4.2.3
       charwise: 3.0.1
       idb: 8.0.0
       ipfs-unixfs-exporter: 13.5.0
@@ -5075,6 +5079,8 @@ snapshots:
       uint8arraylist: 2.4.8
 
   cborg@4.2.2: {}
+
+  cborg@4.2.3: {}
 
   chai@5.1.1:
     dependencies:

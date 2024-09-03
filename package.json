@@ -70,9 +70,9 @@
   },
   "homepage": "https://github.com/fireproof-storage/connector#readme",
   "dependencies": {
-    "@adviser/cement": "^0.2.18",
+    "@adviser/cement": "^0.2.22",
     "@aws-sdk/client-s3": "^3.614.0",
-    "@fireproof/core": "file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz",
+    "@fireproof/core": "0.19.9-dev-frag",
     "@netlify/blobs": "^7.4.0",
     "@ucanto/interface": "^10.0.1",
     "@web3-storage/clock": "^0.4.1",
