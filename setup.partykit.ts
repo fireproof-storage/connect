@@ -1,14 +1,8 @@
-import { registerPartyKitStoreProtocol } from "./src/connect-partykit/partykit-store";
+import { registerPartyKitStoreProtocol } from "./src/partykit/register.ts"
 import { URI } from "@adviser/cement";
 
 registerPartyKitStoreProtocol();
-const url = URI.from("partykit://localhost:1999").build();
-url.setParam("insecure", "true");
-const toSet = {
-  FP_STORAGE_URL: url.toString(),
-};
-for (const [key, value] of Object.entries(toSet)) {
-  if (!process.env[key]) {
-    process.env[key] = value;
-  }
-}
+
+const url = URI.from("partykit://localhost:1999?protocol=ws")
+process.env.FP_STORAGE_URL=url.toString()
+// console.log(">>>>", process.env.FP_DEBUG)

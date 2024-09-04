@@ -1,0 +1,52 @@
+{
+  "name": "@fireproof/connect",
+  "version": "must-set",
+  "description": "Fireproof Connect Collection",
+  "type": "module",
+  "module": "./index.js",
+  "main": "./index.cjs",
+  "browser": "./index.global.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs",
+      "script": "./index.global.js",
+      "types": "./index.d.ts"
+    }
+  },
+  "scripts": {},
+  "keywords": ["database", "JSON", "document", "IPLD", "CID", "IPFS"],
+  "contributors": ["J Chris Anderson", "Alan Shaw", "Travis Vachon", "Mikeal Rogers", "Meno Abels"],
+  "author": "J Chris Anderson",
+  "license": "Apache-2.0 OR MIT",
+  "homepage": "https://use-fireproof.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fireproof-storage/connect.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fireproof-storage/connect/issues"
+  },
+  "devDependencies": {},
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "dependencies": {
+    "@adviser/cement": "^0.2.22",
+    "@aws-sdk/client-s3": "^3.614.0",
+    "@fireproof/core": "0.19.9-dev-frag",
+    "@netlify/blobs": "^7.4.0",
+    "@ucanto/interface": "^10.0.1",
+    "@web3-storage/clock": "^0.4.1",
+    "@web3-storage/pail": "^0.6.0",
+    "@web3-storage/w3up-client": "^15.0.0",
+    "better-sqlite3": "^11.1.2",
+    "cross-fetch": "^4.0.0",
+    "idb": "^8.0.0",
+    "multiformats": "^13.2.2",
+    "node-sqlite3-wasm": "^0.8.18",
+    "partykit": "^0.0.110",
+    "partysocket": "^1.0.2"
+  }
+}

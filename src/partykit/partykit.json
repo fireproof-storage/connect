@@ -1,0 +1,7 @@
+{
+  "main": "./fp-pk-server.ts",
+   "serve": {
+      "build": {
+      }
+   }
+}
