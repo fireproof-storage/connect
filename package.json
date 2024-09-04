@@ -71,13 +71,7 @@
   },
   "homepage": "https://github.com/fireproof-storage/connector#readme",
   "dependencies": {
-<<<<<<< HEAD
-    "@adviser/cement": "^0.2.22",
-||||||| parent of 3ea53f2 (revamped to work with SuperThis branch)
-    "@adviser/cement": "^0.2.12",
-=======
-    "@adviser/cement": "^0.2.16",
->>>>>>> 3ea53f2 (revamped to work with SuperThis branch)
+    "@adviser/cement": "^0.2.24",
     "@aws-sdk/client-s3": "^3.614.0",
     "@fireproof/core": "0.19.9-dev-frag",
     "@netlify/blobs": "^7.4.0",
@@ -86,15 +80,15 @@
     "@web3-storage/pail": "^0.6.0",
     "@web3-storage/w3up-client": "^15.0.0",
     "better-sqlite3": "^11.1.2",
+    "cborg": "^4.2.3",
     "cross-fetch": "^4.0.0",
     "idb": "^8.0.0",
     "install": "^0.13.0",
     "js-base64": "^3.7.7",
     "multiformats": "^13.2.2",
     "node-sqlite3-wasm": "^0.8.18",
-    "npm": "^10.8.2",
-    "partykit": "^0.0.107",
-    "partysocket": "^1.0.1",
+    "partykit": "^0.0.110",
+    "partysocket": "^1.0.2",
     "uuidv7": "^1.0.1",
     "ws": "^8.18.0"
   }
