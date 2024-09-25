@@ -1,0 +1,302 @@
+import { KeyedResolvOnce, Result, URI } from "@adviser/cement";
+import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError } from "@fireproof/core";
+import { Delegation, DID } from "@ucanto/core";
+import { ConnectionView, Principal } from "@ucanto/interface";
+import { Absentee } from "@ucanto/principal";
+import * as DidMailto from "@web3-storage/did-mailto";
+import * as W3 from "@web3-storage/w3up-client";
+import { Service as W3Service } from "@web3-storage/w3up-client/types";
+// import * as IDB from "idb-keyval";
+import { CID } from "multiformats";
+
+import * as Client from "./client";
+import { Service } from "./types";
+
+export class UCANGateway implements bs.Gateway {
+  readonly sthis: SuperThis;
+  readonly logger: Logger;
+
+  inst?: {
+    clock: Client.Clock;
+    email: `${string}@${string}`;
+    server: Principal;
+    service: ConnectionView<Service>;
+    w3: W3.Client;
+  };
+
+  constructor(sthis: SuperThis) {
+    this.sthis = ensureSuperLog(sthis, "UCANGateway");
+    this.logger = this.sthis.logger;
+  }
+
+  async buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {
+    return Result.Ok(baseUrl.build().setParam("key", key).URI());
+  }
+
+  async start(baseUrl: URI): Promise<Result<URI>> {
+    const dbName = baseUrl.getParam("name");
+    const emailParam = baseUrl.getParam("email");
+
+    if (!dbName) throw new Error("Missing `name` param");
+    if (!emailParam) throw new Error("Missing `email` param");
+
+    const email = emailParam as `${string}@${string}`;
+
+    await this.sthis.start();
+    this.logger.Debug().Str("url", baseUrl.toString()).Msg("start");
+
+    // W3 client
+    const serverHostUrl = baseUrl.getParam("serverHost")?.replace(/\/+$/, "");
+    if (!serverHostUrl) throw new Error("Expected a `serverHost` url param");
+    const serverHost = URI.from(serverHostUrl);
+    if (!serverHost) throw new Error("`serverHost` is not a valid URL");
+
+    const did = await fetch(`${serverHostUrl}/did`).then((r) => r.text());
+    const server = DID.parse(did);
+    const service = Client.service({ host: serverHost, id: server });
+    const w3Service = service as unknown as ConnectionView<W3Service>;
+
+    const w3 = await W3.create({
+      serviceConf: {
+        access: w3Service,
+        filecoin: w3Service,
+        upload: w3Service,
+      },
+    });
+
+    // Clock stuff
+    const existingClock = null;
+    let clock: Client.Clock;
+
+    if (existingClock) {
+      const delegationExtraction = await Delegation.extract(existingClock);
+      if (delegationExtraction.error) throw delegationExtraction.error;
+
+      const delegation = delegationExtraction.ok;
+
+      clock = {
+        delegation,
+        did: () => delegation.issuer.did() as `did:key:${string}`,
+        signer: () => {
+          throw new Error("Cannot sign with a previously created clock");
+        },
+      };
+    } else {
+      const audience = Absentee.from({ id: DidMailto.fromEmail(email) });
+
+      clock = await Client.createClock({ audience });
+
+      const registration = await Client.registerClock({ clock, server, service });
+      if (registration.out.error) throw registration.out.error;
+
+      // const archive = await clock.delegation.archive();
+      // await IDB.set(`fireproof/${dbName}/clock`, archive);
+    }
+
+    this.inst = { clock, email, server, service, w3 };
+
+    // Start URI
+    const ret = baseUrl.build().defParam("version", "v0.1-ucan").URI();
+
+    return Result.Ok(ret);
+  }
+
+  async close(): Promise<bs.VoidResult> {
+    return Result.Ok(undefined);
+  }
+
+  async destroy(): Promise<Result<void>> {
+    // TODO
+    return Result.Ok(undefined);
+  }
+
+  async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
+    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+
+    if (this.inst === undefined) {
+      return Result.Err(new Error("Not started yet"));
+    }
+
+    const key = url.getParam("key");
+    if (!key) {
+      return Result.Err(new Error("Key not found in the URI"));
+    }
+
+    const name = url.getParam("name");
+    if (!name) {
+      return Result.Err(new Error("Name not found in the URI"));
+    }
+
+    // console.log("store", store);
+    // console.log("key", key);
+    // console.log("name", name);
+
+    switch (store) {
+      case "data": {
+        console.log("🥘 PUT Data", key);
+        await Client.store({
+          agent: this.inst.w3.agent.issuer,
+          bytes: body,
+          cid: CID.parse(key).toV1(),
+          server: this.inst.server,
+          service: this.inst.service,
+        });
+        break;
+      }
+
+      case "meta": {
+        console.log("🔮 PUT Meta", key);
+        const cid = CID.parse(key).toV1();
+        const event = await Client.createClockEvent({ messageCid: cid });
+
+        await Client.store({
+          agent: this.inst.w3.agent.issuer,
+          bytes: event.bytes,
+          cid: cid,
+          server: this.inst.server,
+          service: this.inst.service,
+        });
+
+        const { clock, server, service } = this.inst;
+        const agent = await this.agent();
+
+        const advancement = await Client.advanceClock({ agent, clock, event: event.cid, server, service });
+        if (advancement.out.error) return Result.Err(advancement.out.error);
+
+        break;
+      }
+    }
+
+    return Result.Ok(undefined);
+  }
+
+  async get(url: URI): Promise<bs.GetResult> {
+    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+
+    if (this.inst === undefined) {
+      return Result.Err(new Error("Not started yet"));
+    }
+
+    const key = url.getParam("key");
+    if (!key) {
+      return Result.Err(new Error("Key not found in the URI"));
+    }
+
+    let name = url.getParam("name");
+    if (!name) {
+      return Result.Err(new Error("Name not found in the URI"));
+    }
+
+    const index = url.getParam("index");
+    if (index) {
+      name += `-${index}`;
+    }
+
+    name += ".fp";
+
+    switch (store) {
+      case "data": {
+        console.log("🥘 GET Data", url);
+        // TODO
+        break;
+      }
+      case "meta": {
+        console.log("🔮 GET Meta", url);
+        const head = await Client.getClockHead({
+          agent: await this.agent(),
+          clock: this.inst.clock,
+          server: this.inst.server,
+          service: this.inst.service,
+        });
+
+        if (head.out.error) return Result.Err(head.out.error);
+        if (head.out.ok.head === undefined) return Result.Err(new NotFoundError());
+
+        const cid = CID.parse(head.out.ok.head).toV1();
+
+        if (cid.code !== 514) return Result.Err(new Error("Expected clock-head CID to be a CAR CID"));
+
+        await Client.retrieve({
+          agent: this.inst.w3.agent.issuer,
+          cid: cid as CID<unknown, 514, number, 1>,
+          server: this.inst.server,
+          service: this.inst.service,
+        });
+
+        break;
+      }
+    }
+
+    return Result.Err(new NotFoundError());
+  }
+
+  async delete(_url: URI): Promise<bs.VoidResult> {
+    // TODO
+    return Result.Ok(undefined);
+  }
+
+  ////////////////////////////////////////
+  // AGENT
+  ////////////////////////////////////////
+
+  /**
+   * Produce an agent.
+   *
+   */
+  async agent(): Promise<Client.Agent> {
+    if (this.inst === undefined) {
+      throw new Error("Not started yet");
+    }
+
+    const account = await this.inst.w3.login(this.inst.email);
+
+    const attestation = account.proofs.find((p) => p.capabilities[0].can === "ucan/attest");
+    const delegation = account.proofs.find((p) => p.capabilities[0].can === "*");
+
+    if (!attestation || !delegation) {
+      throw new Error("Unable to locate agent attestion or delegation");
+    }
+
+    return {
+      attestation,
+      delegation,
+      signer: this.inst.w3.agent.issuer,
+    };
+  }
+}
+
+export class UCANTestStore implements bs.TestGateway {
+  readonly logger: Logger;
+  readonly sthis: SuperThis;
+  readonly gateway: bs.Gateway;
+
+  constructor(sthis: SuperThis, gw: bs.Gateway) {
+    this.sthis = ensureSuperLog(sthis, "UCANTestStore");
+    this.logger = this.sthis.logger;
+    this.gateway = gw;
+  }
+
+  async get(iurl: URI, key: string): Promise<Uint8Array> {
+    const url = iurl.build().setParam("key", key).URI();
+    const buffer = await this.gateway.get(url);
+    return buffer.Ok();
+  }
+}
+
+const onceRegisterUCANStoreProtocol = new KeyedResolvOnce<() => void>();
+export function registerUCANStoreProtocol(protocol = "ucan:", overrideBaseURL?: string) {
+  return onceRegisterUCANStoreProtocol.get(protocol).once(() => {
+    URI.protocolHasHostpart(protocol);
+    return bs.registerStoreProtocol({
+      protocol,
+      overrideBaseURL,
+      gateway: async (sthis) => {
+        return new UCANGateway(sthis);
+      },
+      test: async (sthis: SuperThis) => {
+        const gateway = new UCANGateway(sthis);
+        return new UCANTestStore(sthis, gateway);
+      },
+    });
+  });
+}

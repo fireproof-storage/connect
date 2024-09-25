@@ -7,6 +7,7 @@ import partykit from "./vitest.partykit.config.ts";
 import s3 from "./vitest.s3.config.ts";
 // import connector from "./vitest.connector.config.ts";
 import netlify from "./vitest.netlify.config.ts";
+import ucanCloud from "./vitest.ucan-cloud.config.ts";
 // import cf_kv from "./vitest.cf-kv.config.ts";
 
 void nodeSqlite3Wasm;
@@ -15,6 +16,7 @@ void netlify;
 void aws;
 void partykit;
 void s3;
+void ucanCloud;
 
 export default defineWorkspace([
   nodeSqlite3Wasm,
@@ -25,4 +27,5 @@ export default defineWorkspace([
   netlify,
   partykit,
   //cf_kv
+  ucanCloud,
 ]);

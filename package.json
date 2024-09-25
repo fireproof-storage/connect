@@ -5,12 +5,12 @@
   "description": "Live database connector for the web",
   "type": "module",
   "scripts": {
-    "prepublish": "pnpm run build",
-    "publish": "pnpm run '/publish:/'",
+    "publish-packages": "pnpm run '/publish:/'",
     "publish:aws": "tsx ./publish-package.ts ./dist/aws/package.json",
     "publish:netlify": "tsx ./publish-package.ts ./dist/netlify/package.json",
     "publish:s3": "tsx ./publish-package.ts ./dist/s3/package.json",
     "publish:partykit": "tsx ./publish-package.ts ./dist/partykit/package.json",
+    "publish:ucan": "tsx ./publish-package.ts ./dist/ucan-cloud/package.json",
     "prebuild": "rm -rf dist",
     "build": "pnpm run '/^build:/' && pnpm run '/^pub:/'",
     "build:tsc": "tsc",
@@ -20,6 +20,8 @@
     "pub:netlify": "tsx ./version-copy-package.ts ./dist/netlify/package-netlify.json",
     "pub:s3": "tsx ./version-copy-package.ts ./dist/s3/package-s3.json",
     "pub:partykit": "tsx ./version-copy-package.ts ./dist/partykit/package-partykit.json && cp ./src/partykit/server.ts ./dist/partykit/",
+    "pub:ucan": "tsx ./version-copy-package.ts ./dist/ucan-cloud/package-ucan.json",
+    "prepare": "pnpm run build",
     "presmoke": "pnpm run build",
     "xsmoke": "pnpm run '/smoke:/'",
     "presmoke:node": "cd dist/fireproof-core ; pnpm pack",
@@ -36,6 +38,13 @@
     "stop-s3-test": "docker rm -f minio",
     "format": "prettier .",
     "lint": "eslint"
+  },
+  "exports": {
+    "./ucan": {
+      "import": "./dist/ucan-cloud/index.js",
+      "require": "./dist/ucan-cloud/index.cjs",
+      "types": "./dist/ucan-cloud/index.d.ts"
+    }
   },
   "keywords": [
     "database",
@@ -91,10 +100,17 @@
   "dependencies": {
     "@adviser/cement": "^0.2.31",
     "@aws-sdk/client-s3": "^3.614.0",
-    "@fireproof/core": "file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz",
+    "@fireproof/core": "0.19.11-dev-dryrun4",
     "@netlify/blobs": "^7.4.0",
+    "@ucanto/client": "^9.0.1",
+    "@ucanto/core": "^10.0.1",
     "@ucanto/interface": "^10.0.1",
+    "@ucanto/principal": "^9.0.1",
+    "@ucanto/transport": "^9.1.1",
+    "@ucanto/validator": "^9.0.2",
+    "@web3-storage/capabilities": "^17.3.0",
     "@web3-storage/clock": "^0.4.1",
+    "@web3-storage/did-mailto": "^2.1.0",
     "@web3-storage/pail": "^0.6.0",
     "@web3-storage/w3up-client": "^15.0.0",
     "assert": "^2.1.0",
@@ -102,8 +118,8 @@
     "cborg": "^4.2.3",
     "cross-fetch": "^4.0.0",
     "events": "^3.3.0",
-    "idb": "^8.0.0",
-    "multiformats": "^13.2.2",
+    "idb-keyval": "^6.2.1",
+    "multiformats": "^13.3.0",
     "node-sqlite3-wasm": "^0.8.18",
     "partykit": "^0.0.110",
     "partysocket": "^1.0.2",
