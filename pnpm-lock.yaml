@@ -15,17 +15,41 @@ importers:
         specifier: ^3.614.0
         version: 3.669.0
       '@fireproof/core':
-        specifier: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz
-        version: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(react@18.3.1)(typescript@5.6.3)
+        specifier: 0.19.111
+        version: 0.19.111(react@18.3.1)(typescript@5.6.3)
+      '@ipld/dag-cbor':
+        specifier: ^9.2.1
+        version: 9.2.1
       '@netlify/blobs':
         specifier: ^8.1.0
         version: 8.1.0
+      '@ucanto/client':
+        specifier: ^9.0.1
+        version: 9.0.1
+      '@ucanto/core':
+        specifier: ^10.0.1
+        version: 10.0.1
       '@ucanto/interface':
         specifier: ^10.0.1
         version: 10.0.1
+      '@ucanto/principal':
+        specifier: ^9.0.1
+        version: 9.0.1
+      '@ucanto/transport':
+        specifier: ^9.1.1
+        version: 9.1.1
+      '@ucanto/validator':
+        specifier: ^9.0.2
+        version: 9.0.2
+      '@web3-storage/capabilities':
+        specifier: ^17.3.0
+        version: 17.3.0
       '@web3-storage/clock':
         specifier: ^0.4.1
         version: 0.4.1
+      '@web3-storage/did-mailto':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@web3-storage/pail':
         specifier: ^0.6.0
         version: 0.6.0
@@ -41,8 +65,17 @@ importers:
       cborg:
         specifier: ^4.2.3
         version: 4.2.4
+      cross-fetch:
+        specifier: ^4.0.0
+        version: 4.0.0(encoding@0.1.13)
+      events:
+        specifier: ^3.3.0
+        version: 3.3.0
+      idb-keyval:
+        specifier: ^6.2.1
+        version: 6.2.1
       multiformats:
-        specifier: ^13.2.2
+        specifier: ^13.3.0
         version: 13.3.0
       node-sqlite3-wasm:
         specifier: ^0.8.18
@@ -66,9 +99,6 @@ importers:
       '@eslint/js':
         specifier: ^9.6.0
         version: 9.12.0
-      '@ipld/dag-cbor':
-        specifier: ^9.2.1
-        version: 9.2.1
       '@smithy/types':
         specifier: ^3.3.0
         version: 3.5.0
@@ -87,6 +117,9 @@ importers:
       '@typescript-eslint/typescript-estree':
         specifier: ^8.4.0
         version: 8.8.1(typescript@5.6.3)
+      '@web3-storage/access':
+        specifier: ^20.0.1
+        version: 20.0.1
       esbuild:
         specifier: ^0.23.1
         version: 0.23.1
@@ -845,9 +878,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz':
-    resolution: {integrity: sha512-ZkKn4lb4vF8tL25acW8WP360FEXAv7J6Hm5eGnB9SHzfG8PF4211eWSBvTQ6ar7p0B1s+lJO/MqL6zHqve/P0w==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
-    version: 0.0.0-smoke
+  '@fireproof/core@0.19.111':
+    resolution: {integrity: sha512-LJsXkGpMtDIvabX8YU24x33BV/oL1o6XdDAfbC2TpoRyNZ8pkqohibzHor+LFriMdRLtO2yqPkad2XnKgRZOqw==}
     peerDependencies:
       react: '>=18.0.0'
 
@@ -1699,6 +1731,9 @@ packages:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
     engines: {node: '>= 0.6'}
 
+  cross-fetch@4.0.0:
+    resolution: {integrity: sha512-e4a5N8lVvuLgAWgnCrLr2PP0YyDOTHa9H/Rj54dirp61qXnNq46m82bRhNqIA5VccJtWBvPTFRV3TtvHUKPB1g==}
+
   cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
     engines: {node: '>= 8'}
@@ -1897,6 +1932,10 @@ packages:
   eventemitter3@5.0.1:
     resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
 
+  events@3.3.0:
+    resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
+    engines: {node: '>=0.8.x'}
+
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
@@ -2086,6 +2125,9 @@ packages:
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
+
+  idb-keyval@6.2.1:
+    resolution: {integrity: sha512-8Sb3veuYCyrZL+VBt9LJfZjLUPWVvqn8tG28VqYNFCo43KHcKuq+b4EiXGeuaLAQWL2YmyDgMp2aSpH9JHsEQg==}
 
   idb@8.0.0:
     resolution: {integrity: sha512-l//qvlAKGmQO31Qn7xdzagVPPaHTxXx199MhrAFuVBTPqydcPYBWjkrbv4Y0ktB+GmWOiwHl237UUOrLmQxLvw==}
@@ -4107,7 +4149,7 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(react@18.3.1)(typescript@5.6.3)':
+  '@fireproof/core@0.19.111(react@18.3.1)(typescript@5.6.3)':
     dependencies:
       '@adviser/cement': 0.2.34(typescript@5.6.3)
       '@ipld/car': 5.3.2
@@ -5256,6 +5298,12 @@ snapshots:
 
   cookie@0.7.2: {}
 
+  cross-fetch@4.0.0(encoding@0.1.13):
+    dependencies:
+      node-fetch: 2.7.0(encoding@0.1.13)
+    transitivePeerDependencies:
+      - encoding
+
   cross-spawn@7.0.3:
     dependencies:
       path-key: 3.1.1
@@ -5541,6 +5589,8 @@ snapshots:
 
   eventemitter3@5.0.1: {}
 
+  events@3.3.0: {}
+
   execa@5.1.1:
     dependencies:
       cross-spawn: 7.0.3
@@ -5729,6 +5779,8 @@ snapshots:
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
+
+  idb-keyval@6.2.1: {}
 
   idb@8.0.0: {}
 
