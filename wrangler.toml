@@ -1,0 +1,5 @@
+# Top-level configuration
+name = "connector"
+#main = "src/cf-index.ts"
+compatibility_date = "2024-06-03"
+compatibility_flags = [ "nodejs_compat" ]

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fireproof Test</title>
+    <script src="./index.global.js"></script>
+    <script src="./connect-netlify.iife.js"></script>
+    <script type="text/javascript">
+      function todoApp() {
+        const actorTag = Math.random().toString(36).substring(2, 7)
+        const { fireproof, index } = Fireproof
+        const { connect } = FireproofConnect
+
+        let dbName
+        let db
+        // let cx
+
+        let dbUnsubscribe = false
+
+        function setupDb(name, newDb, newConn) {
+          const input = document.querySelector('#todo')
+          input.disabled = true
+
+          if (dbUnsubscribe) {
+            dbUnsubscribe()
+          }
+          if (newDb) {
+            name = newDb.name
+            dbName = newDb.name
+            db = newDb
+            // cx = newConn
+            const input = document.querySelector('#list')
+            input.value = dbName
+          } else {
+            dbName = name
+            db = fireproof(name)
+            // cx = connect.netlify(db)
+            // cx.ready.then(async () => {
+            //   const span = document.querySelector('#cxInfo')
+            //   span.innerText = `📡 ${cx.name}`
+            // })
+          }
+
+          window.db = db
+          // window.cx = cx
+
+          db.changes([], { limit: 1 }).then(changes => {
+            if (changes.clock.length > 0) {
+              input.disabled = false
+            } else {
+              // cx.ready.then(async () => {
+                input.disabled = false
+              // })
+            }
+          })
+
+          dbUnsubscribe = db.subscribe(redraw)
+          return db
+        }
+
+        let doing
+        const redraw = async () => {
+          if (doing) {
+            return doing
+          }
+          doing = doRedraw().finally(() => (doing = null))
+          return doing
+        }
+        window.redraw = redraw
+
+        let compactor = '🚗'
+        function drawInfo() {
+          document.querySelector(
+            '#carLog'
+          ).innerText = ` ⏰ ${db._crdt.clock.head.length} ${compactor}`
+        }
+        const doRedraw = async () => {
+          drawInfo()
+          const result = await db.allDocs()
+          drawInfo()
+          document.querySelector('ul').innerHTML = ''
+          for (const row of result.rows) {
+            // const doc = await db.get(row.id);
+            const doc = row.value
+            const checkbox = document.createElement('input')
+            checkbox.setAttribute('type', 'checkbox')
+            if (doc.completed) {
+              checkbox.setAttribute('checked', true)
+            }
+            checkbox.onchange = async e => {
+              e.target.indeterminate = true
+              const clicks = doc.clicks || 0
+              doc.clicks = clicks + 1
+              doc.completed = !doc.completed
+              await db.put(doc)
+            }
+            const textSpan = document.createElement('span')
+            textSpan.innerText = `${doc.actor}:${doc.clicks || 0}`
+            textSpan.style.fontFamily = 'monospace'
+            const taskSpan = document.createElement('span')
+            taskSpan.innerText = doc.task
+            taskSpan.style.display = 'block'
+            taskSpan.style.padding = '5px'
+            const li = document.createElement('li')
+            li.appendChild(checkbox)
+            li.appendChild(textSpan)
+            li.appendChild(taskSpan)
+            document.querySelector('ul').appendChild(li)
+          }
+        }
+
+        async function initialize() {
+          ps = new URLSearchParams(location.search)
+          const listQ = ps.get('list')
+          setupDb(listQ || 'my-list')
+          const input = document.querySelector('#list')
+          input.value = dbName
+          redraw()
+        }
+
+        async function openDashboard(e) {
+          db.openDashboard()
+        }
+        window.openDashboard = openDashboard
+
+        async function changeList(e) {
+          e.preventDefault()
+          const input = document.querySelector('#list')
+          dbName = input.value
+          history.pushState(null, '', location.pathname + '?list=' + encodeURIComponent(dbName))
+          setupDb(dbName)
+          redraw()
+        }
+        window.changeList = changeList
+
+        async function createTodoClick(e) {
+          e.preventDefault()
+          const input = document.querySelector('#todo')
+          input.disabled = true
+          const ok = await db.put({
+            actor: actorTag,
+            created: Date.now(),
+            task: input.value,
+            completed: false
+          })
+          input.disabled = false
+          input.value = ''
+        }
+        window.createTodoClick = createTodoClick
+
+        // togglePolling
+        let poller
+        async function startPoller() {
+          const button = document.querySelector('#polling')
+          button.innerText = '🔄'
+          poller = setInterval(async () => {
+            // await cx.refresh()
+          }, 3000)
+        }
+        const stopPoller = () => {
+          const button = document.querySelector('#polling')
+          button.innerText = '⏯️'
+          clearInterval(poller)
+        }
+        const togglePolling = e => {
+          e.preventDefault()
+          if (poller) {
+            stopPoller()
+          } else {
+            startPoller(e)
+          }
+        }
+        window.togglePolling = togglePolling
+
+        let worker
+        async function startWorker() {
+          const button = document.querySelector('#robot')
+          button.innerText = '🦾'
+          const dcs = await db.allDocs()
+          console.log('start worker', dcs.rows.length)
+          goWorker(dcs)
+        }
+        const goWorker = dcs => {
+          worker = setTimeout(async () => {
+            await Promise.all(
+              dcs.rows.slice(0, 5).map(r => {
+                r.value.clicks = r.value.clicks || 0
+                r.value.clicks += 1
+                r.value.completed = Math.random() > 0.5
+                db.put({ ...r.value })
+              })
+            )
+            goWorker(dcs)
+          }, Math.floor(Math.random() * 5000) + 5000)
+        }
+
+        const stopWorker = () => {
+          const button = document.querySelector('#robot')
+          button.innerText = '🤖'
+          console.log('stop worker')
+          clearTimeout(worker)
+        }
+        const toggleWorker = e => {
+          e.preventDefault()
+          if (worker) {
+            stopWorker()
+          } else {
+            startWorker(e)
+          }
+        }
+        window.toggleWorker = toggleWorker
+
+        async function doCompact(e) {
+          e.preventDefault()
+          compactor = '🚕'
+          drawInfo()
+          await db.compact()
+          drawInfo()
+          compactor = '🚗'
+        }
+        window.doCompact = doCompact
+
+        window.onload = initialize
+        window.db = db
+      }
+
+      todoApp()
+    </script>
+  </head>
+
+  <body>
+    <h1>Fireproof Todos</h1>
+    List:
+    <input
+      title="Change list"
+      type="text"
+      name="list"
+      id="list"
+      onkeydown="if (event.keyCode == 13) changeList(event)"
+    />
+    <button onclick="changeList(event)">Change List</button>
+
+    <p>
+      Fireproof stores data locally and encrypts it before sending it to the cloud. This demo uses
+      Netlify Edge Functions, but you can easily run Fireproof on S3 or another provider. You also
+      accelerate sync times by using a real-time adapter like PartyKit or WebRTC, this demo polls
+      the server every 3 seconds.
+      <a href="https://use-fireproof.com/">Learn more in the Fireproof developer docs</a> or
+      <a href="https://github.com/fireproof-storage/todo-netlify">fork the app here</a>.
+    </p>
+
+    <button id="robot" onclick="toggleWorker(event)">Load gen 🤖</button>
+    <button id="polling" onclick="togglePolling(event)">Start polling 🪩</button>
+    <br />
+    <span id="carLog" onclick="doCompact(event)"></span>
+    <br />
+    <span id="cxInfo"></span>
+
+    <h3>Todos</h3>
+    <input
+      title="Create a todo"
+      type="text"
+      name="todo"
+      id="todo"
+      onkeydown="if (event.keyCode == 13) createTodoClick(event)"
+    />
+    <button onclick="createTodoClick(event)">Create Todo</button>
+    <ul></ul>
+  </body>
+</html>

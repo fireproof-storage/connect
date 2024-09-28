@@ -1,0 +1,66 @@
+name: CI
+on:
+  - push
+  - pull_request
+jobs:
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          run_install: false
+          version: 9
+
+      - uses: actions/checkout@v4
+        with:
+          repository: fireproof-storage/fireproof
+          path: ./fireproof
+      - name: build-fireproof-package
+        working-directory: ./fireproof
+        run: |
+          pnpm install
+          pnpm run build
+
+      - uses: actions/checkout@v4
+        with:
+          path: ./connector
+
+      - name: install
+        working-directory: ./connector
+        run: |
+          git config --global url."https://".insteadOf git+ssh://
+          git config --global -l
+          pnpm install -f ../fireproof/dist/fireproof-core/fireproof-core-*.tgz
+          pnpm install
+
+      - name: format-check
+        working-directory: ./connector
+        run: pnpm run format --check
+      - name: lint
+        working-directory: ./connector
+        run: pnpm run lint
+      - name: build
+        working-directory: ./connector
+        run: pnpm run build
+      - name: S3 Mock
+        working-directory: ./connector
+        run: |
+          pnpm run prepare-s3-test
+          sleep 3
+      - name: test
+        working-directory: ./connector
+        run: pnpm run test
+
+      - name: stop S3 Mock
+        working-directory: ./connector
+        run: |
+          docker rm -f minio
+
+      #      - name: smoke
+      #        working-directory: ./connector
+      #        run: pnpm run smoke

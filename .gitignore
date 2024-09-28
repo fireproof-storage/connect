@@ -1,0 +1,30 @@
+# Files
+.vscode
+.idea
+.DS_Store
+.eslintcache
+pail.car
+
+# Directories
+.nyc_output
+build
+coverage
+dist
+node_modules
+out
+logs
+
+# Artifacts
+*.log
+*.tgz
+*.zip
+
+smoke/package.json
+smoke/pnpm-lock.yaml
+smoke/react/package.json
+
+# Local Netlify folder
+.netlify
+
+# Local PartyKit folder
+.partykit
