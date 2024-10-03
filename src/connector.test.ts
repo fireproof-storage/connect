@@ -149,7 +149,7 @@ describe("loading the base store", () => {
 
   it("should sync to an empty db", async (ctx) => {
     // FIXME temporarily disable this test for netlify and aws
-    if (ctx.task.file.projectName === 'netlify' || ctx.task.file.projectName === 'aws') {
+    if (ctx.task.file.projectName === "netlify" || ctx.task.file.projectName === "aws") {
       ctx.skip();
     }
     // await (await db.blockstore.loader?.WALStore())?.process();
