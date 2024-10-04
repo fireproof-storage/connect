@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.2.28
-        version: 0.2.28
+        specifier: ^0.2.31
+        version: 0.2.31(typescript@5.5.4)
       '@aws-sdk/client-s3':
         specifier: ^3.614.0
         version: 3.614.0
       '@fireproof/core':
         specifier: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz
-        version: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(react@18.3.1)
+        version: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(react@18.3.1)(typescript@5.5.4)
       '@netlify/blobs':
         specifier: ^7.4.0
         version: 7.4.0
@@ -107,7 +107,7 @@ importers:
         version: 3.7.0
       tsup:
         specifier: ^8.2.4
-        version: 8.2.4(postcss@8.4.41)(tsx@4.16.2)(typescript@5.5.4)(yaml@2.4.5)
+        version: 8.2.4(postcss@8.4.41)(tsx@4.16.2)(typescript@5.5.4)(yaml@2.5.1)
       tsx:
         specifier: ^4.15.6
         version: 4.16.2
@@ -135,8 +135,8 @@ importers:
 
 packages:
 
-  '@adviser/cement@0.2.28':
-    resolution: {integrity: sha512-M4PmNUZPV90/AEo6yqKQ2uhh9kfCmJzkqasG8GzQOw9ONJv0Zn4zHNLgcvSgIr5k0AOpLd/dL6Fc5vQSERow+Q==}
+  '@adviser/cement@0.2.31':
+    resolution: {integrity: sha512-z8UCOqy0FgKtKTub9efBtGNeWn0JghlfUq6Rz7FsTmt/AjR+jPPPZuzVckVkYqNlyKdY+hu+SlfiTockzW+uEw==}
     engines: {node: '>=16'}
 
   '@ampproject/remapping@2.3.0':
@@ -810,7 +810,7 @@ packages:
     engines: {node: '>=14'}
 
   '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz':
-    resolution: {integrity: sha512-y0mJAAH4TzCm6XuXb3PaogNrY64KcjnySRZWblWQHCJ52jui1AEVqf/7sWRy6NhHgvqS6oNfMm6CKHjDR++RQg==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
+    resolution: {integrity: sha512-wy5wuLyZsZ+1nNYEQOq/pmkvMiuPkPYMMfuKt27P19G7TTLy6xgCsOLGhYgPplx4JB5zGXKMbLoIEhgz/kPAVg==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
     version: 0.0.0-smoke
     peerDependencies:
       react: '>=18.0.0'
@@ -1586,6 +1586,10 @@ packages:
     resolution: {integrity: sha512-XBFbEJ6WMfn9L7woc2t+EzOxF8vGqddoopKBbrhIvZBt2WIUgSlT8xLmM6Aq1xv8eWt4yOSjwxWjYeuHU3CpJA==}
     hasBin: true
 
+  cborg@4.2.4:
+    resolution: {integrity: sha512-ns2xY95zViHIVy4lq+qdLmfXTpnT3XjmKradz4RJxxbr5jc/A5gS5FiFLcPGhSdHVlSeeoizT1fuKdI1Kcd6oA==}
+    hasBin: true
+
   chai@5.1.1:
     resolution: {integrity: sha512-pT1ZgP8rPNqUgieVaEY+ryQr6Q4HXNg8Ei9UnLUrjN4IA7dvQC5JB+/kxVcPNDHyBcc/26CXPkbNzq3qwrOEKA==}
     engines: {node: '>=12'}
@@ -2024,8 +2028,8 @@ packages:
   interface-store@6.0.0:
     resolution: {integrity: sha512-HkjsDPsjA7SKkCr+TH1elUQApAAM3X3JPwrz3vFzaf614wI+ZD6GVvwKGZCHYcbSRqeZP/uzVPqezzeISeo5kA==}
 
-  ipfs-unixfs-exporter@13.5.0:
-    resolution: {integrity: sha512-s1eWXzoyhQFNEAB1p+QE3adjhW+lBdgpORmmjiCLiruHs5z7T5zsAgRVcWpM8LWYhq2flRtJHObb7Hg73J+oLQ==}
+  ipfs-unixfs-exporter@13.6.1:
+    resolution: {integrity: sha512-pYPI4oBTWao2//sFzAL0pURyojn79q/u5BuK6L5/nVbVUQVw6DcVP5uB1ySdWlTM2H+0Zlhp9+OL9aJBRIICpg==}
 
   ipfs-unixfs@11.1.4:
     resolution: {integrity: sha512-RE4nyx5qgG2w7JOLj0Y0D7SfAR1ZkEdramNaBx0OSD4DlQ2Y2NORgc4FHfej3Pgy31v+QISDVP1pQJhdv3bUUg==}
@@ -2307,6 +2311,9 @@ packages:
 
   multiformats@13.2.2:
     resolution: {integrity: sha512-RWI+nyf0q64vyOxL8LbKtjJMki0sogRL/8axvklNtiTM0iFCVtHwME9w6+0P1/v4dQvsIg8A45oT3ka1t/M/+A==}
+
+  multiformats@13.3.0:
+    resolution: {integrity: sha512-CBiqvsufgmpo01VT5ze94O+uc+Pbf6f/sThlvWss0sBZmAOu6GQn5usrYV2sf2mr17FWYc0rO8c/CNe2T90QAA==}
 
   murmurhash3js-revisited@3.0.0:
     resolution: {integrity: sha512-/sF3ee6zvScXMb1XFJ8gDsSnY+X8PbOyjIuBhtgis10W2Jx4ZjIhikUCIF9c4gpJxVnQIsPAFrSwTCuAjicP6g==}
@@ -2840,6 +2847,14 @@ packages:
     peerDependencies:
       typescript: '>=4.2.0'
 
+  ts-essentials@10.0.2:
+    resolution: {integrity: sha512-Xwag0TULqriaugXqVdDiGZ5wuZpqABZlpwQ2Ho4GDyiu/R2Xjkp/9+zcFxL7uzeLl/QCPrflnvpVYyS3ouT7Zw==}
+    peerDependencies:
+      typescript: '>=4.5.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
@@ -3092,8 +3107,8 @@ packages:
   xxhash-wasm@1.0.2:
     resolution: {integrity: sha512-ibF0Or+FivM9lNrg+HGJfVX8WJqgo+kCLDc4vx6xMeTce7Aj+DLttKbxxRR/gNLSAelRc1omAPlJ77N/Jem07A==}
 
-  yaml@2.4.5:
-    resolution: {integrity: sha512-aBx2bnqDzVOyNKfsysjA2ms5ZlnjSAW2eG3/L5G/CSujfjLJTJsEw1bGw8kCf04KodQWk1pxlGnZ56CRxiawmg==}
+  yaml@2.5.1:
+    resolution: {integrity: sha512-bLQOjaX/ADgQ20isPJRvF0iRUHIxVhYvr53Of7wGcWlO2jvtUlH5m87DsmulFVxRpNLOnI4tB6p/oh8D7kpn9Q==}
     engines: {node: '>= 14'}
     hasBin: true
 
@@ -3121,7 +3136,12 @@ packages:
 
 snapshots:
 
-  '@adviser/cement@0.2.28': {}
+  '@adviser/cement@0.2.31(typescript@5.5.4)':
+    dependencies:
+      ts-essentials: 10.0.2(typescript@5.5.4)
+      yaml: 2.5.1
+    transitivePeerDependencies:
+      - typescript
 
   '@ampproject/remapping@2.3.0':
     dependencies:
@@ -3901,23 +3921,25 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(react@18.3.1)':
+  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(react@18.3.1)(typescript@5.5.4)':
     dependencies:
-      '@adviser/cement': 0.2.28
+      '@adviser/cement': 0.2.31(typescript@5.5.4)
       '@ipld/car': 5.3.2
       '@ipld/dag-cbor': 9.2.1
       '@ipld/dag-json': 10.2.2
       '@ipld/unixfs': 3.0.0
       '@web3-storage/pail': 0.6.0
-      cborg: 4.2.3
+      cborg: 4.2.4
       charwise: 3.0.1
       idb: 8.0.0
-      ipfs-unixfs-exporter: 13.5.0
+      ipfs-unixfs-exporter: 13.6.1
       memfs: 4.12.0
-      multiformats: 13.2.2
+      multiformats: 13.3.0
       p-limit: 6.1.0
       prolly-trees: 1.0.4
       react: 18.3.1
+    transitivePeerDependencies:
+      - typescript
 
   '@humanwhocodes/module-importer@1.0.1': {}
 
@@ -3926,8 +3948,8 @@ snapshots:
   '@ipld/car@5.3.2':
     dependencies:
       '@ipld/dag-cbor': 9.2.1
-      cborg: 4.2.3
-      multiformats: 13.2.2
+      cborg: 4.2.4
+      multiformats: 13.3.0
       varint: 6.0.0
 
   '@ipld/dag-cbor@9.2.1':
@@ -3937,8 +3959,8 @@ snapshots:
 
   '@ipld/dag-json@10.2.2':
     dependencies:
-      cborg: 4.2.3
-      multiformats: 13.2.2
+      cborg: 4.2.4
+      multiformats: 13.3.0
 
   '@ipld/dag-pb@4.1.2':
     dependencies:
@@ -3966,7 +3988,7 @@ snapshots:
       '@multiformats/murmur3': 2.1.8
       '@perma/map': 1.0.3
       actor: 2.3.1
-      multiformats: 13.2.2
+      multiformats: 13.3.0
       protobufjs: 7.3.2
       rabin-rs: 2.1.0
 
@@ -4958,6 +4980,8 @@ snapshots:
 
   cborg@4.2.3: {}
 
+  cborg@4.2.4: {}
+
   chai@5.1.1:
     dependencies:
       assertion-error: 2.0.1
@@ -5488,17 +5512,16 @@ snapshots:
   interface-blockstore@5.3.0:
     dependencies:
       interface-store: 6.0.0
-      multiformats: 13.2.2
+      multiformats: 13.3.0
 
   interface-store@6.0.0: {}
 
-  ipfs-unixfs-exporter@13.5.0:
+  ipfs-unixfs-exporter@13.6.1:
     dependencies:
       '@ipld/dag-cbor': 9.2.1
       '@ipld/dag-json': 10.2.2
       '@ipld/dag-pb': 4.1.2
       '@multiformats/murmur3': 2.1.8
-      err-code: 3.0.1
       hamt-sharding: 3.0.6
       interface-blockstore: 5.3.0
       ipfs-unixfs: 11.1.4
@@ -5508,7 +5531,7 @@ snapshots:
       it-parallel: 3.0.8
       it-pipe: 3.0.1
       it-pushable: 3.2.3
-      multiformats: 13.2.2
+      multiformats: 13.3.0
       p-queue: 8.0.1
       progress-events: 1.0.1
 
@@ -5790,6 +5813,8 @@ snapshots:
 
   multiformats@13.2.2: {}
 
+  multiformats@13.3.0: {}
+
   murmurhash3js-revisited@3.0.0: {}
 
   mustache@4.2.0: {}
@@ -5957,13 +5982,13 @@ snapshots:
 
   pirates@4.0.6: {}
 
-  postcss-load-config@6.0.1(postcss@8.4.41)(tsx@4.16.2)(yaml@2.4.5):
+  postcss-load-config@6.0.1(postcss@8.4.41)(tsx@4.16.2)(yaml@2.5.1):
     dependencies:
       lilconfig: 3.1.2
     optionalDependencies:
       postcss: 8.4.41
       tsx: 4.16.2
-      yaml: 2.4.5
+      yaml: 2.5.1
 
   postcss@8.4.41:
     dependencies:
@@ -6300,6 +6325,10 @@ snapshots:
     dependencies:
       typescript: 5.5.4
 
+  ts-essentials@10.0.2(typescript@5.5.4):
+    optionalDependencies:
+      typescript: 5.5.4
+
   ts-interface-checker@0.1.13: {}
 
   tsconfck@3.1.1(typescript@5.5.4):
@@ -6308,7 +6337,7 @@ snapshots:
 
   tslib@2.6.3: {}
 
-  tsup@8.2.4(postcss@8.4.41)(tsx@4.16.2)(typescript@5.5.4)(yaml@2.4.5):
+  tsup@8.2.4(postcss@8.4.41)(tsx@4.16.2)(typescript@5.5.4)(yaml@2.5.1):
     dependencies:
       bundle-require: 5.0.0(esbuild@0.23.1)
       cac: 6.7.14
@@ -6320,7 +6349,7 @@ snapshots:
       globby: 11.1.0
       joycon: 3.1.1
       picocolors: 1.0.1
-      postcss-load-config: 6.0.1(postcss@8.4.41)(tsx@4.16.2)(yaml@2.4.5)
+      postcss-load-config: 6.0.1(postcss@8.4.41)(tsx@4.16.2)(yaml@2.5.1)
       resolve-from: 5.0.0
       rollup: 4.21.0
       source-map: 0.8.0-beta.0
@@ -6566,8 +6595,7 @@ snapshots:
 
   xxhash-wasm@1.0.2: {}
 
-  yaml@2.4.5:
-    optional: true
+  yaml@2.5.1: {}
 
   yocto-queue@0.1.0: {}
 

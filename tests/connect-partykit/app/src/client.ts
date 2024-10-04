@@ -1,11 +1,12 @@
 import "./styles.css";
 
 import { fireproof } from "@fireproof/core";
+// import { connect } from "../../../../src/partykit";
 import { connect } from "@fireproof/partykit";
 
 // Import necessary types
 import type { Database, DocBase } from "@fireproof/core";
-import type { PartyKitConnection } from "@fireproof/partykit";
+// import type { PartyKitConnection } from "../../../../src/partykit";
 interface TodoDoc extends DocBase {
   actor: string;
   created: number;
@@ -14,10 +15,12 @@ interface TodoDoc extends DocBase {
   clicks?: number;
 }
 
+type ConnectionType = unknown;
+
 declare global {
   interface Window {
     db: Database;
-    cx: PartyKitConnection;
+    cx: ConnectionType;
     changeList: (event: Event) => void;
     createTodoClick: (event: Event) => void;
     redraw: () => void;
@@ -39,7 +42,7 @@ function todoApp() {
   const actorTag = Math.random().toString(36).substring(2, 7);
   let dbName: string;
   let db: Database;
-  let cx: PartyKitConnection;
+  let cx: ConnectionType;
   let dbUnsubscribe: () => void;
 
   // Initialize the database
@@ -52,7 +55,7 @@ function todoApp() {
 
     dbName = name;
     db = fireproof(name, { autoCompact: 100, threshold: 50000 });
-    cx = connect.partykitRest(db);
+    cx = connect(db);
 
     window.db = db;
     window.cx = cx;
