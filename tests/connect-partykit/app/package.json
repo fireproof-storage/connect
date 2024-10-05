@@ -7,8 +7,8 @@
     "deploy": "partykit deploy"
   },
   "dependencies": {
-    "@fireproof/core": "file:../../../../fireproof/dist/fireproof-core",
-    "@fireproof/partykit": "file:../../../../connect/dist/partykit",
+    "@fireproof/core": "file:../../../../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz",
+    "@fireproof/partykit": "file:../../../../connect/dist/partykit/fireproof-partykit-0.0.0-smoke.tgz",
     "partysocket": "^1.0.1"
   },
   "devDependencies": {
