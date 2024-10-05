@@ -6,13 +6,10 @@ interface CRDTEntry {
   readonly parents: string[];
 }
 
-console.log("Fireproof edge function loaded");
-
 export default async (req: Request) => {
   const url = new URL(req.url);
   const carId = url.searchParams.get("car");
   const metaDb = url.searchParams.get("meta");
-  console.log("request ", req.method, req.url);
 
   if (req.method === "PUT") {
     if (carId) {

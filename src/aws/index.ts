@@ -54,10 +54,8 @@ export const connect: ConnectFunction = (
   urlObj.searchParams.set("webSocketUrl", webSocketUrl);
   urlObj.searchParams.set("dataUrl", dataUrl);
   const fpUrl = urlObj.toString().replace("https://", "aws://");
-  console.log("fpUrl", fpUrl);
   return connectionCache.get(fpUrl).once(() => {
     makeKeyBagUrlExtractable(sthis);
-    console.log("Connecting to AWS", fpUrl);
     const connection = connectionFactory(sthis, fpUrl);
     connection.connect_X(blockstore);
     return connection;

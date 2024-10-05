@@ -1,33 +1,26 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <title>Fireproof Test App</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>PartyKit: Everything's better with friends!</title>
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="PartyKit" />
+    <meta name="description" content="Everything's better with friends!" />
+    <meta name="author" content="PartyKit" />
+    <!-- Theme Colour -->
+    <meta name="theme-color" content="#ffffff" />
 
+    <link rel="stylesheet" href="/normalize.css" />
+    <link rel="stylesheet" href="/dist/client.css" />
+  </head>
   <body>
     <div id="app">
-      <h1><a href="https://use-fireproof.com/">Fireproof</a> Test App</h1>
-      <div>
-        <label for="list">Database:</label>
-        <input title="Change list" type="text" name="list" id="list" />
-        <button onclick="changeList(event)">Switch</button>
-      </div>
-
-      <p>
-        This version of the Fireproof test app uses PartyKit as the storage backend. Refresh is automatic and live.
-      </p>
-
-      <h3>Todos</h3>
-      <div>
-        <input title="Create a todo" type="text" name="todo" id="todo" />
-        <button onclick="createTodoClick(event)">Create Todo</button>
-      </div>
-      <ul></ul>
+      <h1>🎈 Welcome to PartyKit!</h1>
     </div>
-
-    <!-- Your bundled JavaScript will be included here by your bundler -->
-    <script src="/dist/client.js"></script>
+    <script type="module" src="/dist/client.js"></script>
   </body>
 </html>

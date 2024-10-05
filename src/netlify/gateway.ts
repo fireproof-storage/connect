@@ -202,7 +202,7 @@ export class NetlifyGateway implements bs.Gateway {
           callback(data);
           interval = 100; // Reset interval when data changes
         } else {
-          interval *= 2; // Double the interval when data is unchanged
+          interval = Math.min(interval * 2, 3000);
         }
       }
       timeoutId = setTimeout(fetchData, interval);

@@ -2,14 +2,11 @@ import { KeyedResolvOnce, Result, URI } from "@adviser/cement";
 import { bs, getStore, Logger, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
 import fetch from "cross-fetch";
 
-console.log("aws-gateway.ts");
-
 export class AWSGateway implements bs.Gateway {
   readonly sthis: SuperThis;
   readonly logger: Logger;
 
   constructor(sthis: SuperThis) {
-    console.log("Entering AWSGateway constructor");
     this.sthis = ensureSuperLog(sthis, "AWSGateway");
     this.logger = this.sthis.logger;
   }
@@ -128,7 +125,7 @@ export class AWSGateway implements bs.Gateway {
     const uploadDone = await fetch(doneJson.uploadURL, { method: "PUT", body });
 
     if (!uploadDone.ok) {
-      console.log("Upload Data response error:", uploadDone.status);
+      this.logger.Error().Int("status", uploadDone.status).Msg("Upload Data response error");
       return Result.Err(new Error(`failed to upload ${store} ${done.statusText}`));
     }
 
@@ -161,12 +158,11 @@ export class AWSGateway implements bs.Gateway {
       return Result.Err(new Error("Key not found in the URI"));
     }
     const fetchUrl = new URL(`/data/${name}/${key}.car`, dataUrl);
-    console.log("Download Data URL:", fetchUrl.toString());
 
     const response = await fetch(fetchUrl);
 
     if (!response.ok) {
-      console.log("Download Data response error:", response.status);
+      this.logger.Error().Int("status", response.status).Msg("Download Data response error");
       return Result.Err(new NotFoundError(`data not found: ${url}`));
     }
 
@@ -184,7 +180,6 @@ export class AWSGateway implements bs.Gateway {
     }
     name += ".fp";
 
-    console.log("Get Meta URL:", url.toString());
     if (!dataUrl) {
       return Result.Err(new Error("Download URL not found in the URI"));
     }
@@ -195,23 +190,20 @@ export class AWSGateway implements bs.Gateway {
       return Result.Err(new Error("Name not found in the URI"));
     }
     const fetchUrl = new URL(`${dataUrl}?${new URLSearchParams({ type: "meta", key, name }).toString()}`);
-    console.log("Download Meta URL:", fetchUrl.toString());
 
     const response = await fetch(fetchUrl);
 
     if (!response.ok) {
-      console.log("Download Meta response error:", response.status, response.statusText, await response.text());
+      this.logger
+        .Error()
+        .Int("status", response.status)
+        .Str("statusText", response.statusText)
+        .Str("response", await response.text())
+        .Msg("Download Meta response error");
       return Result.Err(new NotFoundError(`meta not found: ${url}`));
     }
 
     const data = new Uint8Array(await response.arrayBuffer());
-    console.log(
-      "Download Meta response status:",
-      response.status,
-      "data.length",
-      data.length,
-      new TextDecoder().decode(data)
-    );
     // bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
     const res = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
     if (res.isErr()) {
@@ -265,7 +257,7 @@ export class AWSGateway implements bs.Gateway {
           callback(data);
           interval = 100; // Reset interval when data changes
         } else {
-          interval *= 2; // Double the interval when data is unchanged
+          interval = Math.min(interval * 2, 3000); // Double the interval when data is unchanged, but limit to 3 secs
         }
       }
       timeoutId = setTimeout(fetchData, interval);

@@ -46,10 +46,8 @@ export const connect: ConnectFunction = (
   urlObj.searchParams.set("localName", dbName);
   urlObj.searchParams.set("storekey", `@${dbName}:data@`);
   const fpUrl = urlObj.toString().replace("http://", "partykit://").replace("https://", "partykit://");
-  console.log("fpUrl", fpUrl);
   return connectionCache.get(fpUrl).once(() => {
     makeKeyBagUrlExtractable(sthis);
-    console.log("Connecting to partykit", fpUrl);
     const connection = connectionFactory(sthis, fpUrl);
     connection.connect_X(blockstore);
     return connection;

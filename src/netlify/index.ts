@@ -42,10 +42,8 @@ export const connect: ConnectFunction = (
   urlObj.searchParams.set("localName", dbName);
   urlObj.searchParams.set("storekey", `@${dbName}:data@`);
   const fpUrl = urlObj.toString().replace("http://", "netlify://").replace("https://", "netlify://");
-  console.log("fpUrl", fpUrl);
   return connectionCache.get(fpUrl).once(() => {
     makeKeyBagUrlExtractable(sthis);
-    console.log("Connecting to netlify", fpUrl);
     const connection = connectionFactory(sthis, fpUrl);
     connection.connect_X(blockstore);
     return connection;

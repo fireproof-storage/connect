@@ -4,9 +4,18 @@ import { fireproof } from "@fireproof/core";
 // import { connect } from "../../../../src/partykit";
 import { connect } from "@fireproof/partykit";
 
+import * as ps from "partysocket";
+
+declare const PARTYKIT_HOST: string;
+
+let pingInterval: ReturnType<typeof setInterval>;
+
+
 // Import necessary types
 import type { Database, DocBase } from "@fireproof/core";
 // import type { PartyKitConnection } from "../../../../src/partykit";
+
+
 interface TodoDoc extends DocBase {
   actor: string;
   created: number;
@@ -27,10 +36,13 @@ declare global {
   }
 }
 
+
+
 // Let's append all the messages we get into this DOM element
-// const output = document.getElementById("app") as HTMLDivElement;
+const output = document.getElementById("app") as HTMLDivElement;
 
 // Helper function to add a new line to the DOM
+
 // function add(text: string) {
 //   const node = document.createElement("div");
 //   node.textContent = text;
@@ -162,6 +174,29 @@ function todoApp() {
   window.createTodoClick = createTodoClick;
 
   window.onload = initialize;
+
 }
 
-todoApp();
+// A PartySocket is like a WebSocket, except it's a bit more magical.
+// It handles reconnection logic, buffering messages while it's offline, and more.
+const conn = new ps.PartySocket({
+  host: PARTYKIT_HOST,
+  room: "my-new-room",
+});
+
+// You can even start sending messages before the connection is open!
+conn.addEventListener("message", (event) => {
+  add(`Received -> ${event.data}`);
+});
+
+// Let's listen for when the connection opens
+// And send a ping every 2 seconds right after
+conn.addEventListener("open", () => {
+  add("Connected!");
+  add("Sending a ping every 2 seconds...");
+  // TODO: make this more interesting / nice
+  clearInterval(pingInterval);
+  pingInterval = setInterval(() => {
+    conn.send("ping");
+  }, 1000);
+});

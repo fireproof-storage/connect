@@ -64,13 +64,10 @@ describe("loading the base store", () => {
     connect = await getConnect(context.task.file.projectName);
     cx = connect(db, remoteDbName);
     await cx.loaded;
-    console.log("beforeEach", db.name);
     await smokeDB(db);
     await (await db.blockstore.loader?.WALStore())?.process();
-    console.log("beforeEach done", db.name);
   });
   it("should launch tests in the right environment", async () => {
-    console.log("beforeEach", process.env.FP_STORAGE_URL, process.env.FP_KEYBAG_URL, db.name);
     const dbStorageUrl = db.blockstore.sthis.env.get("FP_STORAGE_URL");
     expect(dbStorageUrl).toBe("./dist/fp-dir-file");
     const docs = await db.allDocs<{ hello: string }>();
@@ -126,7 +123,6 @@ describe("loading the base store", () => {
     const metaGateway = metaStore.gateway;
     const metaUrl = await metaGateway?.buildUrl(metaStore._url, "main");
     // await metaGateway?.start(metaStore?._url);
-    console.log("metaUrl", metaUrl?.Ok()?.toString());
     const metaGetResult = await metaGateway.get(metaUrl?.Ok());
     expect(metaGetResult).toBeDefined();
     expect(metaGetResult.Ok()).toBeDefined();
@@ -153,7 +149,6 @@ describe("loading the base store", () => {
       ctx.skip();
     }
     // await (await db.blockstore.loader?.WALStore())?.process();
-    console.log("db-names", db.name, emptyDbName, remoteDbName);
 
     const db2 = fireproof(emptyDbName);
     await db2.ready;
@@ -171,27 +166,23 @@ describe("loading the base store", () => {
     const parsedUrl = new URL(url.toString());
     parsedUrl.searchParams.set("cache", "two");
 
-    console.log("db2 CONNECT", db2.name, remoteDbName, parsedUrl.toString());
     // const cx2 = connect(db2, parsedUrl.toString());
     const cx2 = connect(db2, remoteDbName); //, `partykit://localhost:1999/?name=${remoteDbName}&protocol=ws&cache=bust`);
     // const cx2 = connect(db2, remoteDbName);
 
     await cx2.loaded;
-    console.log("db2 LOADED", db2.name);
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const carLog = db2.blockstore.loader?.carLog;
     expect(carLog).toBeDefined();
     expect(carLog?.length).toBeGreaterThan(2);
 
-    console.log("db2 ALLDOCS", db2.name);
     const docs = await db2.allDocs<{ hello: string }>();
     expect(docs).toBeDefined();
     expect(docs.rows.length).toBe(10);
     expect(docs.rows[0].value._id).toMatch("key");
     expect(docs.rows[0].value.hello).toMatch("world");
 
-    console.log("db2 WRITE", db2.name);
     // it should sync write from the new db to the orginal db
     const ok = await db2.put({ _id: "secondary", hello: "original" });
     expect(ok).toBeDefined();
@@ -199,8 +190,6 @@ describe("loading the base store", () => {
     expect(ok.id).toBe("secondary");
 
     await (await db2.blockstore.loader?.WALStore())?.process();
-
-    console.log("db2 processed", db2.name);
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
