@@ -197,8 +197,17 @@ export class UCANGateway implements bs.Gateway {
     switch (store) {
       case "data": {
         console.log("🥘 GET Data", url);
-        // TODO
-        break;
+        const cid = CID.parse(key).toV1();
+
+        const res = await Client.retrieve({
+          agent: this.inst.w3.agent.issuer,
+          cid: cid as CID<unknown, 514, number, 1>,
+          server: this.inst.server,
+          service: this.inst.service,
+        });
+
+        if (!res) return Result.Err(new NotFoundError());
+        return Result.Ok(res);
       }
       case "meta": {
         console.log("🔮 GET Meta", url);
@@ -216,14 +225,15 @@ export class UCANGateway implements bs.Gateway {
 
         if (cid.code !== 514) return Result.Err(new Error("Expected clock-head CID to be a CAR CID"));
 
-        await Client.retrieve({
+        const res = await Client.retrieve({
           agent: this.inst.w3.agent.issuer,
           cid: cid as CID<unknown, 514, number, 1>,
           server: this.inst.server,
           service: this.inst.service,
         });
 
-        break;
+        if (!res) return Result.Err(new NotFoundError());
+        return Result.Ok(res);
       }
     }
 
