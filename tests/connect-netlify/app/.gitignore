@@ -4,4 +4,3 @@ node_modules
 .netlify
 *.iife.js
 *.global.js
-*.js.map

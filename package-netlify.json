@@ -22,7 +22,7 @@
   "license": "Apache-2.0 OR MIT",
   "devDependencies": {},
   "dependencies": {
-    "@netlify/blobs": "^8.1.0",
+    "@netlify/blobs": "^7.4.0",
     "cross-fetch": "^4.0.0"
   }
 }
