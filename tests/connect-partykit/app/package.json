@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "partykit dev",
-    "deploy": "partykit deploy",
-    "copy-server": "cp ../../../src/partykit/server.ts ./src/"
+    "deploy": "partykit deploy"
   },
   "dependencies": {
     "partysocket": "^1.0.1"
