@@ -27,7 +27,7 @@ If you already have PartyKit configured in your project, all you need to do is a
   "name": "my-app-name",
   "main": "src/partykit/server.ts",
   "parties": {
-    "fireproof": "node_modules/@fireproof/partykit/src/server.ts"
+    "fireproof": "node_modules/@fireproof/partykit/server.ts"
   }
 }
 ```
