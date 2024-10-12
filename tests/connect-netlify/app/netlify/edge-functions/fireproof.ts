@@ -1,5 +1,7 @@
 import { getStore } from "@netlify/blobs";
 
+console.log("fireproof edge function loaded netlify");
+
 interface CRDTEntry {
   readonly data: string;
   readonly cid: string;
