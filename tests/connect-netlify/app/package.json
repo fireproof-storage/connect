@@ -10,7 +10,7 @@
     "watch-server": "chokidar \"../../../src/netlify/server.ts\" -c \"pnpm run copy-server\"",
     "watch": "pnpm run copy-server && pnpm run watch-server &",
     "watch-dev": "pnpm run watch & pnpm run dev",
-    "dev": "pnpm --package=netlify-cli dlx netlify --version && pnpm --package=netlify-cli dlx netlify dev --no-open --debug"
+    "dev": "pnpm --package=netlify-cli dlx netlify --version && pnpm --package=netlify-cli dlx netlify dev --no-open"
   },
   "author": "",
   "license": "ISC",
