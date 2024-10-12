@@ -1,8 +1,0 @@
-[build]
-  command = "# no build command"
-  publish = ""
-
-[dev]
-  functions = "netlify/edge-functions"
-  port = 8888
-  publish = "public"
