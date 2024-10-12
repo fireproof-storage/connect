@@ -29,7 +29,7 @@
     "clean": "rm -rf node_modules dist",
     "prepare-s3-test": "docker run -d -p 9000:9000 --name minio -e MINIO_ACCESS_KEY=minioadmin -e MINIO_SECRET_KEY=minioadmin -v /tmp/data:/data -v /tmp/config:/root/.minio minio/minio server /data",
     "setup-gateway-servers": "pnpm run '/^pretest:/'",
-    "pretest:partykit": "cd tests/connect-partykit/app && pnpm i && pnpm run dev",
+    "pretest:partykit": "cd tests/connect-partykit/app && pnpm run dev",
     "pretest:netlify": "cd tests/connect-netlify/app && pnpm run copy-server && pnpm --package=netlify-cli dlx netlify dev --no-open",
     "test-gateways": "vitest --run connector gateway",
     "test": "vitest --run",
