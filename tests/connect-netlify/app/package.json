@@ -5,7 +5,7 @@
   "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "copy-server": "cp ../../../src/netlify/server.ts netlify/edge-functions/fireproof.ts",
+    "copy-server": "mkdir -p netlify/edge-functions && cp ../../../src/netlify/server.ts netlify/edge-functions/fireproof.ts",
     "watch-server": "chokidar \"../../../src/netlify/server.ts\" -c \"npm run copy-server\"",
     "predev": "npm run copy-server && npm run watch-server &",
     "dev": "npx netlify dev --no-open"
