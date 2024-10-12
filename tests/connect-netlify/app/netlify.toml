@@ -1,5 +1,6 @@
 [build]
-  base = "tests/connect-netlify/app"
   command = "# no build command"
   publish = ""
 
+[dev]
+  functions = "netlify/edge-functions"
