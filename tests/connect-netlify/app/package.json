@@ -6,14 +6,16 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "copy-server": "mkdir -p netlify/edge-functions && cp ../../../src/netlify/server.ts netlify/edge-functions/fireproof.ts",
-    "watch-server": "chokidar \"../../../src/netlify/server.ts\" -c \"npm run copy-server\"",
-    "predev": "npm run copy-server && npm run watch-server &",
-    "dev": "npx netlify --version && npx netlify dev --no-open --debug"
+    "watch-server": "chokidar \"../../../src/netlify/server.ts\" -c \"pnpm run copy-server\"",
+    "watch": "pnpm run copy-server && pnpm run watch-server &",
+    "watch-dev": "pnpm run watch & pnpm run dev",
+    "predev": "pnpm run copy-server",
+    "dev": "pnpm --package=netlify-cli dlx netlify --version && pnpm --package=netlify-cli dlx netlify dev --no-open --debug"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@netlify/blobs": "^6.3.1"
+    "@netlify/blobs": "^8.1.0"
   },
   "devDependencies": {
     "chokidar-cli": "^3.0.0"
