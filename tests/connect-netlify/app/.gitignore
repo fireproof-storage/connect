@@ -4,3 +4,4 @@ node_modules
 .netlify
 *.iife.js
 *.global.js
+netlify/edge-functions/fireproof.ts
