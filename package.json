@@ -92,7 +92,7 @@
     "@adviser/cement": "^0.2.34",
     "@aws-sdk/client-s3": "^3.614.0",
     "@fireproof/core": "file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz",
-    "@netlify/blobs": "^7.4.0",
+    "@netlify/blobs": "^8.1.0",
     "@ucanto/interface": "^10.0.1",
     "@web3-storage/clock": "^0.4.1",
     "@web3-storage/pail": "^0.6.0",

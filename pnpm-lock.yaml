@@ -18,8 +18,8 @@ importers:
         specifier: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz
         version: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(react@18.3.1)(typescript@5.6.3)
       '@netlify/blobs':
-        specifier: ^7.4.0
-        version: 7.4.0
+        specifier: ^8.1.0
+        version: 8.1.0
       '@ucanto/interface':
         specifier: ^10.0.1
         version: 10.0.1
@@ -954,8 +954,8 @@ packages:
     resolution: {integrity: sha512-6vId1C46ra3R1sbJUOFCZnsUIveR9oF20yhPmAFxPm0JfrX3/ZRCgP3YDrBzlGoEppOXnA9czHeYc0T9mB6hbA==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
-  '@netlify/blobs@7.4.0':
-    resolution: {integrity: sha512-7rdPzo8bggt3D2CVO+U1rmEtxxs8X7cLusDbHZRJaMlxqxBD05mXgThj5DUJMFOvmfVjhEH/S/3AyiLUbDQGDg==}
+  '@netlify/blobs@8.1.0':
+    resolution: {integrity: sha512-9hIbusvAZjSGBJ42OyFC2AxsEph1LuKQahMWFcPGEIsOqIYHhMRkYA7wSUMhH7naydjNmllpcp3pJLOK4RhFaQ==}
     engines: {node: ^14.16.0 || >=16.0.0}
 
   '@noble/curves@1.6.0':
@@ -2575,6 +2575,10 @@ packages:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
 
+  p-map@7.0.2:
+    resolution: {integrity: sha512-z4cYYMMdKHzw4O5UkWJImbZynVIo0lSGTXc7bzB1e/rrDqkgGUNysK/o4bTr+0+xKvvLoTyGqYC4Fgljy9qe1Q==}
+    engines: {node: '>=18'}
+
   p-queue@8.0.1:
     resolution: {integrity: sha512-NXzu9aQJTAzbBqOt2hwsR63ea7yvxJc0PwN/zobNAudYfb1B7R08SzB4TsLeSbUCuG467NhnoT0oO6w1qRO+BA==}
     engines: {node: '>=18'}
@@ -4150,6 +4154,8 @@ snapshots:
       memfs: 4.13.0
       multiformats: 13.3.0
       p-limit: 6.1.0
+      p-map: 7.0.2
+      p-retry: 6.2.0
       prolly-trees: 1.0.4
       react: 18.3.1
     transitivePeerDependencies:
@@ -6234,6 +6240,8 @@ snapshots:
   p-locate@5.0.0:
     dependencies:
       p-limit: 3.1.0
+
+  p-map@7.0.2: {}
 
   p-queue@8.0.1:
     dependencies:
