@@ -1,12 +1,13 @@
-import { fireproof, Database, ConfigOpts } from "@fireproof/core";
+import { fireproof, ConfigOpts, bs } from "@fireproof/core";
 import { registerAWSStoreProtocol } from "./gateway";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { smokeDB } from "../../tests/helper";
 import { URI } from "@adviser/cement";
+import { mockSuperThis } from "@fireproof/core/tests/helpers";
 
 describe("AWSGateway", () => {
-  let db: Database;
   let unregister: () => void;
+  const sthis = mockSuperThis()
 
   beforeAll(() => {
     unregister = registerAWSStoreProtocol("aws:");
@@ -32,29 +33,12 @@ describe("AWSGateway", () => {
         base: process.env.FP_STORAGE_URL || "aws://aws",
       },
     };
-    // console.log("Fireproof config:", JSON.stringify(config, null, 2));
-    db = fireproof("aws-test-db" + Math.random().toString(36).substring(7), config);
+    const db = fireproof("aws-test-db" + sthis.nextId(), config);
 
-    const loader = db.crdt.blockstore.loader;
-    // Assert that loader has ebOpts.store.stores
-    expect(loader).toBeDefined();
-    if (!loader) {
-      throw new Error("Loader is not defined");
-    }
-    expect(loader.ebOpts).toBeDefined();
-    expect(loader.ebOpts.store).toBeDefined();
-    expect(loader.ebOpts.store.stores).toBeDefined();
-    if (!loader.ebOpts.store.stores) {
-      throw new Error("Loader stores is not defined");
-    }
-    if (!loader.ebOpts.store.stores.base) {
-      throw new Error("Loader stores.base is not defined");
-    }
-
-    // console.log("Loader stores:", loader.ebOpts.store.stores);
+    const store = await db.crdt.blockstore.loader?.carStore() as bs.DataStore
 
     // Test base URL configuration
-    const baseUrl = URI.from(loader.ebOpts.store.stores.base.toString());
+    const baseUrl = store.url();
     expect(baseUrl.protocol).toBe("aws:");
     expect(baseUrl.hostname).toBe("aws");
 
@@ -78,12 +62,11 @@ describe("AWSGateway", () => {
     await db.del(updateDoc._id);
     try {
       await db.get(updateDoc._id);
-      throw new Error("Document should have been deleted");
+      assert(false, "Document should have been deleted");
     } catch (e) {
       const error = e as Error;
       expect(error.message).toContain("Not found");
     }
-
     // Clean up
     await db.destroy();
   });
