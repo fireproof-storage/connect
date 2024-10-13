@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 
+// eslint-disable-next-line no-console
 console.log("fireproof edge function loaded netlify");
 
 interface CRDTEntry {
