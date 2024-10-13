@@ -6,10 +6,11 @@
   "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "copy-server": "cp ../../../src/netlify/server.ts netlify/edge-functions/fireproof.ts",
-    "watch-server": "chokidar \"../../../src/netlify/server.ts\" -c \"npm run copy-server\"",
-    "predev": "npm run copy-server && npm run watch-server &",
-    "dev": "npx netlify dev --no-open"
+    "copy-server": "mkdir -p netlify/edge-functions && cp ../../../src/netlify/server.ts netlify/edge-functions/fireproof.ts",
+    "watch-server": "chokidar \"../../../src/netlify/server.ts\" -c \"pnpm run copy-server\"",
+    "watch": "pnpm run copy-server && pnpm run watch-server &",
+    "watch-dev": "pnpm run watch & pnpm run dev",
+    "dev": "pnpm --package=netlify-cli dlx netlify --version && pnpm --package=netlify-cli dlx netlify dev --no-open"
   },
   "author": "",
   "license": "ISC",
