@@ -289,7 +289,9 @@ export function registerAWSStoreProtocol(protocol = "aws:", overrideBaseURL?: st
   return onceRegisterAWSStoreProtocol.get(protocol).once(() => {
     return bs.registerStoreProtocol({
       protocol,
-      overrideBaseURL,
+      defaultURI: () => {
+        return URI.from(overrideBaseURL || "aws://fireproof.io");
+      },
       gateway: async (sthis) => {
         return new AWSGateway(sthis);
       },

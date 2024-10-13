@@ -1,4 +1,4 @@
-import { KeyedResolvOnce, Result, URI } from "@adviser/cement";
+import { BuildURI, KeyedResolvOnce, Result, URI } from "@adviser/cement";
 import {
   CreateBucketCommand,
   DeleteObjectCommand,
@@ -245,7 +245,9 @@ export function registerS3StoreProtocol(protocol = "s3:", overrideBaseURL?: stri
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const _f: any = bs.registerStoreProtocol({
       protocol,
-      overrideBaseURL,
+      defaultURI: () => {
+        return BuildURI.from(overrideBaseURL || `${protocol}://default-db`).URI();
+      },
       gateway: async (sthis) => {
         return new S3Gateway(sthis);
       },

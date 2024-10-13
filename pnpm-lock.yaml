@@ -142,7 +142,7 @@ importers:
         specifier: ^4.3.2
         version: 4.3.2(typescript@5.6.3)(vite@5.4.8(@types/node@22.7.5))
       vitest:
-        specifier: ^2.0.5
+        specifier: ^2.1.2
         version: 2.1.2(@types/node@22.7.5)
       wrangler:
         specifier: ^3.65.1
@@ -858,7 +858,7 @@ packages:
     engines: {node: '>=14'}
 
   '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz':
-    resolution: {integrity: sha512-iYLnSmmfb9NmWdZavDqm07Q/rhR6nSy8XyR6LeIN+BuMfQ/7FM1OimJsWv5EuUAcV6V1+dM/66p5AMO4CIG2ZA==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
+    resolution: {integrity: sha512-KHb4412O/sbQlAZj2klJ72BIS7wS1llbRwcrjPAG4a4b7Rvzi7C1kCp6Fx4mt4YbobaBIfmwIQKcwPj/CVfSJQ==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
     version: 0.0.0-smoke
     peerDependencies:
       react: '>=18.0.0'

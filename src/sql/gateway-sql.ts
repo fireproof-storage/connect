@@ -1,4 +1,4 @@
-import { Logger, ResolveOnce, Result, URI, exception2Result } from "@adviser/cement";
+import { BuildURI, Logger, ResolveOnce, Result, URI, exception2Result } from "@adviser/cement";
 
 // import { TestStore } from "../../blockstore/types.js";
 import { SQLConnectionFactoryx } from "./sql-connection-factory.js";
@@ -306,6 +306,9 @@ export function registerSqliteStoreProtocol() {
   return _register.once(() => {
     return bs.registerStoreProtocol({
       protocol: "sqlite:",
+      defaultURI: () => {
+        return BuildURI.from("sqlite://default-db").URI();
+      },
       gateway: async (sthis) => {
         return new SQLStoreGateway(sthis);
       },

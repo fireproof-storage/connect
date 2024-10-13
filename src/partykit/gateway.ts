@@ -293,7 +293,7 @@ export function registerPartyKitStoreProtocol(protocol = "partykit:", overrideBa
     URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
       protocol,
-      overrideBaseURL,
+      defaultURI: () => BuildURI.from(overrideBaseURL || `${protocol}://localhost:1999/`).URI(),
       gateway: async (sthis) => {
         return new PartyKitGateway(sthis);
       },

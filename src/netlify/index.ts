@@ -28,19 +28,16 @@ export const connect: ConnectFunction = (
   remoteDbName = "",
   url = "netlify://localhost:8888?protocol=ws"
 ) => {
-  const { sthis, blockstore, name: dbName } = db;
-  if (!dbName) {
-    throw new Error("dbName is required");
-  }
+  const { sthis, crdt, name: dbName } = db;
   const urlObj = BuildURI.from(url);
-  const existingName = urlObj.getParam("name");
-  urlObj.defParam("name", remoteDbName || existingName || dbName);
-  urlObj.defParam("localName", dbName);
-  urlObj.defParam("storekey", `@${dbName}:data@`);
+  // const existingName = urlObj.getParam("name");
+  urlObj.defParam("name", remoteDbName || dbName());
+  urlObj.defParam("localName", dbName());
+  urlObj.defParam("storekey", `@${dbName()}:data@`);
   return connectionCache.get(urlObj.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
     const connection = connectionFactory(sthis, urlObj);
-    connection.connect_X(blockstore);
+    connection.connect_X(crdt.blockstore);
     return connection;
   });
 };

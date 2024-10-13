@@ -15,21 +15,6 @@ async function getConnect(moduleName: string) {
   return connect;
 }
 
-// MUST go if superthis is there
-interface ExtendedGateway extends bs.Gateway {
-  // logger: { _attributes: { module: string; url?: string } };
-  headerSize: number;
-  fidLength: number;
-  handleByteHeads: (meta: Uint8Array) => Promise<bs.VoidResult>;
-}
-
-// MUST go if superthis is there
-interface ExtendedStore extends bs.BaseStore {
-  gateway: ExtendedGateway;
-  _url: URI;
-  name: string;
-}
-
 describe("loading the base store", () => {
   let db: Database;
   let cx: bs.Connection;
@@ -54,7 +39,7 @@ describe("loading the base store", () => {
     cx = connect(db, remoteDbName);
     await cx.loaded;
     await smokeDB(db);
-    await (await db.blockstore.loader?.WALStore())?.process();
+    await ((await db.crdt.blockstore.loader?.WALStore()) as bs.WALStore).process();
   });
   it("should launch tests in the right environment", async () => {
     const dbStorageUrl = sthis.env.get("FP_STORAGE_URL");
@@ -67,52 +52,50 @@ describe("loading the base store", () => {
   });
 
   it("should have data in the local gateway", async () => {
-    const carLog = await db.blockstore.loader?.carLog;
+    const carLog = db.crdt.blockstore.loader?.carLog as bs.CarLog;
     expect(carLog).toBeDefined();
-    expect(carLog?.length).toBe(10);
-    if (!carLog) return;
-    const carStore = (await db.blockstore.loader?.carStore()) as unknown as ExtendedStore;
-    const carGateway = carStore?.gateway;
+    expect(carLog.length).toBe(10);
+    const carStore = (await db.crdt.blockstore.loader?.carStore()) as bs.DataStore;
+    const carGateway = carStore.realGateway;
     const testKey = carLog[0][0].toString();
-    const carUrl = await carGateway?.buildUrl(carStore?._url, testKey);
-    // await carGateway?.start(carStore?._url);
-    const carGetResult = await carGateway?.get(carUrl?.Ok());
+    const carUrl = await carGateway.buildUrl(carStore.url(), testKey);
+    // await carGateway.start(carStore._url);
+    const carGetResult = await carGateway.get(carUrl.Ok());
     expect(carGetResult).toBeDefined();
-    expect(carGetResult?.Ok()).toBeDefined();
+    expect(carGetResult.Ok()).toBeDefined();
   });
 
   it("should have meta in the local gateway", async () => {
-    const metaStore = (await db.blockstore.loader?.metaStore()) as unknown as ExtendedStore;
-    const metaGateway = metaStore?.gateway;
-    const metaUrl = await metaGateway?.buildUrl(metaStore?._url, "main");
-    // await metaGateway?.start(metaStore?._url);
-    const metaGetResult = await metaGateway?.get(metaUrl?.Ok());
+    const metaStore = (await db.crdt.blockstore.loader?.metaStore()) as bs.MetaStore;
+    const metaGateway = metaStore.realGateway;
+    const metaUrl = await metaGateway.buildUrl(metaStore.url(), "main");
+    // await metaGateway.start(metaStore._url);
+    const metaGetResult = await metaGateway.get(metaUrl.Ok());
     expect(metaGetResult).toBeDefined();
-    expect(metaGetResult?.Ok()).toBeDefined();
+    expect(metaGetResult.Ok()).toBeDefined();
   });
 
   it("should have data in the remote gateway", async () => {
-    const carLog = await db.blockstore.loader?.carLog;
+    const carLog = db.crdt.blockstore.loader?.carLog as bs.CarLog;
     expect(carLog).toBeDefined();
-    expect(carLog?.length).toBe(10);
-    if (!carLog) return;
-    await (await db.blockstore.loader?.WALStore())?.process();
-    const carStore = (await db.blockstore.loader?.remoteCarStore) as unknown as ExtendedStore;
-    const carGateway = carStore?.gateway;
+    expect(carLog.length).toBe(10);
+    await ((await db.crdt.blockstore.loader?.WALStore()) as bs.WALStore).process();
+    const carStore = (await db.crdt.blockstore.loader?.remoteCarStore) as bs.DataStore;
+    const carGateway = carStore.realGateway;
     const testKey = carLog[0][0].toString();
-    const carUrl = await carGateway?.buildUrl(carStore._url, testKey);
-    const carGetResult = await carGateway?.get(carUrl.Ok());
+    const carUrl = await carGateway.buildUrl(carStore.url(), testKey);
+    const carGetResult = await carGateway.get(carUrl.Ok());
     expect(carGetResult.Ok()).toBeDefined();
   });
 
   it("should have meta in the remote gateway", async () => {
-    // await (await db.blockstore.loader?.WALStore())?.process();
-    const metaStore = (await db.blockstore.loader?.remoteMetaStore) as unknown as ExtendedStore;
-    const metaGateway = metaStore.gateway;
+    // await (await db.blockstore.loader.WALStore()).process();
+    const metaStore = (await db.crdt.blockstore.loader?.remoteMetaStore) as bs.MetaStore;
+    const metaGateway = metaStore.realGateway;
     await metaGateway.start(metaStore.url());
 
     const metaUrl = await metaGateway.buildUrl(metaStore.url(), "main");
-    const metaGetResult = await metaGateway.get(metaUrl?.Ok());
+    const metaGetResult = await metaGateway.get(metaUrl.Ok());
     if (metaGetResult.isErr()) {
       expect(metaGetResult.Err().message).toBe("xxx");
     }
@@ -121,10 +104,10 @@ describe("loading the base store", () => {
     const decodedMetaBody = db.sthis.txt.decode(metaBody);
     expect(decodedMetaBody).toBeDefined();
     expect(decodedMetaBody).toMatch(/"parents":\["bafy/);
-    const dbMetaRes = await bs.setCryptoKeyFromGatewayMetaPayload(metaStore._url, db.sthis, metaGetResult?.Ok());
-    const dbMeta = dbMetaRes.Ok() as unknown as bs.DbMeta;
-    expect(dbMeta).toBeDefined();
-    expect(dbMeta.key).toBeDefined();
+    const dbMetaRes = await bs.setCryptoKeyFromGatewayMetaPayload(metaStore.url(), db.sthis, metaGetResult.Ok());
+    const dbMetas = dbMetaRes.Ok();
+    expect(dbMetas.length).toBeGreaterThan(0);
+    expect(dbMetas[0].key).toBeDefined();
   });
 
   it("should open an empty db", async () => {
@@ -139,19 +122,19 @@ describe("loading the base store", () => {
     if (ctx.task.file.projectName === "netlify" || ctx.task.file.projectName === "aws") {
       ctx.skip();
     }
-    // await (await db.blockstore.loader?.WALStore())?.process();
+    // await (await db.blockstore.loader.WALStore()).process();
 
     const db2 = fireproof(emptyDbName);
-    await db2.ready;
-    const carLog0 = db2.blockstore.loader?.carLog;
+    await db2.ready();
+    const carLog0 = db2.crdt.blockstore.loader?.carLog as bs.CarLog;
     expect(carLog0).toBeDefined();
-    expect(carLog0?.length).toBe(0);
+    expect(carLog0.length).toBe(0);
 
-    // const metaStore = (await db.blockstore.loader?.metaStore()) as unknown as ExtendedStore;
+    // const metaStore = (await db.blockstore.loader.metaStore()) as unknown as ExtendedStore;
 
-    // const remoteMetaStore = (await db.blockstore.loader?.remoteMetaStore) as unknown as ExtendedStore;
+    // const remoteMetaStore = (await db.blockstore.loader.remoteMetaStore) as unknown as ExtendedStore;
 
-    // const url = remoteMetaStore?._url;
+    // const url = remoteMetaStore._url;
     // console.log("metaStore", url.toString());
 
     // const parsedUrl = url.build().setParam("cache", "two");
@@ -164,9 +147,9 @@ describe("loading the base store", () => {
     await cx2.loaded;
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const carLog = db2.blockstore.loader?.carLog;
+    const carLog = db2.crdt.blockstore.loader?.carLog as bs.CarLog;
     expect(carLog).toBeDefined();
-    expect(carLog?.length).toBeGreaterThan(2);
+    expect(carLog.length).toBeGreaterThan(2);
 
     const docs = await db2.allDocs<{ hello: string }>();
     expect(docs).toBeDefined();
@@ -180,7 +163,7 @@ describe("loading the base store", () => {
     expect(ok.id).toBeDefined();
     expect(ok.id).toBe("secondary");
 
-    await (await db2.blockstore.loader?.WALStore())?.process();
+    await ((await db2.crdt.blockstore.loader?.WALStore()) as bs.WALStore).process();
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
 

@@ -19,8 +19,8 @@ import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
 // }
 
 if (!runtimeFn().isBrowser) {
-  const url = new URL(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-partykit");
-  url.searchParams.set("extractKey", "_deprecated_internal_api");
+  const url = BuildURI.from(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-partykit");
+  url.setParam("extractKey", "_deprecated_internal_api");
   process.env.FP_KEYBAG_URL = url.toString();
 }
 
@@ -32,20 +32,20 @@ export const connect: ConnectFunction = (
   remoteDbName = "",
   url = "http://localhost:1999?protocol=ws"
 ) => {
-  const { sthis, blockstore, name: dbName } = db;
+  const { sthis, crdt, name: dbName } = db;
   if (!dbName) {
-    throw new Error("dbName is required");
+    throw db.logger.Error().Msg("Database name is required").AsError();
   }
   const urlObj = BuildURI.from(url);
-  const existingName = urlObj.getParam("name");
-  urlObj.defParam("name", remoteDbName || existingName || dbName);
-  urlObj.defParam("localName", dbName);
-  urlObj.defParam("storekey", `@${dbName}:data@`);
-  const fpUrl = urlObj.toString().replace("http://", "partykit://").replace("https://", "partykit://");
-  return connectionCache.get(fpUrl).once(() => {
+  // const existingName = urlObj.getParam("name");
+  urlObj.defParam("name", dbName() || remoteDbName);
+  urlObj.defParam("localName", dbName());
+  urlObj.defParam("storekey", `@${dbName()}:data@`);
+  urlObj.protocol("partykit:");
+  return connectionCache.get(urlObj.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
-    const connection = connectionFactory(sthis, fpUrl);
-    connection.connect_X(blockstore);
+    const connection = connectionFactory(sthis, urlObj);
+    connection.connect_X(crdt.blockstore);
     return connection;
   });
 };
