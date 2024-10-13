@@ -1,39 +1,26 @@
-import { fireproof, Database, bs } from "@fireproof/core";
+import { fireproof, Database, bs, ConfigOpts } from "@fireproof/core";
 import { registerPartyKitStoreProtocol } from "./gateway";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { URI } from "@adviser/cement";
 import { smokeDB } from "../../tests/helper";
-
-// has to leave
-interface ExtendedGateway extends bs.Gateway {
-  headerSize: number;
-  subscribe?: (url: URI, callback: (meta: Uint8Array) => void) => Promise<bs.UnsubscribeResult>; // Changed VoidResult to UnsubscribeResult
-}
-
-// has to leave
-interface ExtendedStore {
-  gateway: ExtendedGateway;
-  _url: URI;
-  name: string;
-}
+import { mockSuperThis } from "@fireproof/core/tests/helpers";
+import { Future } from "@adviser/cement";
 
 describe("PartyKitGateway", () => {
   let db: Database;
   let unregister: () => void;
+  const sthis = mockSuperThis();
 
   beforeAll(() => {
     unregister = registerPartyKitStoreProtocol("partykit:");
   });
 
   beforeEach(() => {
-    const config = {
-      store: {
-        stores: {
-          base: process.env.FP_STORAGE_URL || "partykit://localhost:1999",
-        },
+    const config: ConfigOpts = {
+      storeUrls: {
+        base: process.env.FP_STORAGE_URL || "partykit://localhost:1999",
       },
     };
-    const name = "partykit-test-db-" + Math.random().toString(36).substring(7);
+    const name = "partykit-test-db-" + sthis.nextId();
     db = fireproof(name, config);
   });
 
@@ -52,41 +39,25 @@ describe("PartyKitGateway", () => {
     expect(process.env.FP_STORAGE_URL).toMatch(/partykit:\/\/localhost:1999/);
   });
 
-  it("should have loader and options", () => {
-    const loader = db.blockstore.loader;
-    expect(loader).toBeDefined();
-    if (!loader) {
-      throw new Error("Loader is not defined");
-    }
-    expect(loader.ebOpts).toBeDefined();
-    expect(loader.ebOpts.store).toBeDefined();
-    expect(loader.ebOpts.store.stores).toBeDefined();
-    if (!loader.ebOpts.store.stores) {
-      throw new Error("Loader stores is not defined");
-    }
-    if (!loader.ebOpts.store.stores.base) {
-      throw new Error("Loader stores.base is not defined");
-    }
-
-    const baseUrl = new URL(loader.ebOpts.store.stores.base.toString());
-    expect(baseUrl.protocol).toBe("partykit:");
-    expect(baseUrl.hostname).toBe("localhost");
-    expect(baseUrl.port || "").toBe("1999");
+  it("should have loader and options", async () => {
+    const store = (await db.crdt.blockstore.loader?.carStore()) as bs.BaseStore;
+    const url = store.url();
+    expect(url.protocol).toBe("partykit:");
+    expect(url.hostname).toBe("localhost");
+    expect(url.port).toBe("1999");
   });
 
   it("should initialize and perform basic operations", async () => {
     const docs = await smokeDB(db);
-
-    // // get a new db instance
-    // db = new Database(name, config);
-
     // Test update operation
-    const updateDoc = await db.get<{ content: string }>(docs[0]._id);
-    updateDoc.content = "Updated content";
-    const updateResult = await db.put(updateDoc);
+    const updateDoc = await db.get<{ readonly content: string }>(docs[0]._id);
+    const updateResult = await db.put({
+      ...updateDoc,
+      content: "Updated content",
+    });
     expect(updateResult.id).toBe(updateDoc._id);
 
-    const updatedDoc = await db.get<{ content: string }>(updateDoc._id);
+    const updatedDoc = await db.get<{ readonly content: string }>(updateDoc._id);
     expect(updatedDoc.content).toBe("Updated content");
 
     // Test delete operation
@@ -105,32 +76,27 @@ describe("PartyKitGateway", () => {
 
   it("should subscribe to changes", async () => {
     // Extract stores from the loader
-    const metaStore = (await db.blockstore.loader?.metaStore()) as unknown as ExtendedStore;
+    const metaStore = (await db.crdt.blockstore.loader?.metaStore()) as bs.BaseStore;
 
-    const metaGateway = metaStore?.gateway;
+    const metaGateway = metaStore.realGateway;
 
-    const metaUrl = await metaGateway?.buildUrl(metaStore?._url, "main");
-    await metaGateway?.start(metaStore?._url);
-
-    let didCall = false;
+    const metaUrl = await metaGateway.buildUrl(metaStore.url(), "main");
+    await metaGateway.start(metaStore.url());
 
     if (metaGateway.subscribe) {
-      let resolve: () => void;
-      const p = new Promise<void>((r) => {
-        resolve = r;
-      });
-
-      const metaSubscribeResult = await metaGateway?.subscribe?.(metaUrl?.Ok(), async (data: Uint8Array) => {
-        const decodedData = new TextDecoder().decode(data);
+      const future = new Future<void>();
+      let didCall = false;
+      const metaSubscribeResult = await metaGateway.subscribe?.(metaUrl.Ok(), async (data: Uint8Array) => {
+        const decodedData = sthis.txt.decode(data);
         expect(decodedData).toContain("parents");
         didCall = true;
-        resolve();
+        future.resolve();
       });
-      expect(metaSubscribeResult?.Ok()).toBeTruthy();
+      expect(metaSubscribeResult.Ok()).toBeTruthy();
       const ok = await db.put({ _id: "key1", hello: "world1" });
       expect(ok).toBeTruthy();
       expect(ok.id).toBe("key1");
-      await p;
+      await future.asPromise();
       expect(didCall).toBeTruthy();
     }
   });

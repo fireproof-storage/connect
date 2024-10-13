@@ -20,9 +20,9 @@ import { Database } from "@fireproof/core";
 
 export const connect = {
   s3: async (db: Database, url?: CoerceURI) => {
-    const { sthis, blockstore } = db;
+    const { sthis, crdt } = db;
     const connection = await connectionFactory(sthis, url);
-    await connection.connect_X(blockstore);
+    await connection.connect_X(crdt.blockstore);
     // return connection;
   },
 };

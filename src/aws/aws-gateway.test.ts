@@ -1,7 +1,8 @@
-import { fireproof, Database } from "@fireproof/core";
+import { fireproof, Database, ConfigOpts } from "@fireproof/core";
 import { registerAWSStoreProtocol } from "./gateway";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { smokeDB } from "../../tests/helper";
+import { URI } from "@adviser/cement";
 
 describe("AWSGateway", () => {
   let db: Database;
@@ -18,25 +19,23 @@ describe("AWSGateway", () => {
   it("env setup is ok", () => {
     expect(process.env.FP_STORAGE_URL).toMatch(/aws:\/\/aws/);
 
-    const url = new URL(process.env.FP_STORAGE_URL || "");
-    expect(url.searchParams.get("dataUrl")).toBeTruthy();
-    expect(url.searchParams.get("uploadUrl")).toBeTruthy();
-    expect(url.searchParams.get("webSocketUrl")).toBeTruthy();
+    const url = URI.from(process.env.FP_STORAGE_URL || "");
+    expect(url.getParam("dataUrl")).toBeTruthy();
+    expect(url.getParam("uploadUrl")).toBeTruthy();
+    expect(url.getParam("webSocketUrl")).toBeTruthy();
   });
 
   it("should initialize and perform basic operations", async () => {
     // Initialize the database with AWS configuration
-    const config = {
-      store: {
-        stores: {
-          base: process.env.FP_STORAGE_URL || "aws://aws",
-        },
+    const config: ConfigOpts = {
+      storeUrls: {
+        base: process.env.FP_STORAGE_URL || "aws://aws",
       },
     };
     // console.log("Fireproof config:", JSON.stringify(config, null, 2));
     db = fireproof("aws-test-db" + Math.random().toString(36).substring(7), config);
 
-    const loader = db.blockstore.loader;
+    const loader = db.crdt.blockstore.loader;
     // Assert that loader has ebOpts.store.stores
     expect(loader).toBeDefined();
     if (!loader) {
@@ -55,14 +54,14 @@ describe("AWSGateway", () => {
     // console.log("Loader stores:", loader.ebOpts.store.stores);
 
     // Test base URL configuration
-    const baseUrl = new URL(loader.ebOpts.store.stores.base.toString());
+    const baseUrl = URI.from(loader.ebOpts.store.stores.base.toString());
     expect(baseUrl.protocol).toBe("aws:");
     expect(baseUrl.hostname).toBe("aws");
 
     // Check for required parameters in the base URL
-    expect(baseUrl.searchParams.get("dataUrl")).toBeTruthy();
-    expect(baseUrl.searchParams.get("uploadUrl")).toBeTruthy();
-    expect(baseUrl.searchParams.get("webSocketUrl")).toBeTruthy();
+    expect(baseUrl.getParam("dataUrl")).toBeTruthy();
+    expect(baseUrl.getParam("uploadUrl")).toBeTruthy();
+    expect(baseUrl.getParam("webSocketUrl")).toBeTruthy();
 
     const docs = await smokeDB(db);
 

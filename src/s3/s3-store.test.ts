@@ -12,10 +12,8 @@ describe("store-register", () => {
   it("should store and retrieve data", async () => {
     const unreg = registerS3StoreProtocol("s3test:");
     const db = fireproof("my-database", {
-      store: {
-        stores: {
-          base: process.env.FP_STORAGE_URL,
-        },
+      storeUrls: {
+        base: process.env.FP_STORAGE_URL,
       },
     });
     await smokeDB(db);

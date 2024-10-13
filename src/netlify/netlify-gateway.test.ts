@@ -1,4 +1,4 @@
-import { fireproof, Database } from "@fireproof/core";
+import { fireproof, Database, ConfigOpts } from "@fireproof/core";
 import { registerNetlifyStoreProtocol } from "./gateway";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { URI } from "@adviser/cement";
@@ -21,16 +21,14 @@ describe("NetlifyGateway", () => {
   });
 
   it("should initialize and perform basic operations", async () => {
-    const config = {
-      store: {
-        stores: {
-          base: process.env.FP_STORAGE_URL || "netlify://localhost:8888",
-        },
+    const config: ConfigOpts = {
+      storeUrls: {
+        base: process.env.FP_STORAGE_URL || "netlify://localhost:8888",
       },
     };
     db = fireproof("netlify-test-db", config);
 
-    const loader = db.blockstore.loader;
+    const loader = db.crdt.blockstore.loader;
     expect(loader).toBeDefined();
     if (!loader) {
       throw new Error("Loader is not defined");

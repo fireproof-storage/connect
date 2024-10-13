@@ -246,7 +246,10 @@ export function registerNetlifyStoreProtocol(protocol = "netlify:", overrideBase
     URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
       protocol,
-      overrideBaseURL,
+      defaultURI: () => {
+        const url = URI.from(overrideBaseURL || "netlify://localhost:8888");
+        return url;
+      },
       gateway: async (sthis): Promise<bs.Gateway> => {
         return new NetlifyGateway(sthis);
       },

@@ -142,7 +142,7 @@ importers:
         specifier: ^4.3.2
         version: 4.3.2(typescript@5.6.3)(vite@5.4.8(@types/node@22.7.5))
       vitest:
-        specifier: ^2.0.5
+        specifier: ^2.1.2
         version: 2.1.2(@types/node@22.7.5)
       wrangler:
         specifier: ^3.65.1
@@ -858,7 +858,7 @@ packages:
     engines: {node: '>=14'}
 
   '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz':
-    resolution: {integrity: sha512-iYLnSmmfb9NmWdZavDqm07Q/rhR6nSy8XyR6LeIN+BuMfQ/7FM1OimJsWv5EuUAcV6V1+dM/66p5AMO4CIG2ZA==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
+    resolution: {integrity: sha512-KHb4412O/sbQlAZj2klJ72BIS7wS1llbRwcrjPAG4a4b7Rvzi7C1kCp6Fx4mt4YbobaBIfmwIQKcwPj/CVfSJQ==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
     version: 0.0.0-smoke
     peerDependencies:
       react: '>=18.0.0'
@@ -2575,6 +2575,10 @@ packages:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
 
+  p-map@7.0.2:
+    resolution: {integrity: sha512-z4cYYMMdKHzw4O5UkWJImbZynVIo0lSGTXc7bzB1e/rrDqkgGUNysK/o4bTr+0+xKvvLoTyGqYC4Fgljy9qe1Q==}
+    engines: {node: '>=18'}
+
   p-queue@8.0.1:
     resolution: {integrity: sha512-NXzu9aQJTAzbBqOt2hwsR63ea7yvxJc0PwN/zobNAudYfb1B7R08SzB4TsLeSbUCuG467NhnoT0oO6w1qRO+BA==}
     engines: {node: '>=18'}
@@ -4150,6 +4154,8 @@ snapshots:
       memfs: 4.13.0
       multiformats: 13.3.0
       p-limit: 6.1.0
+      p-map: 7.0.2
+      p-retry: 6.2.0
       prolly-trees: 1.0.4
       react: 18.3.1
     transitivePeerDependencies:
@@ -6234,6 +6240,8 @@ snapshots:
   p-locate@5.0.0:
     dependencies:
       p-limit: 3.1.0
+
+  p-map@7.0.2: {}
 
   p-queue@8.0.1:
     dependencies:
