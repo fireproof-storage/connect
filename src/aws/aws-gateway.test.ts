@@ -7,7 +7,7 @@ import { mockSuperThis } from "@fireproof/core/tests/helpers";
 
 describe("AWSGateway", () => {
   let unregister: () => void;
-  const sthis = mockSuperThis()
+  const sthis = mockSuperThis();
 
   beforeAll(() => {
     unregister = registerAWSStoreProtocol("aws:");
@@ -35,7 +35,7 @@ describe("AWSGateway", () => {
     };
     const db = fireproof("aws-test-db" + sthis.nextId(), config);
 
-    const store = await db.crdt.blockstore.loader?.carStore() as bs.DataStore
+    const store = (await db.crdt.blockstore.loader?.carStore()) as bs.DataStore;
 
     // Test base URL configuration
     const baseUrl = store.url();

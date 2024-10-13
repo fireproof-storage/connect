@@ -25,7 +25,7 @@ describe("NetlifyGateway", () => {
     };
     const db = fireproof("netlify-test-db", config);
 
-    const store = await db.crdt.blockstore.loader?.carStore() as bs.DataStore;
+    const store = (await db.crdt.blockstore.loader?.carStore()) as bs.DataStore;
 
     const baseUrl = store.url();
     expect(baseUrl.protocol).toBe("netlify:");
