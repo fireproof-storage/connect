@@ -100,16 +100,12 @@
     "assert": "^2.1.0",
     "better-sqlite3": "^11.2.1",
     "cborg": "^4.2.3",
-    "events": "^3.3.0",
-    "idb": "^8.0.0",
     "multiformats": "^13.2.2",
     "node-sqlite3-wasm": "^0.8.18",
     "partykit": "^0.0.110",
     "partysocket": "^1.0.2",
     "path": "^0.12.7",
-    "readable-stream": "^4.5.2",
     "util": "^0.12.5",
-    "ws": "^8.18.0",
-    "uuidv7": "^1.0.2"
+    "ws": "^8.18.0"
   }
 }
