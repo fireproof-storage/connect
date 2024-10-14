@@ -51,7 +51,7 @@ export const connect: ConnectFunction = (
 };
 
 const getOrCreateRemoteName = async (dbName: string) => {
-  const petnames = fireproof('petname.mappings');
+  const petnames = fireproof("petname.mappings");
 
   try {
     const doc = await petnames.get<{ remoteName: string; firstConnect: boolean }>(dbName);
@@ -70,18 +70,15 @@ export const cloudConnect = (db: Database) => {
   }
 
   getOrCreateRemoteName(db.name).then(async ({ remoteName, firstConnect }) => {
-    if (firstConnect && typeof window !== 'undefined' && window.location.href.indexOf('localhost:3000') === -1) {
+    if (firstConnect && typeof window !== "undefined" && window.location.href.indexOf("localhost:3000") === -1) {
       // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
-      const petnames = fireproof('petname.mappings');
+      const petnames = fireproof("petname.mappings");
       await petnames.put({ _id: dbName, remoteName, firstConnect: false });
 
-      const connectUrl = new URL('http://localhost:3000/fp/databases/connect');
-      connectUrl.searchParams.set('localName', dbName);
-      connectUrl.searchParams.set('remoteName', remoteName);
-      window.open(connectUrl.toString(), '_blank');
-
-      
-
+      const connectUrl = new URL("http://localhost:3000/fp/databases/connect");
+      connectUrl.searchParams.set("localName", dbName);
+      connectUrl.searchParams.set("remoteName", remoteName);
+      window.open(connectUrl.toString(), "_blank");
     }
     return connect(db, remoteName);
   });
