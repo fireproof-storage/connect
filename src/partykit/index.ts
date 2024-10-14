@@ -1,7 +1,7 @@
 import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
-import { bs, Database } from "@fireproof/core";
 import { registerPartyKitStoreProtocol } from "./gateway";
 import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
+import { bs, Database, fireproof } from "@fireproof/core";
 
 // Usage:
 //
@@ -47,5 +47,42 @@ export const connect: ConnectFunction = (
     const connection = connectionFactory(sthis, fpUrl);
     connection.connect_X(blockstore);
     return connection;
+  });
+};
+
+const getOrCreateRemoteName = async (dbName: string) => {
+  const petnames = fireproof('petname.mappings');
+
+  try {
+    const doc = await petnames.get<{ remoteName: string; firstConnect: boolean }>(dbName);
+    return { remoteName: doc.remoteName, firstConnect: false };
+  } catch (error) {
+    const remoteName = crypto.randomUUID();
+    await petnames.put({ _id: dbName, remoteName, firstConnect: true });
+    return { remoteName, firstConnect: true };
+  }
+};
+
+export const cloudConnect = (db: Database) => {
+  const dbName = db.name;
+  if (!dbName) {
+    throw new Error("Database name is required for cloud connection");
+  }
+
+  getOrCreateRemoteName(db.name).then(async ({ remoteName, firstConnect }) => {
+    if (firstConnect && typeof window !== 'undefined' && window.location.href.indexOf('localhost:3000') === -1) {
+      // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
+      const petnames = fireproof('petname.mappings');
+      await petnames.put({ _id: dbName, remoteName, firstConnect: false });
+
+      const connectUrl = new URL('http://localhost:3000/fp/databases/connect');
+      connectUrl.searchParams.set('localName', dbName);
+      connectUrl.searchParams.set('remoteName', remoteName);
+      window.open(connectUrl.toString(), '_blank');
+
+      
+
+    }
+    return connect(db, remoteName);
   });
 };
