@@ -1,4 +1,4 @@
-import { BuildURI, KeyedResolvOnce, runtimeFn, URI } from "@adviser/cement";
+import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
 import { bs, Database, fireproof } from "@fireproof/core";
 import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
 import { registerPartyKitStoreProtocol } from "./gateway";
@@ -56,30 +56,34 @@ async function getOrCreateRemoteName(dbName: string) {
   try {
     const doc = await petnames.get<{ remoteName: string; firstConnect: boolean }>(dbName);
     return { remoteName: doc.remoteName, firstConnect: false };
-  } catch (error) {
+  } catch (_error) {
     const remoteName = petnames.sthis.nextId().str;
     await petnames.put({ _id: dbName, remoteName, firstConnect: true });
-    return { remoteName, firstConnect: true };
+    return { remoteName };
   }
 }
 
-export function cloudConnect(db: Database, dashboardURL = "http://localhost:3000") {
+export function cloudConnect(
+  db: Database,
+  dashboardURI = BuildURI.from("https://dashboard.fireproof.storage/"),
+  partykitURL = '"http://localhost:1999?protocol=ws'
+) {
   const dbName = db.name;
   if (!dbName) {
     throw new Error("Database name is required for cloud connection");
   }
 
-  getOrCreateRemoteName(db.name).then(async ({ remoteName, firstConnect }) => {
-    if (firstConnect && typeof window !== "undefined" && window.location.href.indexOf("localhost:3000") === -1) {
+  getOrCreateRemoteName(dbName).then(async ({ remoteName, firstConnect = true }) => {
+    if (firstConnect && typeof window !== "undefined" && window.location.href.indexOf(dashboardURI.toString()) === -1) {
       // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
       const petnames = fireproof("petname.mappings");
-      await petnames.put({ _id: dbName, remoteName, firstConnect: false });
+      await petnames.put({ id: dbName, remoteName, firstConnect: false });
 
-      const connectUrl = URI.from(`${dashboardURL}/fp/databases/connect`).build();
-      connectUrl.setParam("localName", dbName);
-      connectUrl.setParam("remoteName", remoteName);
-      window.open(connectUrl.toString(), "_blank");
+      const connectURI = dashboardURI.pathname("/fp/databases/connect");
+      connectURI.setParam("localName", dbName);
+      connectURI.setParam("remoteName", remoteName);
+      window.open(connectURI.toString(), "_blank");
     }
-    return connect(db, remoteName);
+    return connect(db, remoteName, partykitURL);
   });
 }
