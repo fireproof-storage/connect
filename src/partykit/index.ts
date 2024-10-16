@@ -66,7 +66,7 @@ async function getOrCreateRemoteName(dbName: string) {
 export function cloudConnect(
   db: Database,
   dashboardURI = BuildURI.from("https://dashboard.fireproof.storage/"),
-  partykitURL = "http://localhost:1999?protocol=ws"
+  partykitURL = "https://fireproof.necrodome.partykit.dev"
 ) {
   const dbName = db.name;
   if (!dbName) {
