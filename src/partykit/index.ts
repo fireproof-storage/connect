@@ -1,7 +1,7 @@
+import { BuildURI, KeyedResolvOnce, runtimeFn, URI } from "@adviser/cement";
+import { bs, Database, fireproof } from "@fireproof/core";
 import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
 import { registerPartyKitStoreProtocol } from "./gateway";
-import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
-import { bs, Database, fireproof } from "@fireproof/core";
 
 // Usage:
 //
@@ -50,20 +50,20 @@ export const connect: ConnectFunction = (
   });
 };
 
-const getOrCreateRemoteName = async (dbName: string) => {
+async function getOrCreateRemoteName(dbName: string) {
   const petnames = fireproof("petname.mappings");
 
   try {
     const doc = await petnames.get<{ remoteName: string; firstConnect: boolean }>(dbName);
     return { remoteName: doc.remoteName, firstConnect: false };
   } catch (error) {
-    const remoteName = crypto.randomUUID();
+    const remoteName = petnames.sthis.nextId().str;
     await petnames.put({ _id: dbName, remoteName, firstConnect: true });
     return { remoteName, firstConnect: true };
   }
-};
+}
 
-export const cloudConnect = (db: Database) => {
+export function cloudConnect(db: Database, dashboardURL = "http://localhost:3000") {
   const dbName = db.name;
   if (!dbName) {
     throw new Error("Database name is required for cloud connection");
@@ -75,11 +75,11 @@ export const cloudConnect = (db: Database) => {
       const petnames = fireproof("petname.mappings");
       await petnames.put({ _id: dbName, remoteName, firstConnect: false });
 
-      const connectUrl = new URL("http://localhost:3000/fp/databases/connect");
-      connectUrl.searchParams.set("localName", dbName);
-      connectUrl.searchParams.set("remoteName", remoteName);
+      const connectUrl = URI.from(`${dashboardURL}/fp/databases/connect`).build();
+      connectUrl.setParam("localName", dbName);
+      connectUrl.setParam("remoteName", remoteName);
       window.open(connectUrl.toString(), "_blank");
     }
     return connect(db, remoteName);
   });
-};
+}
