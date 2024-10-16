@@ -66,7 +66,7 @@ async function getOrCreateRemoteName(dbName: string) {
 export function cloudConnect(
   db: Database,
   dashboardURI = BuildURI.from("https://dashboard.fireproof.storage/"),
-  partykitURL = 'http://localhost:1999?protocol=ws'
+  partykitURL = "http://localhost:1999?protocol=ws"
 ) {
   const dbName = db.name;
   if (!dbName) {
@@ -79,7 +79,7 @@ export function cloudConnect(
       const petnames = fireproof("petname.mappings");
       await petnames.put({ id: dbName, remoteName, firstConnect: false });
 
-      const connectURI = dashboardURI.pathname("/fp/databases/connect");
+      const connectURI = BuildURI.from(`${dashboardURI}/fp/databases/connect`);
       connectURI.setParam("localName", dbName);
       connectURI.setParam("remoteName", remoteName);
       window.open(connectURI.toString(), "_blank");
