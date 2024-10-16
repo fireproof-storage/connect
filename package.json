@@ -64,7 +64,6 @@
   "license": "Apache-2.0 OR MIT",
   "devDependencies": {
     "@eslint/js": "^9.6.0",
-    "@ipld/dag-cbor": "^9.2.1",
     "@smithy/types": "^3.3.0",
     "@types/better-sqlite3": "^7.6.11",
     "@types/eslint__js": "^8.42.3",
@@ -101,6 +100,7 @@
     "@adviser/cement": "^0.2.31",
     "@aws-sdk/client-s3": "^3.614.0",
     "@fireproof/core": "0.19.11-dev-dryrun4",
+    "@ipld/dag-cbor": "^9.2.1",
     "@netlify/blobs": "^7.4.0",
     "@ucanto/client": "^9.0.1",
     "@ucanto/core": "^10.0.1",

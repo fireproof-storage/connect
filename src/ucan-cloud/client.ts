@@ -4,9 +4,9 @@ import { CAR } from "@ucanto/core";
 import { Channel, ConnectionView, Delegation, DID, Link, Principal, Signer } from "@ucanto/interface";
 import { ed25519 } from "@ucanto/principal";
 import { CAR as CARTransport } from "@ucanto/transport";
-import { Block } from "multiformats/block";
+import * as Block from "multiformats/block";
 import { CID } from "multiformats/cid";
-import * as Json from "multiformats/codecs/json";
+import * as CBOR from "@ipld/dag-cbor";
 import * as Raw from "multiformats/codecs/raw";
 import { sha256 } from "multiformats/hashes/sha2";
 
@@ -81,14 +81,18 @@ export async function createClock({ audience }: { audience: Principal }): Promis
 /**
  * Create a clock event.
  */
-export async function createClockEvent({ messageCid }: { messageCid: Link }) {
-  const eventData = { metadata: messageCid.toString() };
+export async function createClockEvent({ metadata }: { metadata: Uint8Array }) {
+  const eventData = { metadata };
   const event = { parents: [], data: eventData };
-  const eventBytes = Json.encode(event);
-  const eventLink = CID.create(1, Json.code, await sha256.digest(eventBytes));
+
+  const block = await Block.encode({
+    value: event,
+    codec: CBOR,
+    hasher: sha256,
+  });
 
   return await CAR.write({
-    roots: [new Block({ cid: eventLink, bytes: eventBytes, value: event })],
+    roots: [block],
   });
 }
 
@@ -111,6 +115,15 @@ export async function getClockHead({
   });
 
   return await invocation.execute(service);
+}
+
+export async function metadataFromClockEvent(carBytes: Uint8Array): Uint8Array {
+  const car = CAR.decode(carBytes);
+  // const link = car.roots[0]
+  // const block = car.blocks.get(link.toString())
+
+  console.log(car.roots);
+  console.log(car.blocks);
 }
 
 /**
@@ -207,19 +220,31 @@ export async function store({
 }: {
   agent: Signer;
   bytes: Uint8Array;
-  cid: CID<unknown, number, number, 1>;
+  cid?: Link;
   server: Principal;
   service: ConnectionView<Service>;
 }) {
-  if (cid === undefined) {
-    const hash = await sha256.digest(bytes);
-    cid = CID.create(1, Raw.code, hash);
-    console.log("✨", cid.toString());
-  }
+  let link: Link;
+  let size: number;
 
-  const car = await CAR.write({
-    roots: [new Block({ cid, bytes: bytes, value: bytes })],
-  });
+  if (cid === undefined) {
+    const block = await Block.encode({
+      value: bytes,
+      codec: Raw,
+      hasher: sha256,
+    });
+
+    const car = await CAR.write({
+      roots: [block],
+    });
+
+    link = car.cid;
+    size = car.bytes.length;
+    bytes = car.bytes;
+  } else {
+    link = cid;
+    size = bytes.length;
+  }
 
   // Invocation
   const resp = await StoreCaps.add
@@ -228,11 +253,14 @@ export async function store({
       audience: server,
       with: agent.did(),
       nb: {
-        link: car.cid,
-        size: car.bytes.length,
+        link,
+        size,
       },
     })
     .execute(service);
+
+  console.log("🚗", link);
+  console.log(resp.out);
 
   if (resp.out.error) throw resp.out.error;
 
@@ -241,13 +269,15 @@ export async function store({
 
   const r2 = await fetch(storeUrl, {
     method: "PUT",
-    body: car.bytes,
+    body: bytes,
   });
+
+  console.log("STORED", r2.ok);
 
   if (!r2.ok) {
     throw new Error(`Failed to store data on Cloudflare R2: ${await r2.text()}`);
   }
 
   // Return
-  return { cid: car.cid };
+  return { cid: link };
 }

@@ -21,7 +21,7 @@ export const add = capability({
      * for this exact CAR file for agent to PUT or POST it. Attempt to write
      * any other content will fail.
      */
-    link: CARLink,
+    link: Link,
     /**
      * Size of the CAR file to be stored. Service will provision write target
      * for this exact size. Attempt to write a larger CAR file will fail.
@@ -69,7 +69,7 @@ export const get = capability({
     /**
      * shard CID to fetch info about.
      */
-    link: CARLink,
+    link: Link,
   }),
   derives: equalLink,
 });

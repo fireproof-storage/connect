@@ -1,4 +1,4 @@
-import { KeyedResolvOnce, Result, URI } from "@adviser/cement";
+import { exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement";
 import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError } from "@fireproof/core";
 import { Delegation, DID } from "@ucanto/core";
 import { ConnectionView, Principal } from "@ucanto/interface";
@@ -6,7 +6,7 @@ import { Absentee } from "@ucanto/principal";
 import * as DidMailto from "@web3-storage/did-mailto";
 import * as W3 from "@web3-storage/w3up-client";
 import { Service as W3Service } from "@web3-storage/w3up-client/types";
-// import * as IDB from "idb-keyval";
+
 import { CID } from "multiformats";
 
 import * as Client from "./client";
@@ -21,12 +21,15 @@ export class UCANGateway implements bs.Gateway {
     email: `${string}@${string}`;
     server: Principal;
     service: ConnectionView<Service>;
+    // stateDb: Fireproof;
     w3: W3.Client;
   };
 
   constructor(sthis: SuperThis) {
     this.sthis = ensureSuperLog(sthis, "UCANGateway");
     this.logger = this.sthis.logger;
+
+    // this.stateDB = fireproof("state-db");
   }
 
   async buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {
@@ -111,25 +114,27 @@ export class UCANGateway implements bs.Gateway {
   }
 
   async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
+    const result = await exception2Result(() => this.#put(url, body));
+    if (result.isErr()) this.logger.Error().Msg(result.Err().message);
+    return result;
+  }
+
+  async #put(url: URI, body: Uint8Array): Promise<void> {
     const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
 
     if (this.inst === undefined) {
-      return Result.Err(new Error("Not started yet"));
+      throw new Error("Not started yet");
     }
 
     const key = url.getParam("key");
     if (!key) {
-      return Result.Err(new Error("Key not found in the URI"));
+      throw new Error("Key not found in the URI");
     }
 
     const name = url.getParam("name");
     if (!name) {
-      return Result.Err(new Error("Name not found in the URI"));
+      throw new Error("Name not found in the URI");
     }
-
-    // console.log("store", store);
-    // console.log("key", key);
-    // console.log("name", name);
 
     switch (store) {
       case "data": {
@@ -146,13 +151,17 @@ export class UCANGateway implements bs.Gateway {
 
       case "meta": {
         console.log("🔮 PUT Meta", key);
-        const cid = CID.parse(key).toV1();
-        const event = await Client.createClockEvent({ messageCid: cid });
+        const bodyWithCrypto = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
+        if (bodyWithCrypto.isErr()) throw bodyWithCrypto.Err();
+        const metadata = bodyWithCrypto.Ok();
 
-        await Client.store({
+        // const cid = CID.parse(key).toV1();
+        const event = await Client.createClockEvent({ metadata });
+
+        const car = await Client.store({
           agent: this.inst.w3.agent.issuer,
           bytes: event.bytes,
-          cid: cid,
+          cid: event.cid,
           server: this.inst.server,
           service: this.inst.service,
         });
@@ -160,31 +169,35 @@ export class UCANGateway implements bs.Gateway {
         const { clock, server, service } = this.inst;
         const agent = await this.agent();
 
-        const advancement = await Client.advanceClock({ agent, clock, event: event.cid, server, service });
-        if (advancement.out.error) return Result.Err(advancement.out.error);
+        const advancement = await Client.advanceClock({ agent, clock, event: car.cid, server, service });
+        if (advancement.out.error) throw advancement.out.error;
 
         break;
       }
     }
-
-    return Result.Ok(undefined);
   }
 
   async get(url: URI): Promise<bs.GetResult> {
+    const result = await exception2Result(() => this.#get(url));
+    if (result.isErr()) this.logger.Error().Msg(result.Err().message);
+    return result;
+  }
+
+  async #get(url: URI): Promise<Uint8Array> {
     const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
 
     if (this.inst === undefined) {
-      return Result.Err(new Error("Not started yet"));
+      throw new Error("Not started yet");
     }
 
     const key = url.getParam("key");
     if (!key) {
-      return Result.Err(new Error("Key not found in the URI"));
+      throw new Error("Key not found in the URI");
     }
 
     let name = url.getParam("name");
     if (!name) {
-      return Result.Err(new Error("Name not found in the URI"));
+      throw new Error("Name not found in the URI");
     }
 
     const index = url.getParam("index");
@@ -206,8 +219,8 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
-        if (!res) return Result.Err(new NotFoundError());
-        return Result.Ok(res);
+        if (!res) throw new NotFoundError();
+        return res;
       }
       case "meta": {
         console.log("🔮 GET Meta", url);
@@ -218,12 +231,12 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
-        if (head.out.error) return Result.Err(head.out.error);
-        if (head.out.ok.head === undefined) return Result.Err(new NotFoundError());
+        if (head.out.error) throw head.out.error;
+        if (head.out.ok.head === undefined) throw new NotFoundError();
 
         const cid = CID.parse(head.out.ok.head).toV1();
 
-        if (cid.code !== 514) return Result.Err(new Error("Expected clock-head CID to be a CAR CID"));
+        if (cid.code !== 514) throw new Error("Expected clock-head CID to be a CAR CID");
 
         const res = await Client.retrieve({
           agent: this.inst.w3.agent.issuer,
@@ -232,12 +245,12 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
-        if (!res) return Result.Err(new NotFoundError());
-        return Result.Ok(res);
+        if (!res) throw new NotFoundError();
+        return Client.metadataFromClockEvent(res);
       }
     }
 
-    return Result.Err(new NotFoundError());
+    throw new NotFoundError();
   }
 
   async delete(_url: URI): Promise<bs.VoidResult> {
