@@ -79,8 +79,7 @@ export function cloudConnect(
       const petnames = fireproof("petname.mappings");
       await petnames.put({ id: dbName, remoteName, firstConnect: false });
 
-      const connectURI = dashboardURI.build().pathname("/fp/databases/connect")
-
+      const connectURI = dashboardURI.build().pathname("/fp/databases/connect");
 
       connectURI.defParam("localName", dbName);
       connectURI.defParam("remoteName", remoteName);
