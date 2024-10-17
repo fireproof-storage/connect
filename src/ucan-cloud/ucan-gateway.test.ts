@@ -1,7 +1,16 @@
 import { URI } from "@adviser/cement";
 import { fireproof, Database } from "@fireproof/core";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { Absentee } from "@ucanto/principal";
+import * as UCANTO from "@ucanto/core";
+import { ConnectionView, Signer } from "@ucanto/principal/ed25519";
+import * as UCAN from "@web3-storage/capabilities/ucan";
+import * as DidMailto from "@web3-storage/did-mailto";
+import * as W3 from "@web3-storage/w3up-client";
+import { Service as W3Service } from "@web3-storage/w3up-client/types";
+import { MemoryDriver } from "@web3-storage/access/drivers/memory";
 
+import * as Client from "./client";
 import { registerUCANStoreProtocol } from "./ucan-gateway";
 
 async function smokeDB(db: Database) {
@@ -20,6 +29,44 @@ async function smokeDB(db: Database) {
   return docs.rows.map((row) => row.value);
 }
 
+async function authorizeW3({ email, host }: { email: `${string}@${string}`; host: string }) {
+  const serverPrivateKey =
+    "MgCZc476L5pn6Kiw5YdLHEy5CHZgw5gRWxNj/UcLRQoxaHu0BREgGEsI7N8cQxjO6fdgA/lEAphNmR/um1DEfmBTBByY=";
+  const signer = Signer.parse(serverPrivateKey);
+  const account = Absentee.from({ id: DidMailto.fromEmail(email) });
+
+  const hostURI = URI.from(host);
+  if (!hostURI) throw new Error("`hostURI` is not a valid URI");
+
+  const delegation = await UCANTO.delegate({
+    issuer: account,
+    audience: signer,
+    capabilities: [{ can: "*", with: "ucan:*" }],
+    expiration: Infinity,
+  });
+
+  const attestation = await UCAN.attest.delegate({
+    issuer: signer,
+    audience: signer,
+    with: signer.did(),
+    nb: { proof: delegation.cid },
+    expiration: Infinity,
+  });
+
+  const service = Client.service({ host: hostURI, id: signer });
+  const w3Service = service as unknown as ConnectionView<W3Service>;
+
+  const w3 = await W3.create({
+    serviceConf: {
+      access: w3Service,
+      filecoin: w3Service,
+      upload: w3Service,
+    },
+  });
+
+  await w3.agent.addProofs([delegation, attestation]);
+}
+
 describe("UCANGateway", () => {
   let db: Database;
   let unregister: () => void;
@@ -33,9 +80,14 @@ describe("UCANGateway", () => {
   });
 
   it("should initialize and perform basic operations", async () => {
-    // Initialize the database with UCAN configuration
     const uri = URI.from(process.env.FP_STORAGE_URL);
-    const url = `ucan://${uri.host}?email=example@fireproof.storage&serverHost=${uri.protocol + uri.host}`;
+    const host = uri.protocol + uri.host;
+    const email = "steven+3@fireproof.storage";
+
+    await authorizeW3({ email, host });
+
+    // Initialize the database with UCAN configuration
+    const url = `ucan://${uri.host}?email=${encodeURIComponent(email)}&serverHost=${host}`;
 
     const config = {
       store: {

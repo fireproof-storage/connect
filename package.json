@@ -70,6 +70,7 @@
     "@types/node": "^22.5.4",
     "@types/ws": "^8.5.12",
     "@typescript-eslint/typescript-estree": "^8.4.0",
+    "@web3-storage/access": "^20.0.1",
     "esbuild": "^0.23.1",
     "esbuild-plugin-polyfill-node": "^0.3.0",
     "esbuild-plugin-replace": "^1.4.0",
@@ -126,7 +127,7 @@
     "path": "^0.12.7",
     "readable-stream": "^4.5.2",
     "util": "^0.12.5",
-    "ws": "^8.18.0",
-    "uuidv7": "^1.0.2"
+    "uuidv7": "^1.0.2",
+    "ws": "^8.18.0"
   }
 }

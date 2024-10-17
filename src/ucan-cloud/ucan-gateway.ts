@@ -21,15 +21,12 @@ export class UCANGateway implements bs.Gateway {
     email: `${string}@${string}`;
     server: Principal;
     service: ConnectionView<Service>;
-    // stateDb: Fireproof;
     w3: W3.Client;
   };
 
   constructor(sthis: SuperThis) {
     this.sthis = ensureSuperLog(sthis, "UCANGateway");
     this.logger = this.sthis.logger;
-
-    // this.stateDB = fireproof("state-db");
   }
 
   async buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {
@@ -37,6 +34,12 @@ export class UCANGateway implements bs.Gateway {
   }
 
   async start(baseUrl: URI): Promise<Result<URI>> {
+    const result = await exception2Result(() => this.#start(baseUrl));
+    if (result.isErr()) this.logger.Error().Msg(result.Err().message);
+    return result;
+  }
+
+  async #start(baseUrl: URI): Promise<URI> {
     const dbName = baseUrl.getParam("name");
     const emailParam = baseUrl.getParam("email");
 
@@ -99,9 +102,7 @@ export class UCANGateway implements bs.Gateway {
     this.inst = { clock, email, server, service, w3 };
 
     // Start URI
-    const ret = baseUrl.build().defParam("version", "v0.1-ucan").URI();
-
-    return Result.Ok(ret);
+    return baseUrl.build().defParam("version", "v0.1-ucan").URI();
   }
 
   async close(): Promise<bs.VoidResult> {
@@ -114,6 +115,7 @@ export class UCANGateway implements bs.Gateway {
   }
 
   async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
+    console.log("🥘 PUT", url);
     const result = await exception2Result(() => this.#put(url, body));
     if (result.isErr()) this.logger.Error().Msg(result.Err().message);
     return result;
@@ -138,7 +140,6 @@ export class UCANGateway implements bs.Gateway {
 
     switch (store) {
       case "data": {
-        console.log("🥘 PUT Data", key);
         await Client.store({
           agent: this.inst.w3.agent.issuer,
           bytes: body,
@@ -150,7 +151,6 @@ export class UCANGateway implements bs.Gateway {
       }
 
       case "meta": {
-        console.log("🔮 PUT Meta", key);
         const bodyWithCrypto = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
         if (bodyWithCrypto.isErr()) throw bodyWithCrypto.Err();
         const metadata = bodyWithCrypto.Ok();
@@ -178,6 +178,7 @@ export class UCANGateway implements bs.Gateway {
   }
 
   async get(url: URI): Promise<bs.GetResult> {
+    console.log("🔮 GET", url);
     const result = await exception2Result(() => this.#get(url));
     if (result.isErr()) this.logger.Error().Msg(result.Err().message);
     return result;
@@ -209,7 +210,6 @@ export class UCANGateway implements bs.Gateway {
 
     switch (store) {
       case "data": {
-        console.log("🥘 GET Data", url);
         const cid = CID.parse(key).toV1();
 
         const res = await Client.retrieve({
@@ -223,7 +223,6 @@ export class UCANGateway implements bs.Gateway {
         return res;
       }
       case "meta": {
-        console.log("🔮 GET Meta", url);
         const head = await Client.getClockHead({
           agent: await this.agent(),
           clock: this.inst.clock,
@@ -264,7 +263,6 @@ export class UCANGateway implements bs.Gateway {
 
   /**
    * Produce an agent.
-   *
    */
   async agent(): Promise<Client.Agent> {
     if (this.inst === undefined) {
