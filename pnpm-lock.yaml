@@ -858,7 +858,7 @@ packages:
     engines: {node: '>=14'}
 
   '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz':
-    resolution: {integrity: sha512-iYLnSmmfb9NmWdZavDqm07Q/rhR6nSy8XyR6LeIN+BuMfQ/7FM1OimJsWv5EuUAcV6V1+dM/66p5AMO4CIG2ZA==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
+    resolution: {integrity: sha512-7v953pqOnXwG3t14yp8YlvCTAiDQuwBzE0kXwG9FrL5fOq7nHthEVoGjxwqlo1KaZQT3R/GNZg9ACuVzU0I3fw==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
     version: 0.0.0-smoke
     peerDependencies:
       react: '>=18.0.0'
@@ -2364,8 +2364,8 @@ packages:
   magic-string@0.30.12:
     resolution: {integrity: sha512-Ea8I3sQMVXr8JhN4z+H/d8zwo+tYDgHE9+5G4Wnrwhs0gaK9fXTKx0Tw5Xwsd/bCPTTZNRAdpyzvoeORe9LYpw==}
 
-  memfs@4.13.0:
-    resolution: {integrity: sha512-dIs5KGy24fbdDhIAg0RxXpFqQp3RwL6wgSMRF9OSuphL/Uc9a4u2/SDJKPLj/zUgtOGKuHrRMrj563+IErj4Cg==}
+  memfs@4.14.0:
+    resolution: {integrity: sha512-JUeY0F/fQZgIod31Ja1eJgiSxLn7BfQlCnqhwXFBzFHEw63OdLK7VJUJ7bnzNsWgCyoUP5tEp1VRY8rDaYzqOA==}
     engines: {node: '>= 4.0.0'}
 
   memoizee@0.4.17:
@@ -4151,7 +4151,7 @@ snapshots:
       charwise: 3.0.1
       idb: 8.0.0
       ipfs-unixfs-exporter: 13.6.1
-      memfs: 4.13.0
+      memfs: 4.14.0
       multiformats: 13.3.0
       p-limit: 6.1.0
       p-map: 7.0.2
@@ -4273,7 +4273,7 @@ snapshots:
       multiformats: 13.3.0
       murmurhash3js-revisited: 3.0.0
 
-  '@netlify/blobs@7.4.0': {}
+  '@netlify/blobs@8.1.0': {}
 
   '@noble/curves@1.6.0':
     dependencies:
@@ -6028,7 +6028,7 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  memfs@4.13.0:
+  memfs@4.14.0:
     dependencies:
       '@jsonjoy.com/json-pack': 1.1.0(tslib@2.7.0)
       '@jsonjoy.com/util': 1.5.0(tslib@2.7.0)

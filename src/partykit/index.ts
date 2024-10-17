@@ -1,7 +1,7 @@
+import { BuildURI, CoerceURI, KeyedResolvOnce, runtimeFn, URI } from "@adviser/cement";
+import { bs, Database, fireproof } from "@fireproof/core";
 import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
-import { bs, Database } from "@fireproof/core";
 import { registerPartyKitStoreProtocol } from "./gateway";
-import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
 
 // Usage:
 //
@@ -49,3 +49,42 @@ export const connect: ConnectFunction = (
     return connection;
   });
 };
+
+async function getOrCreateRemoteName(dbName: string) {
+  const petnames = fireproof("petname.mappings");
+
+  try {
+    const doc = await petnames.get<{ remoteName: string; firstConnect: boolean }>(dbName);
+    return { remoteName: doc.remoteName, firstConnect: false };
+  } catch (_error) {
+    const remoteName = petnames.sthis.nextId().str;
+    await petnames.put({ _id: dbName, remoteName, firstConnect: true });
+    return { remoteName };
+  }
+}
+
+export function cloudConnect(
+  db: Database,
+  dashboardURI = URI.from("https://dashboard.fireproof.storage/"),
+  partykitURL: CoerceURI = "https://fireproof-cloud.jchris.partykit.dev/"
+) {
+  const dbName = db.name;
+  if (!dbName) {
+    throw new Error("Database name is required for cloud connection");
+  }
+
+  getOrCreateRemoteName(dbName).then(async ({ remoteName, firstConnect = true }) => {
+    if (firstConnect && runtimeFn().isBrowser && window.location.href.indexOf(dashboardURI.toString()) === -1) {
+      // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
+      const petnames = fireproof("petname.mappings");
+      await petnames.put({ id: dbName, remoteName, firstConnect: false });
+
+      const connectURI = dashboardURI.build().pathname("/fp/databases/connect");
+
+      connectURI.defParam("localName", dbName);
+      connectURI.defParam("remoteName", remoteName);
+      window.open(connectURI.toString(), "_blank");
+    }
+    return connect(db, remoteName, URI.from(partykitURL).toString());
+  });
+}
