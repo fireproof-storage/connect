@@ -1,4 +1,4 @@
-import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
+import { BuildURI, CoerceURI, KeyedResolvOnce, runtimeFn, URI } from "@adviser/cement";
 import { bs, Database, fireproof } from "@fireproof/core";
 import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
 import { registerPartyKitStoreProtocol } from "./gateway";
@@ -65,8 +65,8 @@ async function getOrCreateRemoteName(dbName: string) {
 
 export function cloudConnect(
   db: Database,
-  dashboardURI = BuildURI.from("https://dashboard.fireproof.storage/"),
-  partykitURL = "https://fireproof-cloud.jchris.partykit.dev/"
+  dashboardURI = URI.from("https://dashboard.fireproof.storage/"),
+  partykitURL: CoerceURI = "https://fireproof-cloud.jchris.partykit.dev/"
 ) {
   const dbName = db.name;
   if (!dbName) {
@@ -74,16 +74,18 @@ export function cloudConnect(
   }
 
   getOrCreateRemoteName(dbName).then(async ({ remoteName, firstConnect = true }) => {
-    if (firstConnect && typeof window !== "undefined" && window.location.href.indexOf(dashboardURI.toString()) === -1) {
+    if (firstConnect && runtimeFn().isBrowser && window.location.href.indexOf(dashboardURI.toString()) === -1) {
       // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
       const petnames = fireproof("petname.mappings");
       await petnames.put({ id: dbName, remoteName, firstConnect: false });
 
-      const connectURI = BuildURI.from(`${dashboardURI}/fp/databases/connect`);
-      connectURI.setParam("localName", dbName);
-      connectURI.setParam("remoteName", remoteName);
+      const connectURI = dashboardURI.build().pathname("/fp/databases/connect")
+
+
+      connectURI.defParam("localName", dbName);
+      connectURI.defParam("remoteName", remoteName);
       window.open(connectURI.toString(), "_blank");
     }
-    return connect(db, remoteName, partykitURL);
+    return connect(db, remoteName, URI.from(partykitURL).toString());
   });
 }
