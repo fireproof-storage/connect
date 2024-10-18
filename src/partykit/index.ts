@@ -52,20 +52,16 @@ export const connect: ConnectFunction = (
 
 async function getOrCreateRemoteName(dbName: string) {
   const petnames = fireproof("petname.mappings");
-  try {
-    const result = await petnames.query<string, { remoteName: string; firstConnect: boolean }>('localName', { key: dbName, includeDocs: true })
-    if (result.rows.length === 0) {
-      const doc = { remoteName: petnames.sthis.nextId().str, firstConnect: true };
-      await petnames.put(doc);
-      return doc;
-    }
-    const doc = result.rows[0].doc as { remoteName: string; }
-    return { remoteName: doc.remoteName, firstConnect: false };
-  } catch (_error) {
-    const remoteName = petnames.sthis.nextId().str;
-    await petnames.put({ _id: dbName, remoteName, firstConnect: true });
-    return { remoteName };
+  const result = await petnames.query<string, { remoteName: string; firstConnect: boolean }>('localName', { key: dbName, includeDocs: true })
+  if (result.rows.length === 0) {
+    const doc = { remoteName: petnames.sthis.nextId().str, firstConnect: true };
+    await petnames.put(doc);
+    return doc;
   }
+  const doc = result.rows[0].doc as { remoteName: string; firstConnect: boolean }
+  // doc.firstConnect = false
+  return doc
+  // return { remoteName: doc.remoteName, firstConnect: false };
 }
 
 export function cloudConnect(
@@ -73,23 +69,28 @@ export function cloudConnect(
   dashboardURI = URI.from("https://dashboard.fireproof.storage/"),
   partykitURL: CoerceURI = "https://fireproof-cloud.jchris.partykit.dev/"
 ) {
-  const dbName = db.name;
+  const dbName = db.name as unknown as string;
   if (!dbName) {
     throw new Error("Database name is required for cloud connection");
   }
 
-  getOrCreateRemoteName(dbName).then(async ({ remoteName, firstConnect = true }) => {
-    if (firstConnect && runtimeFn().isBrowser && window.location.href.indexOf(dashboardURI.toString()) === -1) {
+  getOrCreateRemoteName(dbName).then(async (doc: { remoteName: string; firstConnect: boolean, endpoint?: string }) => {
+    if (doc.firstConnect && runtimeFn().isBrowser && window.location.href.indexOf(dashboardURI.toString()) === -1) {
       // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
       const petnames = fireproof("petname.mappings");
-      await petnames.put({ localName: dbName, remoteName: remoteName, endpoint: partykitURL, firstConnect: false });
+      doc.endpoint = partykitURL?.toString()
+      doc.firstConnect = false
+      await petnames.put(doc);
 
       const connectURI = dashboardURI.build().pathname("/fp/databases/connect");
 
       connectURI.defParam("localName", dbName);
-      connectURI.defParam("remoteName", remoteName);
+      connectURI.defParam("remoteName", doc.remoteName);
+      if (doc.endpoint) {
+        connectURI.defParam("endpoint", doc.endpoint);
+      }
       window.open(connectURI.toString(), "_blank");
     }
-    return connect(db, remoteName, URI.from(partykitURL).toString());
+    return connect(db, doc.remoteName, URI.from(doc.endpoint).toString());
   });
 }
