@@ -144,7 +144,7 @@ export class PartyKitGateway implements bs.Gateway {
         }
       });
     } else {
-      const uploadUrl = pkCarURL(uri, key);
+      const uploadUrl = pkURL(uri, key, "car");
       return exception2Result(async () => {
         const response = await fetch(uploadUrl.asURL(), { method: "PUT" });
         if (response.status === 404) {
@@ -192,7 +192,19 @@ export class PartyKitGateway implements bs.Gateway {
       const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
       const key = uri.getParam("key");
       if (!key) throw new Error("key not found");
-      const downloadUrl = store === "meta" ? pkMetaURL(uri, key) : pkCarURL(uri, key);
+      let downloadUrl;
+      console.log("store-get", store);
+      switch (store) {
+        case "meta":
+          downloadUrl = pkMetaURL(uri, key);
+          break;
+        case "data":
+          downloadUrl = pkCarGetURL(uri, key);
+          break;
+        default:
+          throw new Error(`Unsupported store: ${store}`);
+          
+      }
       const response = await fetch(downloadUrl.toString(), { method: "GET" });
       if (response.status === 404) {
         throw new Error(`Failure in downloading ${store}!`);
@@ -211,21 +223,6 @@ export class PartyKitGateway implements bs.Gateway {
         }
       }
       return body;
-    });
-  }
-
-  async delete(uri: URI): Promise<bs.VoidResult> {
-    await this.ready();
-    return exception2Result(async () => {
-      const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
-      const key = uri.getParam("key");
-      if (!key) throw new Error("key not found");
-      if (store === "meta") throw new Error("Cannot delete from meta store");
-      const deleteUrl = pkCarURL(uri, key);
-      const response = await fetch(deleteUrl.toString(), { method: "DELETE" });
-      if (response.status === 404) {
-        throw new Error(`Failure in deleting ${store}!`);
-      }
     });
   }
 
@@ -275,8 +272,15 @@ function pkBaseURL(uri: URI): URI {
   return BuildURI.from(`${protocol}://${host}${path}`).URI();
 }
 
-function pkCarURL(uri: URI, key: string): URI {
-  return pkURL(uri, key, "car");
+function pkCarGetURL(uri: URI, key: string): URI {
+  const baseUrl = uri.getParam("getBaseUrl");
+  if (!baseUrl) {
+    return pkURL(uri, key, "car");
+  }
+  const baseUri = URI.from(baseUrl).asURL();
+  baseUri.pathname = `/${key}`;
+  console.log("pkCarGetURL", baseUri.toString());
+  return BuildURI.from(baseUri).URI();
 }
 
 function pkMetaURL(uri: URI, key: string): URI {
