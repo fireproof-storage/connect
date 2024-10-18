@@ -30,7 +30,7 @@ const connectionCache = new KeyedResolvOnce<bs.Connection>();
 export const connect: ConnectFunction = (
   db: Database,
   remoteDbName = "",
-  url = "partykit://localhost:1999?protocol=ws&getBaseUrl=https://pub-6bc5b83e295847498a0d16230a55d5f6.r2.dev/"
+  url = "partykit://fireproof-cloud.jchris.workers.dev?getBaseUrl=https://pub-6bc5b83e295847498a0d16230a55d5f6.r2.dev/"
 ) => {
   const { sthis, blockstore, name: dbName } = db;
   if (!dbName) {
