@@ -1,8 +1,15 @@
+import { BuildURI, CoerceURI, KeyedResolvOnce, runtimeFn, URI } from "@adviser/cement";
+import { bs, Database, fireproof } from "@fireproof/core";
 import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
-import { bs, Database } from "@fireproof/core";
 import { registerPartyKitStoreProtocol } from "./gateway";
-import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
 
+interface ConnectData {
+  readonly remoteName: string;
+  firstConnect: boolean;
+  endpoint?: string;
+}
+
+const SYNC_DB_NAME = "_fp.sync";
 // Usage:
 //
 // import { useFireproof } from 'use-fireproof'
@@ -49,3 +56,50 @@ export const connect: ConnectFunction = (
     return connection;
   });
 };
+
+async function getOrCreateRemoteName(dbName: string) {
+  const syncDb = fireproof(SYNC_DB_NAME);
+  const result = await syncDb.query<string, ConnectData>("localName", { key: dbName, includeDocs: true });
+  if (result.rows.length === 0) {
+    const doc = { remoteName: syncDb.sthis.nextId().str, firstConnect: true } as ConnectData;
+    await syncDb.put(doc);
+    return doc;
+  }
+  const doc = result.rows[0].doc as ConnectData;
+  return doc;
+}
+
+export function cloudConnect(
+  db: Database,
+  dashboardURI: CoerceURI = "https://dashboard.fireproof.storage/",
+  partykitURI: CoerceURI = "https://fireproof-cloud.jchris.partykit.dev/"
+) {
+  const dbName = db.name as unknown as string;
+  if (!dbName) {
+    throw new Error("Database name is required for cloud connection");
+  }
+
+  getOrCreateRemoteName(dbName).then(async (doc: ConnectData) => {
+    if (
+      doc.firstConnect &&
+      runtimeFn().isBrowser &&
+      window.location.href.indexOf(URI.from(dashboardURI).toString()) === -1
+    ) {
+      // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
+      const syncDb = fireproof(SYNC_DB_NAME);
+      doc.endpoint = URI.from(partykitURI).toString();
+      doc.firstConnect = false;
+      await syncDb.put(doc);
+
+      const connectURI = URI.from(dashboardURI).build().pathname("/fp/databases/connect");
+
+      connectURI.defParam("localName", dbName);
+      connectURI.defParam("remoteName", doc.remoteName);
+      if (doc.endpoint) {
+        connectURI.defParam("endpoint", doc.endpoint);
+      }
+      window.open(connectURI.toString(), "_blank");
+    }
+    return connect(db, doc.remoteName, URI.from(doc.endpoint).toString());
+  });
+}
