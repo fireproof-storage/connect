@@ -52,13 +52,18 @@ export const connect: ConnectFunction = (
 
 async function getOrCreateRemoteName(dbName: string) {
   const petnames = fireproof("petname.mappings");
-
   try {
-    const doc = await petnames.get<{ remoteName: string; firstConnect: boolean }>(dbName);
+    const result = await petnames.query<string, { remoteName: string; firstConnect: boolean }>('localName', { key: dbName, includeDocs: true })
+    if (result.rows.length === 0) {
+      const doc = { remoteName: petnames.sthis.nextId().str, firstConnect: true };
+      await petnames.put(doc);
+      return doc;
+    }
+    const doc = result.rows[0].doc as { remoteName: string; }
     return { remoteName: doc.remoteName, firstConnect: false };
   } catch (_error) {
     const remoteName = petnames.sthis.nextId().str;
-    await petnames.put({ localName: dbName, remoteName, firstConnect: true });
+    await petnames.put({ _id: dbName, remoteName, firstConnect: true });
     return { remoteName };
   }
 }
