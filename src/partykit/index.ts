@@ -71,8 +71,8 @@ async function getOrCreateRemoteName(dbName: string) {
 
 export function cloudConnect(
   db: Database,
-  dashboardURI = URI.from("https://dashboard.fireproof.storage/"),
-  partykitURL: CoerceURI = "https://fireproof-cloud.jchris.partykit.dev/"
+  dashboardURI: CoerceURI = "https://dashboard.fireproof.storage/",
+  partykitURI: CoerceURI = "https://fireproof-cloud.jchris.partykit.dev/"
 ) {
   const dbName = db.name as unknown as string;
   if (!dbName) {
@@ -80,14 +80,18 @@ export function cloudConnect(
   }
 
   getOrCreateRemoteName(dbName).then(async (doc: ConnectData) => {
-    if (doc.firstConnect && runtimeFn().isBrowser && window.location.href.indexOf(dashboardURI.toString()) === -1) {
+    if (
+      doc.firstConnect &&
+      runtimeFn().isBrowser &&
+      window.location.href.indexOf(URI.from(dashboardURI).toString()) === -1
+    ) {
       // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
       const syncDb = fireproof(SYNC_DB_NAME);
-      doc.endpoint = URI.from(partykitURL).toString();
+      doc.endpoint = URI.from(partykitURI).toString();
       doc.firstConnect = false;
       await syncDb.put(doc);
 
-      const connectURI = dashboardURI.build().pathname("/fp/databases/connect");
+      const connectURI = URI.from(dashboardURI).build().pathname("/fp/databases/connect");
 
       connectURI.defParam("localName", dbName);
       connectURI.defParam("remoteName", doc.remoteName);
