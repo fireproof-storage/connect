@@ -58,7 +58,7 @@ async function getOrCreateRemoteName(dbName: string) {
     return { remoteName: doc.remoteName, firstConnect: false };
   } catch (_error) {
     const remoteName = petnames.sthis.nextId().str;
-    await petnames.put({ _id: dbName, remoteName, firstConnect: true });
+    await petnames.put({ localName: dbName, remoteName, firstConnect: true });
     return { remoteName };
   }
 }
@@ -77,7 +77,7 @@ export function cloudConnect(
     if (firstConnect && typeof window !== "undefined" && window.location.href.indexOf(dashboardURI.toString()) === -1) {
       // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
       const petnames = fireproof("petname.mappings");
-      await petnames.put({ id: dbName, remoteName, firstConnect: false });
+      await petnames.put({ localName: dbName, remoteName: remoteName, endpoint: partykitURL, firstConnect: false });
 
       const connectURI = BuildURI.from(`${dashboardURI}/fp/databases/connect`);
       connectURI.setParam("localName", dbName);
