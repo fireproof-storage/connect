@@ -61,11 +61,11 @@ async function getOrCreateRemoteName(dbName: string) {
   const syncDb = fireproof(SYNC_DB_NAME);
   const result = await syncDb.query<string, ConnectData>("localName", { key: dbName, includeDocs: true });
   if (result.rows.length === 0) {
-    const doc = { remoteName: syncDb.sthis.nextId().str, firstConnect: true } as ConnectData;
-    await syncDb.put(doc);
-    return doc;
+    const doc = { remoteName: syncDb.sthis.nextId().str, localName: dbName, firstConnect: true } as ConnectData;
+    const { id } = await syncDb.put(doc);
+    return { ...doc, _id: id };
   }
-  const doc = result.rows[0].doc as ConnectData;
+  const doc = result.rows[0].doc;
   return doc;
 }
 
@@ -79,7 +79,10 @@ export function cloudConnect(
     throw new Error("Database name is required for cloud connection");
   }
 
-  getOrCreateRemoteName(dbName).then(async (doc: ConnectData) => {
+  getOrCreateRemoteName(dbName).then(async (doc) => {
+    if (!doc) {
+      throw new Error("Failed to get or create remote name");
+    }
     if (
       doc.firstConnect &&
       runtimeFn().isBrowser &&
@@ -98,6 +101,7 @@ export function cloudConnect(
       if (doc.endpoint) {
         connectURI.defParam("endpoint", doc.endpoint);
       }
+      console.log(connectURI.toString());
       window.open(connectURI.toString(), "_blank");
     }
     return connect(db, doc.remoteName, URI.from(doc.endpoint).toString());
