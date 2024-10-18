@@ -9,6 +9,7 @@ interface ConnectData {
   endpoint?: string;
 }
 
+const SYNC_DB_NAME = "petname.mappings";
 // Usage:
 //
 // import { useFireproof } from 'use-fireproof'
@@ -57,11 +58,11 @@ export const connect: ConnectFunction = (
 };
 
 async function getOrCreateRemoteName(dbName: string) {
-  const petnames = fireproof("petname.mappings");
-  const result = await petnames.query<string, ConnectData>("localName", { key: dbName, includeDocs: true });
+  const syncDb = fireproof(SYNC_DB_NAME);
+  const result = await syncDb.query<string, ConnectData>("localName", { key: dbName, includeDocs: true });
   if (result.rows.length === 0) {
-    const doc = { remoteName: petnames.sthis.nextId().str, firstConnect: true } as ConnectData;
-    await petnames.put(doc);
+    const doc = { remoteName: syncDb.sthis.nextId().str, firstConnect: true } as ConnectData;
+    await syncDb.put(doc);
     return doc;
   }
   const doc = result.rows[0].doc as ConnectData;
@@ -81,10 +82,10 @@ export function cloudConnect(
   getOrCreateRemoteName(dbName).then(async (doc: ConnectData) => {
     if (doc.firstConnect && runtimeFn().isBrowser && window.location.href.indexOf(dashboardURI.toString()) === -1) {
       // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
-      const petnames = fireproof("petname.mappings");
+      const syncDb = fireproof(SYNC_DB_NAME);
       doc.endpoint = URI.from(partykitURL).toString();
       doc.firstConnect = false;
-      await petnames.put(doc);
+      await syncDb.put(doc);
 
       const connectURI = dashboardURI.build().pathname("/fp/databases/connect");
 
