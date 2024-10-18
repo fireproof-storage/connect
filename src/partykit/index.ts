@@ -9,7 +9,7 @@ interface ConnectData {
   endpoint?: string;
 }
 
-const SYNC_DB_NAME = "petname.mappings";
+const SYNC_DB_NAME = "_fp.sync";
 // Usage:
 //
 // import { useFireproof } from 'use-fireproof'
