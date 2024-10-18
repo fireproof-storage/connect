@@ -135,13 +135,23 @@ export class PartyKitGateway implements bs.Gateway {
     const rkey = uri.getParamResult("key");
     if (rkey.isErr()) return Result.Err(rkey.Err());
     const key = rkey.Ok();
-    const uploadUrl = store === "meta" ? pkMetaURL(uri, key) : pkCarURL(uri, key);
-    return exception2Result(async () => {
-      const response = await fetch(uploadUrl.asURL(), { method: "PUT", body: body });
-      if (response.status === 404) {
-        throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
-      }
-    });
+    if (store === "meta") {
+      const uploadUrl = pkMetaURL(uri, key);
+      return exception2Result(async () => {
+        const response = await fetch(uploadUrl.asURL(), { method: "PUT", body: body });
+        if (response.status === 404) {
+          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
+        }
+      });
+    } else {
+      const uploadUrl = pkCarURL(uri, key);
+      return exception2Result(async () => {
+        const response = await fetch(uploadUrl.asURL(), { method: "PUT", body: body });
+        if (response.status === 404) {
+          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
+        }
+      });
+    }
   }
 
   private readonly subscriberCallbacks = new Set<(data: Uint8Array) => void>();
