@@ -146,8 +146,13 @@ export class PartyKitGateway implements bs.Gateway {
     } else {
       const uploadUrl = pkCarURL(uri, key);
       return exception2Result(async () => {
-        const response = await fetch(uploadUrl.asURL(), { method: "PUT", body: body });
+        const response = await fetch(uploadUrl.asURL(), { method: "PUT" });
         if (response.status === 404) {
+          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
+        }
+        const url = (await response.json()).url;
+        const uploadResponse = await fetch(url, { method: "PUT", body: body });
+        if (uploadResponse.status === 404) {
           throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
         }
       });
