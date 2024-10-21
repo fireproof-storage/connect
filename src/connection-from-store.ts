@@ -40,9 +40,13 @@ export class ConnectionFromStore extends bs.ConnectionBase {
       throw this.logger.Error().Err(rName).Msg("missing Parameter").AsError();
     }
     const storeRuntime = bs.toStoreRuntime(this.sthis);
+    const keybag = await this.loader?.keyBag();
+    if (!keybag) {
+      throw this.logger.Error().Msg("missing keybag").AsError();
+    }
     const sfi: bs.StoreFactoryItem = {
       url: this.url,
-      // readonly keybag: KeyBag;
+      keybag,
       sthis: this.sthis,
     };
 
