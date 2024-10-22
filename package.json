@@ -5,7 +5,7 @@
   "description": "Live database connector for the web",
   "type": "module",
   "scripts": {
-    "publish-packages": "pnpm run build && pnpm run '/publish:/'",
+    "publish-packages": "pnpm run '/publish:/'",
     "publish:aws": "tsx ./publish-package.ts ./dist/aws/package.json",
     "publish:cloud": "tsx ./publish-package.ts ./dist/cloud/package.json",
     "publish:netlify": "tsx ./publish-package.ts ./dist/netlify/package.json",
@@ -13,6 +13,7 @@
     "publish:partykit": "tsx ./publish-package.ts ./dist/partykit/package.json",
     "publish:ucan": "tsx ./publish-package.ts ./dist/ucan-cloud/package.json",
     "prebuild": "rm -rf dist",
+    "prepare": "pnpm run build",
     "build": "pnpm run '/^build:/' && pnpm run '/^pub:/'",
     "build:tsc": "tsc",
     "build:tsup": "tsup",
