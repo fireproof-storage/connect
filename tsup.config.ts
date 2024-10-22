@@ -3,8 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import resolve from "esbuild-plugin-resolve";
 import { replace } from "esbuild-plugin-replace";
-import { polyfillNode as polyfillNodePkg } from "esbuild-plugin-polyfill-node";
-// import { nodeModulesPolyfillPlugin } from "esbuild-plugins-node-modules-polyfill";
+import { polyfillNode } from "esbuild-plugin-polyfill-node";
 
 // Correctly resolve __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -12,14 +11,6 @@ const __dirname = path.dirname(__filename);
 
 // Existing 'ourMultiformat' object or any other resolve mappings you have
 const ourMultiformat = {};
-
-function polyfillNode() {
-  return polyfillNodePkg({
-    polyfills: {
-      util: true,
-    },
-  });
-}
 
 function packageVersion() {
   let version = "refs/tags/v0.0.0-smoke";
