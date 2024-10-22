@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: fireproof-storage/fireproof
-          ref: series_0.19
+          ref: main
           path: ./fireproof
       - name: build-fireproof-package
         working-directory: ./fireproof
