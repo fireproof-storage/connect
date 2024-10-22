@@ -3,16 +3,23 @@ import path from "path";
 import { fileURLToPath } from "url";
 import resolve from "esbuild-plugin-resolve";
 import { replace } from "esbuild-plugin-replace";
-import { polyfillNode } from "esbuild-plugin-polyfill-node";
+import { polyfillNode as polyfillNodePkg } from "esbuild-plugin-polyfill-node";
+// import { nodeModulesPolyfillPlugin } from "esbuild-plugins-node-modules-polyfill";
 
 // Correctly resolve __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Existing 'ourMultiformat' object or any other resolve mappings you have
-const ourMultiformat = {
-  // ... your existing mappings ...
-};
+const ourMultiformat = {};
+
+function polyfillNode() {
+  return polyfillNodePkg({
+    polyfills: {
+      util: true,
+    },
+  });
+}
 
 function packageVersion() {
   let version = "refs/tags/v0.0.0-smoke";
@@ -252,14 +259,15 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/ucan-cloud",
     esbuildPlugins: [
-      polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
       resolve({
         ...ourMultiformat,
+        "node:util": path.join(__dirname, "node-util-polyfill.js"),
       }),
+      polyfillNode(),
     ],
     dts: false, // No type declarations needed for IIFE build
   },
@@ -272,14 +280,15 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/ucan-cloud",
     esbuildPlugins: [
-      polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
       resolve({
         ...ourMultiformat,
+        "node:util": path.join(__dirname, "node-util-polyfill.js"),
       }),
+      polyfillNode(),
     ],
     dts: {
       footer: "declare module '@fireproof/ucan-cloud'",

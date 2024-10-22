@@ -20,6 +20,9 @@ importers:
       '@ipld/dag-cbor':
         specifier: ^9.2.1
         version: 9.2.1
+      '@jspm/core':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@netlify/blobs':
         specifier: ^8.1.0
         version: 8.1.0
@@ -74,6 +77,9 @@ importers:
       idb-keyval:
         specifier: ^6.2.1
         version: 6.2.1
+      is-deep-strict-equal-x:
+        specifier: ^1.1.2
+        version: 1.1.2
       multiformats:
         specifier: ^13.3.0
         version: 13.3.0
@@ -132,6 +138,9 @@ importers:
       esbuild-plugin-resolve:
         specifier: ^2.0.0
         version: 2.0.0
+      esbuild-plugins-node-modules-polyfill:
+        specifier: ^1.6.7
+        version: 1.6.7(esbuild@0.23.1)
       eslint:
         specifier: ^9.9.0
         version: 9.12.0
@@ -967,8 +976,8 @@ packages:
     peerDependencies:
       tslib: '2'
 
-  '@jspm/core@2.0.1':
-    resolution: {integrity: sha512-Lg3PnLp0QXpxwLIAuuJboLeRaIhrgJjeuh797QADg3xz8wGLugQOS5DpsE8A6i6Adgzf+bacllkKZG3J0tGfDw==}
+  '@jspm/core@2.1.0':
+    resolution: {integrity: sha512-3sRl+pkyFY/kLmHl0cgHiFp2xEqErA8N3ECjMs7serSUBmoJ70lBa0PG5t0IM6WJgdZNyyI0R8YFfi5wM8+mzg==}
 
   '@multiformats/murmur3@2.1.8':
     resolution: {integrity: sha512-6vId1C46ra3R1sbJUOFCZnsUIveR9oF20yhPmAFxPm0JfrX3/ZRCgP3YDrBzlGoEppOXnA9czHeYc0T9mB6hbA==}
@@ -1578,8 +1587,51 @@ packages:
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
+  array-all-x@1.1.2:
+    resolution: {integrity: sha512-rOaX+4+ihVMmJbXMyAEQF1UDfQO2Q8RQZtokSvb2ZpXy/JDaHyY6OtVwEXDmhaLg/FsK3Pb0hJNzWbAZbnwZZg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  array-any-x@1.1.2:
+    resolution: {integrity: sha512-b9cGMCI0YlIYDuINxHy7ipAO0v9nixJg0RYwDsiJMxQewMOwBpLMW/jJGAHBoDmaHb7b2jR/j7SnyH49ZDxJyQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  array-filter-x@3.1.2:
+    resolution: {integrity: sha512-Dui8g/SEu2a8UY5f3GNzXx84WGIMYPrRaQtL5L3h1cxybDT5rsi/bkDpWq7y3/FZ5nvxyJNx4ld5C6qA3lqPDg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  array-for-each-x@3.1.2:
+    resolution: {integrity: sha512-dv8xr/sVk3d5BVyki+4CGDvJdyREEVnvV+RVLIH6IlQwpYtDpqqkpuL9Wv+io+lFprnCj0SORomlarIMdmNK/A==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  array-like-slice-x@2.2.2:
+    resolution: {integrity: sha512-GqQzhIMscxFoePBnkOJNrj80A9uUGInqln4lmyzJpeJZVqoQ+78aEuRmjWVz0kuuj+MDzOJMddHIyp4kyQxJFg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  array-reduce-right-x@3.1.2:
+    resolution: {integrity: sha512-wdJDvghyE/mT5h6djsO9cAKUeLxpVohUhBJ3etms8v/g/5wt9lmL+nOSETDne3oYMLHdd44lNbxjSbWUBNxrXQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  array-slice-x@4.2.2:
+    resolution: {integrity: sha512-B/ZxDn/WVzlwNAzH2XPZb8MbqMKHAp1CiCjygLH2GamBp3tMY1Dcbwh08X+H3IWkMaV0dr8aT+BRIG0zHh199w==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  array-some-x@3.1.2:
+    resolution: {integrity: sha512-JccQYIaJSaDCcKsB3x7/SYnhpnKbeiyJT4g5DtkZllzfP9GfDCnl53ILaH3saiJcbFg83eWR4VbsGtzsiHLpYg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  arraybuffer-equal@1.0.4:
+    resolution: {integrity: sha512-B/HbicKd82qtq5NiNShqx6oAhHkYi+VFREUyHo9qdjyEwQDLL626XM80M88Pvr2TC7roUX3UsVALGvNIqeqc1g==}
+
   as-table@1.0.55:
     resolution: {integrity: sha512-xvsWESUJn0JN421Xb9MQw6AsMHRCUknCe0Wjlxvjud80mU4E6hQf1A6NzQKcYNmYw62MfzEtXc+badstZP3JpQ==}
+
+  assert-is-function-x@3.1.2:
+    resolution: {integrity: sha512-FiMv0RYR/eMQk2EOMYJKvm+QFQa2AQzjccI9rN4cpvNd6M+UuobnV6m0sqIO5U+Q2LillGwaya16MRGa2Sr6+w==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  assert-is-object-x@3.1.2:
+    resolution: {integrity: sha512-PGTfDoK9nx05h4v17u5PmtLwdtty1wGQA1FZ+ZpV+YmgMSFifAwajxhCBca2p6mPfKlGUryHut7vc36UxQxG8w==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   assert@2.1.0:
     resolution: {integrity: sha512-eLHpSK/Y4nhMJ07gDaAzoX/XAKS8PSaojml3M0DM4JpV1LAi5JOJ/p6H/XWrl8L+DzVEvVCW1z3vWAaB9oTsQw==}
@@ -1590,6 +1642,10 @@ packages:
 
   atomically@2.0.3:
     resolution: {integrity: sha512-kU6FmrwZ3Lx7/7y3hPS5QnbJfaohcIul5fGqf7ok+4KklIEk9tJ0C2IQPdacSbVUWv6zVHXEBWoWd6NrVMT7Cw==}
+
+  attempt-x@2.1.2:
+    resolution: {integrity: sha512-vblT/0yT5dmm2qo8mfBjtiu0BGL/HWhxBFTrqHvkjQQSsXb/sTmpYIi1StJGSN5W/TX2E+FsuX7c23ExMZy2jw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
@@ -1603,6 +1659,10 @@ packages:
 
   better-sqlite3@11.3.0:
     resolution: {integrity: sha512-iHt9j8NPYF3oKCNOO5ZI4JwThjt3Z6J6XrcwG85VNMVzv1ByqrHWv5VILEbCMFWDsoHhXvQ7oC8vgRXFAKgl9w==}
+
+  big-counter-x@4.1.2:
+    resolution: {integrity: sha512-rO414jDJf//NDNvIfbChPT+qAXrs5aXIWwq+327qWVn64eKpE+dMsr72o+18tYsSOnF79C6+LO9c756/h6Ghaw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   big-integer@1.6.52:
     resolution: {integrity: sha512-QxD8cf2eVqJOOz63z6JIN9BzvVs/dlySa5HGSBH5xtR8dPteIRQnBxxKqkNTiT6jbDTF6jAfrd4oMcND9RGbQg==}
@@ -1657,6 +1717,14 @@ packages:
     resolution: {integrity: sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ==}
     engines: {node: '>=8'}
 
+  cached-constructors-x@2.2.1:
+    resolution: {integrity: sha512-GQFEIdT6mBLUfY986TdQA05WnmkkCFf0CDk++VfNraIWSCz0889bAu14FPMuoKNbVySAub7ItDa95ALp2008FQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  calculate-from-index-x@3.1.2:
+    resolution: {integrity: sha512-7TsLYHEPvyCWaFwCQgCWcE6Lt5BowjA/TqggJFhE4hs4c4UM36H3Sodf5Jy0TxVepu0pYTWHtKaeOvoKrRl4JA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   call-bind@1.0.7:
     resolution: {integrity: sha512-GHTSNSYICQ7scH7sZ+M2rFopRoLh8t2bLSW6BbgrtLsahOIB5iyAVJf9GjWK3cYTDaMj4XdBpM1cA6pIS0Kv2w==}
     engines: {node: '>= 0.4'}
@@ -1705,6 +1773,10 @@ packages:
     resolution: {integrity: sha512-5mOlNS0mhX0707P2I0aZ2V/cmHUEO/fL7VFLqszkhUsxt7RwnmrInf/eEQKlf5GzvYeHIjT+Ov1HRfNmymlG0w==}
     engines: {node: '>=18'}
 
+  collections-x@3.1.2:
+    resolution: {integrity: sha512-UBj0YBtdMhubwaYnbfmCA8PHS79mbvCPYTw7YzUGhQzuyH3jf7Bc8RXQHqiZrTDtcl8+4oSbehFyu4jUH8PGag==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
     engines: {node: '>=7.0.0'}
@@ -1722,6 +1794,9 @@ packages:
   conf@11.0.2:
     resolution: {integrity: sha512-jjyhlQ0ew/iwmtwsS2RaB6s8DBifcE2GYBEaw2SJDUY/slJJbNfY4GlDVzOs/ff8cM/Wua5CikqXgbFl5eu85A==}
     engines: {node: '>=14.16'}
+
+  confbox@0.1.8:
+    resolution: {integrity: sha512-RMtmw0iFkeR4YV+fUOSucriAQNb9g8zFR52MWCtl+cCZOFRNL6zeB395vPzFhEjjn4fMxXudmELnl/KF/WrK6w==}
 
   consola@3.2.3:
     resolution: {integrity: sha512-I5qxpzLv+sJhTVEoLYNcTW+bThDCPsit0vLNKShZx6rLtpilNpmmeTPaeqJb9ZE9dV3DGaeby6Vuhrw38WjeyQ==}
@@ -1850,6 +1925,12 @@ packages:
 
   esbuild-plugin-resolve@2.0.0:
     resolution: {integrity: sha512-eJy9B8yDW5X/J48eWtR1uVmv+DKfHvYYnrrcqQoe/nUkVHVOTZlJnSevkYyGOz6hI90t036Y5QIPDrGzmppxfg==}
+
+  esbuild-plugins-node-modules-polyfill@1.6.7:
+    resolution: {integrity: sha512-1lzsVFT/6OO1ZATHKZqSP+qYzyFo2d+QF9QzMKsyJR7GMRScYizYb1uEEE4NxTsBSxWviY3xnmN9dEOTaKFbJA==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      esbuild: '>=0.14.0 <=0.23.x'
 
   esbuild@0.17.19:
     resolution: {integrity: sha512-XQ0jAPFkK/u3LcVRcvVHQcTIqD6E2H1fvZMA5dQPSOWb3suUbWbfbRf94pjc0bNzRYLfIrDRQXr7X+LHIm5oHw==}
@@ -2000,6 +2081,10 @@ packages:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
 
+  find-index-x@3.1.2:
+    resolution: {integrity: sha512-BrDZ6eZDuspxF8qQ0n6044fnOzhY+ITNn7M+iqHekU6l1eeu6UcC5dqm+3tGip5vG4JHEEfbiT7vhcJcj3H9Bg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   find-up@5.0.0:
     resolution: {integrity: sha512-78/PXT1wlLLDgTzDs7sjq9hzz0vXD+zn+7wypEe4fXQxCmdmqfGsEPQxmiCSQI3ajFV91bVSsvNtrJRiW6nGng==}
     engines: {node: '>=10'}
@@ -2035,6 +2120,26 @@ packages:
 
   get-iterator@1.0.2:
     resolution: {integrity: sha512-v+dm9bNVfOYsY1OrhaCrmyOcYoSeVvbt+hHZ0Au+T+p1y+0Uyj9aMaGIeUTT6xdpRbWzDeYKvfOslPhggQMcsg==}
+
+  get-own-enumerable-keys-x@2.1.2:
+    resolution: {integrity: sha512-2bf5zqZELbF1XX9ick95QwvBPz7rBs7FxZBXcnAj+yTxNTVd5Ns3FLPZbI5U+9RsxZ82Cswf97XvlgoSdIT2qg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  get-own-enumerable-property-symbols-x@2.1.2:
+    resolution: {integrity: sha512-MUKw2J+D1TLh4esLFRzqWBqqjlqBYMfOt4MTRfHT6nNBDt9tF94fEDPYY01fyR8DN3XK6AOqYXBegrGdMZW1dg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  get-own-property-names-x@3.1.2:
+    resolution: {integrity: sha512-616M5sAhDfRjUBAJPFYDuVmZD+rSi2MQSCo+96zr8u4xmRDaUPzQexBheey7qsYhcAqGRL6ZBMFOW+eUOoSgdQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  get-own-property-symbols-x@2.1.2:
+    resolution: {integrity: sha512-cFVkod03zzfHKZwwluRzva5EmrV6PuhOVNNMILc+qwbshs/tt+zJRROL4oWjtI7k6ERzMkF/PILOL2fhG0AbnA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  get-prototype-of-x@2.1.2:
+    resolution: {integrity: sha512-LBo5X3ed0qI8k6UmEo7JgohXu3SGki60IdpnT1OlNp83GaxK66yiMjFZk67ofPH3aHENEc1+qvCmBhrlliVPPQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   get-source@2.0.12:
     resolution: {integrity: sha512-X5+4+iD+HoSeEED+uwrQ07BOQr0kEDFMVqqpBuI+RaZBpBpHCuXxo70bjar6f0b0u/DQJsJ7ssurpP0V60Az+w==}
@@ -2084,9 +2189,20 @@ packages:
   hamt-sharding@3.0.6:
     resolution: {integrity: sha512-nZeamxfymIWLpVcAN0CRrb7uVq3hCOGj9IcL6NMA6VVCVWqj+h9Jo/SmaWuS92AEDf1thmHsM5D5c70hM3j2Tg==}
 
+  has-bigints@1.0.2:
+    resolution: {integrity: sha512-tSvCKtBr9lkF0Ex0aQiP9N+OpV4zi2r/Nee5VkRDbaqv35RLYMzbwQfFSZZH0kR+Rd6302UJZ2p/bJCEoR3VoQ==}
+
+  has-boxed-string-x@2.1.1:
+    resolution: {integrity: sha512-1MmOo3H8UbI6JQ3e3TaxAXHQmpnyrM5DjYRqRXNvjl/UHZqb2fEyfp0UPvtbzvmOf0+sBzcv4ea/LEw87WNyVA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
+
+  has-own-property-x@4.1.2:
+    resolution: {integrity: sha512-P6CEga37+01XlBfYBfnp4e2e5Mj0geyW5zvBhbmggkr9DkxtXWlDQIIv2PaJIOWql/rfGm7GDpKBqZ5/PT1wrA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   has-property-descriptors@1.0.2:
     resolution: {integrity: sha512-55JNKuIW+vq4Ke1BjOTjM2YctQIvCT7GFzHwmfZPGo5wnrgkid0YQtnAleFSqumZm4az3n2BS+erby5ipJdgrg==}
@@ -2095,13 +2211,25 @@ packages:
     resolution: {integrity: sha512-SJ1amZAJUiZS+PhsVLf5tGydlaVB8EdFpaSO4gmiUKUOxk8qzn5AIy4ZeJUmh22znIdk/uMAUT2pl3FxzVUH+Q==}
     engines: {node: '>= 0.4'}
 
+  has-symbol-support-x@2.1.2:
+    resolution: {integrity: sha512-RpWVMhXSkiJCXI7+bavsapHwlS0VD7rCOSwhzcy0yZzFXxr+FznUBK4OkECVH/EOM1ZoVXw8OzABIEvaEFl+Zg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   has-symbols@1.0.3:
     resolution: {integrity: sha512-l3LCuF6MgDNwTDKkdYGEihYjt5pRPbEg46rtlmnSPlUbgmB8LOIrKJbYYFBSbnPaJexMKtiPO8hmeRjRz2Td+A==}
     engines: {node: '>= 0.4'}
 
+  has-to-string-tag-x@2.1.2:
+    resolution: {integrity: sha512-xVv4BRcvyT9FAZSzvWD6tzVWj5JHK2d+mcv2wRSIfNBhG534hSfDGPdtx3hHJUE94BufO+pFyVpKbnaC6dsalA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   has-tostringtag@1.0.2:
     resolution: {integrity: sha512-NqADB8VjPFLM2V0VvHUewwwsw0ZWBaIdgo+ieHtK3hasLz4qeCRjYcqfB6AQrBggRKppKF8L52/VqdVsO47Dlw==}
     engines: {node: '>= 0.4'}
+
+  has-working-bind-x@1.0.1:
+    resolution: {integrity: sha512-iVknmNYk7CdVSDsdIyaeyPNPHlhoESfNEztH9J6kUayhj123M1so039HfC91vAOtR4NyLXWyvaFiNaXvmT/JRQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   hashlru@2.3.0:
     resolution: {integrity: sha512-0cMsjjIC8I+D3M44pOQdsy0OHXGLVz6Z0beRuufhKa0KfaD2wGwAev6jILzXsd3/vpnNQJmWyZtIILqM1N+n5A==}
@@ -2150,6 +2278,14 @@ packages:
     resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
     engines: {node: '>=0.8.19'}
 
+  index-of-x@3.1.2:
+    resolution: {integrity: sha512-IgA7qpd3a0QeGD6GyznKqTz7IGQ6aubo19yi9Canit1ajRnqafF9iTnhuarp+ZEUBEpdIkbHSa9cpKPHA+N9cg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  infinity-x@2.2.1:
+    resolution: {integrity: sha512-aGc1EANwAzNPQYQ1uqZRiEVOK6NktlCQ+72Ey4+bDkKIiA93vPZiwjkz2sxgaRaEBed2FwXDdgPHez0K97sf3w==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   inherits@2.0.3:
     resolution: {integrity: sha512-x00IRNXNy63jwGkJmzPigoySHbaqpNuzKbBOmzK+g2OdZpQ9w+sxCN+VSB3ja7IAge2OP2qpfxTjeNcyjmW1uw==}
 
@@ -2179,9 +2315,35 @@ packages:
     resolution: {integrity: sha512-8Q7EARjzEnKpt/PCD7e1cgUS0a6X8u5tdSiMqXhojOdoV9TsMsiO+9VLC5vAmO8N7/GmXn7yjR8qnA6bVAEzfA==}
     engines: {node: '>= 0.4'}
 
+  is-array-buffer-x@2.1.2:
+    resolution: {integrity: sha512-8SiqbYgnBDoLFsoGP4VEW8pZuu2TW2/owsS1RDlhlg7T50XLn0QRqgzRKiA1l9LVFXbuBoGKAumhtN4lf9Erhw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-array-like-x@2.1.2:
+    resolution: {integrity: sha512-XkIyHvSRWLcsAYAQq71pAMqcEaq2tZuK6saW9H1iMel3IoyN2HFy6RjRzvCQR2tHqlGW7ueHxAgalr7rjYHtXA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-array-x@2.1.2:
+    resolution: {integrity: sha512-XuKYtKwek6xUys0fEpRQXzlvHpuO4WoDrGRHjoHw+f+AevGkiu4CKkqN2bBHKhmlLKAHv+6ekUnK5pnsNM1C4Q==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-bigint@1.0.4:
+    resolution: {integrity: sha512-zB9CruMamjym81i2JZ3UMn54PKGsQzsJeo6xvN3HJJ4CAsQNB6iRutp2To77OfCNuoxspsIhzaPoO1zyCEhFOg==}
+
   is-binary-path@2.1.0:
     resolution: {integrity: sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw==}
     engines: {node: '>=8'}
+
+  is-boolean-object@1.1.2:
+    resolution: {integrity: sha512-gDYaKHJmnj4aWxyj6YHyXVpdQawtVLHU5cb+eztPGczf6cjuTdwve5ZIEfgXqH4e57An1D1AKf8CZ3kYrQRqYA==}
+    engines: {node: '>= 0.4'}
+
+  is-boxed-primitive@1.0.1:
+    resolution: {integrity: sha512-9SGCUKKEgd7tAkgJgkiz4Hli/ASBTM37CjuT1+9C6ONC7G6HjJwaS4Vmi6ePMqBhTu0S05zFkuBzX0D3MhD2LA==}
+
+  is-buffer@2.0.5:
+    resolution: {integrity: sha512-i2R6zNFDwgEHJyQUtJEk0XFi1i0dPFn/oqjK3/vPCcDeJvW5NQ83V8QbicfF1SupOaB0h8ntgBC2YiE7dfyctQ==}
+    engines: {node: '>=4'}
 
   is-callable@1.2.7:
     resolution: {integrity: sha512-1BC0BVFhS/p0qtw6enp8e+8OD0UrK0oFLztSjNzhcKA3WDuJxxAPXzPuPtKkjEY9UUoEWlX/8fgKeu2S8i9JTA==}
@@ -2191,6 +2353,18 @@ packages:
     resolution: {integrity: sha512-z0vtXSwucUJtANQWldhbtbt7BnL0vxiFjIdDLAatwhDYty2bad6s+rijD6Ri4YuYJubLzIJLUidCh09e1djEVQ==}
     engines: {node: '>= 0.4'}
 
+  is-data-view-x@2.1.2:
+    resolution: {integrity: sha512-IUIxqqWkplq+w3oQLmzzPW16OBJLMtPmLknR1tyj8XIPoZKpy6dyCsJs/6+Axzt85KMAGaly8bRZnpBCGwW/TQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-date-object@1.0.5:
+    resolution: {integrity: sha512-9YQaSxsAiSwcvS33MBk3wTCVnWK+HhF8VZR2jRxehM16QcVOdHqPn4VPHmRK4lSr38n9JriurInLcP90xsYNfQ==}
+    engines: {node: '>= 0.4'}
+
+  is-deep-strict-equal-x@1.1.2:
+    resolution: {integrity: sha512-qUeYt713o++F+SBaD+4e9kvwcuN145KNTTj6ESQKPaid3EI+LaFaKfjBgJ5Kq8vKgnLB2tGvFRPcx68PamsNJw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   is-docker@3.0.0:
     resolution: {integrity: sha512-eljcgEDlEns/7AXFosB5K/2nCM4P7FQPkGc/DWLy5rmFEWvZayGrik1d9/QIY5nJ4f9YsVvBkA6kJpHn9rISdQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -2199,13 +2373,25 @@ packages:
   is-electron@2.2.2:
     resolution: {integrity: sha512-FO/Rhvz5tuw4MCWkpMzHFKWD2LsfHzIb7i6MdPYZ/KW7AlxawyLkqdy+jPZP1WubqEADE3O4FUENlJHDfQASRg==}
 
+  is-error-x@2.1.2:
+    resolution: {integrity: sha512-8bQJRMUP3QFz/PcS3TC6ZkHOhDv8jAvDNABNEMnclZJsLdFtJf0PzhG2OUee/KtP8eA2UxK6tM6HMqWk7cj04A==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
     engines: {node: '>=0.10.0'}
 
+  is-finite-x@4.2.1:
+    resolution: {integrity: sha512-Ec5P0yFz5GR8uYQbVNx1QFUzgggsuhv85iDUJzrAe6aiJB8DTIivJKJoDBpHDcb7VXi3tEJTnBIYYRiRwgsIxQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   is-fullwidth-code-point@3.0.0:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
+
+  is-function-x@4.1.2:
+    resolution: {integrity: sha512-Ddyyh7mT7Wa4/WCvJ1yHOVQ8Sy+fx76PlfNYoKWJAPUj3O+DjYRQF4NdZ8zRIpkN08Oyto0yPkckUrShYthrFQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   is-generator-function@1.0.10:
     resolution: {integrity: sha512-jsEjy9l3yiXEQ+PsXdmBwEPcOxaXWLspKdplFUVI9vq1iZgIekeC0L167qeu86czQaxed3q/Uzuw0swL0irL8A==}
@@ -2215,10 +2401,30 @@ packages:
     resolution: {integrity: sha512-xelSayHH36ZgE7ZWhli7pW34hNbNl8Ojv5KVmkJD4hBdD3th8Tfk9vYasLM+mXWOZhFkgZfxhLSnrwRr4elSSg==}
     engines: {node: '>=0.10.0'}
 
+  is-index-x@2.1.2:
+    resolution: {integrity: sha512-AaCvzDt3cpJg+gVeOxferhetS4bMH9Npr7MeNNwA6GZlbY5PxWkMQj8HsezyPRg7TLKO9wrnRBSUNqeg6LpgiQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   is-inside-container@1.0.0:
     resolution: {integrity: sha512-KIYLCCJghfHZxqjYBE7rEy0OBuTd5xCHS7tHVgvCLkx7StIoaxwNW3hCALgEUjFfeRk+MG/Qxmp/vtETEF3tRA==}
     engines: {node: '>=14.16'}
     hasBin: true
+
+  is-integer-x@2.2.2:
+    resolution: {integrity: sha512-06SipMhKYqmrf6h6P96d/0QMy7kEjo91dKjlgym9mx3yb8F0DMuLji16QA4iq1tn4ZaWMQg9dK7S57TA/rZayA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-length-x@3.2.2:
+    resolution: {integrity: sha512-FvtrFszHlUmX1LDYLvdd/iooYZWiVzZal0RCEDdx79vqYOChqoIxgiZETppp60znCM37dKubFLIcpQYhDpSwMw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-map-x@2.1.2:
+    resolution: {integrity: sha512-IEat1bmsZ/R4Y9hSeRjmuKTj9DXcc2tOeOCH2HeY1V1mUUY1oYUsPAci/6t6zIQrFktbqbQThthJ8Rpu2iMF0g==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-nan-x@2.1.1:
+    resolution: {integrity: sha512-pF3332LooafxENk8PnUjZlW/VTX1SNI9/gHfMKWXX/5PzpA7wjnaQcfeBa8Hyo77V1T1WOZ65YeRpidZvShkrg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   is-nan@1.3.2:
     resolution: {integrity: sha512-E+zBKpQ2t6MEo1VsonYmluk9NxGrbzpeeLC2xIViuO2EjU2xsXsBPwTr3Ykv9l08UYEVEdWeRZNouaZqF6RN0w==}
@@ -2228,16 +2434,44 @@ packages:
     resolution: {integrity: sha512-tUdRRAnhT+OtCZR/LxZelH/C7QtjtFrTu5tXCA8pl55eTUElUHT+GPYV8MBMBvea/j+NxQqVt3LbWMRir7Gx9g==}
     engines: {node: '>=16'}
 
+  is-nil-x@2.1.1:
+    resolution: {integrity: sha512-8PThmdFnNVMfzg+rsUD9lWnZ9PMOPsOzDTxTycc5xIU7nlu8jEFhIj6wk+1yTeu2UHoyj78mueL9kh/eLIGumQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-number-object@1.0.7:
+    resolution: {integrity: sha512-k1U0IRzLMo7ZlYIfzRu23Oh6MiIFasgpb9X76eqfFZAqwH44UI4KTBvBYIZ1dSL9ZzChTB9ShHfLkR4pdW5krQ==}
+    engines: {node: '>= 0.4'}
+
   is-number@7.0.0:
     resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
     engines: {node: '>=0.12.0'}
+
+  is-object-like-x@2.1.2:
+    resolution: {integrity: sha512-QledvfxPGy+NdNy5hmB7G4+AnK1y6KaBW55es/K+GfGkvX9Dvf/MgoQB5la002z1Htp3HQiiOfInbpxo4L0V6A==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   is-plain-obj@2.1.0:
     resolution: {integrity: sha512-YWnfyRwxL/+SsrWYfOpUtz5b3YD+nyfkHvjbcanzk8zgyO4ASD67uVMRt8k5bM4lLMDnXfriRhOpemw+NfT1eA==}
     engines: {node: '>=8'}
 
+  is-primitive-x@1.0.1:
+    resolution: {integrity: sha512-Z29Qi/aRkELj6LO3LnnSAPN1929UIpY0h0yha5zULYo3VY1Q8hr2ocAE/fVZf22D8LFwoDoGSZwepbk7nvv+Ag==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   is-promise@2.2.2:
     resolution: {integrity: sha512-+lP4/6lKUBfQjZ2pdxThZvLUAafmZb8OAxFb8XXtiQmS35INgr85hdOGoEs124ez1FCnZJt6jau/T+alh58QFQ==}
+
+  is-regexp-x@3.1.2:
+    resolution: {integrity: sha512-Vd9F0FLvNQgEEJvcgIIpGiKnmLaYXjUSyFJd3MLNzozi79iIfDM0LfwtdB7N2ly3AUDHKlhrbUYXBBzRGt2/Sg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-safe-integer-x@2.2.2:
+    resolution: {integrity: sha512-ls5MYHB6n4sUtRTFR/EfngesYZUCv57/sWChbaV53q1HZSG5gYiDOIgOwCu9b95RW23LdBrbCf4A5u2F7gp2Zg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-set-x@2.1.2:
+    resolution: {integrity: sha512-cPidjAosuclJZzYk01eMmTEzNnB/R29a6TgJsXaCzg4q8czSGEJpuslUo4Rk4ZI6aIeQESuqj9VZhUHP5AUTvA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   is-stream@2.0.1:
     resolution: {integrity: sha512-hFoiJiTl63nn+kstHGBtewWSKnQLpyb155KHheA1l39uvtO9nWIop1p3udqPcUd/xbF1VLMO4n7OI6p7RbngDg==}
@@ -2247,9 +2481,24 @@ packages:
     resolution: {integrity: sha512-LnQR4bZ9IADDRSkvpqMGvt/tEJWclzklNgSw48V5EAaAeDd6qGvN8ei6k5p0tvxSR171VmGyHuTiAOfxAbr8kA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
+  is-string@1.0.7:
+    resolution: {integrity: sha512-tE2UXzivje6ofPW7l23cjDOMa09gb7xlAqG6jG5ej6uPV32TlWP3NKPigtaGeHNu9fohccRYvIiZMfOOnOYUtg==}
+    engines: {node: '>= 0.4'}
+
+  is-surrogate-pair-x@3.1.2:
+    resolution: {integrity: sha512-kRjOqq0CUPVaf9apeFv6vfjPbTJjiWbDR11bzryKjrT6j/Go3dZ8/Ed464AGpCB2vUV6KYcSHoholzplgbFfeg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  is-symbol@1.0.4:
+    resolution: {integrity: sha512-C/CPBqKWnvdcxqIARxyOh4v1UUEOCHpgDa0WYgpKDFMszcrPcffg5uhwSgPCLD2WWxmq6isisz87tzT01tuGhg==}
+    engines: {node: '>= 0.4'}
+
   is-typed-array@1.1.13:
     resolution: {integrity: sha512-uZ25/bUAlUY5fR4OKT4rZQEBrzQWYV9ZJYGGsUmEJ6thodVJ1HX64ePQ6Z0qPWP+m+Uq6e9UugrE38jeYsDSMw==}
     engines: {node: '>= 0.4'}
+
+  is-var-name@2.0.0:
+    resolution: {integrity: sha512-U+7mpdfaV4Qz2hDNy1Vt7TjWwdIp6br/w7CUlTnyMdsJq+IOSZrh+RsJNlSSckPAnTllhWxpiqC7VSxVTbcr2Q==}
 
   is-wsl@3.1.0:
     resolution: {integrity: sha512-UcVfVfaK4Sc4m7X3dUSoHoozQGBEFeDC+zVo06t98xe8CzHSZZBekNXH+tu0NalHolcJ/QAGqS46Hef7QXBIMw==}
@@ -2350,6 +2599,10 @@ packages:
     resolution: {integrity: sha512-IXO6OCs9yg8tMKzfPZ1YmheJbZCiEsnBdcB03l0OcfK9prKnJb96siuHCr5Fl37/yo9DnKU+TLpxzTUspw9shg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
+  local-pkg@0.5.0:
+    resolution: {integrity: sha512-ok6z3qlYyCDS4ZEU27HaU6x/xZa9Whf8jD4ptH5UZTQYZVYeb9bnZ3ojVhiJNLiXK1Hfc0GNbLXcmZ5plLDDBg==}
+    engines: {node: '>=14'}
+
   locate-path@6.0.0:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
@@ -2381,6 +2634,14 @@ packages:
 
   magic-string@0.30.12:
     resolution: {integrity: sha512-Ea8I3sQMVXr8JhN4z+H/d8zwo+tYDgHE9+5G4Wnrwhs0gaK9fXTKx0Tw5Xwsd/bCPTTZNRAdpyzvoeORe9LYpw==}
+
+  math-clamp-x@3.2.2:
+    resolution: {integrity: sha512-Oi8TI3q8QsIMAR9mhH4u2u52kqUVzvehq6tOoK92ipZO/SNVoFpAgr7alHuIQdevvczP4X71GZfMlkexJAarTw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  math-sign-x@4.2.2:
+    resolution: {integrity: sha512-mQ2o1VayrZ6Jaz8VyP8B7h/hdn2iAnbUOrQh4rTiwbpULhktpD8IpHGBw8Qo2fmv97Z1P3YzLF3X/DkbIHBQmA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   memfs@4.14.0:
     resolution: {integrity: sha512-JUeY0F/fQZgIod31Ja1eJgiSxLn7BfQlCnqhwXFBzFHEw63OdLK7VJUJ7bnzNsWgCyoUP5tEp1VRY8rDaYzqOA==}
@@ -2449,6 +2710,9 @@ packages:
   mkdirp-classic@0.5.3:
     resolution: {integrity: sha512-gKLcREMhtuZRwRAfqP3RFW+TK4JqApVBtOIftVgjuABpAtpxhPGaDcfvbhNvD0B8iD1oUr/txX35NjcaY6Ns/A==}
 
+  mlly@1.7.2:
+    resolution: {integrity: sha512-tN3dvVHYVz4DhSXinXIk7u9syPYaJvio118uomkovAtWBT+RdbP6Lfh/5Lvo519YMmwBafwlh20IPTXIStscpA==}
+
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
     engines: {node: '>=4'}
@@ -2477,6 +2741,10 @@ packages:
 
   mz@2.7.0:
     resolution: {integrity: sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q==}
+
+  nan-x@2.2.1:
+    resolution: {integrity: sha512-kZN/tgpupBg+ZVB+25lTDNKwnDGCFia36awekeIRj4AF3zQ/bnRDgr3M3mEV2KmFYC+UW8rVCCPjAz0rGdZk8A==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   nanoid@3.3.7:
     resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
@@ -2521,9 +2789,17 @@ packages:
   node-sqlite3-wasm@0.8.23:
     resolution: {integrity: sha512-PwbsAjA4aOhh8DwWWk6Df0IzjSraMyjfDShQHnoS4luCxsTx6/FNwofW3DDEJlaCM/0P0zxhGcIpK6BmapnpdA==}
 
+  noop-x@1.2.1:
+    resolution: {integrity: sha512-X+jn3u2YhlAjteZIfrcVxaDLRfnrMvkzQ+jRatOX8UO7PFqU0QKlcyI2DhvLKEK2K4u1cRrZw9QqK3XruvyH2A==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
+
+  normalize-space-x@4.1.2:
+    resolution: {integrity: sha512-nADMBxZ8tCAS/VR6s+EU7p2P/+Hs0GSmUvkXyThZmdACqDIeyAmRHi4aRsbR32Ec0H+AC71srh2l3I5CF0NKvw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   npm-run-path@4.0.1:
     resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
@@ -2537,9 +2813,29 @@ packages:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
     engines: {node: '>=0.10.0'}
 
+  object-create-x@3.1.2:
+    resolution: {integrity: sha512-2wuzXZSKzMHGFb7WDBwtwzGScucbHxGASyL8ti/XrM50BS0kfbmVmZAxe606Itb/rI8I2KNT6K0m3xsXCLco0g==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  object-define-properties-x@5.1.2:
+    resolution: {integrity: sha512-HSBe2tnSHjxTqVzS7KS59HpMffRBYEnI4xb/9k86rfC0ENLTx/o2YzK4G1D9FTQXOSoUrCPNJXWA7C64LYe1kQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  object-define-property-x@5.1.2:
+    resolution: {integrity: sha512-s/p8ajRQwsPBe3+8v2DjeGYBTS35XOSxBVwvvf481/gAsvcvNRjttbck2t6NPbdkkLh+Uqf9WaeiFTC1LIsZPA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  object-get-own-property-descriptor-x@4.1.2:
+    resolution: {integrity: sha512-ukh2PlxrPWenQ7pcCfeUbFg4Bib8Km1CvFVKrgWbPVgkBM7hMC3EhJ3RFK1zl8c3dnp+8l25IGM9RF3wpkcIQA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   object-is@1.1.6:
     resolution: {integrity: sha512-F8cZ+KfGlSGi09lJT7/Nd6KJZ9ygtvYC0/UYYLI9nmQKLMnydpB9yvbv9K1uSkEu7FU9vYPmVwLg328tX+ot3Q==}
     engines: {node: '>= 0.4'}
+
+  object-keys-x@3.1.2:
+    resolution: {integrity: sha512-Ov6fQwPoxBG5iYXFpX66cSJVOKp6b06HI7KUfBTQoomVzCQSDefelL1w9IIQSXKoWjcTYIxjmuA+qNXJNGAnxA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   object-keys@1.1.1:
     resolution: {integrity: sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==}
@@ -2620,6 +2916,10 @@ packages:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
 
+  parse-int-x@3.2.2:
+    resolution: {integrity: sha512-2hRe7DQZb8+YAXHu1esNwfEp6+yypsl1wayA7Vm7s/atrkUPltuG/y9KKfLcg3Ns/eG9EFJCugVS2eDZ8mJdYA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   partykit@0.0.110:
     resolution: {integrity: sha512-lAUeB/b6nZbMr6c789RKlSsGhbMtklNhjJZ0ri4zzaVEqhG2/k+cqTLCYTwHvfSI6eSa7cIF614R7CyMUrSLgA==}
     hasBin: true
@@ -2674,6 +2974,9 @@ packages:
     resolution: {integrity: sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==}
     engines: {node: '>= 6'}
 
+  pkg-types@1.2.1:
+    resolution: {integrity: sha512-sQoqa8alT3nHjGuTjuKgOnvjo4cljkufdtLMnO2LBP/wRwuDlo1tkaEdMxCRhyGRPacv/ztlZgDPm2b7FAmEvw==}
+
   possible-typed-array-names@1.0.0:
     resolution: {integrity: sha512-d7Uw+eZoloe0EHDIYoe+bQ5WXnGMOpmiZFTuMWCwpjzzkL2nTjcKiAk4hh8TjnGye2TwWOk3UXucZ+3rbmBa8Q==}
     engines: {node: '>= 0.4'}
@@ -2727,6 +3030,10 @@ packages:
   prolly-trees@1.0.4:
     resolution: {integrity: sha512-vtnxfw5wnUHbGa0IIIk9B9DRztJWZw+t9d0s0iGxY/VzEGCg2EMl8GgGU3EhSquFLWapwbGjFTL1ipbezaXR3g==}
 
+  property-is-enumerable-x@2.1.2:
+    resolution: {integrity: sha512-lRqJh4yGnwiZUx7x8abWhfucNsImqwxbFoCQzRjfwJflOBenZoFq/YMlWJShdzBmqd9i2/RrrvFW8cBs1+H+3w==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   protobufjs@7.4.0:
     resolution: {integrity: sha512-mRUWCc3KUU4w1jU8sGxICXH/gNS94DvI1gxqDvBzhj1JpcsimQkYiOJfwsPUykUI5ZaspFbSgmBLER8IrQ3tqw==}
     engines: {node: '>=12.0.0'}
@@ -2766,9 +3073,25 @@ packages:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
     engines: {node: '>=8.10.0'}
 
+  rename-function-x@1.1.2:
+    resolution: {integrity: sha512-3kkzZck51lWM7V71Px8ynhLX1JbS5EQPPeOfPywp41f50VLKdh+1lZJz3VgzTDRYerQIw1uxHUCm5XXFweCWIg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  replace-comments-x@3.1.2:
+    resolution: {integrity: sha512-Ig8PT8++5YLhTDD8EokcTyawaULbOzzeFk8Tb6VVAVqiqZ5ZFcU1/fBw9IEwjd8r3wMm6HSZmQOCYYYny8dGnw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  require-coercible-to-string-x@2.1.1:
+    resolution: {integrity: sha512-/6GKFuhc8z1zBXkTLQDH1OrbkeMWKwvJbjkLFMiKi3LOBpn+5pAdgV5B8Y4vXWrlwhvpIeg3dFRFDZdcyBDQyA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
+
+  require-object-coercible-x@2.1.1:
+    resolution: {integrity: sha512-te3nTMzvKCUMIRBQYAtLAPMfXvYnYCijZplqA3/VdSGFFNzgkiuaUGUQdZDSHhK20Z7xewHRWW4XkVpUVrQwMA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -2825,6 +3148,14 @@ packages:
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
+  same-value-x@2.1.1:
+    resolution: {integrity: sha512-dPxZF9siIDDQk0oZ4g88mA5OcLx7EKKqU2PNSyr8RCAjsfV1DLfWOVnETxEZSHXr+TpDy0Jco6en/RLO33vfdQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  same-value-zero-x@2.1.1:
+    resolution: {integrity: sha512-EYw4MgarqX8i//WneRq/jgamDcYC7KUrS9yNoRGvvQMTtrBeMLSPfnjz4+KgqueDW9If5iq2Km4MV9AswuMA9A==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   selfsigned@2.4.1:
     resolution: {integrity: sha512-th5B4L2U+eGLq1TVh7zNRGBapioSORUeymIydxgFpwww9d2qyKvtuPU2jJuHvYAwwqi2Y596QBL3eEqcPEYL8Q==}
     engines: {node: '>=10'}
@@ -2856,11 +3187,23 @@ packages:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
 
+  simple-bind-x@1.0.3:
+    resolution: {integrity: sha512-UNt+DzNdI/a6dfkpJoGTCarOKnBBNxTwcjrCqQWtHQ5NZtI0fdjL4hB4YtYCbOETGnNw5/e69K6URhSs738KLg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  simple-call-x@1.0.3:
+    resolution: {integrity: sha512-f80t0ft82q15coHABjl95mnqCDIkpxLeQzfwdwtc0bx0FTnsS8uKDseyY0Pxa2O6Oh5Lpe2QKG2Q3NXWPjxEMQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   simple-concat@1.0.1:
     resolution: {integrity: sha512-cSFtAPtRhljv69IK0hTVZQ+OfE9nePi/rtJmw5UjHeVyVroEqJXP1sFztKUy1qU+xvz3u/sfYJLa947b7nAN2Q==}
 
   simple-get@4.0.1:
     resolution: {integrity: sha512-brv7p5WgH0jmQJr1ZDDfKDOSeWWg+OVypG99A/5vYGPqJ6pxiaHLy8nxtFjBA7oMa01ebA9gfh1uMCFqOuXxvA==}
+
+  simple-methodize-x@1.0.4:
+    resolution: {integrity: sha512-omskIMJiH/urw+5mzLDYsV7yVFigo5LHTA24CHAFkh+HmZ53eQtfoeh4nkGI03JFCacAnL1uhNCyMlJTecXvzg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -2880,6 +3223,10 @@ packages:
 
   sparse-array@1.3.2:
     resolution: {integrity: sha512-ZT711fePGn3+kQyLuv1fpd3rNSkNF8vd5Kv2D+qnOANeyKs3fx6bUMGWRPvgTTcYV64QMqZKZwcuaQSP3AZ0tg==}
+
+  split-if-boxed-bug-x@2.1.2:
+    resolution: {integrity: sha512-s16LLvA6VVqayT560dGsP1AXGWAIBsd/1KotRSjoPiaAMPKLbyio9iAsR+b6RGBF22zdlBLGjc4KyU5KCfmzIA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
@@ -2951,6 +3298,14 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
+  symbol-iterator-x@1.1.2:
+    resolution: {integrity: sha512-Zx/FE0En8jKE0iEGO/x1iqBW08dkY29hFrU3VC/gZktCHqQd3rKoXzhP4ArGAS99/jkOC7A0FMEPCGX4EWOG/Q==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  symbol-species-x@1.1.2:
+    resolution: {integrity: sha512-k15dJ8HS3gXNr/wwUbe3RAYkq/oWK3TbNa7g9/XaVK2S8f9GLACJlfwvUASIlTpzi3ip0s5m1NVmCqc13Cs/Zw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   sync-multihash-sha2@1.0.0:
     resolution: {integrity: sha512-A5gVpmtKF0ov+/XID0M0QRJqF2QxAsj3x/LlDC8yivzgoYCoWkV+XaZPfVu7Vj1T/hYzYS1tfjwboSbXjqocug==}
 
@@ -3007,9 +3362,49 @@ packages:
     resolution: {integrity: sha512-n1cw8k1k0x4pgA2+9XrOkFydTerNcJ1zWCO5Nn9scWHTD+5tp8dghT2x1uduQePZTZgd3Tupf+x9BxJjeJi77Q==}
     engines: {node: '>=14.0.0'}
 
+  to-boolean-x@2.1.1:
+    resolution: {integrity: sha512-ir6nGXyTFDPIUiMuePbGIx5UnY6JbxMw7e18djKrDHhXvt14pbhsbatFzySIVW++4vevTtQNYinh8bKOCW//KQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  to-integer-x@4.2.2:
+    resolution: {integrity: sha512-dOYAgv5mt1/2rQsHne+DcHQkO9maWn1qreikAg5EMIdVZXNMYfKmrYrtKKunS4CUyqnvd1UaLgrY3QRkj8jM+A==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  to-length-x@4.2.2:
+    resolution: {integrity: sha512-ZOla1LzUusLnMyjieVtLQTtmLctIYSrXK34V2dGdALXYxIGvFxapiKgkQdIH1PlV1mPUFDziDr1TkYEa1zBwFA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  to-number-x@3.2.2:
+    resolution: {integrity: sha512-snnymZEexIsNKZQu2Ak6sZpQ9u0BZ5VJfcjBuZHg6IUih/42rup75jQlTE1K5loUB/dBeZj8uMLa2xA2VxsccQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  to-object-x@2.2.1:
+    resolution: {integrity: sha512-bTqODgmN4q3TJfIVDd4qNRNyDxOHyy0ZzFEwJsZr0RUseKQFTAcGszFCAtypLKjfTsSxoPZUkq9OPB9h/Hf2PQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  to-primitive-x@2.1.2:
+    resolution: {integrity: sha512-AXm1W8QR8tvi8HeClW3dKQxBErtvBgg54RjLY3HvuT+aXUwDPAQJETZED9yk8xA11Nd4NSql8iz4QP4nmnU2oA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  to-property-key-x@3.1.2:
+    resolution: {integrity: sha512-DHgewI2SIkHGpB5jGeesfSaEN88N0P6A83mYCd28IN5T9FkaKtb7jvqAajey1Vv20GcKAcPiL8hlEeeWdbaE4g==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
+
+  to-string-symbols-supported-x@2.1.2:
+    resolution: {integrity: sha512-sHDiVh9DeTSgMxmgDDFiay4+WpFx81U0e9el6lxORfm/s3F07suUieI+rPKOfQ3sqVvkPMd4aCvuQtHLJQj2vg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  to-string-tag-x@2.1.2:
+    resolution: {integrity: sha512-854igRa+5oWpAy2Y+SwGbjyjgFNfl1gIJH9ShVeXJYuKHIt8NS17sFllysRtFOD1iemNoGbVbTnI1qFDyjjGQw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  to-string-x@2.1.1:
+    resolution: {integrity: sha512-4R9y5W1m3YxHM4MGtgudgtVsx7mTTtyI7qC5wiuoJt3fwJEiNBBInmwggGawJELSY7aDajIaVyWziq46bimupw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   tr46@0.0.3:
     resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
@@ -3026,6 +3421,18 @@ packages:
   tree-kill@1.2.2:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
     hasBin: true
+
+  trim-left-x@4.1.2:
+    resolution: {integrity: sha512-yJeikzHJkxBygGAhXIVxxFuRqO0jptEx91+U7bS2il6uCZ/CAOWySArfOt35ZwzTyXfnfiB+BhvxvE2TroVcxA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  trim-right-x@4.1.2:
+    resolution: {integrity: sha512-//Z+2PD4eS9lh2lZjalpBEII7Ef2DaDQ5s1OOx1JK1L90WWfrqdC9/vX8f467lmahNGkxoxmHWwNDN6XdK0oKg==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  trim-x@4.1.2:
+    resolution: {integrity: sha512-Cr4fnQ52a57JCX20SzyvRyLcMvKgKd9lcf7Jh/oa1w4FfH1kGT6F7/HjNiAJZyDW+xdLLH6KhrfRhvoIYZKROA==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   ts-api-utils@1.3.0:
     resolution: {integrity: sha512-UQMIo7pb8WRomKR1/+MFVLTroIvDVtMX3K6OUir8ynLyzB8Jeriont2bTAtmNPa1ekAgN7YPDyf6V+ygrdU+eQ==}
@@ -3144,6 +3551,14 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
+  util-get-getter-x@1.0.2:
+    resolution: {integrity: sha512-iZF1RJsNLV7zW37sH1nTudFUkwaTgigz5O19Ok1LeRBe8eZGYNrMJ/xvUDore3nt/z2mf7gBnUH1jyg00yJ/fQ==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
+  util-pusher-x@1.0.3:
+    resolution: {integrity: sha512-+hCPl/DrppZRn/RHYnUcNwckR4h5s06pUELCSGEMhdYSy7N6dIfvozR482w5j2+eKfXvDISL/QNlTnRPB2skDw==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
+
   util@0.10.4:
     resolution: {integrity: sha512-0Pm9hTQ3se5ll1XihRic3FDIku70C+iHUdT/W926rSgHV5QgXsYbKZN8MSC3tJtSkhuROzvsQjAaFENRXr+19A==}
 
@@ -3241,6 +3656,9 @@ packages:
   when-exit@2.1.3:
     resolution: {integrity: sha512-uVieSTccFIr/SFQdFWN/fFaQYmV37OKtuaGphMAzi4DmmUlrvRBJW5WSLkHyjNQY/ePJMz3LoiX9R3yy1Su6Hw==}
 
+  which-boxed-primitive@1.0.2:
+    resolution: {integrity: sha512-bwZdv0AKLpplFY2KZRX6TvyuN7ojjr7lwkg6ml0roIy9YeuSr7JS372qlNW18UQYzgYK9ziGcerWqZOmEn9VNg==}
+
   which-typed-array@1.1.15:
     resolution: {integrity: sha512-oV0jmFtUky6CXfkqehVvBP/LSWJ2sy4vWMioiENyJLePrBO/yKyV9OyJySfAKosh+RYkIl5zJCNZ8/4JncrpdA==}
     engines: {node: '>= 0.4'}
@@ -3249,6 +3667,10 @@ packages:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
     engines: {node: '>= 8'}
     hasBin: true
+
+  white-space-x@4.1.1:
+    resolution: {integrity: sha512-eVlQcQLfYCUhM+oSoyKzn1j+z//UHbe9Lqr6xUeR/YG4n9AobOtLVdHnj69MJK8LaW3fqSm4n+hAbfPi/1M5/Q==}
+    engines: {node: '>=8.11.4', npm: 6.10.1}
 
   why-is-node-running@2.3.0:
     resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
@@ -4276,7 +4698,7 @@ snapshots:
     dependencies:
       tslib: 2.7.0
 
-  '@jspm/core@2.0.1': {}
+  '@jspm/core@2.1.0': {}
 
   '@multiformats/murmur3@2.1.8':
     dependencies:
@@ -5119,9 +5541,97 @@ snapshots:
 
   argparse@2.0.1: {}
 
+  array-all-x@1.1.2:
+    dependencies:
+      array-any-x: 1.1.2
+      simple-call-x: 1.0.3
+
+  array-any-x@1.1.2:
+    dependencies:
+      assert-is-function-x: 3.1.2
+      simple-call-x: 1.0.3
+      split-if-boxed-bug-x: 2.1.2
+      to-length-x: 4.2.2
+      to-object-x: 2.2.1
+
+  array-filter-x@3.1.2:
+    dependencies:
+      array-all-x: 1.1.2
+      assert-is-function-x: 3.1.2
+      attempt-x: 2.1.2
+      require-object-coercible-x: 2.1.1
+      simple-call-x: 1.0.3
+      simple-methodize-x: 1.0.4
+      to-boolean-x: 2.1.1
+      to-object-x: 2.2.1
+
+  array-for-each-x@3.1.2:
+    dependencies:
+      array-all-x: 1.1.2
+      assert-is-function-x: 3.1.2
+      attempt-x: 2.1.2
+      require-object-coercible-x: 2.1.1
+      simple-call-x: 1.0.3
+      simple-methodize-x: 1.0.4
+      to-boolean-x: 2.1.1
+      to-object-x: 2.2.1
+
+  array-like-slice-x@2.2.2:
+    dependencies:
+      split-if-boxed-bug-x: 2.1.2
+      to-integer-x: 4.2.2
+      to-length-x: 4.2.2
+      to-object-x: 2.2.1
+
+  array-reduce-right-x@3.1.2:
+    dependencies:
+      assert-is-function-x: 3.1.2
+      attempt-x: 2.1.2
+      require-object-coercible-x: 2.1.1
+      simple-methodize-x: 1.0.4
+      split-if-boxed-bug-x: 2.1.2
+      to-boolean-x: 2.1.1
+      to-length-x: 4.2.2
+      to-object-x: 2.2.1
+
+  array-slice-x@4.2.2:
+    dependencies:
+      array-like-slice-x: 2.2.2
+      attempt-x: 2.1.2
+      cached-constructors-x: 2.2.1
+      is-arguments: 1.1.1
+      is-array-x: 2.1.2
+      is-string: 1.0.7
+      simple-methodize-x: 1.0.4
+      to-object-x: 2.2.1
+
+  array-some-x@3.1.2:
+    dependencies:
+      array-any-x: 1.1.2
+      assert-is-function-x: 3.1.2
+      attempt-x: 2.1.2
+      require-object-coercible-x: 2.1.1
+      simple-call-x: 1.0.3
+      simple-methodize-x: 1.0.4
+      to-boolean-x: 2.1.1
+      to-object-x: 2.2.1
+
+  arraybuffer-equal@1.0.4: {}
+
   as-table@1.0.55:
     dependencies:
       printable-characters: 1.0.42
+
+  assert-is-function-x@3.1.2:
+    dependencies:
+      is-function-x: 4.1.2
+      is-primitive-x: 1.0.1
+      to-string-symbols-supported-x: 2.1.2
+
+  assert-is-object-x@3.1.2:
+    dependencies:
+      is-primitive-x: 1.0.1
+      to-string-symbols-supported-x: 2.1.2
 
   assert@2.1.0:
     dependencies:
@@ -5138,6 +5648,11 @@ snapshots:
       stubborn-fs: 1.2.5
       when-exit: 2.1.3
 
+  attempt-x@2.1.2:
+    dependencies:
+      simple-call-x: 1.0.3
+      util-pusher-x: 1.0.3
+
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.0.0
@@ -5150,6 +5665,13 @@ snapshots:
     dependencies:
       bindings: 1.5.0
       prebuild-install: 7.1.2
+
+  big-counter-x@4.1.2:
+    dependencies:
+      array-reduce-right-x: 3.1.2
+      array-slice-x: 4.2.2
+      object-define-properties-x: 5.1.2
+      to-boolean-x: 2.1.1
 
   big-integer@1.6.52: {}
 
@@ -5202,6 +5724,17 @@ snapshots:
       load-tsconfig: 0.2.5
 
   cac@6.7.14: {}
+
+  cached-constructors-x@2.2.1:
+    dependencies:
+      noop-x: 1.2.1
+
+  calculate-from-index-x@3.1.2:
+    dependencies:
+      is-array-like-x: 2.1.2
+      to-integer-x: 4.2.2
+      to-length-x: 4.2.2
+      to-object-x: 2.2.1
 
   call-bind@1.0.7:
     dependencies:
@@ -5273,6 +5806,37 @@ snapshots:
       is-wsl: 3.1.0
       is64bit: 2.0.0
 
+  collections-x@3.1.2:
+    dependencies:
+      array-for-each-x: 3.1.2
+      array-some-x: 3.1.2
+      assert-is-function-x: 3.1.2
+      assert-is-object-x: 3.1.2
+      attempt-x: 2.1.2
+      big-counter-x: 4.1.2
+      get-prototype-of-x: 2.1.2
+      has-own-property-x: 4.1.2
+      index-of-x: 3.1.2
+      is-array-like-x: 2.1.2
+      is-array-x: 2.1.2
+      is-boolean-object: 1.1.2
+      is-function-x: 4.1.2
+      is-map-x: 2.1.2
+      is-object-like-x: 2.1.2
+      is-primitive-x: 1.0.1
+      is-set-x: 2.1.2
+      is-string: 1.0.7
+      is-surrogate-pair-x: 3.1.2
+      object-create-x: 3.1.2
+      object-define-properties-x: 5.1.2
+      object-define-property-x: 5.1.2
+      rename-function-x: 1.1.2
+      simple-call-x: 1.0.3
+      simple-methodize-x: 1.0.4
+      symbol-iterator-x: 1.1.2
+      symbol-species-x: 1.1.2
+      to-boolean-x: 2.1.1
+
   color-convert@2.0.1:
     dependencies:
       color-name: 1.1.4
@@ -5293,6 +5857,8 @@ snapshots:
       env-paths: 3.0.0
       json-schema-typed: 8.0.1
       semver: 7.6.3
+
+  confbox@0.1.8: {}
 
   consola@3.2.3: {}
 
@@ -5410,7 +5976,7 @@ snapshots:
 
   esbuild-plugin-polyfill-node@0.3.0(esbuild@0.23.1):
     dependencies:
-      '@jspm/core': 2.0.1
+      '@jspm/core': 2.1.0
       esbuild: 0.23.1
       import-meta-resolve: 3.1.1
 
@@ -5419,6 +5985,13 @@ snapshots:
       magic-string: 0.25.9
 
   esbuild-plugin-resolve@2.0.0: {}
+
+  esbuild-plugins-node-modules-polyfill@1.6.7(esbuild@0.23.1):
+    dependencies:
+      '@jspm/core': 2.1.0
+      esbuild: 0.23.1
+      local-pkg: 0.5.0
+      resolve.exports: 2.0.2
 
   esbuild@0.17.19:
     optionalDependencies:
@@ -5663,6 +6236,14 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
+  find-index-x@3.1.2:
+    dependencies:
+      assert-is-function-x: 3.1.2
+      attempt-x: 2.1.2
+      split-if-boxed-bug-x: 2.1.2
+      to-length-x: 4.2.2
+      to-object-x: 2.2.1
+
   find-up@5.0.0:
     dependencies:
       locate-path: 6.0.0
@@ -5700,6 +6281,41 @@ snapshots:
       hasown: 2.0.2
 
   get-iterator@1.0.2: {}
+
+  get-own-enumerable-keys-x@2.1.2:
+    dependencies:
+      get-own-enumerable-property-symbols-x: 2.1.2
+      object-keys-x: 3.1.2
+      simple-methodize-x: 1.0.4
+      to-object-x: 2.2.1
+
+  get-own-enumerable-property-symbols-x@2.1.2:
+    dependencies:
+      array-filter-x: 3.1.2
+      get-own-property-symbols-x: 2.1.2
+      property-is-enumerable-x: 2.1.2
+      to-object-x: 2.2.1
+
+  get-own-property-names-x@3.1.2:
+    dependencies:
+      array-slice-x: 4.2.2
+      attempt-x: 2.1.2
+      is-array-x: 2.1.2
+      object-keys-x: 3.1.2
+      to-object-x: 2.2.1
+      to-string-tag-x: 2.1.2
+
+  get-own-property-symbols-x@2.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      has-symbol-support-x: 2.1.2
+      to-object-x: 2.2.1
+
+  get-prototype-of-x@2.1.2:
+    dependencies:
+      is-function-x: 4.1.2
+      to-boolean-x: 2.1.1
+      to-object-x: 2.2.1
 
   get-source@2.0.12:
     dependencies:
@@ -5750,7 +6366,17 @@ snapshots:
       sparse-array: 1.3.2
       uint8arrays: 5.1.0
 
+  has-bigints@1.0.2: {}
+
+  has-boxed-string-x@2.1.1: {}
+
   has-flag@4.0.0: {}
+
+  has-own-property-x@4.1.2:
+    dependencies:
+      simple-methodize-x: 1.0.4
+      to-object-x: 2.2.1
+      to-property-key-x: 3.1.2
 
   has-property-descriptors@1.0.2:
     dependencies:
@@ -5758,11 +6384,25 @@ snapshots:
 
   has-proto@1.0.3: {}
 
+  has-symbol-support-x@2.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      is-symbol: 1.0.4
+
   has-symbols@1.0.3: {}
+
+  has-to-string-tag-x@2.1.2:
+    dependencies:
+      has-symbol-support-x: 2.1.2
+      is-symbol: 1.0.4
 
   has-tostringtag@1.0.2:
     dependencies:
       has-symbols: 1.0.3
+
+  has-working-bind-x@1.0.1:
+    dependencies:
+      noop-x: 1.2.1
 
   hashlru@2.3.0: {}
 
@@ -5796,6 +6436,24 @@ snapshots:
   import-meta-resolve@3.1.1: {}
 
   imurmurhash@0.1.4: {}
+
+  index-of-x@3.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      calculate-from-index-x: 3.1.2
+      find-index-x: 3.1.2
+      is-nan-x: 2.1.1
+      is-string: 1.0.7
+      same-value-x: 2.1.1
+      same-value-zero-x: 2.1.1
+      simple-methodize-x: 1.0.4
+      split-if-boxed-bug-x: 2.1.2
+      to-boolean-x: 2.1.1
+      to-integer-x: 4.2.2
+      to-length-x: 4.2.2
+      to-object-x: 2.2.1
+
+  infinity-x@2.2.1: {}
 
   inherits@2.0.3: {}
 
@@ -5860,9 +6518,45 @@ snapshots:
       call-bind: 1.0.7
       has-tostringtag: 1.0.2
 
+  is-array-buffer-x@2.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      has-to-string-tag-x: 2.1.2
+      is-object-like-x: 2.1.2
+      simple-call-x: 1.0.3
+      to-boolean-x: 2.1.1
+      to-string-tag-x: 2.1.2
+      util-get-getter-x: 1.0.2
+
+  is-array-like-x@2.1.2:
+    dependencies:
+      is-function-x: 4.1.2
+      is-length-x: 3.2.2
+      is-nil-x: 2.1.1
+
+  is-array-x@2.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      to-string-tag-x: 2.1.2
+
+  is-bigint@1.0.4:
+    dependencies:
+      has-bigints: 1.0.2
+
   is-binary-path@2.1.0:
     dependencies:
       binary-extensions: 2.3.0
+
+  is-boolean-object@1.1.2:
+    dependencies:
+      call-bind: 1.0.7
+      has-tostringtag: 1.0.2
+
+  is-boxed-primitive@1.0.1:
+    dependencies:
+      which-boxed-primitive: 1.0.2
+
+  is-buffer@2.0.5: {}
 
   is-callable@1.2.7: {}
 
@@ -5870,13 +6564,86 @@ snapshots:
     dependencies:
       hasown: 2.0.2
 
+  is-data-view-x@2.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      has-to-string-tag-x: 2.1.2
+      is-array-buffer-x: 2.1.2
+      is-object-like-x: 2.1.2
+      simple-call-x: 1.0.3
+      to-string-tag-x: 2.1.2
+      util-get-getter-x: 1.0.2
+
+  is-date-object@1.0.5:
+    dependencies:
+      has-tostringtag: 1.0.2
+
+  is-deep-strict-equal-x@1.1.2:
+    dependencies:
+      array-filter-x: 3.1.2
+      arraybuffer-equal: 1.0.4
+      attempt-x: 2.1.2
+      collections-x: 3.1.2
+      get-own-property-names-x: 3.1.2
+      get-own-property-symbols-x: 2.1.2
+      get-prototype-of-x: 2.1.2
+      has-own-property-x: 4.1.2
+      has-symbol-support-x: 2.1.2
+      is-array-buffer-x: 2.1.2
+      is-array-x: 2.1.2
+      is-bigint: 1.0.4
+      is-boolean-object: 1.1.2
+      is-boxed-primitive: 1.0.1
+      is-buffer: 2.0.5
+      is-data-view-x: 2.1.2
+      is-date-object: 1.0.5
+      is-error-x: 2.1.2
+      is-index-x: 2.1.2
+      is-map-x: 2.1.2
+      is-nan-x: 2.1.1
+      is-number-object: 1.0.7
+      is-regexp-x: 3.1.2
+      is-set-x: 2.1.2
+      is-string: 1.0.7
+      is-symbol: 1.0.4
+      object-keys-x: 3.1.2
+      property-is-enumerable-x: 2.1.2
+      same-value-x: 2.1.1
+      simple-methodize-x: 1.0.4
+      to-boolean-x: 2.1.1
+      to-string-symbols-supported-x: 2.1.2
+      to-string-tag-x: 2.1.2
+      which-typed-array: 1.1.15
+
   is-docker@3.0.0: {}
 
   is-electron@2.2.2: {}
 
+  is-error-x@2.1.2:
+    dependencies:
+      get-prototype-of-x: 2.1.2
+      is-object-like-x: 2.1.2
+      to-string-tag-x: 2.1.2
+
   is-extglob@2.1.1: {}
 
+  is-finite-x@4.2.1:
+    dependencies:
+      infinity-x: 2.2.1
+      is-nan-x: 2.1.1
+
   is-fullwidth-code-point@3.0.0: {}
+
+  is-function-x@4.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      has-to-string-tag-x: 2.1.2
+      is-primitive-x: 1.0.1
+      normalize-space-x: 4.1.2
+      replace-comments-x: 3.1.2
+      simple-methodize-x: 1.0.4
+      to-boolean-x: 2.1.1
+      to-string-tag-x: 2.1.2
 
   is-generator-function@1.0.10:
     dependencies:
@@ -5886,9 +6653,35 @@ snapshots:
     dependencies:
       is-extglob: 2.1.1
 
+  is-index-x@2.1.2:
+    dependencies:
+      math-clamp-x: 3.2.2
+      to-integer-x: 4.2.2
+      to-number-x: 3.2.2
+      to-string-symbols-supported-x: 2.1.2
+
   is-inside-container@1.0.0:
     dependencies:
       is-docker: 3.0.0
+
+  is-integer-x@2.2.2:
+    dependencies:
+      is-finite-x: 4.2.1
+      to-integer-x: 4.2.2
+
+  is-length-x@3.2.2:
+    dependencies:
+      is-safe-integer-x: 2.2.2
+
+  is-map-x@2.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      is-length-x: 3.2.2
+      is-object-like-x: 2.1.2
+      simple-call-x: 1.0.3
+      util-get-getter-x: 1.0.2
+
+  is-nan-x@2.1.1: {}
 
   is-nan@1.3.2:
     dependencies:
@@ -5897,19 +6690,69 @@ snapshots:
 
   is-network-error@1.1.0: {}
 
+  is-nil-x@2.1.1: {}
+
+  is-number-object@1.0.7:
+    dependencies:
+      has-tostringtag: 1.0.2
+
   is-number@7.0.0: {}
+
+  is-object-like-x@2.1.2:
+    dependencies:
+      is-function-x: 4.1.2
+      is-primitive-x: 1.0.1
 
   is-plain-obj@2.1.0: {}
 
+  is-primitive-x@1.0.1: {}
+
   is-promise@2.2.2: {}
+
+  is-regexp-x@3.1.2:
+    dependencies:
+      has-own-property-x: 4.1.2
+      has-to-string-tag-x: 2.1.2
+      is-object-like-x: 2.1.2
+      object-define-property-x: 5.1.2
+      object-get-own-property-descriptor-x: 4.1.2
+      simple-methodize-x: 1.0.4
+      to-string-tag-x: 2.1.2
+
+  is-safe-integer-x@2.2.2:
+    dependencies:
+      is-integer-x: 2.2.2
+
+  is-set-x@2.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      is-length-x: 3.2.2
+      is-object-like-x: 2.1.2
+      simple-call-x: 1.0.3
+      util-get-getter-x: 1.0.2
 
   is-stream@2.0.1: {}
 
   is-stream@3.0.0: {}
 
+  is-string@1.0.7:
+    dependencies:
+      has-tostringtag: 1.0.2
+
+  is-surrogate-pair-x@3.1.2:
+    dependencies:
+      is-string: 1.0.7
+      simple-methodize-x: 1.0.4
+
+  is-symbol@1.0.4:
+    dependencies:
+      has-symbols: 1.0.3
+
   is-typed-array@1.1.13:
     dependencies:
       which-typed-array: 1.1.15
+
+  is-var-name@2.0.0: {}
 
   is-wsl@3.1.0:
     dependencies:
@@ -6010,6 +6853,11 @@ snapshots:
 
   load-tsconfig@0.2.5: {}
 
+  local-pkg@0.5.0:
+    dependencies:
+      mlly: 1.7.2
+      pkg-types: 1.2.1
+
   locate-path@6.0.0:
     dependencies:
       p-locate: 5.0.0
@@ -6039,6 +6887,15 @@ snapshots:
   magic-string@0.30.12:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
+
+  math-clamp-x@3.2.2:
+    dependencies:
+      to-number-x: 3.2.2
+
+  math-sign-x@4.2.2:
+    dependencies:
+      is-nan-x: 2.1.1
+      to-number-x: 3.2.2
 
   memfs@4.14.0:
     dependencies:
@@ -6131,6 +6988,13 @@ snapshots:
 
   mkdirp-classic@0.5.3: {}
 
+  mlly@1.7.2:
+    dependencies:
+      acorn: 8.12.1
+      pathe: 1.1.2
+      pkg-types: 1.2.1
+      ufo: 1.5.4
+
   mri@1.2.0: {}
 
   ms@2.1.3: {}
@@ -6150,6 +7014,8 @@ snapshots:
       any-promise: 1.3.0
       object-assign: 4.1.1
       thenify-all: 1.6.0
+
+  nan-x@2.2.1: {}
 
   nanoid@3.3.7: {}
 
@@ -6181,7 +7047,15 @@ snapshots:
 
   node-sqlite3-wasm@0.8.23: {}
 
+  noop-x@1.2.1: {}
+
   normalize-path@3.0.0: {}
+
+  normalize-space-x@4.1.2:
+    dependencies:
+      simple-methodize-x: 1.0.4
+      trim-x: 4.1.2
+      white-space-x: 4.1.1
 
   npm-run-path@4.0.1:
     dependencies:
@@ -6193,10 +7067,64 @@ snapshots:
 
   object-assign@4.1.1: {}
 
+  object-create-x@3.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      is-primitive-x: 1.0.1
+      object-define-properties-x: 5.1.2
+      to-boolean-x: 2.1.1
+
+  object-define-properties-x@5.1.2:
+    dependencies:
+      array-for-each-x: 3.1.2
+      assert-is-object-x: 3.1.2
+      get-own-enumerable-keys-x: 2.1.2
+      object-define-property-x: 5.1.2
+      to-object-x: 2.2.1
+
+  object-define-property-x@5.1.2:
+    dependencies:
+      assert-is-object-x: 3.1.2
+      attempt-x: 2.1.2
+      has-own-property-x: 4.1.2
+      has-symbol-support-x: 2.1.2
+      is-function-x: 4.1.2
+      simple-methodize-x: 1.0.4
+      to-boolean-x: 2.1.1
+      to-object-x: 2.2.1
+      to-property-key-x: 3.1.2
+
+  object-get-own-property-descriptor-x@4.1.2:
+    dependencies:
+      attempt-x: 2.1.2
+      has-own-property-x: 4.1.2
+      has-symbol-support-x: 2.1.2
+      is-index-x: 2.1.2
+      is-primitive-x: 1.0.1
+      is-string: 1.0.7
+      property-is-enumerable-x: 2.1.2
+      simple-methodize-x: 1.0.4
+      to-boolean-x: 2.1.1
+      to-object-x: 2.2.1
+      to-property-key-x: 3.1.2
+
   object-is@1.1.6:
     dependencies:
       call-bind: 1.0.7
       define-properties: 1.2.1
+
+  object-keys-x@3.1.2:
+    dependencies:
+      array-like-slice-x: 2.2.2
+      attempt-x: 2.1.2
+      has-own-property-x: 4.1.2
+      is-arguments: 1.1.1
+      is-array-x: 2.1.2
+      is-regexp-x: 3.1.2
+      is-string: 1.0.7
+      object-keys: 1.1.1
+      split-if-boxed-bug-x: 2.1.2
+      to-object-x: 2.2.1
 
   object-keys@1.1.1: {}
 
@@ -6279,6 +7207,13 @@ snapshots:
     dependencies:
       callsites: 3.1.0
 
+  parse-int-x@3.2.2:
+    dependencies:
+      nan-x: 2.2.1
+      simple-methodize-x: 1.0.4
+      to-string-x: 2.1.1
+      trim-left-x: 4.1.2
+
   partykit@0.0.110:
     dependencies:
       '@cloudflare/workers-types': 4.20240718.0
@@ -6329,6 +7264,12 @@ snapshots:
 
   pirates@4.0.6: {}
 
+  pkg-types@1.2.1:
+    dependencies:
+      confbox: 0.1.8
+      mlly: 1.7.2
+      pathe: 1.1.2
+
   possible-typed-array-names@1.0.0: {}
 
   postcss-load-config@6.0.1(postcss@8.4.47)(tsx@4.19.1)(yaml@2.5.1):
@@ -6374,6 +7315,12 @@ snapshots:
     dependencies:
       bl: 4.1.0
       node-sql-parser: 3.9.4
+
+  property-is-enumerable-x@2.1.2:
+    dependencies:
+      simple-methodize-x: 1.0.4
+      to-object-x: 2.2.1
+      to-property-key-x: 3.1.2
 
   protobufjs@7.4.0:
     dependencies:
@@ -6432,7 +7379,32 @@ snapshots:
     dependencies:
       picomatch: 2.3.1
 
+  rename-function-x@1.1.2:
+    dependencies:
+      assert-is-function-x: 3.1.2
+      attempt-x: 2.1.2
+      is-var-name: 2.0.0
+      object-define-property-x: 5.1.2
+      object-get-own-property-descriptor-x: 4.1.2
+      to-boolean-x: 2.1.1
+      to-string-x: 2.1.1
+
+  replace-comments-x@3.1.2:
+    dependencies:
+      require-coercible-to-string-x: 2.1.1
+      simple-methodize-x: 1.0.4
+      to-string-x: 2.1.1
+
+  require-coercible-to-string-x@2.1.1:
+    dependencies:
+      require-object-coercible-x: 2.1.1
+      to-string-x: 2.1.1
+
   require-from-string@2.0.2: {}
+
+  require-object-coercible-x@2.1.1:
+    dependencies:
+      is-nil-x: 2.1.1
 
   resolve-from@4.0.0: {}
 
@@ -6500,6 +7472,14 @@ snapshots:
 
   safer-buffer@2.1.2: {}
 
+  same-value-x@2.1.1:
+    dependencies:
+      is-nan-x: 2.1.1
+
+  same-value-zero-x@2.1.1:
+    dependencies:
+      same-value-x: 2.1.1
+
   selfsigned@2.4.1:
     dependencies:
       '@types/node-forge': 1.3.11
@@ -6528,6 +7508,16 @@ snapshots:
 
   signal-exit@4.1.0: {}
 
+  simple-bind-x@1.0.3:
+    dependencies:
+      has-working-bind-x: 1.0.1
+      util-pusher-x: 1.0.3
+
+  simple-call-x@1.0.3:
+    dependencies:
+      simple-bind-x: 1.0.3
+      util-pusher-x: 1.0.3
+
   simple-concat@1.0.1: {}
 
   simple-get@4.0.1:
@@ -6535,6 +7525,11 @@ snapshots:
       decompress-response: 6.0.0
       once: 1.4.0
       simple-concat: 1.0.1
+
+  simple-methodize-x@1.0.4:
+    dependencies:
+      simple-call-x: 1.0.3
+      util-pusher-x: 1.0.3
 
   source-map-js@1.2.1: {}
 
@@ -6547,6 +7542,12 @@ snapshots:
   sourcemap-codec@1.4.8: {}
 
   sparse-array@1.3.2: {}
+
+  split-if-boxed-bug-x@2.1.2:
+    dependencies:
+      has-boxed-string-x: 2.1.1
+      is-string: 1.0.7
+      simple-methodize-x: 1.0.4
 
   stackback@0.0.2: {}
 
@@ -6615,6 +7616,15 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
+  symbol-iterator-x@1.1.2:
+    dependencies:
+      has-symbol-support-x: 2.1.2
+      is-nil-x: 2.1.1
+
+  symbol-species-x@1.1.2:
+    dependencies:
+      has-symbol-support-x: 2.1.2
+
   sync-multihash-sha2@1.0.0:
     dependencies:
       '@noble/hashes': 1.5.0
@@ -6670,9 +7680,66 @@ snapshots:
 
   tinyspy@3.0.2: {}
 
+  to-boolean-x@2.1.1: {}
+
+  to-integer-x@4.2.2:
+    dependencies:
+      is-finite-x: 4.2.1
+      is-nan-x: 2.1.1
+      math-sign-x: 4.2.2
+      to-number-x: 3.2.2
+
+  to-length-x@4.2.2:
+    dependencies:
+      to-integer-x: 4.2.2
+
+  to-number-x@3.2.2:
+    dependencies:
+      is-symbol: 1.0.4
+      nan-x: 2.2.1
+      parse-int-x: 3.2.2
+      simple-methodize-x: 1.0.4
+      to-primitive-x: 2.1.2
+      trim-x: 4.1.2
+
+  to-object-x@2.2.1:
+    dependencies:
+      cached-constructors-x: 2.2.1
+      require-object-coercible-x: 2.1.1
+
+  to-primitive-x@2.1.2:
+    dependencies:
+      has-symbol-support-x: 2.1.2
+      is-date-object: 1.0.5
+      is-function-x: 4.1.2
+      is-nil-x: 2.1.1
+      is-primitive-x: 1.0.1
+      is-symbol: 1.0.4
+      require-object-coercible-x: 2.1.1
+      simple-call-x: 1.0.3
+
+  to-property-key-x@3.1.2:
+    dependencies:
+      has-symbol-support-x: 2.1.2
+      to-primitive-x: 2.1.2
+      to-string-x: 2.1.1
+
   to-regex-range@5.0.1:
     dependencies:
       is-number: 7.0.0
+
+  to-string-symbols-supported-x@2.1.2:
+    dependencies:
+      has-symbol-support-x: 2.1.2
+      is-symbol: 1.0.4
+
+  to-string-tag-x@2.1.2:
+    dependencies:
+      simple-methodize-x: 1.0.4
+
+  to-string-x@2.1.1:
+    dependencies:
+      is-symbol: 1.0.4
 
   tr46@0.0.3: {}
 
@@ -6685,6 +7752,23 @@ snapshots:
       tslib: 2.7.0
 
   tree-kill@1.2.2: {}
+
+  trim-left-x@4.1.2:
+    dependencies:
+      require-coercible-to-string-x: 2.1.1
+      simple-methodize-x: 1.0.4
+      white-space-x: 4.1.1
+
+  trim-right-x@4.1.2:
+    dependencies:
+      require-coercible-to-string-x: 2.1.1
+      simple-methodize-x: 1.0.4
+      white-space-x: 4.1.1
+
+  trim-x@4.1.2:
+    dependencies:
+      trim-left-x: 4.1.2
+      trim-right-x: 4.1.2
 
   ts-api-utils@1.3.0(typescript@5.6.3):
     dependencies:
@@ -6801,6 +7885,20 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
+  util-get-getter-x@1.0.2:
+    dependencies:
+      attempt-x: 2.1.2
+      is-object-like-x: 2.1.2
+      object-get-own-property-descriptor-x: 4.1.2
+      simple-call-x: 1.0.3
+
+  util-pusher-x@1.0.3:
+    dependencies:
+      has-boxed-string-x: 2.1.1
+      has-working-bind-x: 1.0.1
+      is-primitive-x: 1.0.1
+      is-string: 1.0.7
+
   util@0.10.4:
     dependencies:
       inherits: 2.0.3
@@ -6905,6 +8003,14 @@ snapshots:
 
   when-exit@2.1.3: {}
 
+  which-boxed-primitive@1.0.2:
+    dependencies:
+      is-bigint: 1.0.4
+      is-boolean-object: 1.1.2
+      is-number-object: 1.0.7
+      is-string: 1.0.7
+      is-symbol: 1.0.4
+
   which-typed-array@1.1.15:
     dependencies:
       available-typed-arrays: 1.0.7
@@ -6916,6 +8022,8 @@ snapshots:
   which@2.0.2:
     dependencies:
       isexe: 2.0.0
+
+  white-space-x@4.1.1: {}
 
   why-is-node-running@2.3.0:
     dependencies:
