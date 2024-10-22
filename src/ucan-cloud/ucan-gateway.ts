@@ -1,21 +1,19 @@
 import { exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement";
-import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError, ensureLogger } from "@fireproof/core";
+import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError, ensureLogger, rt } from "@fireproof/core";
 import { DID } from "@ucanto/core";
 import { ConnectionView, Principal } from "@ucanto/interface";
 import { Absentee } from "@ucanto/principal";
 import * as DidMailto from "@web3-storage/did-mailto";
 import * as W3 from "@web3-storage/w3up-client";
 import { Service as W3Service } from "@web3-storage/w3up-client/types";
-import { StoreConf } from "@web3-storage/access/stores/store-conf";
-import { StoreIndexedDB } from "@web3-storage/access/stores/store-indexeddb";
+import { AgentData, AgentDataExport } from "@web3-storage/access/agent";
 
 import { CID } from "multiformats";
 
 import * as Client from "./client";
 import { Service } from "./types";
-import { rt } from "@fireproof/core";
-import { AgentData, AgentDataExport } from "@web3-storage/access/agent";
 import { exportDelegation } from "./common";
+import stateStore from "./store/state";
 
 export class UCANGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -66,11 +64,7 @@ export class UCANGateway implements bs.Gateway {
     const server = DID.parse(did);
     const service = Client.service({ host: serverHost, id: server });
     const w3Service = service as unknown as ConnectionView<W3Service>;
-
-    const store =
-      baseUrl.getParam("w3-store") === "conf"
-        ? new StoreConf({ profile: baseUrl.getParam("conf-profile") || "fireproof-connect" })
-        : new StoreIndexedDB("w3up-client");
+    const store = await stateStore("w3up-client");
 
     const w3 = await W3.create({
       store,
@@ -83,10 +77,7 @@ export class UCANGateway implements bs.Gateway {
 
     // Clock stuff
     const clockStoreName = `fireproof/${dbName}/clock/delegation`;
-    const clockStore =
-      baseUrl.getParam("w3-store") === "conf"
-        ? new StoreConf({ profile: clockStoreName })
-        : new StoreIndexedDB(clockStoreName);
+    const clockStore = await stateStore(clockStoreName);
 
     let clock: Client.Clock;
 
