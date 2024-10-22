@@ -266,11 +266,9 @@ export class UCANGateway implements bs.Gateway {
 
         const cid = CID.parse(head.out.ok.head).toV1();
 
-        if (cid.code !== 514) throw new Error("Expected clock-head CID to be a CAR CID");
-
         const res = await Client.retrieve({
           agent: this.inst.w3.agent.issuer,
-          cid: cid as CID<unknown, 514, number, 1>,
+          cid: cid,
           server: this.inst.server,
           service: this.inst.service,
         });

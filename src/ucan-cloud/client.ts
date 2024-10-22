@@ -191,7 +191,7 @@ export async function retrieve({
   service,
 }: {
   agent: Signer;
-  cid: CID<unknown, 514, number, 1>; // CAR cid
+  cid: CID;
   server: Principal;
   service: ConnectionView<Service>;
 }): Promise<Uint8Array | undefined> {
