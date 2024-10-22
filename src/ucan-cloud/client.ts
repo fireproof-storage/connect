@@ -114,15 +114,13 @@ export async function getClockHead({
 }
 
 export async function metadataFromClockEvent(eventBytes: Uint8Array): Promise<Uint8Array> {
-  const block = await Block.decode({
+  const block = await Block.decode<{ data: { metadata: Uint8Array } }, 113, 18>({
     bytes: eventBytes,
     codec: CBOR,
     hasher: sha256,
   });
 
-  console.log(block.value);
-
-  return new Uint8Array([]);
+  return block.value.data.metadata;
 }
 
 /**
