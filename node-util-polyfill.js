@@ -6,5 +6,6 @@ export * from "@jspm/core/nodelibs/util";
 export { isDeepStrictEqual } from "is-deep-strict-equal-x";
 
 export function promisify(fn) {
-  return pr(fn);
+  // Don't attempt to promisify undefined functions
+  return fn ? pr(fn) : undefined;
 }
