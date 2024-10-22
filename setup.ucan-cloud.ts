@@ -7,5 +7,5 @@ const protocol = "http://";
 const host = "localhost:8787";
 const confProfile = "fireproof";
 
-process.env.FP_STORAGE_URL = `ucan://${host}?email=${encodeURIComponent(email)}&serverHost=${encodeURIComponent(protocol + host)}&w3-store=conf&conf-profile=${encodeURIComponent(confProfile)}`;
+process.env.FP_STORAGE_URL = `ucan://${host}?email=${encodeURIComponent(email)}&serverHost=${encodeURIComponent(protocol + host)}&conf-profile=${encodeURIComponent(confProfile)}`;
 process.env.FP_KEYBAG_URL = "file://./dist/kb-dir-ucan?fs=mem&extractKey=_deprecated_internal_api";

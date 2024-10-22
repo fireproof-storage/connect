@@ -64,7 +64,7 @@ export class UCANGateway implements bs.Gateway {
     const server = DID.parse(did);
     const service = Client.service({ host: serverHost, id: server });
     const w3Service = service as unknown as ConnectionView<W3Service>;
-    const store = await stateStore("w3up-client");
+    const store = await stateStore(baseUrl.getParam("conf-profile") || "w3up-client");
 
     const w3 = await W3.create({
       store,
