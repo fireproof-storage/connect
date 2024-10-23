@@ -5,7 +5,7 @@ export default async function store(name: string) {
     const n = await import("../../../ucan-cloud/store/state/node.js");
     return n.default(name);
   } else {
-    const b = await import("../../../ucan-cloud/store/state/node.js");
+    const b = await import("../../../ucan-cloud/store/state/browser.js");
     return b.default(name);
   }
 }
