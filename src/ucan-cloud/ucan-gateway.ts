@@ -2,17 +2,13 @@ import { exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement"
 import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError, ensureLogger, rt } from "@fireproof/core";
 import { DID } from "@ucanto/core";
 import { ConnectionView, Principal } from "@ucanto/interface";
-import { Absentee } from "@ucanto/principal";
-import * as DidMailto from "@web3-storage/did-mailto";
 import * as W3 from "@web3-storage/w3up-client";
 import { Service as W3Service } from "@web3-storage/w3up-client/types";
-import { AgentData, AgentDataExport } from "@web3-storage/access/agent";
 
 import { CID } from "multiformats";
 
 import * as Client from "./client";
 import { Service } from "./types";
-import { exportDelegation } from "./common";
 import stateStore from "./store/state";
 
 export class UCANGateway implements bs.Gateway {
@@ -20,7 +16,7 @@ export class UCANGateway implements bs.Gateway {
   readonly logger: Logger;
 
   inst?: {
-    clock: Client.Clock;
+    clockId: `did:key:${string}`;
     email: `${string}@${string}`;
     server: Principal;
     service: ConnectionView<Service>;
@@ -45,23 +41,27 @@ export class UCANGateway implements bs.Gateway {
   async #start(baseUrl: URI): Promise<URI> {
     const dbName = baseUrl.getParam("name");
     const emailParam = baseUrl.getParam("email");
+    const clockIdParam = baseUrl.getParam("clock-id");
+    const serverId = baseUrl.getParam("server-id");
 
     if (!dbName) throw new Error("Missing `name` param");
     if (!emailParam) throw new Error("Missing `email` param");
+    if (!clockIdParam) throw new Error("Missing `clock-id` param");
+    if (!serverId) throw new Error("Missing `server-id` param");
 
+    const clockId = clockIdParam as `did:key:${string}`;
     const email = emailParam as `${string}@${string}`;
 
     await this.sthis.start();
     this.logger.Debug().Str("url", baseUrl.toString()).Msg("start");
 
     // W3 client
-    const serverHostUrl = baseUrl.getParam("serverHost")?.replace(/\/+$/, "");
-    if (!serverHostUrl) throw new Error("Expected a `serverHost` url param");
+    const serverHostUrl = baseUrl.getParam("server-host")?.replace(/\/+$/, "");
+    if (!serverHostUrl) throw new Error("Expected a `server-host` url param");
     const serverHost = URI.from(serverHostUrl);
-    if (!serverHost) throw new Error("`serverHost` is not a valid URL");
+    if (!serverHost) throw new Error("`server-host` is not a valid URL");
 
-    const did = await fetch(`${serverHostUrl}/did`).then((r) => r.text());
-    const server = DID.parse(did);
+    const server = DID.parse(serverId);
     const service = Client.service({ host: serverHost, id: server });
     const w3Service = service as unknown as ConnectionView<W3Service>;
     const store = await stateStore(baseUrl.getParam("conf-profile") || "w3up-client");
@@ -75,49 +75,10 @@ export class UCANGateway implements bs.Gateway {
       },
     });
 
-    // Clock stuff
-    const clockStoreName = `fireproof/${dbName}/clock/delegation`;
-    const clockStore = await stateStore(clockStoreName);
+    console.log("⏰ CLOCK", clockId);
 
-    let clock: Client.Clock;
-
-    const dataExport = await clockStore.load();
-
-    if (dataExport) {
-      const data = AgentData.fromExport(dataExport);
-
-      // data.principal
-      const keys = Array.from(data.delegations.keys());
-      const delegation = data.delegations.get(keys[0])?.delegation;
-
-      if (!delegation) throw new Error("Expected a clock delegation to be present");
-
-      clock = {
-        delegation,
-        did: () => data.principal.did(),
-        signer: () => data.principal,
-      };
-    } else {
-      const audience = Absentee.from({ id: DidMailto.fromEmail(email) });
-
-      clock = await Client.createClock({ audience });
-
-      const raw: AgentDataExport = {
-        meta: { name: clockStoreName, type: "service" },
-        principal: clock.signer().toArchive(),
-        spaces: new Map(),
-        delegations: new Map([exportDelegation(clock.delegation)]),
-      };
-
-      await clockStore.save(raw);
-
-      const registration = await Client.registerClock({ clock, server, service });
-      if (registration.out.error) throw registration.out.error;
-    }
-
-    console.log("⏰ CLOCK", clock.did());
-
-    this.inst = { clock, email, server, service, w3 };
+    // This
+    this.inst = { clockId, email, server, service, w3 };
 
     // Start URI
     return baseUrl.build().defParam("version", "v0.1-ucan").URI();
@@ -134,10 +95,6 @@ export class UCANGateway implements bs.Gateway {
   async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
     const result = await exception2Result(() => this.#put(url, body));
     if (result.isErr()) this.logger.Error().Msg(result.Err().message);
-
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
-    if (result.isErr()) console.log("🚨", store, result.Err().constructor.name, result.Err().message);
-
     return result;
   }
 
@@ -188,10 +145,10 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
-        const { clock, server, service } = this.inst;
+        const { clockId, server, service } = this.inst;
         const agent = await this.agent();
 
-        const advancement = await Client.advanceClock({ agent, clock, event: event.cid, server, service });
+        const advancement = await Client.advanceClock({ agent, clockId, event: event.cid, server, service });
         if (advancement.out.error) throw advancement.out.error;
 
         break;
@@ -201,11 +158,8 @@ export class UCANGateway implements bs.Gateway {
 
   async get(url: URI): Promise<bs.GetResult> {
     const result = await exception2Result(() => this.#get(url));
-    if (result.isErr()) this.logger.Error().Msg(result.Err().message);
-
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
-    if (result.isErr()) console.log("🚨", store, result.Err().constructor.name, result.Err().message);
-
+    if (result.isErr() && result.Err().constructor.name !== "NotFoundError")
+      this.logger.Error().Msg(result.Err().message);
     return result;
   }
 
@@ -254,7 +208,7 @@ export class UCANGateway implements bs.Gateway {
       case "meta": {
         const head = await Client.getClockHead({
           agent: await this.agent(),
-          clock: this.inst.clock,
+          clockId: this.inst.clockId,
           server: this.inst.server,
           service: this.inst.service,
         });
@@ -280,11 +234,7 @@ export class UCANGateway implements bs.Gateway {
         const resKeyInfo = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, metadata);
 
         if (resKeyInfo.isErr()) {
-          this.logger
-            .Error()
-            .Err(resKeyInfo.Err())
-            .Str("body", new TextDecoder().decode(metadata))
-            .Msg("Error in setCryptoKeyFromGatewayMetaPayload");
+          this.logger.Error().Err(resKeyInfo).Any("body", metadata).Msg("Error in setCryptoKeyFromGatewayMetaPayload");
           throw resKeyInfo.Err();
         }
 

@@ -3,6 +3,8 @@ import { bs, Database } from "@fireproof/core";
 
 import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
 import { registerUCANStoreProtocol } from "./ucan-gateway";
+import { clockStoreName, createNewClock } from "./common";
+import stateStore from "./store/state";
 
 // Usage:
 //
@@ -25,9 +27,22 @@ registerUCANStoreProtocol();
 
 const connectionCache = new KeyedResolvOnce<bs.Connection>();
 
-export const connect = (db: Database, email: `${string}@${string}`, url = "http://localhost:8787"): bs.Connection => {
-  const { sthis, blockstore, name: dbName } = db;
+export interface ConnectionParams {
+  clockId?: `did:key:${string}`;
+  email: `${string}@${string}`;
+  serverId: `did:${string}:${string}`;
+  url?: string;
+}
 
+export const connect = async (db: Database, params: ConnectionParams): Promise<bs.Connection> => {
+  const { sthis, blockstore, name: dbName } = db;
+  const { email } = params;
+  const url = params.url || "http://localhost:8787";
+  const urlObj = new URL(url);
+
+  let clockId = params.clockId;
+
+  // URL param validation
   if (!dbName) {
     throw new Error("`dbName` is required");
   }
@@ -36,16 +51,57 @@ export const connect = (db: Database, email: `${string}@${string}`, url = "http:
     throw new Error("`email` is required");
   }
 
-  const urlObj = new URL(url);
+  // DB name
   const existingName = urlObj.searchParams.get("name");
-  urlObj.searchParams.set("name", existingName || dbName);
+  const name = existingName || dbName;
+
+  // Server host
+  const serverHostUrl = url.replace(/\/+$/, "");
+
+  // Server id
+  let serverId: `did:${string}:${string}`;
+
+  if (params.serverId) {
+    serverId = params.serverId;
+  } else {
+    serverId = await fetch(`${serverHostUrl}/did`)
+      .then((r) => r.text())
+      .then((r) => r as `did:${string}:${string}`);
+  }
+
+  // Use stored clock id if needed
+  const storeName = clockStoreName({ databaseName: dbName });
+  const clockStore = await stateStore(storeName);
+
+  if (clockId === undefined) {
+    const clockExport = await clockStore.load();
+    if (clockExport) clockId = clockExport.principal.id as `did:key:${string}`;
+  }
+
+  // Register new clock if needed
+  if (clockId === undefined) {
+    const newClock = await createNewClock({
+      databaseName: dbName,
+      email,
+      serverHost: url,
+      serverId,
+    });
+
+    clockId = newClock.did();
+  }
+
+  // Add params to URL
+  urlObj.searchParams.set("name", name);
+  urlObj.searchParams.set("clock-id", clockId);
   urlObj.searchParams.set("email", email);
-  urlObj.searchParams.set("localName", dbName);
-  urlObj.searchParams.set("serverHost", url);
+  urlObj.searchParams.set("server-host", url);
+  urlObj.searchParams.set("server-id", serverId);
   urlObj.searchParams.set("storekey", `@${dbName}:data@`);
+
   const fpUrl = urlObj.toString().replace("http://", "ucan://").replace("https://", "ucan://");
   console.log("fpUrl", fpUrl);
 
+  // Connect
   return connectionCache.get(fpUrl).once(() => {
     makeKeyBagUrlExtractable(sthis);
     console.log("Connecting to Fireproof Cloud", fpUrl);

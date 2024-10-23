@@ -90,9 +90,9 @@ describe("UCANGateway", () => {
     if (ep) email = ep as `${string}@${string}`;
     else throw new Error("Missing email param in URI");
 
-    const sp = uri.getParam("serverHost");
+    const sp = uri.getParam("server-host");
     if (sp) host = sp;
-    else throw new Error("Missing serverHost param in URI");
+    else throw new Error("Missing server-host param in URI");
 
     const config = {
       store: {
@@ -163,9 +163,6 @@ describe("UCANGateway", () => {
       const error = e as Error;
       expect(error.message).toContain("Not found");
     }
-
-    // Second instance (test meta retrieval)
-    // TODO
 
     // Clean up
     await db.destroy();

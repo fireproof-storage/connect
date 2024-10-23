@@ -34,13 +34,13 @@ export interface Clock {
 
 export async function advanceClock({
   agent,
-  clock,
+  clockId,
   event,
   server,
   service,
 }: {
   agent: Agent;
-  clock: Clock;
+  clockId: `did:key:${string}`;
   event: Link;
   server: Principal;
   service: ConnectionView<Service>;
@@ -48,7 +48,7 @@ export async function advanceClock({
   const invocation = ClockCaps.advance.invoke({
     issuer: agent.signer,
     audience: server,
-    with: clock.did(),
+    with: clockId,
     nb: { event },
     proofs: [agent.delegation, agent.attestation],
   });
@@ -94,19 +94,19 @@ export async function createClockEvent({ metadata }: { metadata: Uint8Array }) {
 
 export async function getClockHead({
   agent,
-  clock,
+  clockId,
   server,
   service,
 }: {
   agent: Agent;
-  clock: Clock;
+  clockId: `did:key:${string}`;
   server: Principal;
   service: ConnectionView<Service>;
 }) {
   const invocation = ClockCaps.head.invoke({
     issuer: agent.signer,
     audience: server,
-    with: clock.did(),
+    with: clockId,
     proofs: [agent.delegation, agent.attestation],
   });
 
@@ -248,6 +248,6 @@ export async function store({
   });
 
   if (!r2.ok) {
-    throw new Error(`Failed to store data on Cloudflare R2: ${await r2.text()}`);
+    throw new Error(`Failed to store data on Cloudflare R2`);
   }
 }
