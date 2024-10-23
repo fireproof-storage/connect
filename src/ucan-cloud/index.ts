@@ -31,13 +31,13 @@ export interface ConnectionParams {
   clockId?: `did:key:${string}`;
   email: `${string}@${string}`;
   serverId: `did:${string}:${string}`;
-  url?: string;
+  serverHost?: string;
 }
 
 export const connect = async (db: Database, params: ConnectionParams): Promise<bs.Connection> => {
   const { sthis, blockstore, name: dbName } = db;
   const { email } = params;
-  const url = params.url || "http://localhost:8787";
+  const url = params.serverHost || "http://localhost:8787";
   const urlObj = new URL(url);
 
   let clockId = params.clockId;
