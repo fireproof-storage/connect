@@ -9,7 +9,7 @@ interface ConnectData {
   endpoint?: string;
 }
 
-const SYNC_DB_NAME = "_fp.sync";
+const SYNC_DB_NAME = "fp_sync";
 
 // Usage:
 //
