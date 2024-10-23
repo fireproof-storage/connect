@@ -30,7 +30,7 @@ const connectionCache = new KeyedResolvOnce<bs.Connection>();
 export interface ConnectionParams {
   clockId?: `did:key:${string}`;
   email: `${string}@${string}`;
-  serverId: `did:${string}:${string}`;
+  serverId?: `did:${string}:${string}`;
   serverHost?: string;
 }
 
