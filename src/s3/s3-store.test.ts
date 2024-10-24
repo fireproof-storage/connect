@@ -11,7 +11,7 @@ describe("store-register", () => {
   });
   it("should store and retrieve data", async () => {
     const unreg = registerS3StoreProtocol("s3test:");
-    const db = fireproof("my-database", {
+    const db = fireproof("my-ledger", {
       store: {
         stores: {
           base: process.env.FP_STORAGE_URL,
@@ -25,7 +25,7 @@ describe("store-register", () => {
 
   it("override default Base Dir", async () => {
     const unreg = registerS3StoreProtocol("s3test:", process.env.FP_STORAGE_URL);
-    const db = fireproof("override-database");
+    const db = fireproof("override-ledger");
     await smokeDB(db);
     await db.destroy();
     unreg();

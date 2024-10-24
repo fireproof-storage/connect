@@ -5,7 +5,7 @@ const ipfsCxs = new Map<string, ConnectUCAN>();
 
 export const connect = {
   ucan: ({ name, blockstore }: bs.Connectable, schemaName?: string) => {
-    if (!name) throw new Error("database name is required");
+    if (!name) throw new Error("ledger name is required");
     if (ipfsCxs.has(name)) {
       return ipfsCxs.get(name);
     }

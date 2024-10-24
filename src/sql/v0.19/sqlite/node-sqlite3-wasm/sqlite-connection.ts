@@ -1,5 +1,5 @@
-// import type { Database } from "better-sqlite3";
-import type { Database } from "node-sqlite3-wasm";
+// import type { Ledger } from "better-sqlite3";
+import type { Ledger } from "node-sqlite3-wasm";
 import { KeyedResolvOnce, ResolveOnce, URI } from "@adviser/cement";
 
 import { SQLOpts } from "../../../types.js";
@@ -7,7 +7,7 @@ import { ensureSuperLog, SuperThis } from "@fireproof/core";
 import { ensureSQLOpts } from "../../../ensurer.js";
 import { Sqlite3Connection, TasteHandler } from "../../sqlite_factory.js";
 
-const onceSQLiteConnections = new KeyedResolvOnce<Database>();
+const onceSQLiteConnections = new KeyedResolvOnce<Ledger>();
 
 class NSWTaste implements TasteHandler {
   readonly taste = "node-sqlite3-wasm" as const;
@@ -31,11 +31,11 @@ class NSWTaste implements TasteHandler {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onceImport = new ResolveOnce<any>();
 export class V0_19NSWConnection extends Sqlite3Connection {
-  get client(): Database {
+  get client(): Ledger {
     if (!this._client) {
       throw this.logger.Error().Msg("client not connected").AsError();
     }
-    return this._client as Database;
+    return this._client as Ledger;
   }
 
   constructor(_sthis: SuperThis, url: URI, opts: Partial<SQLOpts>) {
@@ -65,7 +65,7 @@ export class V0_19NSWConnection extends Sqlite3Connection {
       // const Sqlite3Database = (await import("better-sqlite3")).default;
       const Sqlite3Database = await onceImport.once(async () => {
         const sql = await import("node-sqlite3-wasm");
-        return sql.Database;
+        return sql.Ledger;
       });
       if (hasName) {
         await (await this.fs()).mkdir(this.sthis.pathOps.dirname(fName), { recursive: true });

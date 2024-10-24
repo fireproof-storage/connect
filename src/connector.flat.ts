@@ -7,7 +7,7 @@ async function main() {
   const sthis = ensureSuperThis();
   const url = URI.from("file://./dist/connect_to?storekey=@bla@");
   console.log("--1");
-  const wdb = fireproof("my-database", {
+  const wdb = fireproof("my-ledger", {
     store: {
       stores: {
         base: "file://./dist/connector?storekey=@bla@",

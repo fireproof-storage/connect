@@ -4,52 +4,52 @@ This gateway intended for use with Fireproof Cloud.
 
 ## Usage
 
-You can call the `connect` function with a database and it will provision a remote UUID for the database, and sync the database to the remote. It will also log a URL to the console that you can open in a browser to connect to the database, as well as try to open the URL in a new tab. Tell us what you think about this workflow!
+You can call the `connect` function with a ledger and it will provision a remote UUID for the ledger, and sync the ledger to the remote. It will also log a URL to the console that you can open in a browser to connect to the ledger, as well as try to open the URL in a new tab. Tell us what you think about this workflow!
 
 ```typescript
 import { fireproof } from "@fireproof/core";
 import { connect } from "@fireproof/cloud";
 
-const database = await fireproof("my-db-name");
-const connection = await connect(database);
+const ledger = await fireproof("my-db-name");
+const connection = await connect(ledger);
 ```
 
 ### With React Hooks
 
-In a React component, you can use the `useFireproof` hook to get the database and then call `connect` (it is safe to call `connect` multiple times, but in this example we're using a state variable to store the dashboard URL).
+In a React component, you can use the `useFireproof` hook to get the ledger and then call `connect` (it is safe to call `connect` multiple times, but in this example we're using a state variable to store the dashboard URL).
 
 ```typescript
 import { useFireproof } from "use-fireproof";
 import { connect } from "@fireproof/cloud";
 
-const { database } = useFireproof("my-db-name");
+const { ledger } = useFireproof("my-db-name");
 const [dashboardUrl, setDashboardUrl] = useState<string | undefined>();
 
 // there is a useConnection hook coming soon
 useEffect(() => {
-  connect(database).then((connection) => {
+  connect(ledger).then((connection) => {
     setDashboardUrl(connection.dashboardUrl?.toString());
   });
-}, [database]);
+}, [ledger]);
 ```
 
 ## The Second Argument
 
-The second argument to `connect` is the remote database name. This will be assigned for you if you don't provide one, and the created name will be persisted locally.
+The second argument to `connect` is the remote ledger name. This will be assigned for you if you don't provide one, and the created name will be persisted locally.
 
-The most common way to use this is if you want to sync to a remote database. The UUID will have been assigned when on first sync, and now you want to connect a new client to that remote.
-
-```typescript
-const connection = await connect(database, "my-remote-uuid");
-```
-
-If you provide a name, it will be used as the remote database name. If you want to control the name, you should use a prefix unique to your app, so no one else uses your endpoint. This is useful if you want the database name to come from your URL slug, like `/my-app/my-db-name`.
+The most common way to use this is if you want to sync to a remote ledger. The UUID will have been assigned when on first sync, and now you want to connect a new client to that remote.
 
 ```typescript
-const connection = await connect(database, `com.my-app.v1.${database.name}`);
+const connection = await connect(ledger, "my-remote-uuid");
 ```
 
-Note: if your database already has data in it, connecting to a new remote will do nothing. To prevent data lost, you need to rename the local database to an unused name and the connect.
+If you provide a name, it will be used as the remote ledger name. If you want to control the name, you should use a prefix unique to your app, so no one else uses your endpoint. This is useful if you want the ledger name to come from your URL slug, like `/my-app/my-db-name`.
+
+```typescript
+const connection = await connect(ledger, `com.my-app.v1.${ledger.name}`);
+```
+
+Note: if your ledger already has data in it, connecting to a new remote will do nothing. To prevent data lost, you need to rename the local ledger to an unused name and the connect.
 
 ## No Warranty, For Evaluation Purposes
 

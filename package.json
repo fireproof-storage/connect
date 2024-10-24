@@ -40,7 +40,7 @@
     "lint": "eslint"
   },
   "keywords": [
-    "database",
+    "ledger",
     "JSON",
     "immutable",
     "IPLD",

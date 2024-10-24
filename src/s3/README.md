@@ -1,8 +1,8 @@
 # `@fireproof/aws`
 
-[Fireproof](https://use-fireproof.com) is an embedded JavaScript document database that runs in the browser (or anywhere with JavaScript) and **[connects to any cloud](https://www.npmjs.com/package/@fireproof/connect)**.
+[Fireproof](https://use-fireproof.com) is an embedded JavaScript document ledger that runs in the browser (or anywhere with JavaScript) and **[connects to any cloud](https://www.npmjs.com/package/@fireproof/connect)**.
 
-This module, `@fireproof/aws`, allows you to connect your Fireproof database to AWS S3 and DynamoDB via pre defined Lambda functions, enabling you to sync your data across multiple users in real-time.
+This module, `@fireproof/aws`, allows you to connect your Fireproof ledger to AWS S3 and DynamoDB via pre defined Lambda functions, enabling you to sync your data across multiple users in real-time.
 
 ## Get started
 
@@ -30,22 +30,22 @@ import { connect } from "@fireproof/aws";
 Now later in your app connect to the party (be sure to do this a component that runs on every render, like your root component or layout):
 
 ```js
-const { database } = useFireproof("my-app-database-name");
-const connection = connect.awsFree(database);
+const { ledger } = useFireproof("my-app-ledger-name");
+const connection = connect.awsFree(ledger);
 ```
 
 OR
 
 ```js
-const { database } = useFireproof("my-app-database-name");
-const connection = connect.s3Free(database);
+const { ledger } = useFireproof("my-app-ledger-name");
+const connection = connect.s3Free(ledger);
 ```
 
 OR
 
 ```js
-const { database } = useFireproof("my-app-database-name");
-const connection = connect.aws(database, {
+const { ledger } = useFireproof("my-app-ledger-name");
+const connection = connect.aws(ledger, {
   uploadUrl,
   downloadUrl,
   webSocketUrl,
@@ -56,4 +56,4 @@ All the functions are idempotent and designed to be safe to call on every render
 
 ### 3. Collaborate
 
-Now you can use Fireproof as you normally would, and it will sync in realtime with other users. Any existing apps you have that use the [live query](https://use-fireproof.com/docs/react-hooks/use-live-query) or [subscription](https://use-fireproof.com/docs/database-api/database#subscribe) APIs will automatically render multi-user updates.
+Now you can use Fireproof as you normally would, and it will sync in realtime with other users. Any existing apps you have that use the [live query](https://use-fireproof.com/docs/react-hooks/use-live-query) or [subscription](https://use-fireproof.com/docs/ledger-api/ledger#subscribe) APIs will automatically render multi-user updates.

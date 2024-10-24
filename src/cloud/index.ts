@@ -1,5 +1,5 @@
 import { BuildURI, CoerceURI, KeyedResolvOnce, runtimeFn, URI } from "@adviser/cement";
-import { bs, Database, fireproof } from "@fireproof/core";
+import { bs, Ledger, fireproof } from "@fireproof/core";
 import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
 import { registerFireproofCloudStoreProtocol } from "./gateway";
 
@@ -36,7 +36,7 @@ registerFireproofCloudStoreProtocol();
 
 const connectionCache = new KeyedResolvOnce<bs.Connection>();
 export const rawConnect: ConnectFunction = (
-  db: Database,
+  db: Ledger,
   remoteDbName = "",
   url = "fireproof://cloud.fireproof.direct"
 ) => {
@@ -81,14 +81,14 @@ async function getOrCreateRemoteName(dbName: string, remoteName?: string) {
 }
 
 export function connect(
-  db: Database,
+  db: Ledger,
   remoteName?: string,
   dashboardURI: CoerceURI = "https://dashboard.fireproof.storage/",
   remoteURI: CoerceURI = "fireproof://cloud.fireproof.direct"
 ): Promise<bs.Connection> {
   const dbName = db.name as unknown as string;
   if (!dbName) {
-    throw new Error("Database name is required for cloud connection");
+    throw new Error("Ledger name is required for cloud connection");
   }
 
   return getOrCreateRemoteName(dbName, remoteName).then(async (doc) => {
@@ -97,7 +97,7 @@ export function connect(
     }
     doc.endpoint = URI.from(remoteURI).toString();
     const connection = rawConnect(db, doc.remoteName, URI.from(doc.endpoint).toString());
-    const connectURI = URI.from(dashboardURI).build().pathname("/fp/databases/connect");
+    const connectURI = URI.from(dashboardURI).build().pathname("/fp/ledgers/connect");
     connectURI.defParam("localName", dbName);
     connectURI.defParam("remoteName", doc.remoteName);
     if (doc.endpoint) {

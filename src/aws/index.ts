@@ -1,5 +1,5 @@
 import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
-import { bs, Database } from "@fireproof/core";
+import { bs, Ledger } from "@fireproof/core";
 import { registerAWSStoreProtocol } from "./gateway";
 import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
 
@@ -28,7 +28,7 @@ registerAWSStoreProtocol();
 
 const connectionCache = new KeyedResolvOnce<bs.Connection>();
 export const connect: ConnectFunction = (
-  db: Database,
+  db: Ledger,
   remoteDbName = "",
   url = "aws://aws.amazon.com",
   region = "us-east-2",

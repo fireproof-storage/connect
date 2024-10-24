@@ -1,7 +1,7 @@
 import { fireproof } from "@fireproof/connect";
 
 async function main() {
-  const db = fireproof("my-database");
+  const db = fireproof("my-ledger");
  
   const connection = new ConnectSQL(SimpleSQLite("sqlite.db"));
   await connection.connect(db.blockstore);

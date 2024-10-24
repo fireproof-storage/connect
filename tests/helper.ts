@@ -1,6 +1,6 @@
-import { Database } from "@fireproof/core";
+import { Ledger } from "@fireproof/core";
 
-export async function smokeDB(db: Database) {
+export async function smokeDB(db: Ledger) {
   const ran = Math.random().toString();
   for (let i = 0; i < 10; i++) {
     await db.put({ _id: `key${i}:${ran}`, hello: `world${i}` });

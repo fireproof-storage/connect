@@ -133,7 +133,7 @@ export class ConnectUCAN extends bs.ConnectionBase {
 
   //   // uploadCar is processed so roots are reachable via CDN
   //   // uploadFile makes the car itself available via CDN
-  //   // todo if params.type === 'file' and database is public also uploadCAR
+  //   // todo if params.type === 'file' and ledger is public also uploadCAR
   //   if (params.type === "file" && opts?.public) {
   //     await client.uploadCAR(new Blob([bytes]));
   //   }
