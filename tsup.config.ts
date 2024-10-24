@@ -10,9 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Existing 'ourMultiformat' object or any other resolve mappings you have
-const ourMultiformat = {
-  // ... your existing mappings ...
-};
+const ourMultiformat = {};
 
 function packageVersion() {
   let version = "refs/tags/v0.0.0-smoke";
@@ -241,6 +239,52 @@ const LIBRARY_BUNDLES: Options[] = [
     ],
     dts: {
       footer: "declare module '@fireproof/cloud'",
+    },
+  },
+  // IIFE build with moduleReplacementPlugin
+  {
+    ...LIBRARY_BUNDLE_OPTIONS,
+    format: ["iife"],
+    name: "@fireproof/ucan-cloud",
+    entry: ["src/ucan-cloud/index.ts"],
+    platform: "browser",
+    outDir: "dist/ucan-cloud",
+    esbuildPlugins: [
+      replace({
+        __packageVersion__: packageVersion(),
+        include: /version/,
+      }),
+      resolve({
+        ...ourMultiformat,
+        // "node:util": path.join(__dirname, "node-util-polyfill.js"),
+        "../../../ucan-cloud/store/state/node.js": "../../../ucan-cloud/store/state/browser.js",
+      }),
+      polyfillNode(),
+    ],
+    dts: false, // No type declarations needed for IIFE build
+  },
+  // ESM and CJS builds without moduleReplacementPlugin
+  {
+    ...LIBRARY_BUNDLE_OPTIONS,
+    format: ["esm", "cjs"],
+    name: "@fireproof/ucan-cloud",
+    entry: ["src/ucan-cloud/index.ts"],
+    platform: "browser",
+    outDir: "dist/ucan-cloud",
+    esbuildPlugins: [
+      replace({
+        __packageVersion__: packageVersion(),
+        include: /version/,
+      }),
+      resolve({
+        ...ourMultiformat,
+        // "node:util": path.join(__dirname, "node-util-polyfill.js"),
+        "../../../ucan-cloud/store/state/node.js": "../../../ucan-cloud/store/state/browser.js",
+      }),
+      polyfillNode(),
+    ],
+    dts: {
+      footer: "declare module '@fireproof/ucan-cloud'",
     },
   },
 ];
