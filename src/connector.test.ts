@@ -1,7 +1,7 @@
 // import { connectionFactory } from "./connection-from-store";
 // import { registerS3StoreProtocol } from "./s3/s3-gateway";
 import { URI, runtimeFn } from "@adviser/cement";
-import { type Database, type SuperThis, bs, fireproof } from "@fireproof/core";
+import { type Ledger, type SuperThis, bs, fireproof } from "@fireproof/core";
 import { mockSuperThis } from "../node_modules/@fireproof/core/tests/helpers";
 import { type TaskContext, describe } from "vitest";
 import type { ConnectFunction } from "./connection-from-store";
@@ -31,7 +31,7 @@ interface ExtendedStore extends bs.BaseStore {
 }
 
 describe("loading the base store", () => {
-  let db: Database;
+  let db: Ledger;
   let cx: bs.Connection;
   let dbName: string;
   let emptyDbName: string;
@@ -62,8 +62,8 @@ describe("loading the base store", () => {
     const docs = await db.allDocs<{ hello: string }>();
     expect(docs).toBeDefined();
     expect(docs.rows.length).toBe(10);
-    expect(docs.rows[0].value._id).toMatch("key");
-    expect(docs.rows[0].value.hello).toMatch("world");
+    expect(docs.rows[0].doc._id).toMatch("key");
+    expect(docs.rows[0].doc.hello).toMatch("world");
   });
 
   it("should have data in the local gateway", async () => {
@@ -171,8 +171,8 @@ describe("loading the base store", () => {
     const docs = await db2.allDocs<{ hello: string }>();
     expect(docs).toBeDefined();
     expect(docs.rows.length).toBe(10);
-    expect(docs.rows[0].value._id).toMatch("key");
-    expect(docs.rows[0].value.hello).toMatch("world");
+    expect(docs.rows[0].doc._id).toMatch("key");
+    expect(docs.rows[0].doc.hello).toMatch("world");
 
     // it should sync write from the new db to the orginal db
     const ok = await db2.put({ _id: "secondary", hello: "original" });

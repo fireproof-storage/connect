@@ -1,4 +1,4 @@
-import type { Database } from "better-sqlite3";
+import type { Ledger } from "better-sqlite3";
 import { KeyedResolvOnce, ResolveOnce, URI } from "@adviser/cement";
 
 import { SQLOpts } from "../../../types.js";
@@ -22,13 +22,13 @@ class BS3Taste implements TasteHandler {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onceImport = new ResolveOnce<any>();
-const onceSQLiteConnections = new KeyedResolvOnce<Database>();
+const onceSQLiteConnections = new KeyedResolvOnce<Ledger>();
 export class V0_19BS3Connection extends Sqlite3Connection {
-  get client(): Database {
+  get client(): Ledger {
     if (!this._client) {
       throw this.logger.Error().Msg("client not connected").AsError();
     }
-    return this._client as Database;
+    return this._client as Ledger;
   }
 
   constructor(_sthis: SuperThis, url: URI, opts: Partial<SQLOpts>) {

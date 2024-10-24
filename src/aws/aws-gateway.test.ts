@@ -1,10 +1,10 @@
-import { fireproof, Database } from "@fireproof/core";
+import { fireproof, Ledger } from "@fireproof/core";
 import { registerAWSStoreProtocol } from "./gateway";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { smokeDB } from "../../tests/helper";
 
 describe("AWSGateway", () => {
-  let db: Database;
+  let db: Ledger;
   let unregister: () => void;
 
   beforeAll(() => {

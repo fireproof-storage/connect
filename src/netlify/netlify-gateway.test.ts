@@ -1,11 +1,11 @@
-import { fireproof, Database } from "@fireproof/core";
+import { fireproof, Ledger } from "@fireproof/core";
 import { registerNetlifyStoreProtocol } from "./gateway";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { URI } from "@adviser/cement";
 import { smokeDB } from "../../tests/helper";
 
 describe("NetlifyGateway", () => {
-  let db: Database;
+  let db: Ledger;
   let unregister: () => void;
 
   beforeAll(() => {
@@ -54,7 +54,7 @@ describe("NetlifyGateway", () => {
     const docs = await smokeDB(db);
     return;
     // get a new db instance
-    db = new Database("netlify-test-db", config);
+    db = new Ledger("netlify-test-db", config);
 
     // Test update operation
     const updateDoc = await db.get<{ content: string }>(docs[0]._id);

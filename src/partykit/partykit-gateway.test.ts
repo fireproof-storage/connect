@@ -1,4 +1,4 @@
-import { fireproof, Database, bs } from "@fireproof/core";
+import { fireproof, Ledger, bs } from "@fireproof/core";
 import { registerPartyKitStoreProtocol } from "./gateway";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { URI } from "@adviser/cement";
@@ -18,7 +18,7 @@ interface ExtendedStore {
 }
 
 describe("PartyKitGateway", () => {
-  let db: Database;
+  let db: Ledger;
   let unregister: () => void;
 
   beforeAll(() => {
@@ -78,7 +78,7 @@ describe("PartyKitGateway", () => {
     const docs = await smokeDB(db);
 
     // // get a new db instance
-    // db = new Database(name, config);
+    // db = new Ledger(name, config);
 
     // Test update operation
     const updateDoc = await db.get<{ content: string }>(docs[0]._id);

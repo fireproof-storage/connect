@@ -1,5 +1,5 @@
 import { BuildURI, CoerceURI, runtimeFn, URI } from "@adviser/cement";
-import { bs, Database, ensureLogger, SuperThis } from "@fireproof/core";
+import { bs, Ledger, ensureLogger, SuperThis } from "@fireproof/core";
 
 // export interface StoreOptions {
 //   readonly data: bs.DataStore;
@@ -80,4 +80,4 @@ export function makeKeyBagUrlExtractable(sthis: SuperThis) {
   sthis.logger.Debug().Url(kbUrl, "keyBagUrl").Msg("Make keybag url extractable");
 }
 
-export type ConnectFunction = (db: Database, name?: string, url?: string) => bs.Connection;
+export type ConnectFunction = (db: Ledger, name?: string, url?: string) => bs.Connection;

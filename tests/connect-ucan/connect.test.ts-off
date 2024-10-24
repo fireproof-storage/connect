@@ -1,5 +1,5 @@
 import { assert, equals, notEquals, matches, resetDirectory, equalsJSON } from "../../helpers.js";
-import { Database } from "../../../src/index.js";
+import { Ledger } from "../../../src/index.js";
 // import { connect } from "../../../src/index.js";
 // import { Doc } from '../dist/test/types.d.esm.js'
 // import { MetaStore } from "../../../src/store-fs.js";
@@ -55,11 +55,11 @@ class MockConnect extends Connection {
 // const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 describe.skip("basic Connection with s3 remote", function () {
-  let db: Database
+  let db: Ledger
   let dbName: string
   beforeEach(async function () {
     dbName = "test-s3-" + Math.ceil(Math.random() * 100000);
-    db = new Database(dbName);
+    db = new Ledger(dbName);
     const remote = connect.s3(db, serviceConfig.s3);
     await remote.ready;
     /** @type {Doc} */
@@ -92,7 +92,7 @@ describe.skip("basic Connection with s3 remote", function () {
   }, 10000);
   it("should get remote", async function () {
     await resetDirectory(MetaStore.dataDir, dbName);
-    const db2 = new Database(dbName);
+    const db2 = new Ledger(dbName);
     const remote = connect.s3(db2, serviceConfig.s3);
     await remote.ready;
     const {
@@ -113,13 +113,13 @@ describe.skip("basic Connection with s3 remote", function () {
 });
 
 describe("basic Connection with raw remote", function () {
-  let db: Database
+  let db: Ledger
   let dbName: string;
   beforeEach(async function () {
     dbName = "test-raw-connect";
     await resetDirectory(MetaStore.dataDir, dbName);
     mockStore.clear();
-    db = new Database(dbName);
+    db = new Ledger(dbName);
     const remote = connect.raw(db, mockConnect);
     await remote.ready;
     /** @type {Doc} */
@@ -155,7 +155,7 @@ describe("basic Connection with raw remote", function () {
   }, 10000);
   it("should get remote", async function () {
     await resetDirectory(MetaStore.dataDir, dbName);
-    const db2 = new Database(dbName);
+    const db2 = new Ledger(dbName);
     const remote = connect.raw(db2, mockConnect);
     await remote.ready;
     const {
@@ -180,7 +180,7 @@ describe("basic Connection with raw remote", function () {
     const dataDownload = async function () { };
     const badMockConnect = { ...mockConnect, dataDownload };
 
-    const db2 = new Database(dbName);
+    const db2 = new Ledger(dbName);
     const connection = connect.raw(db2, badMockConnect);
     await connection.ready;
 
@@ -222,13 +222,13 @@ describe("basic Connection with raw remote", function () {
 });
 
 describe("forked Connection with raw remote", function () {
-  let db: Database
+  let db: Ledger
   let dbName: string
   beforeEach(async function () {
     dbName = "test-raw-forked";
     await resetDirectory(MetaStore.dataDir, dbName);
     mockStore.clear();
-    db = new Database(dbName);
+    db = new Ledger(dbName);
     const remote = connect.raw(db, mockConnect);
     await remote.ready;
     /** @type {Doc} */
@@ -256,7 +256,7 @@ describe("forked Connection with raw remote", function () {
   it("should get remote fork", async function () {
     // await resetDirectory(MetaStore.dataDir, dbName)
 
-    const db2 = new Database(dbName);
+    const db2 = new Ledger(dbName);
 
     const doc = await db2.get<{ value: string }>("hello");
     assert(doc);
@@ -285,7 +285,7 @@ describe("forked Connection with raw remote", function () {
     equals(db2._crdt.clock.head.length, 1);
 
     // open a the db again from files
-    const db3 = new Database(dbName);
+    const db3 = new Ledger(dbName);
     const doc3 = await db3.get<{ value: string }>("hey");
     equals(doc3.value, "partyverse");
     const doc4 = await db3.get<{ value: string }>("greetings");
@@ -293,7 +293,7 @@ describe("forked Connection with raw remote", function () {
 
     // reset files and open again
     await resetDirectory(MetaStore.dataDir, dbName);
-    const db4 = new Database(dbName);
+    const db4 = new Ledger(dbName);
     const remote4 = connect.raw(db4, mockConnect);
     await remote4.loaded;
     const changes = await db4.changes();
@@ -302,7 +302,7 @@ describe("forked Connection with raw remote", function () {
 });
 
 describe("two Connection with raw remote", function () {
-  let db: Database
+  let db: Ledger
   let dbName: string
 
   // this test won't test the forking anymore once we
@@ -334,7 +334,7 @@ describe("two Connection with raw remote", function () {
     metaPath = join(MetaStore.dataDir, dbName, "meta", "main.json");
     await resetDirectory(MetaStore.dataDir, dbName);
     mockStore.clear();
-    db = new Database(dbName);
+    db = new Ledger(dbName);
     const remote = connect.raw(db, mockConnect);
     await remote.ready;
     /** @type {Doc} */
@@ -348,7 +348,7 @@ describe("two Connection with raw remote", function () {
 
     // await writeFile(metaPath, meta1)
 
-    const db2 = new Database(dbName);
+    const db2 = new Ledger(dbName);
 
     const remote2 = connect.raw(db2, mockConnect);
 
@@ -401,7 +401,7 @@ describe("two Connection with raw remote", function () {
     notEquals(meta1.toString(), meta3.toString());
 
     await writeFile(metaPath, meta2);
-    const db3 = new Database(dbName);
+    const db3 = new Ledger(dbName);
     await db3._crdt.ready;
     assert(db3._crdt.blockstore.loader);
     assert(db3._crdt.blockstore.loader.carLog);
@@ -447,7 +447,7 @@ describe("two Connection with raw remote", function () {
   it("continues to execute queries", async function () {
     // await resetDirectory(MetaStore.dataDir, dbName)
 
-    const db2 = new Database(dbName);
+    const db2 = new Ledger(dbName);
 
     const doc = await db2.get<{ value: string }>("hello");
     assert(doc);
@@ -476,7 +476,7 @@ describe("two Connection with raw remote", function () {
     equals(db2._crdt.clock.head.length, 1);
 
     // open a the db again from files
-    const db3 = new Database(dbName);
+    const db3 = new Ledger(dbName);
     const doc3 = await db3.get<{ value: string }>("hey");
     equals(doc3.value, "partyverse");
     const doc4 = await db3.get<{ value: string }>("greetings");
@@ -484,7 +484,7 @@ describe("two Connection with raw remote", function () {
 
     // reset files and open again
     await resetDirectory(MetaStore.dataDir, dbName);
-    const db4 = new Database(dbName);
+    const db4 = new Ledger(dbName);
     const remote4 = connect.raw(db4, mockConnect);
     await remote4.loaded;
     const changes = await db4.changes();
