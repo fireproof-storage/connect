@@ -22,6 +22,7 @@ export default tseslint.config(
   {
     rules: {
       "no-console": ["warn"],
+      "no-restricted-globals": ["error", "URL", "TextDecoder", "TextEncoder"],
       "@typescript-eslint/no-unused-vars": [
         "error",
         {

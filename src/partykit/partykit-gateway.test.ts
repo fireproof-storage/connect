@@ -1,39 +1,38 @@
-import { fireproof, Database, bs } from "@fireproof/core";
+import { fireproof, Database, ConfigOpts, bs } from "@fireproof/core";
 import { registerPartyKitStoreProtocol } from "./gateway";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { URI } from "@adviser/cement";
 import { smokeDB } from "../../tests/helper";
+import { mockSuperThis } from "@fireproof/core/tests/helpers";
 
 // has to leave
-interface ExtendedGateway extends bs.Gateway {
-  headerSize: number;
-  subscribe?: (url: URI, callback: (meta: Uint8Array) => void) => Promise<bs.UnsubscribeResult>; // Changed VoidResult to UnsubscribeResult
-}
+// interface ExtendedGateway extends bs.Gateway {
+//   headerSize: number;
+//   subscribe?: (url: URI, callback: (meta: Uint8Array) => void) => Promise<bs.UnsubscribeResult>; // Changed VoidResult to UnsubscribeResult
+// }
 
 // has to leave
-interface ExtendedStore {
-  gateway: ExtendedGateway;
-  _url: URI;
-  name: string;
-}
+// interface ExtendedStore {
+//   gateway: ExtendedGateway;
+//   _url: URI;
+//   name: string;
+// }
 
 describe("PartyKitGateway", () => {
   let db: Database;
   let unregister: () => void;
+  const sthis = mockSuperThis();
 
   beforeAll(() => {
     unregister = registerPartyKitStoreProtocol("partykit:");
   });
 
   beforeEach(() => {
-    const config = {
-      store: {
-        stores: {
-          base: process.env.FP_STORAGE_URL || "partykit://localhost:1999",
-        },
+    const config: ConfigOpts = {
+      storeUrls: {
+        base: process.env.FP_STORAGE_URL || "partykit://localhost:1999",
       },
     };
-    const name = "partykit-test-db-" + Math.random().toString(36).substring(7);
+    const name = "partykit-test-db-" + sthis.nextId().str;
     db = fireproof(name, config);
   });
 
@@ -52,23 +51,21 @@ describe("PartyKitGateway", () => {
     expect(process.env.FP_STORAGE_URL).toMatch(/partykit:\/\/localhost:1999/);
   });
 
-  it("should have loader and options", () => {
-    const loader = db.blockstore.loader;
-    expect(loader).toBeDefined();
-    if (!loader) {
-      throw new Error("Loader is not defined");
-    }
-    expect(loader.ebOpts).toBeDefined();
-    expect(loader.ebOpts.store).toBeDefined();
-    expect(loader.ebOpts.store.stores).toBeDefined();
-    if (!loader.ebOpts.store.stores) {
-      throw new Error("Loader stores is not defined");
-    }
-    if (!loader.ebOpts.store.stores.base) {
-      throw new Error("Loader stores.base is not defined");
-    }
+  it("should have loader and options", async () => {
+    const carStore = await db.crdt.blockstore.loader?.carStore();
+    expect(carStore).toBeDefined();
+    // expect(loader.ebOpts).toBeDefined();
+    // expect(loader.ebOpts.store).toBeDefined();
+    // expect(loader.ebOpts.store.stores).toBeDefined();
+    // if (!loader.ebOpts.store.stores) {
+    //   throw new Error("Loader stores is not defined");
+    // }
+    // if (!loader.ebOpts.store.stores.base) {
+    //   throw new Error("Loader stores.base is not defined");
+    // }
 
-    const baseUrl = new URL(loader.ebOpts.store.stores.base.toString());
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const baseUrl = carStore!.url();
     expect(baseUrl.protocol).toBe("partykit:");
     expect(baseUrl.hostname).toBe("localhost");
     expect(baseUrl.port || "").toBe("1999");
@@ -105,12 +102,12 @@ describe("PartyKitGateway", () => {
 
   it("should subscribe to changes", async () => {
     // Extract stores from the loader
-    const metaStore = (await db.blockstore.loader?.metaStore()) as unknown as ExtendedStore;
+    const metaStore = (await db.crdt.blockstore.loader?.metaStore()) as bs.MetaStore;
 
-    const metaGateway = metaStore?.gateway;
+    const metaGateway = metaStore.realGateway;
 
-    const metaUrl = await metaGateway?.buildUrl(metaStore?._url, "main");
-    await metaGateway?.start(metaStore?._url);
+    const metaUrl = await metaGateway.buildUrl(metaStore.url(), "main");
+    await metaGateway?.start(metaStore.url());
 
     let didCall = false;
 
@@ -120,9 +117,8 @@ describe("PartyKitGateway", () => {
         resolve = r;
       });
 
-      const metaSubscribeResult = await metaGateway?.subscribe?.(metaUrl?.Ok(), async (data: Uint8Array) => {
-        const decodedData = new TextDecoder().decode(data);
-        expect(decodedData).toContain("parents");
+      const metaSubscribeResult = await metaGateway.subscribe?.(metaUrl?.Ok(), async (data) => {
+        expect(data.payload[0]).toContain("parents");
         didCall = true;
         resolve();
       });

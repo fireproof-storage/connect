@@ -2,13 +2,6 @@ job:
   package-manager: npm_and_yarn
   allowed-updates:
     - update-type: all
-  security-advisories:
-    - dependency-name: express
-      affected-versions:
-        - <5.0.0
-      patched-versions: []
-      unaffected-versions: []
-  security-updates-only: true
   source:
     provider: github
     repo: fireproof-storage/connect

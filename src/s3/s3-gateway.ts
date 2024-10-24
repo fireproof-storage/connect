@@ -162,7 +162,7 @@ export class S3Gateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
+  async put<T>(url: URI, fpenv: bs.FPEnvelope<T>): Promise<bs.VoidResult> {
     const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
     const { bucket, prefix } = getBucket(this.sthis, url);
     this.logger.Debug().Url(url).Str("bucket", bucket).Str("key", prefix).Msg("put");
@@ -170,7 +170,7 @@ export class S3Gateway implements bs.Gateway {
       Key: prefix,
       Bucket: bucket,
       ContentType: `fireproof/${store}`,
-      Body: body,
+      Body: await rt.gw.fpSerialize(this.sthis, fpenv, url),
     });
     try {
       await (await s3Client(this.sthis, url)).send(putObjectCommand);
@@ -180,7 +180,7 @@ export class S3Gateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async get(url: URI): Promise<bs.GetResult> {
+  async rawGet(url: URI): Promise<Result<Uint8Array>> {
     const { bucket, prefix } = getBucket(this.sthis, url);
     this.logger.Debug().Url(url).Str("bucket", bucket).Str("key", prefix).Msg("get");
     const getObjectCommand = new GetObjectCommand({
@@ -200,6 +200,14 @@ export class S3Gateway implements bs.Gateway {
       return Result.Err(e as Error);
     }
   }
+
+  async get<T>(url: URI): Promise<bs.GetResult<T>> {
+    const ret = await this.rawGet(url);
+    if (ret.isErr()) {
+      return Result.Err(ret.Err());
+    }
+    return rt.gw.fpDeserialize(this.sthis, ret.Ok(), url);
+  }
   async delete(url: URI): Promise<bs.VoidResult> {
     const { bucket, prefix } = getBucket(this.sthis, url);
     this.logger.Debug().Url(url).Str("bucket", bucket).Str("key", prefix).Msg("delete");
@@ -218,8 +226,8 @@ export class S3Gateway implements bs.Gateway {
 export class S3TestStore implements bs.TestGateway {
   readonly logger: Logger;
   readonly sthis: SuperThis;
-  readonly gateway: bs.Gateway;
-  constructor(sthis: SuperThis, gw: bs.Gateway) {
+  readonly gateway: S3Gateway;
+  constructor(sthis: SuperThis, gw: S3Gateway) {
     this.sthis = ensureSuperLog(sthis, "S3TestStore");
     this.logger = this.sthis.logger;
     this.gateway = gw;
@@ -228,7 +236,7 @@ export class S3TestStore implements bs.TestGateway {
     const url = iurl.build().setParam("key", key).URI();
     const dbFile = this.sthis.pathOps.join(rt.getPath(url, this.sthis), rt.getFileName(url, this.sthis));
     this.logger.Debug().Url(url).Str("dbFile", dbFile).Msg("get");
-    const buffer = await this.gateway.get(url);
+    const buffer = await this.gateway.rawGet(url);
     this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer).Msg("got");
     return buffer.Ok();
   }
@@ -245,7 +253,8 @@ export function registerS3StoreProtocol(protocol = "s3:", overrideBaseURL?: stri
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const _f: any = bs.registerStoreProtocol({
       protocol,
-      overrideBaseURL,
+      isDefault: false,
+      defaultURI: () => URI.from(overrideBaseURL || "s3://default/"),
       gateway: async (sthis) => {
         return new S3Gateway(sthis);
       },

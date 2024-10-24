@@ -1,16 +1,8 @@
-import { BuildURI, CoerceURI, exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement";
-import { bs, getStore, Logger, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
+import { BuildURI, exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement";
+import { bs, getStore, Logger, NotFoundError, SuperThis, ensureSuperLog, rt, PARAM } from "@fireproof/core";
+import { fetchUint8, resultFetch } from "../fetcher";
 
-async function resultFetch(logger: Logger, curl: CoerceURI, init?: RequestInit): Promise<Result<Response>> {
-  const url = URI.from(curl);
-  try {
-    const ret = await fetch(url.asURL(), init);
-    logger.Debug().Url(url).Any("init", init).Int("status", ret.status).Msg("Fetch Done");
-    return Result.Ok(ret);
-  } catch (err) {
-    return logger.Error().Url(url).Any("init", init).Err(err).Msg("Fetch Error").ResultError();
-  }
-}
+export const AWS_VERSION = "v0.1-aws";
 
 export class AWSGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -40,7 +32,7 @@ export class AWSGateway implements bs.Gateway {
     }
     const ret = baseUrl
       .build()
-      .defParam("version", "v0.1-aws")
+      .defParam(PARAM.VERSION, AWS_VERSION)
       .defParam("region", baseUrl.getParam("region") || "us-east-2")
       .URI();
 
@@ -51,7 +43,7 @@ export class AWSGateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
+  async put<T>(url: URI, fpEnv: bs.FPEnvelope<T>): Promise<bs.VoidResult> {
     const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
 
     const rParams = url.getParamsResult("uploadUrl", "key", "name");
@@ -59,6 +51,7 @@ export class AWSGateway implements bs.Gateway {
       return this.logger.Error().Url(url).Err(rParams).Msg("Put Error").ResultError();
     }
     const { uploadUrl, key, name } = rParams.Ok();
+    const body = await rt.gw.fpSerialize(this.sthis, fpEnv, url);
     return store === "meta"
       ? this.putMeta(url, uploadUrl, key, name, body)
       : this.putData(uploadUrl, store, key, name, body);
@@ -77,8 +70,8 @@ export class AWSGateway implements bs.Gateway {
     name += ".fp";
     const fetchUrl = BuildURI.from(uploadUrl)
       .setParam("type", "meta")
-      .setParam("key", key)
-      .setParam("name", name)
+      .setParam(PARAM.KEY, key)
+      .setParam(PARAM.NAME, name)
       .URI();
     const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
     if (bodyRes.isErr()) {
@@ -133,7 +126,7 @@ export class AWSGateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async get(url: URI): Promise<bs.GetResult> {
+  async get<T>(url: URI): Promise<bs.GetResult<T>> {
     const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
     switch (store) {
       case "meta":
@@ -147,7 +140,11 @@ export class AWSGateway implements bs.Gateway {
     }
   }
 
-  private async getData(url: URI): Promise<bs.GetResult> {
+  async getRaw(url: URI): Promise<Result<Uint8Array>> {
+    return fetchUint8(this.logger, url);
+  }
+
+  private async getData<T>(url: URI): Promise<bs.GetResult<T>> {
     const rParams = url.getParamsResult("dataUrl", "key", "name");
     // console.log("Get Data URL:", url.toString());
     if (rParams.isErr()) {
@@ -155,26 +152,10 @@ export class AWSGateway implements bs.Gateway {
     }
     const { dataUrl, name, key } = rParams.Ok();
     const fetchUrl = BuildURI.from(dataUrl).appendRelative(`/data/${name}/${key}.car`).URI();
-    const rresponse = await resultFetch(this.logger, fetchUrl);
-    if (rresponse.isErr()) {
-      return Result.Err(rresponse.Err());
-    }
-    const response = rresponse.Ok();
-    if (!response.ok) {
-      this.logger
-        .Error()
-        .Url(fetchUrl, "fetchUrl")
-        .Url(dataUrl, "dataUrl")
-        .Int("status", response.status)
-        .Msg("Download Data response error");
-      return Result.Err(new NotFoundError(`data not found: ${url}`));
-    }
-
-    const data = new Uint8Array(await response.arrayBuffer());
-    return Result.Ok(data);
+    return rt.gw.fpDeserialize<T>(this.sthis, this.getRaw(fetchUrl), url);
   }
 
-  private async getMeta(url: URI): Promise<bs.GetResult> {
+  private async getMeta<T>(url: URI): Promise<bs.GetResult<T>> {
     const rParams = url.getParamsResult("dataUrl", "name", "key");
     if (rParams.isErr()) {
       return Result.Err(rParams.Err());
@@ -212,7 +193,7 @@ export class AWSGateway implements bs.Gateway {
     return Result.Ok(data);
   }
 
-  private async getWal(url: URI): Promise<bs.GetResult> {
+  private async getWal<T>(url: URI): Promise<bs.GetResult<T>> {
     const rParams = url.getParamsResult("dataUrl", "key", "name");
     if (rParams.isErr()) {
       return Result.Err(rParams.Err());
@@ -228,8 +209,7 @@ export class AWSGateway implements bs.Gateway {
       // console.log("Download Wal response error:", response.status);
       return Result.Err(new NotFoundError(`wal not found: ${url}`));
     }
-    const data = new Uint8Array(await response.arrayBuffer());
-    return Result.Ok(data);
+    return rt.gw.fpDeserialize<T>(this.sthis, new Uint8Array(await response.arrayBuffer()), url);
   }
 
   async delete(_url: URI): Promise<bs.VoidResult> {
@@ -237,7 +217,7 @@ export class AWSGateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async subscribe(url: URI, callback: (meta: Uint8Array) => void): Promise<bs.UnsubscribeResult> {
+  async subscribe(url: URI, callback: (meta: bs.FPEnvelopeMeta) => void): Promise<bs.UnsubscribeResult> {
     url = url.build().setParam("key", "main").defParam("interval", "100").URI();
 
     let lastData: Uint8Array | undefined = undefined;
@@ -269,9 +249,9 @@ export class AWSGateway implements bs.Gateway {
 export class AWSTestStore implements bs.TestGateway {
   readonly logger: Logger;
   readonly sthis: SuperThis;
-  readonly gateway: bs.Gateway;
+  readonly gateway: AWSGateway;
 
-  constructor(sthis: SuperThis, gw: bs.Gateway) {
+  constructor(sthis: SuperThis, gw: AWSGateway) {
     this.sthis = ensureSuperLog(sthis, "AWSTestStore");
     this.logger = this.sthis.logger;
     this.gateway = gw;
@@ -279,7 +259,7 @@ export class AWSTestStore implements bs.TestGateway {
 
   async get(iurl: URI, key: string): Promise<Uint8Array> {
     const url = iurl.build().setParam("key", key).URI();
-    const buffer = await this.gateway.get(url);
+    const buffer = await this.gateway.getRaw(url);
     return buffer.Ok();
   }
 }
@@ -289,7 +269,11 @@ export function registerAWSStoreProtocol(protocol = "aws:", overrideBaseURL?: st
   return onceRegisterAWSStoreProtocol.get(protocol).once(() => {
     return bs.registerStoreProtocol({
       protocol,
-      overrideBaseURL,
+      isDefault: !!overrideBaseURL,
+      defaultURI: () =>
+        BuildURI.from(overrideBaseURL || "aws://default/")
+          .setParam(PARAM.VERSION, AWS_VERSION)
+          .URI(),
       gateway: async (sthis) => {
         return new AWSGateway(sthis);
       },

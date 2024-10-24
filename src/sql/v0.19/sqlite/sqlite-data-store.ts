@@ -68,7 +68,7 @@ export class V0_19_SqliteDataStore implements DataSQLStore {
     });
   }
 
-  async startx(url: URI): Promise<URI> {
+  async start(url: URI): Promise<URI> {
     this.logger.Debug().Msg("start-connect");
     await this.dbConn.connect();
     this.logger.Debug().Msg("start-connected");

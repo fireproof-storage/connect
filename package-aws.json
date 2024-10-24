@@ -21,7 +21,5 @@
   "author": "",
   "license": "Apache-2.0 OR MIT",
   "devDependencies": {},
-  "dependencies": {
-    "cross-fetch": "^4.0.0"
-  }
+  "dependencies": {}
 }
