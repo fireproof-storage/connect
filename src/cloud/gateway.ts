@@ -121,7 +121,7 @@ export class FireproofCloudGateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async put(uri: URI, body: Uint8Array): Promise<Result<void>> {
+  async put<T>(uri: URI, body: bs.FPEnvelope<T>): Promise<Result<void>> {
     await this.ready();
     const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
     if (store === "meta") {
@@ -147,13 +147,18 @@ export class FireproofCloudGateway implements bs.Gateway {
       const uploadUrl = pkURL(uri, key, "car");
       return exception2Result(async () => {
         const response = await fetch(uploadUrl.asURL(), { method: "PUT" });
-        console.log("uploadUrl-put", response.status, response.statusText);
+        this.logger
+          .Debug()
+          .Uint64("status", response.status)
+          .Url(uploadUrl)
+          .Str("statusText", response.statusText)
+          .Msg("uploadUrl-put");
         if (response.status === 404) {
           throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
         }
         const url = (await response.json()).url;
-        console.log("uploadUrl-put", url.toString());
-        const uploadResponse = await fetch(url, { method: "PUT", body: body });
+        this.logger.Debug().Url(url).Msg("uploadUrl-put");
+        const uploadResponse = await fetch(url, { method: "PUT", body: body.payload });
         if (uploadResponse.status === 404) {
           throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
         }
@@ -161,7 +166,7 @@ export class FireproofCloudGateway implements bs.Gateway {
     }
   }
 
-  private readonly subscriberCallbacks = new Set<(data: Uint8Array) => void>();
+  private readonly subscriberCallbacks = new Set<(data: bs.FPEnvelopeMeta) => void>();
 
   private notifySubscribers(data: Uint8Array): void {
     for (const callback of this.subscriberCallbacks) {
@@ -172,7 +177,7 @@ export class FireproofCloudGateway implements bs.Gateway {
       }
     }
   }
-  async subscribe(uri: URI, callback: (meta: Uint8Array) => void): Promise<bs.UnsubscribeResult> {
+  async subscribe(uri: URI, callback: (meta: bs.FPEnvelopeMeta) => void): Promise<bs.UnsubscribeResult> {
     await this.ready();
     await this.connectFireproofCloud();
 
@@ -188,14 +193,14 @@ export class FireproofCloudGateway implements bs.Gateway {
     });
   }
 
-  async get(uri: URI): Promise<bs.GetResult> {
+  async get<S>(uri: URI): Promise<bs.GetResult<S>> {
     await this.ready();
     return exception2Result(async () => {
       const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
       const key = uri.getParam("key");
       if (!key) throw new Error("key not found");
       let downloadUrl;
-      console.log("store-get", store);
+      this.logger.Debug().Str("store", store).Msg("get");
       switch (store) {
         case "meta":
           downloadUrl = pkMetaURL(uri, key);
@@ -276,7 +281,7 @@ function pkBaseURL(uri: URI): URI {
   const protocol = uri.getParam("protocol") === "ws" ? "http" : "https";
   // TODO extract url from uri
   const path = `/parties/fireproof/${name}${idx}`;
-  return BuildURI.from(`${protocol}://${host}${path}`).URI();
+  return URI.from(`${protocol}://${host}${path}`);
 }
 
 function pkCarGetURL(uri: URI, key: string): URI {
@@ -286,10 +291,7 @@ function pkCarGetURL(uri: URI, key: string): URI {
   }
   const name = uri.getParam("name");
   const idx = uri.getParam("index") || "";
-  const baseUri = URI.from(baseUrl).asURL();
-  baseUri.pathname = `/${name}${idx}/${key}`;
-  console.log("pkCarGetURL", baseUri.toString());
-  return BuildURI.from(baseUri).URI();
+  return BuildURI.from(baseUrl).pathname(`/${name}${idx}/${key}`).URI();
 }
 
 function pkMetaURL(uri: URI, key: string): URI {

@@ -19,8 +19,8 @@ import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
 // }
 
 if (!runtimeFn().isBrowser) {
-  const url = new URL(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-aws?fs=mem");
-  url.searchParams.set("extractKey", "_deprecated_internal_api");
+  const url = BuildURI.from(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-aws");
+  url.setParam("extractKey", "_deprecated_internal_api");
   process.env.FP_KEYBAG_URL = url.toString();
 }
 
@@ -36,7 +36,7 @@ export const connect: ConnectFunction = (
   webSocketUrl = "wss://fufauby0ii.execute-api.us-east-2.amazonaws.com/Prod",
   dataUrl = "https://fp1-uploads-201698179963.s3.us-east-2.amazonaws.com"
 ) => {
-  const { sthis, blockstore, name: dbName } = db;
+  const { sthis, crdt, name: dbName } = db;
   if (!dbName) {
     throw new Error("dbName is required");
   }
@@ -52,7 +52,7 @@ export const connect: ConnectFunction = (
   return connectionCache.get(urlObj.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
     const connection = connectionFactory(sthis, urlObj);
-    connection.connect_X(blockstore);
+    connection.connect(crdt.blockstore);
     return connection;
   });
 };

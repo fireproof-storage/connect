@@ -1,10 +1,20 @@
-import { Logger, ResolveOnce, Result, URI, exception2Result } from "@adviser/cement";
+import { BuildURI, Logger, ResolveOnce, Result, URI, exception2Result } from "@adviser/cement";
 
 // import { TestStore } from "../../blockstore/types.js";
 import { SQLConnectionFactoryx } from "./sql-connection-factory.js";
 import { DataSQLStore, MetaSQLStore, WalSQLStore } from "./types.js";
 import { DataStoreFactory, MetaStoreFactory, WalStoreFactory } from "./store-version-factory.js";
-import { exceptionWrapper, getKey, getName, bs, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
+import {
+  exceptionWrapper,
+  getKey,
+  getName,
+  bs,
+  NotFoundError,
+  SuperThis,
+  ensureSuperLog,
+  rt,
+  PARAM,
+} from "@fireproof/core";
 
 export class SQLWalGateway implements bs.Gateway {
   readonly storeType = "wal";
@@ -26,7 +36,7 @@ export class SQLWalGateway implements bs.Gateway {
       this.logger.Debug().Url(baseUrl).Msg("start");
       const conn = await SQLConnectionFactoryx(this.sthis, baseUrl);
       const ws = await WalStoreFactory(this.sthis, conn.dbConn);
-      const upUrl = await ws.startx(conn.url);
+      const upUrl = await ws.start(conn.url);
       this.walSQLStore = ws;
       this.logger.Debug().Url(upUrl).Msg("started");
       return upUrl;
@@ -39,19 +49,19 @@ export class SQLWalGateway implements bs.Gateway {
     return this.walSQLStore.destroy(baseUrl);
   }
 
-  async put(url: URI, body: Uint8Array): Promise<Result<void>> {
+  async put<T>(url: URI, body: bs.FPEnvelope<T>): Promise<Result<void>> {
     return exception2Result(async () => {
       const branch = getKey(url, this.logger);
       const name = getName(this.sthis, url);
       await this.walSQLStore.insert(url, {
-        state: body,
+        state: await rt.gw.fpSerialize(this.sthis, body, url),
         updated_at: new Date(),
         name,
         branch,
       });
     });
   }
-  async get(url: URI): Promise<bs.GetResult> {
+  async get<T>(url: URI): Promise<bs.GetResult<T>> {
     return exceptionWrapper(async () => {
       const branch = getKey(url, this.logger);
       const name = getName(this.sthis, url);
@@ -59,7 +69,7 @@ export class SQLWalGateway implements bs.Gateway {
       if (record.length === 0) {
         return Result.Err(new NotFoundError(`not found ${name} ${branch}`));
       }
-      return Result.Ok(record[0].state);
+      return rt.gw.fpDeserialize<T>(this.sthis, record[0].state, url);
     });
   }
   async delete(url: URI): Promise<Result<void>> {
@@ -90,7 +100,7 @@ export class SQLMetaGateway implements bs.Gateway {
       this.logger.Debug().Url(baseUrl).Msg("start");
       const conn = await SQLConnectionFactoryx(this.sthis, baseUrl);
       const ws = await MetaStoreFactory(this.sthis, conn.dbConn);
-      const upUrl = await ws.startx(conn.url);
+      const upUrl = await ws.start(conn.url);
       this.metaSQLStore = ws;
       this.logger.Debug().Url(upUrl).Msg("started");
       return upUrl;
@@ -103,19 +113,19 @@ export class SQLMetaGateway implements bs.Gateway {
     return this.metaSQLStore.destroy(baseUrl);
   }
 
-  async put(url: URI, body: Uint8Array): Promise<Result<void>> {
+  async put<T>(url: URI, body: bs.FPEnvelope<T>): Promise<Result<void>> {
     return exception2Result(async () => {
       const branch = getKey(url, this.logger);
       const name = getName(this.sthis, url);
       await this.metaSQLStore.insert(url, {
-        meta: body,
+        meta: await rt.gw.fpSerialize(this.sthis, body, url),
         updated_at: new Date(),
         name,
         branch,
       });
     });
   }
-  async get(url: URI): Promise<bs.GetResult> {
+  async get<T>(url: URI): Promise<bs.GetResult<T>> {
     return exceptionWrapper(async () => {
       const branch = getKey(url, this.logger);
       const name = getName(this.sthis, url);
@@ -126,7 +136,7 @@ export class SQLMetaGateway implements bs.Gateway {
       if (record.length === 0) {
         return Result.Err(new NotFoundError(`not found ${name} ${branch}`));
       }
-      return Result.Ok(record[0].meta);
+      return rt.gw.fpDeserialize<T>(this.sthis, record[0].meta, url);
     });
   }
   async delete(url: URI): Promise<Result<void>> {
@@ -161,7 +171,7 @@ export class SQLDataGateway implements bs.Gateway {
       this.logger.Debug().Url(baseUrl).Msg("post-sql-connection");
       const ws = await DataStoreFactory(this.sthis, conn.dbConn);
       this.logger.Debug().Url(conn.url).Msg("post-data-store-factory");
-      const upUrl = await ws.startx(conn.url);
+      const upUrl = await ws.start(conn.url);
       this.dataSQLStore = ws;
       this.logger.Debug().Url(upUrl).Msg("started");
       return upUrl;
@@ -174,26 +184,26 @@ export class SQLDataGateway implements bs.Gateway {
     return this.dataSQLStore.destroy(baseUrl);
   }
 
-  async put(url: URI, body: Uint8Array): Promise<Result<void>> {
+  async put<T>(url: URI, body: bs.FPEnvelope<T>): Promise<Result<void>> {
     return exception2Result(async () => {
       const cid = getKey(url, this.logger);
       const name = getName(this.sthis, url);
       await this.dataSQLStore.insert(url, {
-        data: body,
+        data: await rt.gw.fpSerialize(this.sthis, body, url),
         updated_at: new Date(),
         name: name,
         car: cid,
       });
     });
   }
-  async get(url: URI): Promise<bs.GetResult> {
+  async get<T>(url: URI): Promise<bs.GetResult<T>> {
     return exceptionWrapper(async () => {
       const branch = getKey(url, this.logger);
       const record = await this.dataSQLStore.select(url, branch);
       if (record.length === 0) {
         return Result.Err(new NotFoundError(`not found ${branch}`));
       }
-      return Result.Ok(record[0].data);
+      return rt.gw.fpDeserialize<T>(this.sthis, record[0].data, url);
     });
   }
   async delete(url: URI): Promise<Result<void>> {
@@ -218,7 +228,7 @@ export class SQLTestStore implements bs.TestGateway {
     switch (url.getParam("store")) {
       case "wal": {
         const sqlStore = await WalStoreFactory(this.sthis, conn.dbConn);
-        const surl = await sqlStore.startx(url);
+        const surl = await sqlStore.start(url);
         const records = await sqlStore.select(surl, {
           name,
           branch: key,
@@ -227,7 +237,7 @@ export class SQLTestStore implements bs.TestGateway {
       }
       case "meta": {
         const sqlStore = await MetaStoreFactory(this.sthis, conn.dbConn);
-        const surl = await sqlStore.startx(url);
+        const surl = await sqlStore.start(url);
         const records = await sqlStore.select(surl, {
           name,
           branch: key,
@@ -236,7 +246,7 @@ export class SQLTestStore implements bs.TestGateway {
       }
       case "data": {
         const sqlStore = await DataStoreFactory(this.sthis, conn.dbConn);
-        const surl = await sqlStore.startx(url);
+        const surl = await sqlStore.start(url);
         const records = await sqlStore.select(surl, key);
         return records[0].data;
       }
@@ -266,10 +276,10 @@ class SQLStoreGateway implements bs.Gateway {
   async destroy(baseUrl: URI): Promise<Result<void, Error>> {
     return (await this.getGateway(baseUrl)).destroy(baseUrl);
   }
-  async put(url: URI, body: Uint8Array): Promise<Result<void, Error>> {
+  async put<T>(url: URI, body: bs.FPEnvelope<T>): Promise<Result<void, Error>> {
     return (await this.getGateway(url)).put(url, body);
   }
-  async get(url: URI): Promise<Result<Uint8Array, Error | NotFoundError>> {
+  async get<T>(url: URI): Promise<Result<bs.FPEnvelope<T>, Error | NotFoundError>> {
     return (await this.getGateway(url)).get(url);
   }
   async delete(url: URI): Promise<Result<void, Error>> {
@@ -306,6 +316,7 @@ export function registerSqliteStoreProtocol() {
   return _register.once(() => {
     return bs.registerStoreProtocol({
       protocol: "sqlite:",
+      defaultURI: () => BuildURI.from("sqlite://").setParam(PARAM.VERSION, "").URI(),
       gateway: async (sthis) => {
         return new SQLStoreGateway(sthis);
       },

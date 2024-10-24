@@ -10,6 +10,7 @@ interface CRDTEntry {
 }
 
 export default async (req: Request) => {
+  // eslint-disable-next-line no-restricted-globals
   const url = new URL(req.url);
   const carId = url.searchParams.get("car");
   const metaDb = url.searchParams.get("meta");

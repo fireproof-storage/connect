@@ -5,8 +5,8 @@ import { registerFireproofCloudStoreProtocol } from "./gateway";
 
 interface ConnectData {
   readonly remoteName: string;
-  firstConnect: boolean;
-  endpoint?: string;
+  readonly firstConnect: boolean;
+  readonly endpoint?: string;
 }
 
 const SYNC_DB_NAME = "_fp.sync";
@@ -27,8 +27,8 @@ const SYNC_DB_NAME = "_fp.sync";
 // }
 
 if (!runtimeFn().isBrowser) {
-  const url = new URL(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-FireproofCloud");
-  url.searchParams.set("extractKey", "_deprecated_internal_api");
+  const url = BuildURI.from(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-FireproofCloud");
+  url.setParam("extractKey", "_deprecated_internal_api");
   process.env.FP_KEYBAG_URL = url.toString();
 }
 
@@ -40,7 +40,7 @@ export const rawConnect: ConnectFunction = (
   remoteDbName = "",
   url = "fireproof://cloud.fireproof.direct"
 ) => {
-  const { sthis, blockstore, name: dbName } = db;
+  const { sthis, crdt, name: dbName } = db;
   if (!dbName) {
     throw new Error("dbName is required");
   }
@@ -58,7 +58,7 @@ export const rawConnect: ConnectFunction = (
   return connectionCache.get(fpUrl).once(() => {
     makeKeyBagUrlExtractable(sthis);
     const connection = connectionFactory(sthis, fpUrl);
-    connection.connect_X(blockstore);
+    connection.connect(crdt.blockstore);
     return connection;
   });
 };
@@ -95,14 +95,15 @@ export function connect(
     if (!doc) {
       throw new Error("Failed to get or create remote name");
     }
-    doc.endpoint = URI.from(remoteURI).toString();
+    const endpoint = URI.from(remoteURI).toString();
     const connection = rawConnect(db, doc.remoteName, URI.from(doc.endpoint).toString());
     const connectURI = URI.from(dashboardURI).build().pathname("/fp/databases/connect");
     connectURI.defParam("localName", dbName);
     connectURI.defParam("remoteName", doc.remoteName);
-    if (doc.endpoint) {
-      connectURI.defParam("endpoint", doc.endpoint);
+    if (endpoint) {
+      connectURI.defParam("endpoint", endpoint);
     }
+    // eslint-disable-next-line no-console
     console.log("Fireproof Cloud: " + connectURI.toString());
     if (
       doc.firstConnect &&
@@ -111,8 +112,11 @@ export function connect(
     ) {
       // Set firstConnect to false after opening the window, so we don't constantly annoy with the dashboard
       const syncDb = fireproof(SYNC_DB_NAME);
-      doc.firstConnect = false;
-      await syncDb.put(doc);
+      await syncDb.put({
+        ...doc,
+        endpoint,
+        firstConnect: false,
+      });
 
       window.open(connectURI.toString(), "_blank");
     }

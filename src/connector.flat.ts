@@ -8,17 +8,15 @@ async function main() {
   const url = URI.from("file://./dist/connect_to?storekey=@bla@");
   console.log("--1");
   const wdb = fireproof("my-database", {
-    store: {
-      stores: {
-        base: "file://./dist/connector?storekey=@bla@",
-      },
+    storeUrls: {
+      base: "file://./dist/connector?storekey=@bla@",
     },
   });
   // db.connect("s3://testbucket/connector");
   console.log("--2");
   const connection = await connectionFactory(sthis, url);
   console.log("--3");
-  await connection.connect_X(wdb.blockstore);
+  await connection.connect(wdb.crdt.blockstore);
 
   // await new Promise((res) => setTimeout(res, 1000));
 
@@ -41,17 +39,15 @@ async function main() {
   const docs = await wdb.allDocs();
   console.log("--6");
   expect(docs.rows.length).toBeGreaterThanOrEqual(count);
-  (await wdb.blockstore.loader?.WALStore())?.processQueue.waitIdle();
+  (await wdb.crdt.blockstore.loader.WALStore()).processQueue.waitIdle();
   // console.log("--7")
-  await wdb.blockstore.destroy();
+  await wdb.crdt.blockstore.loader.destroy();
   // console.log("--8")
 
   const rdb = fireproof("", {
-    store: {
-      stores: {
-        base: url,
-        // useEncryptedBlockstore: true
-      },
+    storeUrls: {
+      base: url,
+      // useEncryptedBlockstore: true
     },
   });
   console.log("--9");
