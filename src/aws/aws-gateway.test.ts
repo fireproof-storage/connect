@@ -25,7 +25,7 @@ describe("AWSGateway", () => {
   });
 
   it("should initialize and perform basic operations", async () => {
-    // Initialize the database with AWS configuration
+    // Initialize the ledger with AWS configuration
     const config = {
       store: {
         stores: {
@@ -89,7 +89,7 @@ describe("AWSGateway", () => {
     await db.destroy();
   });
 
-  // it("should handle multiple databases", async () => {
+  // it("should handle multiple ledgers", async () => {
   //   const db1 = fireproof("aws-test-db1", {
   //     store: {
   //       stores: {

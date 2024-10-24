@@ -174,7 +174,7 @@ describe("basic Connection with raw remote", function () {
     equals(doc.value, "world");
   }, 10000);
   it("should be ok with a remote that has headers but not car files", async function () {
-    // create a database that is up to date with meta1 but not meta2
+    // create a ledger that is up to date with meta1 but not meta2
     // add meta2 and poll it
 
     const dataDownload = async function () { };
@@ -314,19 +314,19 @@ describe("two Connection with raw remote", function () {
   // you get the correct outcome (both forks are merged)
 
   // the test should be:
-  // make database A
+  // make ledger A
   // connect A to the remote R
   // create doc 1
   // snap meta 1
   // create doc 2
   // snap meta 2
   // rollback to meta 1
-  // make database A2 (same name)
+  // make ledger A2 (same name)
   // connect A2 to the remote R
   // create doc 3
   // snap meta 3
   // rollback to meta 2
-  // make database A3 (same name)
+  // make ledger A3 (same name)
 
   let metaPath;
   beforeEach(async function () {

@@ -43,7 +43,7 @@ export class NetlifyGateway implements bs.Gateway {
       return this.logger
         .Error()
         .Str("status", response.statusText)
-        .Msg("Failed to destroy meta database")
+        .Msg("Failed to destroy meta ledger")
         .ResultError();
     }
     return Result.Ok(undefined);

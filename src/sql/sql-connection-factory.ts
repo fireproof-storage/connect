@@ -16,7 +16,7 @@ export function SQLConnectionFactoryx(
   const logger = ensureLogger(sthis, "SQLFactory");
   switch (url.protocol) {
     case "sqlite:":
-      logger.Debug().Str("databaseURL", url.toString()).Msg("connecting to sqlite");
+      logger.Debug().Str("ledgerURL", url.toString()).Msg("connecting to sqlite");
       return v0_19sqliteConnectionFactory(sthis, url, { ...opts });
     default:
       throw logger

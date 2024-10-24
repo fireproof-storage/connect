@@ -97,7 +97,7 @@ export function connect(
     }
     doc.endpoint = URI.from(remoteURI).toString();
     const connection = rawConnect(db, doc.remoteName, URI.from(doc.endpoint).toString());
-    const connectURI = URI.from(dashboardURI).build().pathname("/fp/databases/connect");
+    const connectURI = URI.from(dashboardURI).build().pathname("/fp/ledgers/connect");
     connectURI.defParam("localName", dbName);
     connectURI.defParam("remoteName", doc.remoteName);
     if (doc.endpoint) {

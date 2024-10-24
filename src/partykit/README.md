@@ -1,12 +1,12 @@
 # `@fireproof/partykit`
 
-[Fireproof](https://use-fireproof.com) is an embedded JavaScript document database that runs in the browser (or anywhere with JavaScript) and **[connects to any cloud](https://www.npmjs.com/package/@fireproof/connect)**.
+[Fireproof](https://use-fireproof.com) is an embedded JavaScript document ledger that runs in the browser (or anywhere with JavaScript) and **[connects to any cloud](https://www.npmjs.com/package/@fireproof/connect)**.
 
 🎈 [PartyKit](https://www.partykit.io) is a realtime connection library that's the perfect complement to Fireproof's verifiable sync.
 
 ## Get started
 
-We assume you already have an app that uses Fireproof in the browser, and you want to setup collaboration among multiple users via the cloud or peer-to-peer. To write your first Fireproof app, see the [Fireproof quickstart](https://use-fireproof.com/docs/react-tutorial), othwerwise read on. It's also easy to add Fireproof to PartyKit apps, check out this demo repo for [live magnetic poetry with database persistence.](https://github.com/fireproof-storage/sketch-magnetic-poetry)
+We assume you already have an app that uses Fireproof in the browser, and you want to setup collaboration among multiple users via the cloud or peer-to-peer. To write your first Fireproof app, see the [Fireproof quickstart](https://use-fireproof.com/docs/react-tutorial), othwerwise read on. It's also easy to add Fireproof to PartyKit apps, check out this demo repo for [live magnetic poetry with ledger persistence.](https://github.com/fireproof-storage/sketch-magnetic-poetry)
 
 PartyKit uses websockets and CloudFlare workers to manage a real-time group. Adding Fireproof requires one-line of config, and it syncs in its own party so you can use it with your existing [PartyKit](https://docs.partykit.io) apps without impacting existing code.
 
@@ -54,15 +54,15 @@ import { connect } from "@fireproof/partykit";
 Now later in your app connect to the party (be sure to do this a component that runs on every render, like your root component or layout):
 
 ```js
-const { database } = useFireproof('my-app-database-name')
-const connection = connect(database, '', process.env.NEXT_PUBLIC_PARTYKIT_HOST!)
+const { ledger } = useFireproof('my-app-ledger-name')
+const connection = connect(ledger, '', process.env.NEXT_PUBLIC_PARTYKIT_HOST!)
 ```
 
-The `connect` function is idempotent, and designed to be safe to call on every render. It takes three arguments, the current database, the remote database name, and the host of your PartyKit server. This will be the same host you are using in your app when calling `usePartySocket` and other PartyKit APIs, so once you have it set, you won't need to think about it again.
+The `connect` function is idempotent, and designed to be safe to call on every render. It takes three arguments, the current ledger, the remote ledger name, and the host of your PartyKit server. This will be the same host you are using in your app when calling `usePartySocket` and other PartyKit APIs, so once you have it set, you won't need to think about it again.
 
 ### 4. Collaborate
 
-Now you can use Fireproof as you normally would, and it will sync in realtime with other users. Any existing apps you have that use the [live query](https://use-fireproof.com/docs/react-hooks/use-live-query) or [subscription](https://use-fireproof.com/docs/database-api/database#subscribe) APIs will automatically render multi-user updates.
+Now you can use Fireproof as you normally would, and it will sync in realtime with other users. Any existing apps you have that use the [live query](https://use-fireproof.com/docs/react-hooks/use-live-query) or [subscription](https://use-fireproof.com/docs/ledger-api/ledger#subscribe) APIs will automatically render multi-user updates.
 
 ## Remix connectors
 
@@ -70,7 +70,7 @@ In this example we use both the S3 and PartyKit connectors. You can use any comb
 
 ```ts
 function partykitS3({ name, blockstore }: Connectable, partyHost?: string, refresh?: boolean) {
-  if (!name) throw new Error("database name is required");
+  if (!name) throw new Error("ledger name is required");
   if (!refresh && partyCxs.has(name)) {
     return partyCxs.get(name)!;
   }

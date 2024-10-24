@@ -38,7 +38,7 @@ describe("FireproofCloudGateway", () => {
   });
 
   afterEach(() => {
-    // Clear the database before each test
+    // Clear the ledger before each test
     if (db) {
       db.destroy();
     }
