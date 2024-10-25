@@ -13,7 +13,7 @@ const serverId = "did:key:z6Mkj3oU3VKyLv1ZNdjC2oKgHPrZDCnzSJLczrefoq3ZQMVf";
 const clock = await createNewClock({
   databaseName: "test",
   email,
-  serverHost: protocol + host,
+  serverURI: URI.from(protocol + host),
   serverId,
 });
 
