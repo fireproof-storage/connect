@@ -34,12 +34,12 @@ export function exportDelegation(del: API.Delegation): [
 export async function createNewClock({
   databaseName,
   email,
-  serverHost,
+  serverURI,
   serverId,
 }: {
   databaseName: string;
   email: `${string}@${string}`;
-  serverHost: string;
+  serverURI: URI;
   serverId: `did:${string}:${string}`;
 }): Promise<Client.Clock> {
   const audience = Absentee.from({ id: DidMailto.fromEmail(email) });
@@ -58,10 +58,10 @@ export async function createNewClock({
   await clockStore.save(raw);
 
   const server = DID.parse(serverId);
-  const serverHostURI = URI.from(serverHost);
-  if (!serverHostURI) throw new Error("`server-host` is not a valid URL");
+  // const serverHostURI = URI.from(serverHost);
+  // if (!serverHostURI) throw new Error("`server-host` is not a valid URL");
 
-  const service = Client.service({ host: serverHostURI, id: server });
+  const service = Client.service({ host: serverURI, id: server });
   const registration = await Client.registerClock({ clock, server, service });
   if (registration.out.error) throw registration.out.error;
 

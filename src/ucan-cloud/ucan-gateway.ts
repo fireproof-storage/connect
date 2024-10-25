@@ -75,8 +75,7 @@ export class UCANGateway implements bs.Gateway {
       },
     });
 
-    console.log("⏰ CLOCK", clockId);
-
+    this.logger.Debug().Str("clockId", clockId).Str("email", email).Msg("start");
     // This
     this.inst = { clockId, email, server, service, w3 };
 
@@ -115,7 +114,7 @@ export class UCANGateway implements bs.Gateway {
       throw new Error("Name not found in the URI");
     }
 
-    console.log("🥘 PUT", store, key);
+    this.logger.Debug().Str("store", store).Str("key", key).Msg("put");
 
     switch (store.toLowerCase()) {
       case "data": {
@@ -187,7 +186,7 @@ export class UCANGateway implements bs.Gateway {
 
     name += ".fp";
 
-    console.log("🔮 GET", store, key);
+    this.logger.Debug().Str("store", store).Str("key", key).Msg("get");
 
     switch (store.toLowerCase()) {
       case "data": {
@@ -200,8 +199,7 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
-        console.log("DATA FOUND", res);
-
+        this.logger.Debug().Str("cid", cid.toString()).Any("data", res).Msg("DATA RETRIEVED");
         if (!res) throw new NotFoundError();
         return res;
       }
@@ -213,7 +211,7 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
-        console.log("HEAD", head.out);
+        this.logger.Debug().Any("head", head.out).Msg("HEAD");
 
         if (head.out.error) throw head.out.error;
         if (head.out.ok.head === undefined) throw new NotFoundError();
@@ -227,7 +225,7 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
-        console.log("META RETRIEVED", res);
+        this.logger.Debug().Any("meta", res).Msg("retrieved");
 
         if (!res) throw new NotFoundError();
         const metadata = await Client.metadataFromClockEvent(res);

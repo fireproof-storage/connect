@@ -7,5 +7,5 @@ Connects your Fireproof database to Fireproof Cloud using UCANs.
 Start your Fireproof Cloud server in remote mode.
 
 ```shell
-npm run dev --remote
+pnpm run dev --remote
 ```

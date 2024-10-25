@@ -1,4 +1,4 @@
-import { KeyedResolvOnce, runtimeFn } from "@adviser/cement";
+import { KeyedResolvOnce, runtimeFn, BuildURI, CoerceURI } from "@adviser/cement";
 import { bs, Database } from "@fireproof/core";
 
 import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
@@ -16,8 +16,8 @@ import stateStore from "./store/state";
 // const cx = connect.ucan(db, 'example@email.com', 'http://localhost:8787');
 
 if (!runtimeFn().isBrowser) {
-  const url = new URL(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-ucan-cloud");
-  url.searchParams.set("extractKey", "_deprecated_internal_api");
+  const url = BuildURI.from(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-ucan-cloud");
+  url.setParam("extractKey", "_deprecated_internal_api");
   process.env.FP_KEYBAG_URL = url.toString();
 }
 
@@ -28,19 +28,16 @@ registerUCANStoreProtocol();
 const connectionCache = new KeyedResolvOnce<bs.Connection>();
 
 export interface ConnectionParams {
-  clockId?: `did:key:${string}`;
-  email: `${string}@${string}`;
-  serverId?: `did:${string}:${string}`;
-  serverHost?: string;
+  readonly clockId?: `did:key:${string}`;
+  readonly email: `${string}@${string}`;
+  readonly serverId?: `did:${string}:${string}`;
+  readonly didServerURL?: CoerceURI;
 }
 
-export const connect = async (db: Database, params: ConnectionParams): Promise<bs.Connection> => {
+export async function connect(db: Database, params: ConnectionParams): Promise<bs.Connection> {
   const { sthis, blockstore, name: dbName } = db;
   const { email } = params;
-  const url = params.serverHost || "http://localhost:8787";
-  const urlObj = new URL(url);
-
-  let clockId = params.clockId;
+  const didServerUrl = BuildURI.from(params.didServerURL || "http://localhost:8787");
 
   // URL param validation
   if (!dbName) {
@@ -52,11 +49,11 @@ export const connect = async (db: Database, params: ConnectionParams): Promise<b
   }
 
   // DB name
-  const existingName = urlObj.searchParams.get("name");
+  const existingName = didServerUrl.getParam("name");
   const name = existingName || dbName;
 
   // Server host
-  const serverHostUrl = url.replace(/\/+$/, "");
+  // const serverHostUrl = url.replace(/\/+$/, "");
 
   // Server id
   let serverId: `did:${string}:${string}`;
@@ -64,7 +61,7 @@ export const connect = async (db: Database, params: ConnectionParams): Promise<b
   if (params.serverId) {
     serverId = params.serverId;
   } else {
-    serverId = await fetch(`${serverHostUrl}/did`)
+    serverId = await fetch(didServerUrl.pathname("/did").asURL())
       .then((r) => r.text())
       .then((r) => r as `did:${string}:${string}`);
   }
@@ -73,40 +70,40 @@ export const connect = async (db: Database, params: ConnectionParams): Promise<b
   const storeName = clockStoreName({ databaseName: dbName });
   const clockStore = await stateStore(storeName);
 
-  if (clockId === undefined) {
+  let clockId = params.clockId;
+  if (!clockId) {
     const clockExport = await clockStore.load();
     if (clockExport) clockId = clockExport.principal.id as `did:key:${string}`;
   }
-
   // Register new clock if needed
-  if (clockId === undefined) {
+  if (!clockId) {
     const newClock = await createNewClock({
       databaseName: dbName,
       email,
-      serverHost: url,
+      serverURI: didServerUrl.URI(),
       serverId,
     });
 
     clockId = newClock.did();
   }
 
-  // Add params to URL
-  urlObj.searchParams.set("name", name);
-  urlObj.searchParams.set("clock-id", clockId);
-  urlObj.searchParams.set("email", email);
-  urlObj.searchParams.set("server-host", url);
-  urlObj.searchParams.set("server-id", serverId);
-  urlObj.searchParams.set("storekey", `@${dbName}:data@`);
-
-  const fpUrl = urlObj.toString().replace("http://", "ucan://").replace("https://", "ucan://");
-  console.log("fpUrl", fpUrl);
-
+  const fpUrl = BuildURI.from(didServerUrl.toString())
+    .protocol("ucan:")
+    .setParam("server-host", didServerUrl.toString())
+    .setParam("name", name)
+    .setParam("clock-id", clockId)
+    .setParam("email", email)
+    .setParam("server-id", serverId)
+    .setParam("storekey", `@${dbName}:data@`);
+  // eslint-disable-next-line no-console
+  console.log("fpUrl", fpUrl.toString());
   // Connect
-  return connectionCache.get(fpUrl).once(() => {
+  return connectionCache.get(fpUrl.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
+    // eslint-disable-next-line no-console
     console.log("Connecting to Fireproof Cloud", fpUrl);
     const connection = connectionFactory(sthis, fpUrl);
     connection.connect_X(blockstore);
     return connection;
   });
-};
+}

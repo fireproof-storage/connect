@@ -147,12 +147,17 @@ export class FireproofCloudGateway implements bs.Gateway {
       const uploadUrl = pkURL(uri, key, "car");
       return exception2Result(async () => {
         const response = await fetch(uploadUrl.asURL(), { method: "PUT" });
-        console.log("uploadUrl-put", response.status, response.statusText);
+        this.logger
+          .Debug()
+          .Url(uploadUrl)
+          .Uint64("status", response.status)
+          .Str("status-text", response.statusText)
+          .Msg("put");
         if (response.status === 404) {
           throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
         }
         const url = (await response.json()).url;
-        console.log("uploadUrl-put", url.toString());
+        this.logger.Debug().Url(url).Msg("put");
         const uploadResponse = await fetch(url, { method: "PUT", body: body });
         if (uploadResponse.status === 404) {
           throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
@@ -195,7 +200,7 @@ export class FireproofCloudGateway implements bs.Gateway {
       const key = uri.getParam("key");
       if (!key) throw new Error("key not found");
       let downloadUrl;
-      console.log("store-get", store);
+      this.logger.Debug().Str("store", store).Str("key", key).Msg("get");
       switch (store) {
         case "meta":
           downloadUrl = pkMetaURL(uri, key);
@@ -288,7 +293,7 @@ function pkCarGetURL(uri: URI, key: string): URI {
   const idx = uri.getParam("index") || "";
   const baseUri = URI.from(baseUrl).asURL();
   baseUri.pathname = `/${name}${idx}/${key}`;
-  console.log("pkCarGetURL", baseUri.toString());
+  // console.log("pkCarGetURL", baseUri.toString());
   return BuildURI.from(baseUri).URI();
 }
 

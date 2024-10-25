@@ -3,6 +3,7 @@ import { registerFireproofCloudStoreProtocol } from "./gateway";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { URI } from "@adviser/cement";
 import { smokeDB } from "../../tests/helper";
+import { mockSuperThis } from "@fireproof/core/tests/helpers";
 
 // has to leave
 interface ExtendedGateway extends bs.Gateway {
@@ -20,6 +21,7 @@ interface ExtendedStore {
 describe("FireproofCloudGateway", () => {
   let db: Database;
   let unregister: () => void;
+  const sthis = mockSuperThis();
 
   beforeAll(() => {
     unregister = registerFireproofCloudStoreProtocol("fireproof:");
@@ -68,7 +70,7 @@ describe("FireproofCloudGateway", () => {
       throw new Error("Loader stores.base is not defined");
     }
 
-    const baseUrl = new URL(loader.ebOpts.store.stores.base.toString());
+    const baseUrl = URI.from(loader.ebOpts.store.stores.base);
     expect(baseUrl.protocol).toBe("fireproof:");
     // expect(baseUrl.hostname).toBe("localhost");
     // expect(baseUrl.port || "").toBe("1999");
@@ -121,7 +123,7 @@ describe("FireproofCloudGateway", () => {
       });
 
       const metaSubscribeResult = await metaGateway?.subscribe?.(metaUrl?.Ok(), async (data: Uint8Array) => {
-        const decodedData = new TextDecoder().decode(data);
+        const decodedData = sthis.txt.decode(data);
         expect(decodedData).toContain("parents");
         didCall = true;
         resolve();

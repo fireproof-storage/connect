@@ -19,8 +19,8 @@ import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
 // }
 
 if (!runtimeFn().isBrowser) {
-  const url = new URL(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-partykit");
-  url.searchParams.set("extractKey", "_deprecated_internal_api");
+  const url = BuildURI.from(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-partykit");
+  url.setParam("extractKey", "_deprecated_internal_api");
   process.env.FP_KEYBAG_URL = url.toString();
 }
 

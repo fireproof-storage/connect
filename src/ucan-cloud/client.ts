@@ -17,15 +17,15 @@ import { Service } from "./types";
 ////////////////////////////////////////
 
 export interface Agent {
-  attestation: Delegation;
-  delegation: Delegation;
-  signer: Signer<DID<"key">>;
+  readonly attestation: Delegation;
+  readonly delegation: Delegation;
+  readonly signer: Signer<DID<"key">>;
 }
 
 export interface Clock {
-  delegation: Delegation;
-  did: () => DID<"key">;
-  signer: () => Signer<DID<"key">>;
+  readonly delegation: Delegation;
+  did(): DID<"key">;
+  signer(): Signer<DID<"key">>;
 }
 
 ////////////////////////////////////////
@@ -150,7 +150,7 @@ export async function registerClock({
 // CONNECTION
 ////////////////////////////////////////
 
-export const service = (server: { id: Principal; host: URI }) => {
+export function service(server: { id: Principal; host: URI }) {
   const url = server.host.toString();
 
   const channel: Channel<Service> = {
@@ -176,7 +176,7 @@ export const service = (server: { id: Principal; host: URI }) => {
     codec: CARTransport.outbound,
     channel,
   });
-};
+}
 
 ////////////////////////////////////////
 // STORE

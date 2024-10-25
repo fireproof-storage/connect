@@ -27,8 +27,8 @@ const SYNC_DB_NAME = "_fp.sync";
 // }
 
 if (!runtimeFn().isBrowser) {
-  const url = new URL(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-FireproofCloud");
-  url.searchParams.set("extractKey", "_deprecated_internal_api");
+  const url = BuildURI.from(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-FireproofCloud");
+  url.setParam("extractKey", "_deprecated_internal_api");
   process.env.FP_KEYBAG_URL = url.toString();
 }
 
@@ -86,7 +86,7 @@ export function connect(
   dashboardURI: CoerceURI = "https://dashboard.fireproof.storage/",
   remoteURI: CoerceURI = "fireproof://cloud.fireproof.direct"
 ): Promise<bs.Connection> {
-  const dbName = db.name as unknown as string;
+  const dbName = db.name as string;
   if (!dbName) {
     throw new Error("Database name is required for cloud connection");
   }
@@ -103,6 +103,7 @@ export function connect(
     if (doc.endpoint) {
       connectURI.defParam("endpoint", doc.endpoint);
     }
+    // eslint-disable-next-line no-console
     console.log("Fireproof Cloud: " + connectURI.toString());
     if (
       doc.firstConnect &&
