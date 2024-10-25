@@ -47,6 +47,7 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
     throw new Error("`email` is required");
   }
 
+  const didServerUrl = BuildURI.from(params.didServerURL || "http://localhost:8787");
   // DB name
   const existingName = didServerUrl.getParam("name");
   const name = existingName || dbName;
@@ -57,7 +58,6 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
   // Server id
   let serverId: `did:${string}:${string}`;
 
-  const didServerUrl = BuildURI.from(params.didServerURL || "http://localhost:8787");
 
   if (params.serverId) {
     serverId = params.serverId;
