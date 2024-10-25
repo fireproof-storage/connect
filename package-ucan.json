@@ -22,7 +22,11 @@
     "index.js.map",
     "index.cjs.map",
     "chunk-*.js",
-    "browser-*.js"
+    "chunk-*.js.map",
+    "browser-*.js",
+    "browser-*.js.map",
+    "index.global.js",
+    "index.global.js.map"
   ],
   "type": "module",
   "scripts": {},
