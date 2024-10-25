@@ -55,15 +55,33 @@ jobs:
           pnpm run prepare-s3-test
           sleep 3
 
+      - uses: actions/checkout@v4
+        with:
+          repository: fireproof-storage/fireproof-ucan
+          ref: main
+          path: ./fireproof-ucan
+
+      - uses: JarvusInnovations/background-action@v1
+        name: ucan-dev-server
+        with:
+          working-directory: ./fireproof-ucan
+          run: |
+            pnpm install
+            pnpm run dev
+          wait-on: |
+            tcp:localhost:8787
+
       - uses: JarvusInnovations/background-action@v1
         name: gateway servers
         with:
           working-directory: ./connector
-          run: pnpm run setup-gateway-servers &
+          run: |
+            pnpm run setup-gateway-servers
           # partykit:1999 netlify:8888
           wait-on: |
-            tcp:localhost:1999 
+            tcp:localhost:1999
             tcp:localhost:8888
+
       - name: test
         working-directory: ./connector
         run: pnpm run test-gateways

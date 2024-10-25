@@ -22,6 +22,11 @@ uri.setParam("email", email);
 uri.setParam("clock-id", clock.did());
 uri.setParam("conf-profile", confProfile);
 uri.setParam("server-host", protocol + host);
+uri.setParam(
+  "server-priv-key",
+  process.env.UCAN_SERVER_PRIV_KEY ||
+    "MgCZc476L5pn6Kiw5YdLHEy5CHZgw5gRWxNj/UcLRQoxaHu0BREgGEsI7N8cQxjO6fdgA/lEAphNmR/um1DEfmBTBByY"
+);
 uri.setParam("server-id", serverId);
 
 process.env.FP_STORAGE_URL = uri.toString();

@@ -22,13 +22,13 @@ async function authorizeW3({
   confProfile,
   email,
   host,
+  serverPrivateKey,
 }: {
   confProfile: string;
   email: `${string}@${string}`;
   host: string;
+  serverPrivateKey: string;
 }) {
-  const serverPrivateKey =
-    "MgCZc476L5pn6Kiw5YdLHEy5CHZgw5gRWxNj/UcLRQoxaHu0BREgGEsI7N8cQxjO6fdgA/lEAphNmR/um1DEfmBTBByY=";
   const signer = Signer.parse(serverPrivateKey);
   const account = Absentee.from({ id: DidMailto.fromEmail(email) });
   const agent = await ed25519.Signer.generate();
@@ -105,7 +105,12 @@ describe("UCANGateway", () => {
     const name = "ucan-test-db-" + Math.random().toString(36).substring(7);
     db = fireproof(name, config);
 
-    await authorizeW3({ email, host, confProfile: uri.getParam("conf-profile") || "fireproof-connect/test" });
+    await authorizeW3({
+      email,
+      host,
+      confProfile: uri.getParam("conf-profile") || "fireproof-connect/test",
+      serverPrivateKey: uri.getParam("server-priv-key") || "kaputt",
+    });
   });
 
   afterEach(() => {

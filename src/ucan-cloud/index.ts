@@ -37,7 +37,6 @@ export interface ConnectionParams {
 export async function connect(db: Database, params: ConnectionParams): Promise<bs.Connection> {
   const { sthis, blockstore, name: dbName } = db;
   const { email } = params;
-  const didServerUrl = BuildURI.from(params.didServerURL || "http://localhost:8787");
 
   // URL param validation
   if (!dbName) {
@@ -57,6 +56,8 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
 
   // Server id
   let serverId: `did:${string}:${string}`;
+
+  const didServerUrl = BuildURI.from(params.didServerURL || "http://localhost:8787");
 
   if (params.serverId) {
     serverId = params.serverId;
