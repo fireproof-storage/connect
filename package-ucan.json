@@ -14,7 +14,7 @@
   },
   "browser": "./dist/index.browser.iife.js",
   "types": "./dist/types/index.d.ts",
-  "files": ["dist/node", "dist/browser", "dist/types", "src/server.ts"],
+  "files": ["index.js", "index.cjs", "index.d.ts", "index.d.cts", "index.js.map", "index.cjs.map"],
   "type": "module",
   "scripts": {},
   "keywords": [],
