@@ -58,7 +58,6 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
   // Server id
   let serverId: `did:${string}:${string}`;
 
-
   if (params.serverId) {
     serverId = params.serverId;
   } else {
