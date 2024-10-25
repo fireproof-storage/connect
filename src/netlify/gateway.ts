@@ -1,6 +1,7 @@
 import { KeyedResolvOnce, Result, URI, BuildURI } from "@adviser/cement";
 import { bs, getStore, Logger, SuperThis, ensureSuperLog, rt } from "@fireproof/core";
 import { fetchUint8, resultFetch } from "../fetcher";
+import { attachKeyToMeta, deserializeMetaWithKeySideEffect } from "../meta-key-hack";
 
 export class NetlifyGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -67,7 +68,7 @@ export class NetlifyGateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async put<T>(url: URI, fpenv: bs.FPEnvelope<T>): Promise<bs.VoidResult> {
+  async put<T>(url: URI, fpenv: bs.FPEnvelope<T>, loader: bs.Loadable): Promise<bs.VoidResult> {
     // const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
 
     const rParams = url.getParamsResult("key", "name");
@@ -86,22 +87,16 @@ export class NetlifyGateway implements bs.Gateway {
       return Result.Err(new Error("Remote base URL not found in the URI"));
     }
     const fetchUrl = BuildURI.from(remoteBaseUrl);
-    let body: Uint8Array;
+    let body = await rt.gw.fpSerialize(this.sthis, fpenv, url);
     switch (fpenv.type) {
       case "meta":
         {
           fetchUrl.setParam("meta", name);
-
-          const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
-          if (bodyRes.isErr()) {
-            return Result.Err(bodyRes.Err());
-          }
-          body = bodyRes.Ok();
+          body = await attachKeyToMeta(this.sthis, body, loader);
         }
         break;
       default:
         fetchUrl.setParam("car", key);
-        body = await rt.gw.fpSerialize(this.sthis, fpenv, url);
         break;
     }
     const done = await resultFetch(this.logger, fetchUrl, { method: "PUT", body });
@@ -111,7 +106,7 @@ export class NetlifyGateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async get<T>(url: URI): Promise<bs.GetResult<T>> {
+  async get<T>(url: URI, loader: bs.Loadable): Promise<bs.GetResult<T>> {
     const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
     const rParams = url.getParamsResult("key", "name", "remoteBaseUrl");
     if (rParams.isErr()) {
@@ -133,14 +128,8 @@ export class NetlifyGateway implements bs.Gateway {
         fetchUrl.setParam("car", key);
         break;
     }
-    const raw = fetchUint8(this.logger, fetchUrl);
-    if (store === "meta") {
-      const res = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
-      if (res.isErr()) {
-        return Result.Err(res.Err());
-      }
-    }
-    return rt.gw.fpDeserialize(this.sthis, raw, url);
+    const raw = await fetchUint8(this.logger, fetchUrl);
+    return rt.gw.fpDeserialize<T>(this.sthis, deserializeMetaWithKeySideEffect(this.sthis, raw, loader), url);
   }
 
   async delete(url: URI): Promise<bs.VoidResult> {

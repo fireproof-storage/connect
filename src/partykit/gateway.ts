@@ -1,12 +1,15 @@
 import PartySocket, { PartySocketOptions } from "partysocket";
 import { Result, URI, BuildURI, KeyedResolvOnce, runtimeFn, exception2Result } from "@adviser/cement";
 import { bs, ensureLogger, getStore, Logger, PARAM, rt, SuperThis } from "@fireproof/core";
+import { fetchUint8, resultFetch } from "../fetcher";
+import { attachKeyToMeta, deserializeMetaWithKeySideEffect } from "../meta-key-hack";
 
 export const PARTYKIT_VERSION = "v0.1-partykit";
 
 interface SubscribeItem {
   fn: (data: bs.FPEnvelopeMeta) => void;
   url: URI;
+  loader: bs.Loadable;
 }
 
 export class PartyKitGateway implements bs.Gateway {
@@ -44,7 +47,7 @@ export class PartyKitGateway implements bs.Gateway {
       return this.logger.Error().Err(rName).Msg("name not found").ResultError();
     }
     let dbName = rName.Ok();
-    if (this.url.hasParam("index")) {
+    if (this.url.hasParam(PARAM.INDEX)) {
       dbName = dbName + "-idx";
     }
     ret.defParam("party", "fireproof");
@@ -123,36 +126,25 @@ export class PartyKitGateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async put<T>(uri: URI, fpenv: bs.FPEnvelope<T>): Promise<Result<void>> {
+  async put<T>(uri: URI, fpenv: bs.FPEnvelope<T>, loader: bs.Loadable): Promise<Result<void>> {
     // const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
-    let body: Uint8Array;
+    let body = await rt.gw.fpSerialize(this.sthis, fpenv, uri);
     if (fpenv.type === "meta") {
-      const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
-      if (bodyRes.isErr()) {
-        this.logger.Error().Err(bodyRes.Err()).Msg("Error in addCryptoKeyToGatewayMetaPayload");
-        throw bodyRes.Err();
-      }
-      body = bodyRes.Ok();
-    } else {
-      body = await rt.gw.fpSerialize(this.sthis, fpenv, uri);
+      body = await attachKeyToMeta(this.sthis, body, loader);
     }
     const rkey = uri.getParamResult("key");
     if (rkey.isErr()) return Result.Err(rkey.Err());
     const key = rkey.Ok();
     const uploadUrl = fpenv.type === "meta" ? pkMetaURL(uri, key) : pkCarURL(uri, key);
-    return exception2Result(async () => {
-      const response = await fetch(uploadUrl.asURL(), { method: "PUT", body: body });
-      if (response.status === 404) {
-        throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${fpenv.type}!`).AsError();
-      }
-    });
+    return fetchUint8(this.logger, uploadUrl, { method: "PUT", body });
   }
 
   private readonly subscriberCallbacks = new Set<SubscribeItem>();
 
   private async notifySubscribers(raw: Uint8Array) {
     for (const callback of this.subscriberCallbacks) {
-      const data = await rt.gw.fpDeserialize(this.sthis, raw, callback.url);
+      const res = deserializeMetaWithKeySideEffect(this.sthis, Result.Ok(raw), callback.loader);
+      const data = await rt.gw.fpDeserialize(this.sthis, res, callback.url);
       if (data.isErr()) {
         this.logger.Error().Err(data).Url(callback.url).Msg("Error in subscriber callback deserialization");
         continue;
@@ -169,7 +161,7 @@ export class PartyKitGateway implements bs.Gateway {
       }
     }
   }
-  async subscribe(url: URI, callback: (meta: bs.FPEnvelopeMeta) => Promise<void>): Promise<bs.UnsubscribeResult> {
+  async subscribe(url: URI, callback: (meta: bs.FPEnvelopeMeta) => Promise<void>, loader: bs.Loadable): Promise<bs.UnsubscribeResult> {
     await this.connectPartyKit();
 
     const store = url.getParam("store");
@@ -177,53 +169,44 @@ export class PartyKitGateway implements bs.Gateway {
       return Result.Err(new Error("store must be meta"));
     }
 
-    const item = { url, fn: callback };
+    const item = { url, fn: callback, loader };
     this.subscriberCallbacks.add(item);
 
     return Result.Ok(() => {
       this.subscriberCallbacks.delete(item);
     });
   }
+  async getRaw(uri: URI): Promise<Result<Uint8Array>> {
+    const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
+    const key = uri.getParam("key");
+    if (!key) return this.logger.Error().Msg("key not found").ResultError();
+    const downloadUrl = store === "meta" ? pkMetaURL(uri, key) : pkCarURL(uri, key);
+    return fetchUint8(this.logger, downloadUrl);
+  }
 
-  async get<T>(uri: URI): Promise<bs.GetResult<T>> {
-    return exception2Result(async () => {
+  async get<T>(uri: URI, loader: bs.Loadable): Promise<bs.GetResult<T>> {
+      let response = await this.getRaw(uri);
       const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
-      const key = uri.getParam("key");
-      if (!key) throw new Error("key not found");
-      const downloadUrl = store === "meta" ? pkMetaURL(uri, key) : pkCarURL(uri, key);
-      const response = await fetch(downloadUrl.toString(), { method: "GET" });
-      if (response.status === 404) {
-        throw new Error(`Failure in downloading ${store}!`);
-      }
-      const body = new Uint8Array(await response.arrayBuffer());
       if (store === "meta") {
-        const resKeyInfo = await bs.setCryptoKeyFromGatewayMetaPayload(uri, this.sthis, body);
-        if (resKeyInfo.isErr()) {
-          this.logger
-            .Error()
-            .Url(uri)
-            .Err(resKeyInfo)
-            .Any("body", body)
-            .Msg("Error in setCryptoKeyFromGatewayMetaPayload");
-          throw resKeyInfo.Err();
-        }
+        response = await deserializeMetaWithKeySideEffect(this.sthis, response, loader);
       }
-      return body;
-    });
+      return rt.gw.fpDeserialize<T>(this.sthis, response, uri);
   }
 
   async delete(uri: URI): Promise<bs.VoidResult> {
-    return exception2Result(async () => {
       const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
       const key = uri.getParam("key");
       if (!key) throw new Error("key not found");
       if (store === "meta") throw new Error("Cannot delete from meta store");
       const deleteUrl = pkCarURL(uri, key);
-      const response = await fetch(deleteUrl.toString(), { method: "DELETE" });
-      if (response.status === 404) {
-        throw new Error(`Failure in deleting ${store}!`);
+      const response = await resultFetch(this.logger, deleteUrl, { method: "DELETE" });
+      if (response.isErr()) {
+        return Result.Err(response.Err());
       }
-    });
+      if (response.Ok().status === 404) {
+        return this.logger.Error().Str("store", store).Msg(`Failure in deleting ${store}!`).ResultError()
+      }
+      return Result.Ok(undefined);
   }
 
   async destroy(uri: URI): Promise<Result<void>> {
@@ -282,8 +265,8 @@ function pkMetaURL(uri: URI, key: string): URI {
 export class PartyKitTestStore implements bs.TestGateway {
   readonly logger: Logger;
   readonly sthis: SuperThis;
-  readonly gateway: bs.Gateway;
-  constructor(gw: bs.Gateway, sthis: SuperThis) {
+  readonly gateway: PartyKitGateway
+  constructor(sthis: SuperThis, gw: PartyKitGateway) {
     this.sthis = sthis;
     this.logger = ensureLogger(sthis, "PartyKitTestStore");
     this.gateway = gw;
@@ -292,8 +275,8 @@ export class PartyKitTestStore implements bs.TestGateway {
     const url = uri.build().setParam("key", key).URI();
     const dbFile = this.sthis.pathOps.join(rt.getPath(url, this.sthis), rt.getFileName(url, this.sthis));
     this.logger.Debug().Url(url).Str("dbFile", dbFile).Msg("get");
-    const buffer = await this.gateway.get(url);
-    this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer).Msg("got");
+    const buffer = await this.gateway.getRaw(url);
+    this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer.Ok()).Msg("got");
     return buffer.Ok();
   }
 }
@@ -309,7 +292,6 @@ export function registerPartyKitStoreProtocol(protocol = "partykit:", overrideBa
         BuildURI.from(overrideBaseURL || "partykit://roomy")
           .setParam(PARAM.VERSION, "")
           .URI(),
-      overrideBaseURL,
       gateway: async (sthis) => {
         return new PartyKitGateway(sthis);
       },

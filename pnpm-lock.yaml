@@ -846,7 +846,7 @@ packages:
     engines: {node: '>=14'}
 
   '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz':
-    resolution: {integrity: sha512-zrYDZ2JT0mahPDsJFQac3lDCsnqtr/sIRbYYPD1RAzcKlvhuesYKKpvCWdT0Ro7l2pm3J5/8aAORgSIMVlK7xA==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
+    resolution: {integrity: sha512-VYRsca9zGyvgq0NtCOBrlq3PGe36tBdlOPkpl7zUIlVPSvuovy68lNY2Tzkpr0pBAhUWKop9tjBq6AKrLcw00Q==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
     version: 0.0.0-smoke
 
   '@humanfs/core@0.19.0':
