@@ -3,7 +3,7 @@ import { registerFireproofCloudStoreProtocol } from "./gateway";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { URI } from "@adviser/cement";
 import { smokeDB } from "../../tests/helper";
-import { mockSuperThis } from "@fireproof/core/tests/helpers.js";
+import { mockSuperThis } from "../../node_modules/@fireproof/core/tests/helpers.js";
 
 // has to leave
 interface ExtendedGateway extends bs.Gateway {
