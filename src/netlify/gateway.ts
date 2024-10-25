@@ -1,5 +1,7 @@
-import { KeyedResolvOnce, Result, URI, BuildURI, exception2Result } from "@adviser/cement";
-import { bs, getStore, Logger, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
+import { KeyedResolvOnce, Result, URI, BuildURI } from "@adviser/cement";
+import { bs, getStore, Logger, SuperThis, ensureSuperLog, rt } from "@fireproof/core";
+import { fetchUint8, resultFetch } from "../fetcher";
+import { attachKeyToMeta, deserializeMetaWithKeySideEffect } from "../meta-key-hack";
 
 export class NetlifyGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -66,8 +68,8 @@ export class NetlifyGateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+  async put<T>(url: URI, fpenv: bs.FPEnvelope<T>, loader: bs.Loadable): Promise<bs.VoidResult> {
+    // const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
 
     const rParams = url.getParamsResult("key", "name");
     if (rParams.isErr()) {
@@ -85,35 +87,26 @@ export class NetlifyGateway implements bs.Gateway {
       return Result.Err(new Error("Remote base URL not found in the URI"));
     }
     const fetchUrl = BuildURI.from(remoteBaseUrl);
-    switch (store) {
+    let body = await rt.gw.fpSerialize(this.sthis, fpenv, url);
+    switch (fpenv.type) {
       case "meta":
-        fetchUrl.setParam("meta", name);
+        {
+          fetchUrl.setParam("meta", name);
+          body = await attachKeyToMeta(this.sthis, body, loader);
+        }
         break;
       default:
         fetchUrl.setParam("car", key);
         break;
     }
-    if (store === "meta") {
-      const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
-      if (bodyRes.isErr()) {
-        return Result.Err(bodyRes.Err());
-      }
-      body = bodyRes.Ok();
-    }
-
-    const done = await fetch(fetchUrl.URI().asURL(), { method: "PUT", body });
-    if (!done.ok) {
-      return this.logger
-        .Error()
-        .Url(fetchUrl.URI())
-        .Int("status", done.status)
-        .Msg(`failed to upload ${store}`)
-        .ResultError();
+    const done = await resultFetch(this.logger, fetchUrl, { method: "PUT", body });
+    if (done.isErr()) {
+      return done;
     }
     return Result.Ok(undefined);
   }
 
-  async get(url: URI): Promise<bs.GetResult> {
+  async get<T>(url: URI, loader: bs.Loadable): Promise<bs.GetResult<T>> {
     const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
     const rParams = url.getParamsResult("key", "name", "remoteBaseUrl");
     if (rParams.isErr()) {
@@ -135,27 +128,8 @@ export class NetlifyGateway implements bs.Gateway {
         fetchUrl.setParam("car", key);
         break;
     }
-
-    const rresponse = await exception2Result(() => {
-      return fetch(fetchUrl.URI().asURL());
-    });
-    if (rresponse.isErr()) {
-      return this.logger.Error().Url(fetchUrl).Err(rresponse).Msg("Failed to fetch").ResultError();
-    }
-    const response = rresponse.Ok();
-
-    if (!response.ok) {
-      return Result.Err(new NotFoundError(`${store} not found: ${url}`));
-    }
-
-    const data = new Uint8Array(await response.arrayBuffer());
-    if (store === "meta") {
-      const res = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
-      if (res.isErr()) {
-        return Result.Err(res.Err());
-      }
-    }
-    return Result.Ok(data);
+    const raw = await fetchUint8(this.logger, fetchUrl);
+    return rt.gw.fpDeserialize<T>(this.sthis, deserializeMetaWithKeySideEffect(this.sthis, raw, loader), url);
   }
 
   async delete(url: URI): Promise<bs.VoidResult> {
@@ -184,14 +158,15 @@ export class NetlifyGateway implements bs.Gateway {
         fetchUrl.setParam("car", key);
         break;
     }
-    const response = await fetch(fetchUrl.URI().asURL(), { method: "DELETE" });
-    if (!response.ok) {
-      return Result.Err(new Error(`Failed to delete car: ${response.statusText}`));
+    const response = await fetchUint8(this.logger, fetchUrl.URI(), { method: "DELETE" });
+    if (response.isErr()) {
+      return Result.Err(response.Err());
+      // return Result.Err(new Error(`Failed to delete car: ${response.statusText}`));
     }
     return Result.Ok(undefined);
   }
 
-  async subscribe(url: URI, callback: (msg: Uint8Array) => void): Promise<bs.UnsubscribeResult> {
+  async subscribe(url: URI, callback: (msg: bs.FPEnvelopeMeta) => void): Promise<bs.UnsubscribeResult> {
     url = url.build().setParam("key", "main").defParam("interval", "100").defParam("maxInterval", "3000").URI();
 
     let lastData: Uint8Array | undefined = undefined;

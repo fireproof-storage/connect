@@ -14,7 +14,7 @@ export interface SQLRunResult {
 
 export interface SQLStore<IType, KType, OType = IType[]> {
   readonly dbConn: DBConnection;
-  startx(url: URI): Promise<URI>;
+  start(url: URI): Promise<URI>;
   insert(url: URI, ose: IType): Promise<SQLRunResult>;
   select(url: URI, car: KType): Promise<OType>;
   delete(url: URI, car: KType): Promise<SQLRunResult>;

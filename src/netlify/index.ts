@@ -40,7 +40,7 @@ export const connect: ConnectFunction = (
   return connectionCache.get(urlObj.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
     const connection = connectionFactory(sthis, urlObj);
-    connection.connect_X(blockstore);
+    connection.connect(blockstore);
     return connection;
   });
 };

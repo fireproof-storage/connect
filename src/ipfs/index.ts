@@ -16,7 +16,7 @@ export const connect = {
       name,
       schema: schemaName,
     } as ConnectUCANParams);
-    connection.connect_X(blockstore);
+    connection.connect(blockstore);
     ipfsCxs.set(name, connection);
     return connection;
   },
