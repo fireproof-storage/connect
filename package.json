@@ -24,7 +24,7 @@
     "pub:netlify": "tsx ./version-copy-package.ts ./dist/netlify/package-netlify.json && cp ./src/netlify/server.ts ./dist/netlify/ && cp ./src/netlify/README.md ./dist/netlify/",
     "pub:s3": "tsx ./version-copy-package.ts ./dist/s3/package-s3.json && cp ./src/s3/README.md ./dist/s3/",
     "pub:partykit": "tsx ./version-copy-package.ts ./dist/partykit/package-partykit.json && cp ./src/partykit/server.ts ./dist/partykit/ && cp ./src/partykit/README.md ./dist/partykit/",
-    "pub:ucan": "tsx ./version-copy-package.ts ./dist/ucan-cloud/package-ucan.json",
+    "pub:ucan": "tsx ./version-copy-package.ts ./dist/ucan-cloud/package-ucan.json && cp ./src/ucan-cloud/README.md ./dist/ucan-cloud/",
     "presmoke": "pnpm run build",
     "xsmoke": "pnpm run '/smoke:/'",
     "presmoke:node": "cd dist/fireproof-core ; pnpm pack",
