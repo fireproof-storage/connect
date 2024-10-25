@@ -21,8 +21,8 @@
     "index.d.cts",
     "index.js.map",
     "index.cjs.map",
-    "chunk-MLVAXOMO.js",
-    "browser-O7ITMZDU.js"
+    "chunk-*.js",
+    "browser-*.js"
   ],
   "type": "module",
   "scripts": {},
