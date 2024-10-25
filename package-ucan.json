@@ -14,7 +14,16 @@
   },
   "browser": "./index.global.js",
   "types": "./index.d.ts",
-  "files": ["index.js", "index.cjs", "index.d.ts", "index.d.cts", "index.js.map", "index.cjs.map", "chunk-MLVAXOMO.js", "browser-O7ITMZDU.js"],
+  "files": [
+    "index.js",
+    "index.cjs",
+    "index.d.ts",
+    "index.d.cts",
+    "index.js.map",
+    "index.cjs.map",
+    "chunk-MLVAXOMO.js",
+    "browser-O7ITMZDU.js"
+  ],
   "type": "module",
   "scripts": {},
   "keywords": [],
