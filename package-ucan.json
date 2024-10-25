@@ -2,18 +2,18 @@
   "name": "@fireproof/ucan",
   "version": "0.18.0",
   "description": "",
-  "main": "./dist/browser/index.cjs",
-  "module": "./dist/browser/index.esm.js",
+  "main": "./index.cjs",
+  "module": "./index.js",
   "exports": {
     ".": {
-      "import": "./dist/browser/index.esm.js",
-      "require": "./dist/browser/index.cjs",
-      "types": "./dist/types/index.d.ts",
-      "script": "./dist/browser/index.iife.js"
+      "import": "./index.js",
+      "require": "./index.cjs",
+      "script": "./index.global.js",
+      "types": "./index.d.ts"
     }
   },
-  "browser": "./dist/index.browser.iife.js",
-  "types": "./dist/types/index.d.ts",
+  "browser": "./index.global.js",
+  "types": "./index.d.ts",
   "files": ["index.js", "index.cjs", "index.d.ts", "index.d.cts", "index.js.map", "index.cjs.map"],
   "type": "module",
   "scripts": {},
