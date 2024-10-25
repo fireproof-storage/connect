@@ -65,18 +65,18 @@ jobs:
         name: ucan-dev-server
         with:
           working-directory: ./fireproof-ucan
-          run: |
-            pnpm install
-            pnpm run dev
           wait-on: |
             tcp:localhost:8787
+          run: |
+            pnpm install
+            pnpm run dev &
 
       - uses: JarvusInnovations/background-action@v1
         name: gateway servers
         with:
           working-directory: ./connector
           run: |
-            pnpm run setup-gateway-servers
+            pnpm run setup-gateway-servers &
           # partykit:1999 netlify:8888
           wait-on: |
             tcp:localhost:1999
