@@ -256,8 +256,8 @@ const LIBRARY_BUNDLES: Options[] = [
       }),
       resolve({
         ...ourMultiformat,
-        //  "node:util": path.join(__dirname, "node-util-polyfill.js"),
-        "../../../ucan-cloud/store/state/node.js": "../../../ucan-cloud/store/state/browser.js",
+        "node:util": path.join(__dirname, "node-util-polyfill.js"),
+        // "../../../ucan-cloud/store/state/node.js": "../../../ucan-cloud/store/state/browser.js",
       }),
       polyfillNode(),
     ],
@@ -278,8 +278,8 @@ const LIBRARY_BUNDLES: Options[] = [
       }),
       resolve({
         ...ourMultiformat,
-        //     "node:util": path.join(__dirname, "node-util-polyfill.js"),
-        "../../../ucan-cloud/store/state/node.js": "../../../ucan-cloud/store/state/browser.js",
+        "node:util": path.join(__dirname, "node-util-polyfill.js"),
+        // "../../../ucan-cloud/store/state/node.js": "../../../ucan-cloud/store/state/browser.js",
       }),
       polyfillNode(),
     ],
