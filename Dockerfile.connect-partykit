@@ -1,0 +1,11 @@
+FROM node:20-slim AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+RUN apt update && apt install -y git
+COPY src/partykit /usr/src/app/src/partykit
+COPY tests/connect-partykit/app /usr/src/app/tests/connect-partykit/app
+WORKDIR /usr/src/app/tests/connect-partykit/app
+RUN rm -rf node_modules && pnpm i 
+#EXPOSE 8787
+CMD pnpm run dev 
