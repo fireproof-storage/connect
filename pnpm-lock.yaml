@@ -117,6 +117,9 @@ importers:
       '@types/node':
         specifier: ^22.8.1
         version: 22.8.1
+      '@types/wait-on':
+        specifier: ^5.3.4
+        version: 5.3.4
       '@types/ws':
         specifier: ^8.5.12
         version: 8.5.12
@@ -1533,6 +1536,9 @@ packages:
 
   '@types/retry@0.12.2':
     resolution: {integrity: sha512-XISRgDJ2Tc5q4TRqvgJtzsRkFYNJzZrhTdtMoGVBttwzzQJkPnS3WWTFc7kuDRoPtPakl+T+OfdEUjYJj7Jbow==}
+
+  '@types/wait-on@5.3.4':
+    resolution: {integrity: sha512-EBsPjFMrFlMbbUFf9D1Fp+PAB2TwmUn7a3YtHyD9RLuTIk1jDd8SxXVAoez2Ciy+8Jsceo2MYEYZzJ/DvorOKw==}
 
   '@types/ws@8.5.12':
     resolution: {integrity: sha512-3tPRkv1EtkDpzlgyKyI8pGsGZAGPEaXeu0DOj5DI25Ja91bdAYddYHbADRYVrZMRbfW+1l5YwXVDKohDJNQxkQ==}
@@ -5452,6 +5458,10 @@ snapshots:
   '@types/retry@0.12.1': {}
 
   '@types/retry@0.12.2': {}
+
+  '@types/wait-on@5.3.4':
+    dependencies:
+      '@types/node': 22.8.1
 
   '@types/ws@8.5.12':
     dependencies:

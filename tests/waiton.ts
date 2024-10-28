@@ -7,7 +7,7 @@ const opts = {
   timeout: 60000, // timeout in ms, default Infinity
   strictSSL: false,
   followRedirect: true,
-  validateStatus: function (status) {
+  validateStatus: (status: number) => {
     return status >= 200 && status < 599; // default if not provided
   },
 };
@@ -15,7 +15,7 @@ const opts = {
 // Usage with callback function
 waitOn(opts, function (err) {
   if (err) {
-    return handleError(err);
+    process.exit(1);
   }
   process.exit(0);
 });
