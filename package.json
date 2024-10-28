@@ -127,7 +127,7 @@
     "is-deep-strict-equal-x": "^1.1.2",
     "multiformats": "^13.3.0",
     "node-sqlite3-wasm": "^0.8.18",
-    "partykit": "^0.0.110",
+    "partykit": "^0.0.111",
     "partysocket": "^1.0.2",
     "path": "^0.12.7",
     "util": "^0.12.5",

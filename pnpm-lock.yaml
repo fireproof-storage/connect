@@ -87,8 +87,8 @@ importers:
         specifier: ^0.8.18
         version: 0.8.23
       partykit:
-        specifier: ^0.0.110
-        version: 0.0.110
+        specifier: ^0.0.111
+        version: 0.0.111
       partysocket:
         specifier: ^1.0.2
         version: 1.0.2
@@ -2901,8 +2901,8 @@ packages:
     resolution: {integrity: sha512-2hRe7DQZb8+YAXHu1esNwfEp6+yypsl1wayA7Vm7s/atrkUPltuG/y9KKfLcg3Ns/eG9EFJCugVS2eDZ8mJdYA==}
     engines: {node: '>=8.11.4', npm: 6.10.1}
 
-  partykit@0.0.110:
-    resolution: {integrity: sha512-lAUeB/b6nZbMr6c789RKlSsGhbMtklNhjJZ0ri4zzaVEqhG2/k+cqTLCYTwHvfSI6eSa7cIF614R7CyMUrSLgA==}
+  partykit@0.0.111:
+    resolution: {integrity: sha512-pbUzJmulPTqZWgtH++eClnLlddTWS0RPKOAQyexYiSqGEg2/Ff84Ep0qWFqy+53wiz098DPFekRI375Qy2GsZw==}
     hasBin: true
 
   partysocket@1.0.2:
@@ -7171,7 +7171,7 @@ snapshots:
       to-string-x: 2.1.1
       trim-left-x: 4.1.2
 
-  partykit@0.0.110:
+  partykit@0.0.111:
     dependencies:
       '@cloudflare/workers-types': 4.20240718.0
       clipboardy: 4.0.0
