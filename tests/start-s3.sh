@@ -1,4 +1,4 @@
-docker rm $(docker ps --format '{{.ID}}.{{.Names}}' -a | grep 'minio'| sed 's/\..*$//')
+docker rm -f $(docker ps --format '{{.ID}}.{{.Names}}' -a | grep 'minio'| sed 's/\..*$//')
 
 docker run -d -p 9000:9000 --name minio  \
                      -e "MINIO_ACCESS_KEY=minioadmin"  \

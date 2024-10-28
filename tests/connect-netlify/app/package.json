@@ -8,8 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "copy-server": "cp ../../../src/netlify/server.ts netlify/edge-functions/fireproof.ts",
     "watch-server": "chokidar \"../../../src/netlify/server.ts\" -c \"npm run copy-server\"",
-    "predev": "npm run copy-server && npm run watch-server &",
-    "dev": "npx netlify dev --no-open"
+    "predev": "pnpm run copy-server",
+    "dev": "netlify dev --no-open"
   },
   "author": "",
   "license": "ISC",
@@ -17,6 +17,8 @@
     "@netlify/blobs": "^8.1.0"
   },
   "devDependencies": {
-    "chokidar-cli": "^3.0.0"
+    "chokidar-cli": "^3.0.0",
+    "netlify": "^13.1.21",
+    "netlify-cli": "^17.37.1"
   }
 }

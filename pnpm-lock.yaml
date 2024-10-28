@@ -15,7 +15,7 @@ importers:
         specifier: ^3.679.0
         version: 3.679.0
       '@fireproof/core':
-        specifier: 0.19.111
+        specifier: ^0.19.111
         version: 0.19.111(react@18.3.1)(typescript@5.6.3)
       '@ipld/dag-cbor':
         specifier: ^9.2.1
