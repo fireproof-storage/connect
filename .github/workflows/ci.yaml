@@ -81,10 +81,19 @@ jobs:
       #    wait-on: |
       #      tcp:localhost:1999
       #      tcp:localhost:8888
+ 
+      - name: pretest docker
+        working-directory: ./connector
+        run: pnpm run pretest-docker
 
       - name: test
         working-directory: ./connector
         run: pnpm run test
+
+      - name: posttest docker
+        working-directory: ./connector
+  	if: success() || failure()
+        run: pnpm run posttest-docker
 
       #- name: stop S3 Mock
       #  working-directory: ./connector
