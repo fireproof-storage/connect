@@ -193,6 +193,9 @@ export class AWSGateway implements bs.Gateway {
     }
     const response = rresponse.Ok();
     if (!response.ok) {
+      if (response.status === 403) {
+        return Result.Err(new NotFoundError(`meta not found: ${url}`));
+      }
       this.logger
         .Error()
         .Url(fetchUrl)

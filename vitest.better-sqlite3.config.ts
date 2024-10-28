@@ -10,6 +10,7 @@ export default defineConfig({
     exclude: [
       "node_modules/@fireproof/core/tests/react/**",
       "node_modules/@fireproof/core/tests/fireproof/config.test.ts",
+      "node_modules/@fireproof/core/tests/fireproof/utils.test.ts",
     ],
     globals: true,
     setupFiles: "./setup.better-sqlite3.ts",

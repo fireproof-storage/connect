@@ -1,6 +1,6 @@
 import { defineWorkspace } from "vitest/config";
 
-// import aws from "./vitest.aws.config.ts";
+import aws from "./vitest.aws.config.ts";
 import betterSqlite3 from "./vitest.better-sqlite3.config.ts";
 import nodeSqlite3Wasm from "./vitest.node-sqlite3-wasm.config.ts";
 import partykit from "./vitest.partykit.config.ts";
@@ -16,7 +16,7 @@ export default defineWorkspace([
   betterSqlite3,
   // connector,
   s3,
-  // aws,
+  aws,
   netlify,
   partykit,
   cloud,
