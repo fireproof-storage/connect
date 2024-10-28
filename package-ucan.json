@@ -21,6 +21,7 @@
   "license": "ISC",
   "devDependencies": {},
   "dependencies": {
+    "@fireproof/core": "0.19.111",
     "@ipld/dag-cbor": "^9.2.1",
     "@ucanto/client": "^9.0.1",
     "@ucanto/core": "^10.0.1",
