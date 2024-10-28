@@ -124,8 +124,8 @@ importers:
         specifier: ^8.4.0
         version: 8.8.1(typescript@5.6.3)
       '@web3-storage/access':
-        specifier: ^20.0.1
-        version: 20.0.1
+        specifier: ^20.1.0
+        version: 20.1.0
       esbuild:
         specifier: ^0.24.0
         version: 0.24.0
@@ -1644,8 +1644,8 @@ packages:
   '@vitest/utils@2.1.2':
     resolution: {integrity: sha512-zMO2KdYy6mx56btx9JvAqAZ6EyS3g49krMPPrgOp1yxGZiA93HumGk+bZ5jIZtOg5/VBYl5eBmGRQHqq4FG6uQ==}
 
-  '@web3-storage/access@20.0.1':
-    resolution: {integrity: sha512-JlCTp1BlFmxrxpkkLo73tytHIv7J+l8++dP5ghYk5oEo2Om3mUq+T3KkkkjZ8d3omoWam6tGiTQXbc/awHJjDw==}
+  '@web3-storage/access@20.1.0':
+    resolution: {integrity: sha512-IY6ICPRWE8++2jxvy+LzAiFvwAOIHR8cu9eNt+VT5sAFE796o4ma7GSU0eXRCiShmV2n6iSWAwWRT6XD5zIqPA==}
 
   '@web3-storage/blob-index@1.0.4':
     resolution: {integrity: sha512-04+PrmVHFT+xzRhyIPdcvGc8Y2NDffUe8R1gJOyErVzEVz5N1I9Q/BrlFHYt/A4HrjM5JBsxqSrZgTIkjfPmLA==}
@@ -5599,7 +5599,7 @@ snapshots:
       loupe: 3.1.2
       tinyrainbow: 1.2.0
 
-  '@web3-storage/access@20.0.1':
+  '@web3-storage/access@20.1.0':
     dependencies:
       '@ipld/car': 5.3.2
       '@ipld/dag-ucan': 3.4.0
@@ -5717,7 +5717,7 @@ snapshots:
       '@ucanto/interface': 10.0.1
       '@ucanto/principal': 9.0.1
       '@ucanto/transport': 9.1.1
-      '@web3-storage/access': 20.0.1
+      '@web3-storage/access': 20.1.0
       '@web3-storage/blob-index': 1.0.4
       '@web3-storage/capabilities': 17.3.0
       '@web3-storage/did-mailto': 2.1.0
