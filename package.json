@@ -120,7 +120,7 @@
     "@web3-storage/w3up-client": "^15.0.0",
     "assert": "^2.1.0",
     "better-sqlite3": "^11.2.1",
-    "cborg": "^4.2.3",
+    "cborg": "^4.2.6",
     "cross-fetch": "^4.0.0",
     "events": "^3.3.0",
     "idb-keyval": "^6.2.1",
