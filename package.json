@@ -72,7 +72,7 @@
     "@types/eslint__js": "^8.42.3",
     "@types/node": "^22.8.1",
     "@types/ws": "^8.5.12",
-    "@typescript-eslint/typescript-estree": "^8.4.0",
+    "@typescript-eslint/typescript-estree": "^8.11.0",
     "@web3-storage/access": "^20.1.0",
     "esbuild": "^0.24.0",
     "esbuild-plugin-polyfill-node": "^0.3.0",
