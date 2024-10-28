@@ -2,6 +2,10 @@ name: CI
 on:
   - push
   - pull_request
+
+env:
+  FIREPROOF_CORE_VERSION: "^0.19.111"
+
 jobs:
   quality-checks:
     name: Quality Checks
@@ -42,13 +46,17 @@ jobs:
 
       - name: format-check
         working-directory: ./connector
-        run: pnpm run format --check
+        run: |
+          pnpm run format --check
       - name: lint
         working-directory: ./connector
-        run: pnpm run lint
+        run: |
+          pnpm run lint
       - name: build
         working-directory: ./connector
-        run: pnpm run build
+        run: |
+          pnpm run build
+
       - name: S3 Mock
         working-directory: ./connector
         run: |
@@ -84,7 +92,14 @@ jobs:
 
       - name: test
         working-directory: ./connector
-        run: pnpm run test-gateways
+        run: |
+          pnpm run test
+
+      - name: smoke-test
+        working-directory: ./connector
+        run: |
+          # this destroys release builds
+          pnpm run test
 
       - name: stop S3 Mock
         working-directory: ./connector
