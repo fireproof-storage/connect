@@ -99,7 +99,7 @@ jobs:
         working-directory: ./connector
         run: |
           # this destroys release builds
-          pnpm run test
+          bash ./smoke/ucan/it.sh
 
       - name: stop S3 Mock
         working-directory: ./connector
