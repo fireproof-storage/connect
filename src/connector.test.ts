@@ -107,7 +107,7 @@ describe("loading the base store", () => {
 
   it("should have meta in the remote gateway", async () => {
     // await (await db.blockstore.loader?.WALStore())?.process();
-    const metaStore = (await db.blockstore.loader?.remoteMetaStore) as unknown as ExtendedStore;
+    const metaStore = db.blockstore.loader?.remoteMetaStore as unknown as ExtendedStore;
     const metaGateway = metaStore.gateway;
     await metaGateway.start(metaStore.url());
 

@@ -101,12 +101,13 @@ export class NetlifyGateway implements bs.Gateway {
       body = bodyRes.Ok();
     }
 
-    const done = await fetch(fetchUrl.URI().asURL(), { method: "PUT", body });
+    const done = await fetch(fetchUrl.asURL(), { method: "PUT", body });
     if (!done.ok) {
       return this.logger
         .Error()
         .Url(fetchUrl.URI())
         .Int("status", done.status)
+        .Str("statusText", done.statusText)
         .Msg(`failed to upload ${store}`)
         .ResultError();
     }
@@ -152,7 +153,7 @@ export class NetlifyGateway implements bs.Gateway {
     if (store === "meta") {
       const res = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
       if (res.isErr()) {
-        return Result.Err(res.Err());
+        return this.logger.Error().Url(url).Err(res).Msg("Failed to set crypto key").ResultError();
       }
     }
     return Result.Ok(data);
