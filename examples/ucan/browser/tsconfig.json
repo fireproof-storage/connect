@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "checkJs": true,
+    "module": "preserve",
+    "noEmit": true,
+    "strict": true,
+    "target": "es2022"
+  },
+  "include": ["*.js", "src/**/*.js", "src/**/*.d.ts"]
+}

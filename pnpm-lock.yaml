@@ -44,6 +44,9 @@ importers:
       '@ucanto/validator':
         specifier: ^9.0.2
         version: 9.0.2
+      '@web3-storage/access':
+        specifier: ^20.1.0
+        version: 20.1.0
       '@web3-storage/capabilities':
         specifier: ^17.4.0
         version: 17.4.0
@@ -95,6 +98,9 @@ importers:
       path:
         specifier: ^0.12.7
         version: 0.12.7
+      use-fireproof:
+        specifier: 0.19.111
+        version: 0.19.111(react@18.3.1)(typescript@5.6.3)
       util:
         specifier: ^0.12.5
         version: 0.12.5
@@ -129,15 +135,9 @@ importers:
       '@typescript-eslint/typescript-estree':
         specifier: ^8.13.0
         version: 8.13.0(typescript@5.6.3)
-      '@web3-storage/access':
-        specifier: ^20.1.0
-        version: 20.1.0
       esbuild:
         specifier: ^0.24.0
         version: 0.24.0
-      esbuild-plugin-polyfill-node:
-        specifier: ^0.3.0
-        version: 0.3.0(esbuild@0.24.0)
       esbuild-plugin-replace:
         specifier: ^1.4.0
         version: 1.4.0
@@ -2127,11 +2127,6 @@ packages:
   es6-weak-map@2.0.3:
     resolution: {integrity: sha512-p5um32HOTO1kP+w7PRnB+5lQ43Z6muuMuIMffvDN8ZB4GcnjLBV6zGStpbASIMk4DCAvEaamhe2zhyCb/QXXsA==}
 
-  esbuild-plugin-polyfill-node@0.3.0:
-    resolution: {integrity: sha512-SHG6CKUfWfYyYXGpW143NEZtcVVn8S/WHcEOxk62LuDXnY4Zpmc+WmxJKN6GMTgTClXJXhEM5KQlxKY6YjbucQ==}
-    peerDependencies:
-      esbuild: '*'
-
   esbuild-plugin-replace@1.4.0:
     resolution: {integrity: sha512-lP3ZAyzyRa5JXoOd59lJbRKNObtK8pJ/RO7o6vdjwLi71GfbL32NR22ZuS7/cLZkr10/L1lutoLma8E4DLngYg==}
 
@@ -2486,9 +2481,6 @@ packages:
   import-fresh@3.3.0:
     resolution: {integrity: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==}
     engines: {node: '>=6'}
-
-  import-meta-resolve@3.1.1:
-    resolution: {integrity: sha512-qeywsE/KC3w9Fd2ORrRDUw6nS/nLwZpXgfrOc2IILvZYnCaEMd+D56Vfg9k4G29gIeVi3XKql1RQatME8iYsiw==}
 
   imurmurhash@0.1.4:
     resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
@@ -3757,6 +3749,11 @@ packages:
 
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
+
+  use-fireproof@0.19.111:
+    resolution: {integrity: sha512-bmRWaYrtyq0+2ewDj0cLJ8FQL3osUe0j7p89DT2dQ13sji5Td2oTXWgXZVfTPCbC8LF6qW4zXVQ4Cks4SToEaw==}
+    peerDependencies:
+      react: '>=18.0.0'
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
@@ -6327,12 +6324,6 @@ snapshots:
       es6-iterator: 2.0.3
       es6-symbol: 3.1.4
 
-  esbuild-plugin-polyfill-node@0.3.0(esbuild@0.24.0):
-    dependencies:
-      '@jspm/core': 2.1.0
-      esbuild: 0.24.0
-      import-meta-resolve: 3.1.1
-
   esbuild-plugin-replace@1.4.0:
     dependencies:
       magic-string: 0.25.9
@@ -6799,8 +6790,6 @@ snapshots:
     dependencies:
       parent-module: 1.0.1
       resolve-from: 4.0.0
-
-  import-meta-resolve@3.1.1: {}
 
   imurmurhash@0.1.4: {}
 
@@ -8241,6 +8230,25 @@ snapshots:
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
+
+  use-fireproof@0.19.111(react@18.3.1)(typescript@5.6.3):
+    dependencies:
+      '@adviser/cement': 0.2.36(typescript@5.6.3)
+      '@ipld/car': 5.3.2
+      '@ipld/unixfs': 3.0.0
+      '@web3-storage/pail': 0.6.0
+      cborg: 4.2.6
+      charwise: 3.0.1
+      idb: 8.0.0
+      ipfs-unixfs-exporter: 13.6.1
+      multiformats: 13.3.1
+      p-limit: 6.1.0
+      p-map: 7.0.2
+      p-retry: 6.2.0
+      prolly-trees: 1.0.4
+      react: 18.3.1
+    transitivePeerDependencies:
+      - typescript
 
   util-deprecate@1.0.2: {}
 

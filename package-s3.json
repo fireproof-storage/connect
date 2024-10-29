@@ -14,7 +14,6 @@
   },
   "browser": "./dist/index.browser.iife.js",
   "types": "./dist/types/index.d.ts",
-  "files": ["dist/node", "dist/browser", "dist/types", "src/server.ts"],
   "type": "module",
   "scripts": {},
   "keywords": [],

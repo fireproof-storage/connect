@@ -3,14 +3,48 @@ import path from "path";
 import { fileURLToPath } from "url";
 import resolve from "esbuild-plugin-resolve";
 import { replace } from "esbuild-plugin-replace";
-import { polyfillNode } from "esbuild-plugin-polyfill-node";
+// import { polyfillNode } from "esbuild-plugin-polyfill-node";
 
 // Correctly resolve __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Existing 'ourMultiformat' object or any other resolve mappings you have
-const ourMultiformat = {};
+
+function skipper(suffix: string, target: string) {
+  function intercept(build) {
+    const filter = new RegExp(suffix);
+    build.onResolve({ filter }, async (args) => {
+      if (args.path.includes(suffix)) {
+        console.log(">>>>>", args.path, target);
+      }
+      return build.resolve(target, { kind: args.kind, resolveDir: args.resolveDir });
+    });
+  }
+  return {
+    name: "skipper",
+    setup: (build) => {
+      intercept(build);
+    },
+  };
+}
+
+const ourMultiformat = {
+  /*
+        "atomically": `${__dirname}/bundle-not-impl.js`,
+        "memfs": `${__dirname}/bundle-not-impl.js`,
+        "stubborn-fs": `${__dirname}/bundle-not-impl.js`,
+        "conf": `${__dirname}/bundle-not-impl.js`,
+        "fs/promises": `${__dirname}/bundle-not-impl.js`,
+        "node:process": `${__dirname}/bundle-not-impl.js`,
+        "node:fs/promises": `${__dirname}/bundle-not-impl.js`,
+        "./node-filesystem.js": `${__dirname}/bundle-not-impl.js`,
+        "./node.js": `${__dirname}/bundle-not-impl.js`,
+        "@web3-storage/access/stores/store-conf": `${__dirname}/bundle-not-impl.js`,
+        "env-paths": `${__dirname}/bundle-not-impl.js`,
+        "stream": `${__dirname}/bundle-not-impl.js`,
+*/
+};
 
 function packageVersion() {
   let version = "refs/tags/v0.0.0-smoke";
@@ -24,6 +58,7 @@ function packageVersion() {
 const LIBRARY_BUNDLE_OPTIONS: Options = {
   target: ["esnext", "node18"],
   globalName: "Connect",
+  external: ["@fireproof/core"],
   clean: true,
   sourcemap: true,
   metafile: true,
@@ -40,11 +75,12 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/partykit",
     esbuildPlugins: [
-      polyfillNode(),
+      // polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
+      skipper("@fireproof/core", `${__dirname}/src/bundle-not-impl.js`),
       resolve({
         ...ourMultiformat,
       }),
@@ -60,13 +96,13 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/partykit",
     esbuildPlugins: [
-      polyfillNode(),
+      // polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
       resolve({
-        ...ourMultiformat,
+        //        ...ourMultiformat,
       }),
     ],
     dts: {
@@ -102,13 +138,13 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/s3",
     esbuildPlugins: [
-      polyfillNode(),
+      // polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
       resolve({
-        ...ourMultiformat,
+        //        ...ourMultiformat,
       }),
     ],
     dts: {
@@ -124,11 +160,12 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/netlify",
     esbuildPlugins: [
-      polyfillNode(),
+      // polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
+      skipper("@fireproof/core", `${__dirname}/src/bundle-not-impl.js`),
       resolve({
         ...ourMultiformat,
       }),
@@ -144,13 +181,13 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/netlify",
     esbuildPlugins: [
-      polyfillNode(),
+      // polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
       resolve({
-        ...ourMultiformat,
+        //        ...ourMultiformat,
       }),
     ],
     dts: {
@@ -166,11 +203,12 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/aws",
     esbuildPlugins: [
-      polyfillNode(),
+      // polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
+      skipper("@fireproof/core", `${__dirname}/src/bundle-not-impl.js`),
       resolve({
         ...ourMultiformat,
       }),
@@ -186,13 +224,13 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/aws",
     esbuildPlugins: [
-      polyfillNode(),
+      // polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
       resolve({
-        ...ourMultiformat,
+        //        ...ourMultiformat,
       }),
     ],
     dts: {
@@ -208,11 +246,12 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/cloud",
     esbuildPlugins: [
-      polyfillNode(),
+      // polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
+      skipper("@fireproof/core", `${__dirname}/src/bundle-not-impl.js`),
       resolve({
         ...ourMultiformat,
       }),
@@ -228,13 +267,13 @@ const LIBRARY_BUNDLES: Options[] = [
     platform: "browser",
     outDir: "dist/cloud",
     esbuildPlugins: [
-      polyfillNode(),
+      // polyfillNode(),
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
       resolve({
-        ...ourMultiformat,
+        //        ...ourMultiformat,
       }),
     ],
     dts: {
@@ -245,21 +284,26 @@ const LIBRARY_BUNDLES: Options[] = [
   {
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["iife"],
-    name: "@fireproof/ucan-cloud",
-    entry: ["src/ucan-cloud/index.ts"],
+    name: "@fireproof/ucan",
+    entry: ["src/ucan/index.ts"],
     platform: "browser",
-    outDir: "dist/ucan-cloud",
+    outDir: "dist/ucan",
     esbuildPlugins: [
+      // alias,
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
+      skipper("@fireproof/core", `${__dirname}/src/bundle-not-impl.js`),
+      skipper("conf", `${__dirname}/src/bundle-not-impl.js`),
       resolve({
         ...ourMultiformat,
-        "node:util": path.join(__dirname, "node-util-polyfill.js"),
-        "./state/node.js": "./state/browser.js",
+        //"node:fs/promises": `${__dirname}/bundle-not-impl.js`,
+        // "node:util": path.join(__dirname, "node-util-polyfill.js"),
+        //"./node.js": `${__dirname}/bundle-not-impl.js`,
+        // "../../../ucan-cloud/store/state/node.js": "../../../ucan-cloud/store/state/browser.js",
       }),
-      polyfillNode(),
+      // polyfillNode(),
     ],
     dts: false, // No type declarations needed for IIFE build
   },
@@ -267,26 +311,53 @@ const LIBRARY_BUNDLES: Options[] = [
   {
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["esm", "cjs"],
-    name: "@fireproof/ucan-cloud",
-    entry: ["src/ucan-cloud/index.ts"],
+    name: "@fireproof/ucan",
+    entry: ["src/ucan/index.ts"],
     platform: "browser",
-    outDir: "dist/ucan-cloud",
+    outDir: "dist/ucan",
     esbuildPlugins: [
       replace({
         __packageVersion__: packageVersion(),
         include: /version/,
       }),
       resolve({
-        ...ourMultiformat,
-        "node:util": path.join(__dirname, "node-util-polyfill.js"),
-        "../../../ucan-cloud/store/state/node.js": "../../../ucan-cloud/store/state/browser.js",
+        // ...ourMultiformat,
+        // "node:util": path.join(__dirname, "node-util-polyfill.js"),
+        // "../../../ucan-cloud/store/state/node.js": "../../../ucan-cloud/store/state/browser.js",
       }),
-      polyfillNode(),
+      // polyfillNode(),
     ],
     dts: {
-      footer: "declare module '@fireproof/ucan-cloud'",
+      footer: "declare module '@fireproof/ucan",
+    },
+  },
+  {
+    ...LIBRARY_BUNDLE_OPTIONS,
+    format: ["esm", "cjs"],
+    name: "@fireproof/ucan/web",
+    entry: ["src/ucan/index.ts"],
+    platform: "browser",
+    outDir: "dist/ucan/web",
+    esbuildPlugins: [
+      replace({
+        __packageVersion__: packageVersion(),
+        include: /version/,
+      }),
+      skipper("@fireproof/core", "use-fireproof"),
+      skipper("skip-iife", `${__dirname}/src/bundle-not-impl.js`),
+      // skipper("store-conf", `${__dirname}/src/bundle-not-impl.js`),
+
+      resolve({
+        // ...ourMultiformat,
+        // "node:util": path.join(__dirname, "node-util-polyfill.js"),
+        // "../../../ucan-cloud/store/state/node.js": "../../../ucan-cloud/store/state/browser.js",
+      }),
+      // polyfillNode(),
+    ],
+    dts: {
+      footer: "declare module '@fireproof/ucan",
     },
   },
 ];
 
-export default defineConfig((options) => [...LIBRARY_BUNDLES, ...(options.watch || [])]);
+export default defineConfig(() => [...LIBRARY_BUNDLES]);

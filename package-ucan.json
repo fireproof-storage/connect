@@ -2,19 +2,19 @@
   "name": "@fireproof/ucan",
   "version": "0.18.0",
   "description": "",
-  "main": "./dist/browser/index.cjs",
-  "module": "./dist/browser/index.esm.js",
+  "main": "./index.cjs",
+  "module": "./index.js",
   "exports": {
     ".": {
-      "import": "./dist/browser/index.esm.js",
-      "require": "./dist/browser/index.cjs",
-      "types": "./dist/types/index.d.ts",
-      "script": "./dist/browser/index.iife.js"
+      "browser": "./web/index.js",
+      "node": "./index.js",
+      "require": "./index.cjs",
+      "script": "./web/index.global.js",
+      "types": "./index.d.ts"
     }
   },
-  "browser": "./dist/index.browser.iife.js",
-  "types": "./dist/types/index.d.ts",
-  "files": ["dist/node", "dist/browser", "dist/types", "src/server.ts"],
+  "browser": "./web/index.js",
+  "types": "./index.d.ts",
   "type": "module",
   "scripts": {},
   "keywords": [],
@@ -22,6 +22,8 @@
   "license": "ISC",
   "devDependencies": {},
   "dependencies": {
+    "@fireproof/core": "0.19.111",
+    "use-fireproof": "0.19.111",
     "@ipld/dag-cbor": "^9.2.1",
     "@ucanto/client": "^9.0.1",
     "@ucanto/core": "^10.0.1",
@@ -29,10 +31,10 @@
     "@ucanto/principal": "^9.0.1",
     "@ucanto/transport": "^9.1.1",
     "@ucanto/validator": "^9.0.2",
-    "@web3-storage/capabilities": "^17.3.0",
+    "@web3-storage/access": "^20.1.0",
+    "@web3-storage/capabilities": "^17.4.0",
     "@web3-storage/did-mailto": "^2.1.0",
     "@web3-storage/w3up-client": "^15.0.0",
-    "idb-keyval": "^6.2.1",
     "multiformats": "^13.3.0"
   }
 }

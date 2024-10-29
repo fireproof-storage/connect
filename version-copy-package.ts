@@ -46,10 +46,13 @@ async function main() {
   }
   patchVersion(destPackageJson);
   // add a dependency to fireproof core with the same tag we're building
-  destPackageJson.dependencies["@fireproof/core"] = destPackageJson.version;
+  destPackageJson.dependencies["@fireproof/core"] =
+    process.env.FIREPROOF_CORE_VERSION || mainPackageJson.dependencies["@fireproof/core"] || destPackageJson.version;
   const destPackageJsonFile = path.join(destDir, "package.json");
   await fs.writeFile(destPackageJsonFile, JSON.stringify(destPackageJson, null, 2));
-  console.log(`Copied ${templateFile} to ${destDir} with version ${destPackageJson.version}`);
+  console.log(
+    `Copied ${templateFile} to ${destDir} with version ${destPackageJson.version} using fireproof/core=${destPackageJson.dependencies["@fireproof/core"]}`
+  );
   await $`cd ${destDir} && pnpm pack`.pipe(process.stdout);
 }
 

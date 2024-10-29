@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@fireproof/connect": "../../../",
+    "@fireproof/core": "0.19.111",
+    "meow": "^13.2.0"
+  }
+}

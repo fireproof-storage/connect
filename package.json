@@ -5,14 +5,13 @@
   "description": "Live database connector for the web",
   "type": "module",
   "scripts": {
-    "prepublish": "pnpm run build",
     "publish": "pnpm run '/publish:/'",
     "publish:aws": "tsx ./publish-package.ts ./dist/aws/package.json",
     "publish:cloud": "tsx ./publish-package.ts ./dist/cloud/package.json",
     "publish:netlify": "tsx ./publish-package.ts ./dist/netlify/package.json",
     "publish:s3": "tsx ./publish-package.ts ./dist/s3/package.json",
     "publish:partykit": "tsx ./publish-package.ts ./dist/partykit/package.json",
-    "publish:ucan": "tsx ./publish-package.ts ./dist/ucan-cloud/package.json",
+    "publish:ucan": "tsx ./publish-package.ts ./dist/ucan/package.json",
     "prebuild": "rm -rf dist",
     "prepare": "pnpm run build",
     "build": "pnpm run '/^build:/' && pnpm run '/^pub:/'",
@@ -24,13 +23,10 @@
     "pub:netlify": "tsx ./version-copy-package.ts ./dist/netlify/package-netlify.json && cp ./src/netlify/server.ts ./dist/netlify/ && cp ./src/netlify/README.md ./dist/netlify/",
     "pub:s3": "tsx ./version-copy-package.ts ./dist/s3/package-s3.json && cp ./src/s3/README.md ./dist/s3/",
     "pub:partykit": "tsx ./version-copy-package.ts ./dist/partykit/package-partykit.json && cp ./src/partykit/server.ts ./dist/partykit/ && cp ./src/partykit/README.md ./dist/partykit/",
-    "pub:ucan": "tsx ./version-copy-package.ts ./dist/ucan-cloud/package-ucan.json",
-    "presmoke": "pnpm run build",
-    "xsmoke": "pnpm run '/smoke:/'",
-    "presmoke:node": "cd dist/fireproof-core ; pnpm pack",
-    "smoke:node": "sh smoke/it.sh",
-    "presmoke:browser": "cd dist/use-fireproof ; pnpm pack",
-    "smoke:browser": "sh smoke/react/it.sh",
+    "pub:ucan": "tsx ./version-copy-package.ts ./dist/ucan/package-ucan.json && cp ./src/ucan/README.md ./dist/ucan/",
+    "xpresmoke": "pnpm run build",
+    "smoke": "pnpm run '/smoke:/'",
+    "smoke:ucan": "sh smoke/ucan/it.sh",
     "clean": "rm -rf node_modules dist",
     "pretest-docker": "pnpm run '/^pretest:/'; docker ps; tsx tests/waiton.ts",
     "pretest:s3": "bash ./tests/start-s3.sh",
@@ -45,13 +41,6 @@
     "posttest:minio": "docker rm -f minio",
     "format": "prettier .",
     "lint": "eslint"
-  },
-  "exports": {
-    "./ucan": {
-      "require": "./dist/ucan-cloud/index.cjs",
-      "types": "./dist/ucan-cloud/index.d.ts",
-      "default": "./dist/ucan-cloud/index.js"
-    }
   },
   "keywords": [
     "database",
@@ -80,7 +69,6 @@
     "@typescript-eslint/typescript-estree": "^8.13.0",
     "@web3-storage/access": "^20.1.0",
     "esbuild": "^0.24.0",
-    "esbuild-plugin-polyfill-node": "^0.3.0",
     "esbuild-plugin-replace": "^1.4.0",
     "esbuild-plugin-resolve": "^2.0.0",
     "eslint": "^9.14.0",
@@ -111,6 +99,7 @@
     "@aws-sdk/client-s3": "^3.685.0",
     "@fireproof/core": "0.19.111",
     "@ipld/dag-cbor": "^9.2.2",
+    "use-fireproof": "0.19.111",
     "@jspm/core": "^2.1.0",
     "@netlify/blobs": "^8.1.0",
     "@ucanto/client": "^9.0.1",
@@ -119,6 +108,7 @@
     "@ucanto/principal": "^9.0.1",
     "@ucanto/transport": "^9.1.1",
     "@ucanto/validator": "^9.0.2",
+    "@web3-storage/access": "^20.1.0",
     "@web3-storage/capabilities": "^17.4.0",
     "@web3-storage/clock": "^0.4.1",
     "@web3-storage/did-mailto": "^2.1.0",
@@ -136,8 +126,18 @@
     "partykit": "^0.0.111",
     "partysocket": "^1.0.2",
     "path": "^0.12.7",
+    "use-fireproof": "0.19.111",
     "util": "^0.12.5",
     "wait-on": "^8.0.1",
     "ws": "^8.18.0"
+  },
+  "exports": {
+    "./ucan": {
+      "browser": "./dist/ucan/web/index.js",
+      "node": "./dist/ucan/index.js",
+      "require": "./dist/ucan/index.cjs",
+      "script": "./dist/ucan/web/index.global.js",
+      "types": "./dist/ucan/index.d.ts"
+    }
   }
 }

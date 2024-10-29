@@ -2,6 +2,10 @@ name: CI
 on:
   - push
   - pull_request
+
+env:
+  FIREPROOF_CORE_VERSION: "^0.19.111"
+
 jobs:
   quality-checks:
     name: Quality Checks
@@ -26,6 +30,16 @@ jobs:
       #  run: |
       #    pnpm install
       #    pnpm run build
+      - uses: actions/checkout@v4
+        with:
+          repository: fireproof-storage/fireproof
+          path: ./fireproof
+      #    ref: series_0.19
+      #      - name: build-fireproof-package
+      #        working-directory: ./fireproof
+      #        run: |
+      #          pnpm install
+      #          pnpm run build
 
       - uses: actions/checkout@v4
         with:
@@ -36,16 +50,20 @@ jobs:
         run: |
           git config --global url."https://".insteadOf git+ssh://
           git config --global -l
-          #pnpm remove @fireproof/core
-          #pnpm install -f ../fireproof/dist/fireproof-core/fireproof-core-*.tgz
           pnpm install
+      #          git config --global url."https://".insteadOf git+ssh://
+      #          git config --global -l
+      #          pnpm remove @fireproof/core
+      #          pnpm install -f ../fireproof/dist/fireproof-core/fireproof-core-*.tgz
 
       - name: format-check
         working-directory: ./connector
-        run: pnpm run format --check
+        run: |
+          pnpm run format --check
       - name: lint
         working-directory: ./connector
-        run: pnpm run lint
+        run: |
+          pnpm run lint
       - name: build
         working-directory: ./connector
         run: pnpm run build
@@ -88,7 +106,14 @@ jobs:
 
       - name: test
         working-directory: ./connector
-        run: pnpm run test
+        run: |
+          pnpm run test
+
+      #- name: smoke-test
+      #  working-directory: ./connector
+      #  run: |
+      #    # this destroys release builds
+      #    pnpm run test
 
       - name: posttest docker
         working-directory: ./connector
