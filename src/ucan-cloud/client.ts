@@ -35,12 +35,12 @@ export async function advanceClock({
   agent: Agent;
   clockId: `did:key:${string}`;
   event: Link;
-  server: Principal;
+  server: Server;
   service: ConnectionView<Service>;
 }) {
   const invocation = ClockCaps.advance.invoke({
     issuer: agent.signer,
-    audience: server,
+    audience: server.id,
     with: clockId,
     nb: { event },
     proofs: [agent.delegation, agent.attestation],
@@ -92,12 +92,12 @@ export async function getClockHead({
 }: {
   agent: Agent;
   clockId: `did:key:${string}`;
-  server: Principal;
+  server: Server;
   service: ConnectionView<Service>;
 }) {
   const invocation = ClockCaps.head.invoke({
     issuer: agent.signer,
-    audience: server,
+    audience: server.id,
     with: clockId,
     proofs: [agent.delegation, agent.attestation],
   });
@@ -182,13 +182,13 @@ export async function retrieve({
 }: {
   agent: Signer;
   cid: CID;
-  server: Principal;
+  server: Server;
   service: ConnectionView<Service>;
 }): Promise<Uint8Array | undefined> {
   const resp = await StoreCaps.get
     .invoke({
       issuer: agent,
-      audience: server,
+      audience: server.id,
       with: agent.did(),
       nb: {
         link: cid,
@@ -211,7 +211,7 @@ export async function store({
   agent: Signer;
   bytes: Uint8Array;
   cid: Link;
-  server: Principal;
+  server: Server;
   service: ConnectionView<Service>;
 }) {
   const link: Link = cid;
@@ -221,7 +221,7 @@ export async function store({
   const resp = await StoreCaps.add
     .invoke({
       issuer: agent,
-      audience: server,
+      audience: server.id,
       with: agent.did(),
       nb: {
         link,

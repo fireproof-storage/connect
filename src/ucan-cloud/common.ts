@@ -1,13 +1,12 @@
-import { URI } from "@adviser/cement";
-
 import { API } from "@ucanto/core";
-import { ConnectionView, Principal } from "@ucanto/interface";
+import { ConnectionView } from "@ucanto/interface";
 import { DelegationMeta } from "@web3-storage/access";
 import * as W3 from "@web3-storage/w3up-client";
 import { Service as W3Service } from "@web3-storage/w3up-client/types";
 
 import * as Client from "./client";
 import stateStore from "./store/state";
+import { Server } from "./types";
 
 export function exportDelegation(del: API.Delegation): [
   string,
@@ -28,18 +27,6 @@ export function exportDelegation(del: API.Delegation): [
   ];
 }
 
-export async function createNewClock({
-  audience,
-  databaseName,
-  serverURI,
-  serverId,
-}: {
-  audience: Principal;
-  databaseName: string;
-  serverURI: URI;
-  serverId: `did:${string}:${string}`;
-}): Promise<Client.Clock> {}
-
 export function uint8ArrayToArrayBuffer(array: Uint8Array) {
   if (array.byteOffset === 0 && array.byteLength === array.buffer.byteLength) {
     return array.buffer;
@@ -48,16 +35,8 @@ export function uint8ArrayToArrayBuffer(array: Uint8Array) {
   }
 }
 
-export async function w3Client({
-  serverHost,
-  serverId,
-  storeName,
-}: {
-  serverHost: URI;
-  serverId: Principal;
-  storeName: string;
-}) {
-  const service = Client.service({ host: serverHost, id: serverId });
+export async function w3Client({ server, storeName }: { server: Server; storeName: string }) {
+  const service = Client.service(server);
   const w3Service = service as unknown as ConnectionView<W3Service>;
   const store = await stateStore(storeName);
 

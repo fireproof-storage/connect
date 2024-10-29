@@ -11,6 +11,7 @@ import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-
 import { registerUCANStoreProtocol } from "./ucan-gateway";
 import stateStore from "./store/state";
 import type { Clock, ClockWithoutDelegation, Server } from "./types";
+import { w3Client } from "./common";
 
 // Usage:
 //
@@ -71,6 +72,13 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
     connection.connect_X(blockstore);
     return connection;
   });
+}
+
+// AGENT
+// -----
+
+export function agent() {
+  // w3Client();
 }
 
 // CLOCK
@@ -153,11 +161,6 @@ export async function registerClock({ clock, server }: { clock: Clock; server: S
 // LOGIN
 // -----
 // TODO
-
-// OTHER
-// -----
-// TODO:
-// registerClock()
 
 // SERVER
 // ------

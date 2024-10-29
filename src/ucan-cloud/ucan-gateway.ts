@@ -1,7 +1,7 @@
 import { exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement";
 import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError, ensureLogger, rt } from "@fireproof/core";
 import { DID } from "@ucanto/core";
-import { ConnectionView, Principal } from "@ucanto/interface";
+import { ConnectionView } from "@ucanto/interface";
 import * as W3 from "@web3-storage/w3up-client";
 import { fromEmail } from "@web3-storage/did-mailto";
 
@@ -9,7 +9,7 @@ import { CID } from "multiformats";
 
 import * as Common from "./common";
 import * as Client from "./client";
-import { Service } from "./types";
+import { Server, Service } from "./types";
 
 export class UCANGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -18,7 +18,7 @@ export class UCANGateway implements bs.Gateway {
   inst?: {
     clockId: `did:key:${string}`;
     email: `${string}@${string}`;
-    server: Principal;
+    server: Server;
     service: ConnectionView<Service>;
     w3: W3.Client;
   };
@@ -61,13 +61,12 @@ export class UCANGateway implements bs.Gateway {
     const serverHost = URI.from(serverHostUrl);
     if (!serverHost) throw new Error("`server-host` is not a valid URL");
 
-    const server = DID.parse(serverId);
-    const service = Client.service({ id: server, uri: serverHost });
+    const server = { id: DID.parse(serverId), uri: serverHost };
+    const service = Client.service(server);
 
     // Establish W3 client
     const w3 = await Common.w3Client({
-      serverHost,
-      serverId: server,
+      server,
       storeName: baseUrl.getParam("conf-profile") || "w3up-client",
     });
 
