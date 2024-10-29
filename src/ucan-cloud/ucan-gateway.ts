@@ -3,13 +3,13 @@ import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError, ensureL
 import { DID } from "@ucanto/core";
 import { ConnectionView, Principal } from "@ucanto/interface";
 import * as W3 from "@web3-storage/w3up-client";
-import { Service as W3Service } from "@web3-storage/w3up-client/types";
+import { fromEmail } from "@web3-storage/did-mailto";
 
 import { CID } from "multiformats";
 
+import * as Common from "./common";
 import * as Client from "./client";
 import { Service } from "./types";
-import stateStore from "./store/state";
 
 export class UCANGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -55,24 +55,20 @@ export class UCANGateway implements bs.Gateway {
     await this.sthis.start();
     this.logger.Debug().Str("url", baseUrl.toString()).Msg("start");
 
-    // W3 client
+    // Server Host & ID
     const serverHostUrl = baseUrl.getParam("server-host")?.replace(/\/+$/, "");
     if (!serverHostUrl) throw new Error("Expected a `server-host` url param");
     const serverHost = URI.from(serverHostUrl);
     if (!serverHost) throw new Error("`server-host` is not a valid URL");
 
     const server = DID.parse(serverId);
-    const service = Client.service({ host: serverHost, id: server });
-    const w3Service = service as unknown as ConnectionView<W3Service>;
-    const store = await stateStore(baseUrl.getParam("conf-profile") || "w3up-client");
+    const service = Client.service({ id: server, uri: serverHost });
 
-    const w3 = await W3.create({
-      store,
-      serviceConf: {
-        access: w3Service,
-        filecoin: w3Service,
-        upload: w3Service,
-      },
+    // Establish W3 client
+    const w3 = await Common.w3Client({
+      serverHost,
+      serverId: server,
+      storeName: baseUrl.getParam("conf-profile") || "w3up-client",
     });
 
     this.logger.Debug().Str("clockId", clockId).Str("email", email).Str("serverId", serverId).Msg("start");
@@ -268,13 +264,22 @@ export class UCANGateway implements bs.Gateway {
       throw new Error("Not started yet");
     }
 
-    const account = await this.inst.w3.login(this.inst.email);
+    if (this.inst.email === undefined) {
+      throw new Error("Email was not provided");
+    }
 
-    const attestation = account.proofs.find((p) => p.capabilities[0].can === "ucan/attest");
-    const delegation = account.proofs.find((p) => p.capabilities[0].can === "*");
+    const account = fromEmail(this.inst.email);
+    const session = W3.Account.list({ agent: this.inst.w3.agent }, { account })[account];
+
+    if (!session) {
+      throw new Error("Can't proceed");
+    }
+
+    const attestation = session.proofs.find((p) => p.capabilities[0].can === "ucan/attest");
+    const delegation = session.proofs.find((p) => p.capabilities[0].can === "*");
 
     if (!attestation || !delegation) {
-      throw new Error("Unable to locate agent attestion or delegation");
+      throw new Error("Unable to locate agent attestion or delegation. Make sure you are logged in!");
     }
 
     return {

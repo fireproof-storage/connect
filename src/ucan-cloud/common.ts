@@ -1,16 +1,13 @@
 import { URI } from "@adviser/cement";
 
-import { API, DID } from "@ucanto/core";
-import { Absentee } from "@ucanto/principal";
-import * as DidMailto from "@web3-storage/did-mailto";
-import { AgentDataExport, DelegationMeta } from "@web3-storage/access";
+import { API } from "@ucanto/core";
+import { ConnectionView, Principal } from "@ucanto/interface";
+import { DelegationMeta } from "@web3-storage/access";
+import * as W3 from "@web3-storage/w3up-client";
+import { Service as W3Service } from "@web3-storage/w3up-client/types";
 
 import * as Client from "./client";
 import stateStore from "./store/state";
-
-export function clockStoreName({ databaseName }: { databaseName: string }) {
-  return `fireproof/${databaseName}/clock`;
-}
 
 export function exportDelegation(del: API.Delegation): [
   string,
@@ -32,41 +29,16 @@ export function exportDelegation(del: API.Delegation): [
 }
 
 export async function createNewClock({
+  audience,
   databaseName,
-  email,
   serverURI,
   serverId,
 }: {
+  audience: Principal;
   databaseName: string;
-  email: `${string}@${string}`;
   serverURI: URI;
   serverId: `did:${string}:${string}`;
-}): Promise<Client.Clock> {
-  const audience = Absentee.from({ id: DidMailto.fromEmail(email) });
-  const storeName = clockStoreName({ databaseName });
-  const clockStore = await stateStore(storeName);
-  const clock = await Client.createClock({ audience });
-
-  const raw: AgentDataExport = {
-    meta: { name: storeName, type: "service" },
-    principal: clock.signer().toArchive(),
-    spaces: new Map(),
-    delegations: new Map([]),
-    // delegations: new Map([exportDelegation(clock.delegation)]),
-  };
-
-  await clockStore.save(raw);
-
-  const server = DID.parse(serverId);
-  // const serverHostURI = URI.from(serverHost);
-  // if (!serverHostURI) throw new Error("`server-host` is not a valid URL");
-
-  const service = Client.service({ host: serverURI, id: server });
-  const registration = await Client.registerClock({ clock, server, service });
-  if (registration.out.error) throw registration.out.error;
-
-  return clock;
-}
+}): Promise<Client.Clock> {}
 
 export function uint8ArrayToArrayBuffer(array: Uint8Array) {
   if (array.byteOffset === 0 && array.byteLength === array.buffer.byteLength) {
@@ -74,4 +46,27 @@ export function uint8ArrayToArrayBuffer(array: Uint8Array) {
   } else {
     return array.buffer.slice(array.byteOffset, array.byteLength + array.byteOffset);
   }
+}
+
+export async function w3Client({
+  serverHost,
+  serverId,
+  storeName,
+}: {
+  serverHost: URI;
+  serverId: Principal;
+  storeName: string;
+}) {
+  const service = Client.service({ host: serverHost, id: serverId });
+  const w3Service = service as unknown as ConnectionView<W3Service>;
+  const store = await stateStore(storeName);
+
+  return await W3.create({
+    store,
+    serviceConf: {
+      access: w3Service,
+      filecoin: w3Service,
+      upload: w3Service,
+    },
+  });
 }

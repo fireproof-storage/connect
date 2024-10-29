@@ -32,7 +32,6 @@
     "@web3-storage/capabilities": "^17.3.0",
     "@web3-storage/did-mailto": "^2.1.0",
     "@web3-storage/w3up-client": "^15.0.0",
-    "idb-keyval": "^6.2.1",
     "multiformats": "^13.3.0"
   }
 }

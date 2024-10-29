@@ -1,10 +1,16 @@
-import { KeyedResolvOnce, runtimeFn, BuildURI, CoerceURI } from "@adviser/cement";
+import { KeyedResolvOnce, runtimeFn, BuildURI, URI } from "@adviser/cement";
 import { bs, Database } from "@fireproof/core";
+import { Principal, SignerArchive } from "@ucanto/interface";
+import { AgentDataExport } from "@web3-storage/access";
+import { extract } from "@ucanto/core/delegation";
+import { ed25519 } from "@ucanto/principal";
+import { DID } from "@ucanto/core";
 
+import * as Client from "./client";
 import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
 import { registerUCANStoreProtocol } from "./ucan-gateway";
-import { clockStoreName, createNewClock } from "./common";
 import stateStore from "./store/state";
+import type { Clock, ClockWithoutDelegation, Server } from "./types";
 
 // Usage:
 //
@@ -28,10 +34,9 @@ registerUCANStoreProtocol();
 const connectionCache = new KeyedResolvOnce<bs.Connection>();
 
 export interface ConnectionParams {
-  readonly clockId?: `did:key:${string}`;
-  readonly email: `${string}@${string}`;
-  readonly serverId?: `did:${string}:${string}`;
-  readonly didServerURL?: CoerceURI;
+  readonly clock: Clock | ClockWithoutDelegation;
+  readonly email?: `${string}@${string}`;
+  readonly server: Server;
 }
 
 export async function connect(db: Database, params: ConnectionParams): Promise<bs.Connection> {
@@ -43,67 +48,140 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
     throw new Error("`dbName` is required");
   }
 
-  if (!email) {
-    throw new Error("`email` is required");
-  }
-
-  const didServerUrl = BuildURI.from(params.didServerURL || "http://localhost:8787");
   // DB name
-  const existingName = didServerUrl.getParam("name");
+  const existingName = params.server.uri.getParam("name");
   const name = existingName || dbName;
 
-  // Server host
-  // const serverHostUrl = url.replace(/\/+$/, "");
-
-  // Server id
-  let serverId: `did:${string}:${string}`;
-
-  if (params.serverId) {
-    serverId = params.serverId;
-  } else {
-    serverId = await fetch(didServerUrl.pathname("/did").asURL())
-      .then((r) => r.text())
-      .then((r) => r as `did:${string}:${string}`);
-  }
-
-  // Use stored clock id if needed
-  const storeName = clockStoreName({ databaseName: dbName });
-  const clockStore = await stateStore(storeName);
-
-  let clockId = params.clockId;
-  if (!clockId) {
-    const clockExport = await clockStore.load();
-    if (clockExport) clockId = clockExport.principal.id as `did:key:${string}`;
-  }
-  // Register new clock if needed
-  if (!clockId) {
-    const newClock = await createNewClock({
-      databaseName: dbName,
-      email,
-      serverURI: didServerUrl.URI(),
-      serverId,
-    });
-
-    clockId = newClock.did();
-  }
-
-  const fpUrl = BuildURI.from(didServerUrl.toString())
+  // Build FP URL
+  const fpUrl = params.server.uri
+    .build()
     .protocol("ucan:")
-    .setParam("server-host", didServerUrl.toString())
+    .setParam("server-host", params.server.uri.toString())
     .setParam("name", name)
-    .setParam("clock-id", clockId)
-    .setParam("email", email)
-    .setParam("server-id", serverId)
+    .setParam("clock-id", params.clock.id.toString())
+    .setParam("server-id", params.server.id.toString())
     .setParam("storekey", `@${dbName}:data@`);
-  // eslint-disable-next-line no-console
-  console.log("fpUrl", fpUrl.toString());
+
+  if (email) fpUrl.setParam("email", email);
+
   // Connect
   return connectionCache.get(fpUrl.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
-    // eslint-disable-next-line no-console
-    console.log("Connecting to Fireproof Cloud", fpUrl);
     const connection = connectionFactory(sthis, fpUrl);
     connection.connect_X(blockstore);
     return connection;
   });
+}
+
+// CLOCK
+// -----
+
+export function clockStoreName({ databaseName }: { databaseName: string }) {
+  return `fireproof/${databaseName}/clock`;
+}
+
+export async function createAndSaveClock({
+  audience,
+  databaseName,
+  storeName,
+}: {
+  audience: Principal;
+  databaseName: string;
+  storeName?: string;
+}): Promise<Clock> {
+  storeName = storeName || clockStoreName({ databaseName });
+  const clockStore = await stateStore(storeName);
+  const clock = await Client.createClock({ audience });
+  const signer = clock.signer;
+
+  if (signer === undefined) {
+    throw new Error("Cannot save a clock without a signer");
+  }
+
+  const raw: AgentDataExport = {
+    meta: { name: storeName, type: "service" },
+    principal: signer.toArchive(),
+    spaces: new Map(),
+    delegations: new Map([]),
+    // delegations: new Map([exportDelegation(clock.delegation)]),
+  };
+
+  await clockStore.save(raw);
+  return clock;
+}
+
+export async function loadSavedClock({
+  databaseName,
+  storeName,
+}: {
+  databaseName: string;
+  storeName?: string;
+}): Promise<Clock | undefined> {
+  storeName = storeName || clockStoreName({ databaseName });
+  const clockStore = await stateStore(storeName);
+
+  const clockExport = await clockStore.load();
+  if (clockExport) {
+    const delegationKey = Array.from(clockExport.delegations.keys())[0];
+    const delegationBytes = delegationKey ? clockExport.delegations.get(delegationKey)?.delegation?.[0] : undefined;
+
+    if (delegationBytes === undefined) {
+      return undefined;
+    }
+
+    const delegationResult = await extract(new Uint8Array(delegationBytes.bytes));
+    if (delegationResult.error) {
+      throw new Error("Failed to extract delegations");
+    }
+
+    return {
+      delegation: delegationResult.ok,
+      id: DID.parse(clockExport.principal.id as `did:key:${string}`),
+      signer: ed25519.from(clockExport.principal as SignerArchive<`did:key:${string}`, ed25519.SigAlg>),
+    };
+  }
+
+  return undefined;
+}
+
+export async function registerClock({ clock, server }: { clock: Clock; server: Server }) {
+  const service = Client.service(server);
+  const registration = await Client.registerClock({ clock, server, service });
+  if (registration.out.error) throw registration.out.error;
+}
+
+// LOGIN
+// -----
+// TODO
+
+// OTHER
+// -----
+// TODO:
+// registerClock()
+
+// SERVER
+// ------
+
+/**
+ * Determine server properties.
+ * NOTE: This sends a request to the server for the DID if you don't provide it yourself.
+ *       In other words, when working offline, cache the server id and provide it here.
+ */
+export async function server(url = "http://localhost:8787", id?: `did:${string}:${string}`): Promise<Server> {
+  const uri = BuildURI.from(url);
+
+  if (id === undefined) {
+    id = await fetch(uri.pathname("/did").asURL())
+      .then((r) => r.text())
+      .then((r) => r as `did:${string}:${string}`);
+  }
+
+  if (id === undefined) {
+    throw new Error("Unable to determine server id.");
+  }
+
+  return {
+    id: DID.parse(id),
+    uri: URI.from(uri),
+  };
 }

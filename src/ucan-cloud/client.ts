@@ -1,4 +1,3 @@
-import { URI } from "@adviser/cement";
 import { connect } from "@ucanto/client";
 import { Channel, ConnectionView, Delegation, DID, Link, Principal, Signer } from "@ucanto/interface";
 import { ed25519 } from "@ucanto/principal";
@@ -10,7 +9,7 @@ import { sha256 } from "multiformats/hashes/sha2";
 
 import * as ClockCaps from "./clock/capabilities";
 import * as StoreCaps from "./store/capabilities";
-import { Service } from "./types";
+import { Server, type Clock, type Service } from "./types";
 
 ////////////////////////////////////////
 // 🔮
@@ -20,12 +19,6 @@ export interface Agent {
   readonly attestation: Delegation;
   readonly delegation: Delegation;
   readonly signer: Signer<DID<"key">>;
-}
-
-export interface Clock {
-  readonly delegation: Delegation;
-  did(): DID<"key">;
-  signer(): Signer<DID<"key">>;
 }
 
 ////////////////////////////////////////
@@ -58,7 +51,6 @@ export async function advanceClock({
 
 /**
  * Create a clock.
- * Audience is always a `did:mailto` DID.
  */
 export async function createClock({ audience }: { audience: Principal }): Promise<Clock> {
   const signer = await ed25519.Signer.generate();
@@ -71,8 +63,8 @@ export async function createClock({ audience }: { audience: Principal }): Promis
 
   return {
     delegation,
-    did: () => signer.did(),
-    signer: () => signer,
+    id: signer,
+    signer,
   };
 }
 
@@ -132,13 +124,13 @@ export async function registerClock({
   service,
 }: {
   clock: Clock;
-  server: Principal;
+  server: Server;
   service: ConnectionView<Service>;
 }) {
   const invocation = ClockCaps.register.invoke({
-    issuer: clock.signer(),
-    audience: server,
-    with: clock.did(),
+    issuer: clock.signer,
+    audience: server.id,
+    with: clock.id.did(),
     nb: { proof: clock.delegation.cid },
     proofs: [clock.delegation],
   });
@@ -150,8 +142,8 @@ export async function registerClock({
 // CONNECTION
 ////////////////////////////////////////
 
-export function service(server: { id: Principal; host: URI }) {
-  const url = server.host.toString();
+export function service(server: Server) {
+  const url = server.uri.toString();
 
   const channel: Channel<Service> = {
     async request({ headers, body }) {

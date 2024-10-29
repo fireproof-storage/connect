@@ -1,4 +1,15 @@
-import { Failure, InferInvokedCapability, Link, ServiceMethod, Unit } from "@ucanto/interface";
+import { type URI } from "@adviser/cement";
+import {
+  Delegation,
+  DID,
+  Failure,
+  InferInvokedCapability,
+  Link,
+  Principal,
+  ServiceMethod,
+  Signer,
+  Unit,
+} from "@ucanto/interface";
 import * as W3 from "@web3-storage/capabilities/types";
 
 import * as ClockCaps from "./clock/capabilities";
@@ -28,6 +39,16 @@ export interface Service {
 
 // CLOCK
 
+export interface Clock {
+  readonly delegation: Delegation;
+  id: Principal<DID<"key">>;
+  signer: Signer<DID<"key">>;
+}
+
+export interface ClockWithoutDelegation {
+  id: DID<"key">;
+}
+
 export type ClockAdvance = InferInvokedCapability<typeof ClockCaps.advance>;
 export type ClockAuthorizeShare = InferInvokedCapability<typeof ClockCaps.authorizeShare>;
 export type ClockClaimShare = InferInvokedCapability<typeof ClockCaps.claimShare>;
@@ -54,6 +75,13 @@ export interface ClockClaimSharesSuccess {
 
 export interface ClockHeadSuccess {
   readonly head?: string;
+}
+
+// SERVER
+
+export interface Server {
+  id: Principal;
+  uri: URI;
 }
 
 // STORE
