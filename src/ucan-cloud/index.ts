@@ -3,8 +3,9 @@ import { bs, Database } from "@fireproof/core";
 import { Principal, SignerArchive } from "@ucanto/interface";
 import { Agent, AgentData, AgentDataExport } from "@web3-storage/access";
 import { extract } from "@ucanto/core/delegation";
-import { ed25519 } from "@ucanto/principal";
+import { Absentee, ed25519 } from "@ucanto/principal";
 import { DID } from "@ucanto/core";
+import { fromEmail } from "@web3-storage/did-mailto";
 
 import * as Client from "./client";
 import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
@@ -201,7 +202,10 @@ export async function registerClock({ clock, server }: { clock: Clock; server: S
 
 // LOGIN
 // -----
-// TODO
+
+export function email(email: `${string}@${string}`): Principal<`did:mailto:${string}`> {
+  return Absentee.from({ id: fromEmail(email) });
+}
 
 // SERVER
 // ------
@@ -211,7 +215,10 @@ export async function registerClock({ clock, server }: { clock: Clock; server: S
  * NOTE: This sends a request to the server for the DID if you don't provide it yourself.
  *       In other words, when working offline, cache the server id and provide it here.
  */
-export async function server(url = "http://localhost:8787", id?: `did:${string}:${string}`): Promise<Server> {
+export async function server(
+  url = "https://fireproof-ucan.jchris.workers.dev",
+  id?: `did:${string}:${string}`
+): Promise<Server> {
   const uri = BuildURI.from(url);
 
   if (id === undefined) {
@@ -229,6 +236,3 @@ export async function server(url = "http://localhost:8787", id?: `did:${string}:
     uri: URI.from(uri),
   };
 }
-
-// UCAN
-// ----
