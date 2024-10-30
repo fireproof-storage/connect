@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "prepublish": "pnpm run build",
-    "publish": "pnpm run '/publish:/'",
+    "publish-packages": "pnpm run '/publish:/'",
     "publish:aws": "tsx ./publish-package.ts ./dist/aws/package.json",
     "publish:cloud": "tsx ./publish-package.ts ./dist/cloud/package.json",
     "publish:netlify": "tsx ./publish-package.ts ./dist/netlify/package.json",
