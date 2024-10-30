@@ -5,7 +5,7 @@ import { Delegation, DID, generate } from '@ucanto/principal/ed25519'
 import { ConfDriver } from '@web3-storage/access/drivers/conf'
 import { AgentDataExport, AgentDataModel, CIDString, DelegationMeta, SpaceMeta } from '@web3-storage/access/types'
 import { ResolveOnce, URI } from '@adviser/cement'
-import { Database, fireproof, PARAM } from '@fireproof/core'
+import { Database, fireproof } from '@fireproof/core'
 
 function replacer(_k: string, v: { type: string, data: unknown[] }): unknown {
   // eslint-disable-next-line no-restricted-globals
@@ -54,13 +54,15 @@ class FPStore extends ConfDriver<AgentDataExport> {
   constructor(opts: { fpStoreUrl: string, profile: string }) {
     super(opts)
     this.#fpStoreUrl = URI.from(opts.fpStoreUrl)
-    if (!this.#fpStoreUrl.getParam(PARAM.NAME)) {
+    if (!this.#fpStoreUrl.getParam("name")) {
       throw new Error("Missing name parameter in the store URL")
     }
     this.profile = opts.profile
-    this.db = fireproof(this.#fpStoreUrl.getParam(PARAM.NAME, ""), {
-      storeUrls: {
-        base: this.#fpStoreUrl,
+    this.db = fireproof(this.#fpStoreUrl.getParam("name", ""), {
+      store: {
+        stores: {
+          base: this.#fpStoreUrl,
+        }
       }
     })
   }
