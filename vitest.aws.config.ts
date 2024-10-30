@@ -11,7 +11,7 @@ export default defineConfig({
     ],
     include: [
       "src/aws/*test.?(c|m)[jt]s?(x)",
-      "node_modules/@fireproof/core/tests/**/*test.?(c|m)[jt]s?(x)",
+      // "node_modules/@fireproof/core/tests/**/*test.?(c|m)[jt]s?(x)",
       "src/connector.test.ts",
     ],
     globals: true,

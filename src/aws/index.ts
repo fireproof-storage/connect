@@ -1,7 +1,7 @@
 import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
 import { bs, Database } from "@fireproof/core";
 import { registerAWSStoreProtocol } from "./gateway";
-import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
+import { BuildURI, KeyedResolvOnce } from "@adviser/cement";
 
 // Usage:
 //
@@ -17,12 +17,6 @@ import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
 // if (!process.env.FP_KEYBAG_URL) {
 //   process.env.FP_KEYBAG_URL = "file://./dist/kb-dir-aws?fs=mem";
 // }
-
-if (!runtimeFn().isBrowser) {
-  const url = BuildURI.from(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-aws?fs=mem");
-  url.setParam("extractKey", "_deprecated_internal_api");
-  process.env.FP_KEYBAG_URL = url.toString();
-}
 
 registerAWSStoreProtocol();
 

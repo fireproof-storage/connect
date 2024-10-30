@@ -290,6 +290,7 @@ export class AWSTestStore implements bs.TestGateway {
 const onceRegisterAWSStoreProtocol = new KeyedResolvOnce<() => void>();
 export function registerAWSStoreProtocol(protocol = "aws:", overrideBaseURL?: string) {
   return onceRegisterAWSStoreProtocol.get(protocol).once(() => {
+    URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
       protocol,
       overrideBaseURL,
