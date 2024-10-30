@@ -37,11 +37,3 @@ export function exportDelegation(del: Delegation): [
     },
   ];
 }
-
-export function uint8ArrayToArrayBuffer(array: Uint8Array) {
-  if (array.byteOffset === 0 && array.byteLength === array.buffer.byteLength) {
-    return array.buffer;
-  } else {
-    return array.buffer.slice(array.byteOffset, array.byteLength + array.byteOffset);
-  }
-}
