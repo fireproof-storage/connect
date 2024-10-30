@@ -11,16 +11,9 @@ import * as Client from "./client";
 import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
 import { registerUCANStoreProtocol } from "./ucan-gateway";
 import stateStore from "./store/state";
-import type { Clock, ClockWithoutDelegation, Server } from "./types";
+import type { AgentWithStoreName, Clock, ClockWithoutDelegation, Server } from "./types";
 
-// Usage:
-//
-// import { useFireproof } from 'use-fireproof'
-// import { connect } from '@fireproof/ucan'
-//
-// const { db } = useFireproof('test')
-//
-// const cx = connect.ucan(db, 'example@email.com', 'http://localhost:8787');
+// Setup
 
 if (!runtimeFn().isBrowser) {
   const url = BuildURI.from(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-ucan-cloud");
@@ -31,13 +24,15 @@ if (!runtimeFn().isBrowser) {
 registerUCANStoreProtocol();
 
 // CONNECT
+// =======
 
 const connectionCache = new KeyedResolvOnce<bs.Connection>();
 
 export interface ConnectionParams {
-  readonly clock: Clock | ClockWithoutDelegation;
-  readonly email?: `${string}@${string}`;
-  readonly server: Server;
+  readonly agent?: AgentWithStoreName;
+  readonly clock?: Clock | ClockWithoutDelegation;
+  readonly email?: Principal<`did:mailto:${string}`>;
+  readonly server?: Server;
 }
 
 export async function connect(db: Database, params: ConnectionParams): Promise<bs.Connection> {
@@ -49,21 +44,27 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
     throw new Error("`dbName` is required");
   }
 
+  // Parts
+  const agnt = params.agent || (await agent({ databaseName: dbName }));
+  const serv = params.server || (await server());
+  const klok = params.clock || (await clock({ audience: email || agnt.agent, databaseName: dbName }));
+
   // DB name
-  const existingName = params.server.uri.getParam("name");
+  const existingName = serv.uri.getParam("name");
   const name = existingName || dbName;
 
   // Build FP URL
-  const fpUrl = params.server.uri
+  const fpUrl = serv.uri
     .build()
     .protocol("ucan:")
-    .setParam("server-host", params.server.uri.toString())
+    .setParam("agent-store", agnt.storeName)
+    .setParam("clock-id", klok.id.toString())
     .setParam("name", name)
-    .setParam("clock-id", params.clock.id.toString())
-    .setParam("server-id", params.server.id.toString())
+    .setParam("server-host", serv.uri.toString())
+    .setParam("server-id", serv.id.toString())
     .setParam("storekey", `@${dbName}:data@`);
 
-  if (email) fpUrl.setParam("email", email);
+  if (email) fpUrl.setParam("email-id", email.did());
 
   // Connect
   return connectionCache.get(fpUrl.toString()).once(() => {
@@ -77,7 +78,7 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
 // AGENT
 // -----
 
-export async function agent(options?: { databaseName?: string; storeName?: string }): Promise<Agent> {
+export async function agent(options?: { databaseName?: string; storeName?: string }): Promise<AgentWithStoreName> {
   const agentFromStore = await loadSavedAgent(options);
   if (agentFromStore) return agentFromStore;
   return await createAndSaveAgent(options);
@@ -87,7 +88,10 @@ export function agentStoreName({ databaseName }: { databaseName?: string }) {
   return databaseName ? `fireproof/${databaseName}/agent` : `fireproof/agent`;
 }
 
-export async function createAndSaveAgent(options?: { databaseName?: string; storeName?: string }): Promise<Agent> {
+export async function createAndSaveAgent(options?: {
+  databaseName?: string;
+  storeName?: string;
+}): Promise<AgentWithStoreName> {
   let storeName = options?.storeName;
   storeName = storeName || agentStoreName({ databaseName: options?.databaseName });
   const store = await stateStore(storeName);
@@ -98,20 +102,26 @@ export async function createAndSaveAgent(options?: { databaseName?: string; stor
     principal,
   };
 
-  return await Agent.create(agentData, { store });
+  return {
+    agent: await Agent.create(agentData, { store }),
+    storeName,
+  };
 }
 
 export async function loadSavedAgent(options?: {
   databaseName?: string;
   storeName?: string;
-}): Promise<Agent | undefined> {
+}): Promise<AgentWithStoreName | undefined> {
   let storeName = options?.storeName;
   storeName = storeName || agentStoreName({ databaseName: options?.databaseName });
   const store = await stateStore(storeName);
 
   const data = await store.load();
   if (!data) return undefined;
-  return Agent.from(data, { store });
+  return {
+    agent: Agent.from(data, { store }),
+    storeName,
+  };
 }
 
 // CLOCK
@@ -125,6 +135,10 @@ export async function clock(options: {
   const clockFromStore = await loadSavedClock(options);
   if (clockFromStore) return clockFromStore;
   return await createAndSaveClock(options);
+}
+
+export function clockId(id: `did:key:${string}`): ClockWithoutDelegation {
+  return { id };
 }
 
 export function clockStoreName({ databaseName }: { databaseName: string }) {

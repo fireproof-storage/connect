@@ -37,7 +37,7 @@ export class UCANGateway implements bs.Gateway {
 
   async #start(baseUrl: URI): Promise<URI> {
     const dbName = baseUrl.getParam("name");
-    const emailParam = baseUrl.getParam("email");
+    const emailIdParam = baseUrl.getParam("email-id");
     const clockIdParam = baseUrl.getParam("clock-id");
     const serverId = baseUrl.getParam("server-id");
 
@@ -46,7 +46,7 @@ export class UCANGateway implements bs.Gateway {
     if (!serverId) throw new Error("Missing `server-id` param");
 
     const clockId = clockIdParam as `did:key:${string}`;
-    const email = emailParam ? (emailParam as `${string}@${string}`) : undefined;
+    const email = emailIdParam ? (emailIdParam as `did:mailto:${string}`) : undefined;
 
     await this.sthis.start();
     this.logger.Debug().Str("url", baseUrl.toString()).Msg("start");
@@ -60,8 +60,10 @@ export class UCANGateway implements bs.Gateway {
     const server = { id: DID.parse(serverId), uri: serverHost };
     const service = Client.service(server);
 
+    // Agent
+
     // This
-    this.inst = { clockId, email, server, service };
+    this.inst = { agent, clockId, email, server, service };
 
     // Start URI
     return baseUrl.build().defParam("version", "v0.1-ucan").URI();
@@ -103,7 +105,7 @@ export class UCANGateway implements bs.Gateway {
     switch (store.toLowerCase()) {
       case "data": {
         await Client.store({
-          agent: this.inst.w3.agent.issuer,
+          agent: this.inst.agent,
           bytes: body,
           cid: CID.parse(key).toV1(),
           server: this.inst.server,

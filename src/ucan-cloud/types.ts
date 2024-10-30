@@ -1,5 +1,6 @@
 import { type URI } from "@adviser/cement";
-import {
+import { type Agent } from "@web3-storage/access";
+import type {
   Delegation,
   DID,
   Failure,
@@ -15,26 +16,13 @@ import * as W3 from "@web3-storage/capabilities/types";
 import * as ClockCaps from "./clock/capabilities";
 import * as StoreCaps from "./store/capabilities";
 
-export interface Service {
-  readonly access: {
-    readonly authorize: ServiceMethod<W3.AccessAuthorize, W3.AccessAuthorizeSuccess, Failure>;
-    readonly claim: ServiceMethod<W3.AccessClaim, W3.AccessClaimSuccess, W3.AccessClaimFailure>;
-    readonly confirm: ServiceMethod<W3.AccessConfirm, W3.AccessConfirmSuccess, W3.AccessConfirmFailure>;
-    readonly delegate: ServiceMethod<W3.AccessDelegate, W3.AccessDelegateSuccess, W3.AccessDelegateFailure>;
-  };
-  readonly clock: {
-    readonly advance: ServiceMethod<ClockAdvance, ClockAdvanceSuccess, Failure>;
-    readonly "authorize-share": ServiceMethod<ClockAuthorizeShare, ClockAuthorizeShareSuccess, Failure>;
-    readonly "claim-share": ServiceMethod<ClockClaimShare, ClockClaimShareSuccess, Failure>;
-    readonly "claim-shares": ServiceMethod<ClockClaimShares, ClockClaimSharesSuccess, Failure>;
-    readonly "confirm-share": ServiceMethod<ClockConfirmShare, Unit, Failure>;
-    readonly head: ServiceMethod<ClockHead, ClockHeadSuccess, Failure>;
-    readonly register: ServiceMethod<ClockRegister, Unit, Failure>;
-  };
-  readonly store: {
-    readonly add: ServiceMethod<StoreAdd, StoreAddSuccess, Failure>;
-    readonly get: ServiceMethod<StoreGet, StoreGetSuccess, Failure>;
-  };
+// AGENT
+
+export { Agent } from "@web3-storage/access";
+
+export interface AgentWithStoreName {
+  agent: Agent;
+  storeName: string;
 }
 
 // CLOCK
@@ -82,6 +70,30 @@ export interface ClockHeadSuccess {
 export interface Server {
   id: Principal;
   uri: URI;
+}
+
+// SERVICE
+
+export interface Service {
+  readonly access: {
+    readonly authorize: ServiceMethod<W3.AccessAuthorize, W3.AccessAuthorizeSuccess, Failure>;
+    readonly claim: ServiceMethod<W3.AccessClaim, W3.AccessClaimSuccess, W3.AccessClaimFailure>;
+    readonly confirm: ServiceMethod<W3.AccessConfirm, W3.AccessConfirmSuccess, W3.AccessConfirmFailure>;
+    readonly delegate: ServiceMethod<W3.AccessDelegate, W3.AccessDelegateSuccess, W3.AccessDelegateFailure>;
+  };
+  readonly clock: {
+    readonly advance: ServiceMethod<ClockAdvance, ClockAdvanceSuccess, Failure>;
+    readonly "authorize-share": ServiceMethod<ClockAuthorizeShare, ClockAuthorizeShareSuccess, Failure>;
+    readonly "claim-share": ServiceMethod<ClockClaimShare, ClockClaimShareSuccess, Failure>;
+    readonly "claim-shares": ServiceMethod<ClockClaimShares, ClockClaimSharesSuccess, Failure>;
+    readonly "confirm-share": ServiceMethod<ClockConfirmShare, Unit, Failure>;
+    readonly head: ServiceMethod<ClockHead, ClockHeadSuccess, Failure>;
+    readonly register: ServiceMethod<ClockRegister, Unit, Failure>;
+  };
+  readonly store: {
+    readonly add: ServiceMethod<StoreAdd, StoreAddSuccess, Failure>;
+    readonly get: ServiceMethod<StoreGet, StoreGetSuccess, Failure>;
+  };
 }
 
 // STORE
