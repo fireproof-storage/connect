@@ -12,16 +12,6 @@ import * as StoreCaps from "./store/capabilities";
 import { Server, type Clock, type Service } from "./types";
 
 ////////////////////////////////////////
-// 🔮
-////////////////////////////////////////
-
-export interface Agent {
-  readonly attestation: Delegation;
-  readonly delegation: Delegation;
-  readonly signer: Signer<DID<"key">>;
-}
-
-////////////////////////////////////////
 // CLOCK
 ////////////////////////////////////////
 
@@ -29,21 +19,23 @@ export async function advanceClock({
   agent,
   clockId,
   event,
+  proofs,
   server,
   service,
 }: {
-  agent: Agent;
-  clockId: `did:key:${string}`;
+  agent: Signer;
+  clockId: DID<"key">;
   event: Link;
+  proofs: Delegation[];
   server: Server;
   service: ConnectionView<Service>;
 }) {
   const invocation = ClockCaps.advance.invoke({
-    issuer: agent.signer,
+    issuer: agent,
     audience: server.id,
     with: clockId,
     nb: { event },
-    proofs: [agent.delegation, agent.attestation],
+    proofs,
   });
 
   return await invocation.execute(service);
@@ -87,19 +79,21 @@ export async function createClockEvent({ metadata }: { metadata: Uint8Array }) {
 export async function getClockHead({
   agent,
   clockId,
+  proofs,
   server,
   service,
 }: {
-  agent: Agent;
-  clockId: `did:key:${string}`;
+  agent: Signer;
+  clockId: DID<"key">;
+  proofs: Delegation[];
   server: Server;
   service: ConnectionView<Service>;
 }) {
   const invocation = ClockCaps.head.invoke({
-    issuer: agent.signer,
+    issuer: agent,
     audience: server.id,
     with: clockId,
-    proofs: [agent.delegation, agent.attestation],
+    proofs,
   });
 
   return await invocation.execute(service);

@@ -2,12 +2,10 @@ import { exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement"
 import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError, ensureLogger, rt } from "@fireproof/core";
 import { DID } from "@ucanto/core";
 import { ConnectionView } from "@ucanto/interface";
-import * as W3 from "@web3-storage/w3up-client";
 import { fromEmail } from "@web3-storage/did-mailto";
 
 import { CID } from "multiformats";
 
-import * as Common from "./common";
 import * as Client from "./client";
 import { Server, Service } from "./types";
 
@@ -17,10 +15,9 @@ export class UCANGateway implements bs.Gateway {
 
   inst?: {
     clockId: `did:key:${string}`;
-    email: `${string}@${string}`;
+    email?: `${string}@${string}`;
     server: Server;
     service: ConnectionView<Service>;
-    w3: W3.Client;
   };
 
   constructor(sthis: SuperThis) {
@@ -45,12 +42,11 @@ export class UCANGateway implements bs.Gateway {
     const serverId = baseUrl.getParam("server-id");
 
     if (!dbName) throw new Error("Missing `name` param");
-    if (!emailParam) throw new Error("Missing `email` param");
     if (!clockIdParam) throw new Error("Missing `clock-id` param");
     if (!serverId) throw new Error("Missing `server-id` param");
 
     const clockId = clockIdParam as `did:key:${string}`;
-    const email = emailParam as `${string}@${string}`;
+    const email = emailParam ? (emailParam as `${string}@${string}`) : undefined;
 
     await this.sthis.start();
     this.logger.Debug().Str("url", baseUrl.toString()).Msg("start");
@@ -64,16 +60,8 @@ export class UCANGateway implements bs.Gateway {
     const server = { id: DID.parse(serverId), uri: serverHost };
     const service = Client.service(server);
 
-    // Establish W3 client
-    const w3 = await Common.w3Client({
-      server,
-      storeName: baseUrl.getParam("conf-profile") || "w3up-client",
-    });
-
-    this.logger.Debug().Str("clockId", clockId).Str("email", email).Str("serverId", serverId).Msg("start");
-
     // This
-    this.inst = { clockId, email, server, service, w3 };
+    this.inst = { clockId, email, server, service };
 
     // Start URI
     return baseUrl.build().defParam("version", "v0.1-ucan").URI();

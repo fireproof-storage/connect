@@ -1,7 +1,7 @@
 import { KeyedResolvOnce, runtimeFn, BuildURI, URI } from "@adviser/cement";
 import { bs, Database } from "@fireproof/core";
 import { Principal, SignerArchive } from "@ucanto/interface";
-import { AgentDataExport } from "@web3-storage/access";
+import { Agent, AgentData, AgentDataExport } from "@web3-storage/access";
 import { extract } from "@ucanto/core/delegation";
 import { ed25519 } from "@ucanto/principal";
 import { DID } from "@ucanto/core";
@@ -11,7 +11,6 @@ import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-
 import { registerUCANStoreProtocol } from "./ucan-gateway";
 import stateStore from "./store/state";
 import type { Clock, ClockWithoutDelegation, Server } from "./types";
-import { w3Client } from "./common";
 
 // Usage:
 //
@@ -77,12 +76,55 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
 // AGENT
 // -----
 
-export function agent() {
-  // w3Client();
+export async function agent(options?: { databaseName?: string; storeName?: string }): Promise<Agent> {
+  const agentFromStore = await loadSavedAgent(options);
+  if (agentFromStore) return agentFromStore;
+  return await createAndSaveAgent(options);
+}
+
+export function agentStoreName({ databaseName }: { databaseName?: string }) {
+  return databaseName ? `fireproof/${databaseName}/agent` : `fireproof/agent`;
+}
+
+export async function createAndSaveAgent(options?: { databaseName?: string; storeName?: string }): Promise<Agent> {
+  let storeName = options?.storeName;
+  storeName = storeName || agentStoreName({ databaseName: options?.databaseName });
+  const store = await stateStore(storeName);
+
+  const principal = await ed25519.generate();
+  const agentData: Partial<AgentData> = {
+    meta: { name: "fireproof-agent", type: "app" },
+    principal,
+  };
+
+  return await Agent.create(agentData, { store });
+}
+
+export async function loadSavedAgent(options?: {
+  databaseName?: string;
+  storeName?: string;
+}): Promise<Agent | undefined> {
+  let storeName = options?.storeName;
+  storeName = storeName || agentStoreName({ databaseName: options?.databaseName });
+  const store = await stateStore(storeName);
+
+  const data = await store.load();
+  if (!data) return undefined;
+  return Agent.from(data, { store });
 }
 
 // CLOCK
 // -----
+
+export async function clock(options: {
+  audience: Principal;
+  databaseName: string;
+  storeName?: string;
+}): Promise<Clock> {
+  const clockFromStore = await loadSavedClock(options);
+  if (clockFromStore) return clockFromStore;
+  return await createAndSaveClock(options);
+}
 
 export function clockStoreName({ databaseName }: { databaseName: string }) {
   return `fireproof/${databaseName}/clock`;
@@ -98,7 +140,7 @@ export async function createAndSaveClock({
   storeName?: string;
 }): Promise<Clock> {
   storeName = storeName || clockStoreName({ databaseName });
-  const clockStore = await stateStore(storeName);
+  const store = await stateStore(storeName);
   const clock = await Client.createClock({ audience });
   const signer = clock.signer;
 
@@ -110,11 +152,10 @@ export async function createAndSaveClock({
     meta: { name: storeName, type: "service" },
     principal: signer.toArchive(),
     spaces: new Map(),
-    delegations: new Map([]),
-    // delegations: new Map([exportDelegation(clock.delegation)]),
+    delegations: new Map([]), // new Map([exportDelegation(clock.delegation)]),
   };
 
-  await clockStore.save(raw);
+  await store.save(raw);
   return clock;
 }
 
@@ -126,9 +167,9 @@ export async function loadSavedClock({
   storeName?: string;
 }): Promise<Clock | undefined> {
   storeName = storeName || clockStoreName({ databaseName });
-  const clockStore = await stateStore(storeName);
+  const store = await stateStore(storeName);
+  const clockExport = await store.load();
 
-  const clockExport = await clockStore.load();
   if (clockExport) {
     const delegationKey = Array.from(clockExport.delegations.keys())[0];
     const delegationBytes = delegationKey ? clockExport.delegations.get(delegationKey)?.delegation?.[0] : undefined;
@@ -188,3 +229,6 @@ export async function server(url = "http://localhost:8787", id?: `did:${string}:
     uri: URI.from(uri),
   };
 }
+
+// UCAN
+// ----
