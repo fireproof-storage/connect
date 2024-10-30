@@ -1,21 +1,26 @@
 import { exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement";
 import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError, ensureLogger, rt } from "@fireproof/core";
 import { DID } from "@ucanto/core";
-import { ConnectionView } from "@ucanto/interface";
-import { fromEmail } from "@web3-storage/did-mailto";
+import { ConnectionView, Delegation, Principal } from "@ucanto/interface";
+import { Agent } from "@web3-storage/access";
+import { Absentee } from "@ucanto/principal";
 
 import { CID } from "multiformats";
 
 import * as Client from "./client";
 import { Server, Service } from "./types";
+import stateStore from "./store/state";
+import { extractClockDelegation } from "./common";
 
 export class UCANGateway implements bs.Gateway {
   readonly sthis: SuperThis;
   readonly logger: Logger;
 
   inst?: {
-    clockId: `did:key:${string}`;
-    email?: `${string}@${string}`;
+    agent: Agent;
+    clockDelegation?: Delegation;
+    clockId: Principal<`did:key:${string}`>;
+    email?: Principal<`did:mailto:${string}`>;
     server: Server;
     service: ConnectionView<Service>;
   };
@@ -37,19 +42,22 @@ export class UCANGateway implements bs.Gateway {
 
   async #start(baseUrl: URI): Promise<URI> {
     const dbName = baseUrl.getParam("name");
-    const emailIdParam = baseUrl.getParam("email-id");
+
+    const agentStoreName = baseUrl.getParam("agent-store");
     const clockIdParam = baseUrl.getParam("clock-id");
+    const clockStoreName = baseUrl.getParam("clock-store");
+    const emailIdParam = baseUrl.getParam("email-id");
     const serverId = baseUrl.getParam("server-id");
 
+    // Validate params
     if (!dbName) throw new Error("Missing `name` param");
+
+    if (!agentStoreName) throw new Error("Missing `agent-store` param");
     if (!clockIdParam) throw new Error("Missing `clock-id` param");
     if (!serverId) throw new Error("Missing `server-id` param");
 
-    const clockId = clockIdParam as `did:key:${string}`;
-    const email = emailIdParam ? (emailIdParam as `did:mailto:${string}`) : undefined;
-
-    await this.sthis.start();
-    this.logger.Debug().Str("url", baseUrl.toString()).Msg("start");
+    const clockId = DID.parse(clockIdParam) as Principal<`did:key:${string}`>;
+    const email = emailIdParam ? Absentee.from({ id: emailIdParam as `did:mailto:${string}` }) : undefined;
 
     // Server Host & ID
     const serverHostUrl = baseUrl.getParam("server-host")?.replace(/\/+$/, "");
@@ -61,9 +69,30 @@ export class UCANGateway implements bs.Gateway {
     const service = Client.service(server);
 
     // Agent
+    const agentStore = await stateStore(agentStoreName);
+    const agentData = await agentStore.load();
+    if (!agentData) throw new Error("Could not load agent from store, has it been created yet?");
+    const agent = Agent.from(agentData, { store: agentStore });
+
+    // Clock delegation
+    let clockDelegation;
+
+    if (email === undefined) {
+      if (clockStoreName === undefined) {
+        throw new Error("Cannot operate with an email or clock delegation");
+      }
+
+      const clockStore = await stateStore(clockStoreName);
+      const clockExport = await clockStore.load();
+      clockDelegation = clockExport ? await extractClockDelegation(clockExport) : undefined;
+    }
 
     // This
-    this.inst = { agent, clockId, email, server, service };
+    this.inst = { agent, clockDelegation, clockId, email, server, service };
+
+    // Super
+    await this.sthis.start();
+    this.logger.Debug().Str("url", baseUrl.toString()).Msg("start");
 
     // Start URI
     return baseUrl.build().defParam("version", "v0.1-ucan").URI();
@@ -105,7 +134,7 @@ export class UCANGateway implements bs.Gateway {
     switch (store.toLowerCase()) {
       case "data": {
         await Client.store({
-          agent: this.inst.agent,
+          agent: this.inst.agent.issuer,
           bytes: body,
           cid: CID.parse(key).toV1(),
           server: this.inst.server,
@@ -125,7 +154,7 @@ export class UCANGateway implements bs.Gateway {
         this.logger.Debug().Str("cid", event.toString()).Msg("Event created");
 
         await Client.store({
-          agent: this.inst.w3.agent.issuer,
+          agent: this.inst.agent.issuer,
           bytes: event.bytes,
           cid: event.cid,
           server: this.inst.server,
@@ -134,10 +163,16 @@ export class UCANGateway implements bs.Gateway {
 
         this.logger.Debug().Msg("Event stored");
 
-        const { clockId, server, service } = this.inst;
-        const agent = await this.agent();
+        const { agent, clockId, server, service } = this.inst;
+        const advancement = await Client.advanceClock({
+          agent: agent.issuer,
+          clockId,
+          event: event.cid,
+          proofs: this.proofs(),
+          server,
+          service,
+        });
 
-        const advancement = await Client.advanceClock({ agent, clockId, event: event.cid, server, service });
         if (advancement.out.error) throw advancement.out.error;
 
         this.logger.Debug().Str("cid", event.toString()).Msg("Clock advanced");
@@ -183,7 +218,7 @@ export class UCANGateway implements bs.Gateway {
         const cid = CID.parse(key).toV1();
 
         const res = await Client.retrieve({
-          agent: this.inst.w3.agent.issuer,
+          agent: this.inst.agent.issuer,
           cid: cid as CID<unknown, 514, number, 1>,
           server: this.inst.server,
           service: this.inst.service,
@@ -196,8 +231,9 @@ export class UCANGateway implements bs.Gateway {
       }
       case "meta": {
         const head = await Client.getClockHead({
-          agent: await this.agent(),
+          agent: this.inst.agent.issuer,
           clockId: this.inst.clockId,
+          proofs: this.proofs(),
           server: this.inst.server,
           service: this.inst.service,
         });
@@ -210,7 +246,7 @@ export class UCANGateway implements bs.Gateway {
         const cid = CID.parse(head.out.ok.head).toV1();
 
         const res = await Client.retrieve({
-          agent: this.inst.w3.agent.issuer,
+          agent: this.inst.agent.issuer,
           cid: cid,
           server: this.inst.server,
           service: this.inst.service,
@@ -245,37 +281,23 @@ export class UCANGateway implements bs.Gateway {
   // AGENT
   ////////////////////////////////////////
 
-  /**
-   * Produce an agent.
-   */
-  async agent(): Promise<Client.Agent> {
-    if (this.inst === undefined) {
-      throw new Error("Not started yet");
+  proofs(): Delegation[] {
+    if (this.inst && this.inst.email) {
+      const proofs = this.inst.agent.proofs();
+      console.log(proofs);
+
+      // TODO
+      // const attestation = session.proofs.find((p) => p.capabilities[0].can === "ucan/attest");
+      // const delegation = session.proofs.find((p) => p.capabilities[0].can === "*");
+
+      return [];
     }
 
-    if (this.inst.email === undefined) {
-      throw new Error("Email was not provided");
+    if (this.inst && this.inst.clockDelegation) {
+      return [this.inst.clockDelegation];
     }
 
-    const account = fromEmail(this.inst.email);
-    const session = W3.Account.list({ agent: this.inst.w3.agent }, { account })[account];
-
-    if (!session) {
-      throw new Error("Can't proceed");
-    }
-
-    const attestation = session.proofs.find((p) => p.capabilities[0].can === "ucan/attest");
-    const delegation = session.proofs.find((p) => p.capabilities[0].can === "*");
-
-    if (!attestation || !delegation) {
-      throw new Error("Unable to locate agent attestion or delegation. Make sure you are logged in!");
-    }
-
-    return {
-      attestation,
-      delegation,
-      signer: this.inst.w3.agent.issuer,
-    };
+    return [];
   }
 }
 

@@ -24,7 +24,7 @@ export async function advanceClock({
   service,
 }: {
   agent: Signer;
-  clockId: DID<"key">;
+  clockId: Principal<DID<"key">>;
   event: Link;
   proofs: Delegation[];
   server: Server;
@@ -33,7 +33,7 @@ export async function advanceClock({
   const invocation = ClockCaps.advance.invoke({
     issuer: agent,
     audience: server.id,
-    with: clockId,
+    with: clockId.did(),
     nb: { event },
     proofs,
   });
@@ -44,7 +44,7 @@ export async function advanceClock({
 /**
  * Create a clock.
  */
-export async function createClock({ audience }: { audience: Principal }): Promise<Clock> {
+export async function createClock({ audience }: { audience: Principal }): Promise<Omit<Clock, "storeName">> {
   const signer = await ed25519.Signer.generate();
   const delegation = await ClockCaps.clock.delegate({
     issuer: signer,
@@ -84,7 +84,7 @@ export async function getClockHead({
   service,
 }: {
   agent: Signer;
-  clockId: DID<"key">;
+  clockId: Principal<DID<"key">>;
   proofs: Delegation[];
   server: Server;
   service: ConnectionView<Service>;
@@ -92,7 +92,7 @@ export async function getClockHead({
   const invocation = ClockCaps.head.invoke({
     issuer: agent,
     audience: server.id,
-    with: clockId,
+    with: clockId.did(),
     proofs,
   });
 

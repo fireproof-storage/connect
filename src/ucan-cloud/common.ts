@@ -1,7 +1,24 @@
-import { API } from "@ucanto/core";
-import { DelegationMeta } from "@web3-storage/access";
+import { extract } from "@ucanto/core/delegation";
+import { Delegation } from "@ucanto/interface";
+import { AgentDataExport, DelegationMeta } from "@web3-storage/access";
 
-export function exportDelegation(del: API.Delegation): [
+export async function extractClockDelegation(dataExport: AgentDataExport): Promise<Delegation | undefined> {
+  const delegationKey = Array.from(dataExport.delegations.keys())[0];
+  const delegationBytes = delegationKey ? dataExport.delegations.get(delegationKey)?.delegation?.[0] : undefined;
+
+  if (delegationBytes === undefined) {
+    return undefined;
+  }
+
+  const delegationResult = await extract(new Uint8Array(delegationBytes.bytes));
+  if (delegationResult.error) {
+    throw delegationResult.error;
+  }
+
+  return delegationResult.ok;
+}
+
+export function exportDelegation(del: Delegation): [
   string,
   {
     meta: DelegationMeta;

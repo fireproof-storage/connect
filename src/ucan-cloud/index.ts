@@ -2,7 +2,6 @@ import { KeyedResolvOnce, runtimeFn, BuildURI, URI } from "@adviser/cement";
 import { bs, Database } from "@fireproof/core";
 import { Principal, SignerArchive } from "@ucanto/interface";
 import { Agent, AgentData, AgentDataExport } from "@web3-storage/access";
-import { extract } from "@ucanto/core/delegation";
 import { Absentee, ed25519 } from "@ucanto/principal";
 import { DID } from "@ucanto/core";
 import { fromEmail } from "@web3-storage/did-mailto";
@@ -12,6 +11,7 @@ import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-
 import { registerUCANStoreProtocol } from "./ucan-gateway";
 import stateStore from "./store/state";
 import type { AgentWithStoreName, Clock, ClockWithoutDelegation, Server } from "./types";
+import { extractClockDelegation } from "./common";
 
 // Setup
 
@@ -64,6 +64,7 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
     .setParam("server-id", serv.id.toString())
     .setParam("storekey", `@${dbName}:data@`);
 
+  if ("storeName" in klok) fpUrl.setParam("clock-store", klok.storeName);
   if (email) fpUrl.setParam("email-id", email.did());
 
   // Connect
@@ -171,7 +172,7 @@ export async function createAndSaveClock({
   };
 
   await store.save(raw);
-  return clock;
+  return { ...clock, storeName };
 }
 
 export async function loadSavedClock({
@@ -186,22 +187,14 @@ export async function loadSavedClock({
   const clockExport = await store.load();
 
   if (clockExport) {
-    const delegationKey = Array.from(clockExport.delegations.keys())[0];
-    const delegationBytes = delegationKey ? clockExport.delegations.get(delegationKey)?.delegation?.[0] : undefined;
-
-    if (delegationBytes === undefined) {
-      return undefined;
-    }
-
-    const delegationResult = await extract(new Uint8Array(delegationBytes.bytes));
-    if (delegationResult.error) {
-      throw new Error("Failed to extract delegations");
-    }
+    const delegation = await extractClockDelegation(clockExport);
+    if (delegation === undefined) return undefined;
 
     return {
-      delegation: delegationResult.ok,
+      delegation: delegation,
       id: DID.parse(clockExport.principal.id as `did:key:${string}`),
       signer: ed25519.from(clockExport.principal as SignerArchive<`did:key:${string}`, ed25519.SigAlg>),
+      storeName,
     };
   }
 

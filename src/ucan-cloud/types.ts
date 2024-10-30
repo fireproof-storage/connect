@@ -31,6 +31,7 @@ export interface Clock {
   readonly delegation: Delegation;
   id: Principal<DID<"key">>;
   signer: Signer<DID<"key">>;
+  storeName: string;
 }
 
 export interface ClockWithoutDelegation {
