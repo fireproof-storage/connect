@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#484A65" />
+    <meta name="description" content="Demo" />
+
+    <title>Fireproof Cloud</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  </head>
+
+  <body>
+    <main class="container">
+      <h1>Fireproof UCAN Demo</h1>
+      <div class="grid">
+        <form>
+          <fieldset>
+            <label>
+              Add database data
+              <input id="add-input" value="🔮" required />
+            </label>
+            <button id="add">Add</button>
+          </fieldset>
+        </form>
+
+        <form>
+          <fieldset>
+            <label>
+              Reuse existing clock
+              <input id="switch-input" placeholder="did:key:xyz…" required />
+            </label>
+            <button id="switch">Switch</button>
+          </fieldset>
+        </form>
+      </div>
+      <p><small>Connecting …</small></p>
+      <button id="render-data">Render data</button>
+    </main>
+  </body>
+</html>
