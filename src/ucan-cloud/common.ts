@@ -1,21 +1,22 @@
-import { extract } from "@ucanto/core/delegation";
+import { Delegation as DelegationClass, extract, importDAG } from "@ucanto/core/delegation";
 import { Delegation } from "@ucanto/interface";
 import { AgentDataExport, DelegationMeta } from "@web3-storage/access";
+import { Block } from "multiformats/block";
+import { CID } from "multiformats";
 
-export async function extractClockDelegation(dataExport: AgentDataExport): Promise<Delegation | undefined> {
+export async function extractDelegation(dataExport: AgentDataExport): Promise<Delegation | undefined> {
   const delegationKey = Array.from(dataExport.delegations.keys())[0];
-  const delegationBytes = delegationKey ? dataExport.delegations.get(delegationKey)?.delegation?.[0] : undefined;
+  const delegationExport = delegationKey ? dataExport.delegations.get(delegationKey)?.delegation : undefined;
 
-  if (delegationBytes === undefined) {
+  if (delegationExport === undefined) {
     return undefined;
   }
 
-  const delegationResult = await extract(new Uint8Array(delegationBytes.bytes));
-  if (delegationResult.error) {
-    throw delegationResult.error;
-  }
+  const blocks = delegationExport.map((e) => {
+    return new Block({ cid: CID.parse(e.cid).toV1(), bytes: new Uint8Array(e.bytes), value: e.bytes });
+  });
 
-  return delegationResult.ok;
+  return importDAG(blocks);
 }
 
 export function exportDelegation(del: Delegation): [
@@ -31,7 +32,7 @@ export function exportDelegation(del: Delegation): [
       meta: {},
       delegation: [...del.export()].map((b) => ({
         cid: b.cid.toString(),
-        bytes: uint8ArrayToArrayBuffer(b.bytes),
+        bytes: b.bytes,
       })),
     },
   ];

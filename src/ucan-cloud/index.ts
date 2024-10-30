@@ -11,7 +11,7 @@ import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-
 import { registerUCANStoreProtocol } from "./ucan-gateway";
 import stateStore from "./store/state";
 import type { AgentWithStoreName, Clock, ClockWithoutDelegation, Server } from "./types";
-import { extractClockDelegation } from "./common";
+import { exportDelegation, extractDelegation } from "./common";
 
 // Setup
 
@@ -47,7 +47,11 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
   // Parts
   const agnt = params.agent || (await agent({ databaseName: dbName }));
   const serv = params.server || (await server());
-  const klok = params.clock || (await clock({ audience: email || agnt.agent, databaseName: dbName }));
+
+  // Typescript being weird?
+  const klok = (params.clock || (await clock({ audience: email || agnt.agent, databaseName: dbName }))) as
+    | Clock
+    | ClockWithoutDelegation;
 
   // DB name
   const existingName = serv.uri.getParam("name");
@@ -58,10 +62,10 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
     .build()
     .protocol("ucan:")
     .setParam("agent-store", agnt.storeName)
-    .setParam("clock-id", klok.id.toString())
+    .setParam("clock-id", klok.id.did())
     .setParam("name", name)
     .setParam("server-host", serv.uri.toString())
-    .setParam("server-id", serv.id.toString())
+    .setParam("server-id", serv.id.did())
     .setParam("storekey", `@${dbName}:data@`);
 
   if ("storeName" in klok) fpUrl.setParam("clock-store", klok.storeName);
@@ -139,7 +143,7 @@ export async function clock(options: {
 }
 
 export function clockId(id: `did:key:${string}`): ClockWithoutDelegation {
-  return { id };
+  return { id: DID.parse(id) };
 }
 
 export function clockStoreName({ databaseName }: { databaseName: string }) {
@@ -168,7 +172,7 @@ export async function createAndSaveClock({
     meta: { name: storeName, type: "service" },
     principal: signer.toArchive(),
     spaces: new Map(),
-    delegations: new Map([]), // new Map([exportDelegation(clock.delegation)]),
+    delegations: new Map([exportDelegation(clock.delegation)]),
   };
 
   await store.save(raw);
@@ -187,7 +191,7 @@ export async function loadSavedClock({
   const clockExport = await store.load();
 
   if (clockExport) {
-    const delegation = await extractClockDelegation(clockExport);
+    const delegation = await extractDelegation(clockExport);
     if (delegation === undefined) return undefined;
 
     return {

@@ -1,33 +1,33 @@
-import { URI } from "@adviser/cement";
 import { registerUCANStoreProtocol } from "./src/ucan-cloud/ucan-gateway.ts";
-import { createNewClock } from "./src/ucan-cloud/common.ts";
+import * as Connector from "./src/ucan-cloud/index.ts";
 
 registerUCANStoreProtocol();
 
-const email = "example@fireproof.storage";
-const protocol = "http://";
-const host = "localhost:8787";
-const confProfile = "fireproof";
-const serverId = "did:key:z6Mkj3oU3VKyLv1ZNdjC2oKgHPrZDCnzSJLczrefoq3ZQMVf";
-
-const clock = await createNewClock({
-  databaseName: "test",
-  email,
-  serverURI: URI.from(protocol + host),
-  serverId,
+const dbName = "test";
+const agent = await Connector.agent({ storeName: `fireproof/tests/ucan-cloud/${dbName}/agent` });
+const clock = await Connector.createAndSaveClock({
+  audience: agent.agent.issuer,
+  databaseName: dbName,
+  storeName: `fireproof/tests/ucan-cloud/${dbName}/clock`,
 });
 
-const uri = URI.from(`ucan://${host}`).build();
-uri.setParam("email", email);
-uri.setParam("clock-id", clock.did());
-uri.setParam("conf-profile", confProfile);
-uri.setParam("server-host", protocol + host);
-uri.setParam(
-  "server-priv-key",
-  process.env.UCAN_SERVER_PRIV_KEY ||
-    "MgCZc476L5pn6Kiw5YdLHEy5CHZgw5gRWxNj/UcLRQoxaHu0BREgGEsI7N8cQxjO6fdgA/lEAphNmR/um1DEfmBTBByY"
-);
-uri.setParam("server-id", serverId);
+const serverId = "did:key:z6Mkj3oU3VKyLv1ZNdjC2oKgHPrZDCnzSJLczrefoq3ZQMVf";
+const server = await Connector.server("http://localhost:8787", serverId);
+
+const uri = server.uri
+  .build()
+  .protocol("ucan:")
+  .setParam("agent-store", agent.storeName)
+  .setParam("clock-id", clock.id.did())
+  .setParam("clock-store", clock.storeName)
+  .setParam("name", dbName)
+  .setParam("server-host", server.uri.toString())
+  .setParam("server-id", server.id.did())
+  .setParam(
+    "server-priv-key",
+    process.env.UCAN_SERVER_PRIV_KEY ||
+      "MgCZc476L5pn6Kiw5YdLHEy5CHZgw5gRWxNj/UcLRQoxaHu0BREgGEsI7N8cQxjO6fdgA/lEAphNmR/um1DEfmBTBByY"
+  );
 
 process.env.FP_STORAGE_URL = uri.toString();
 process.env.FP_KEYBAG_URL = "file://./dist/kb-dir-ucan?fs=mem&extractKey=_deprecated_internal_api";

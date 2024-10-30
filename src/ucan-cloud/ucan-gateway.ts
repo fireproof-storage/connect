@@ -10,7 +10,7 @@ import { CID } from "multiformats";
 import * as Client from "./client";
 import { Server, Service } from "./types";
 import stateStore from "./store/state";
-import { extractClockDelegation } from "./common";
+import { extractDelegation } from "./common";
 
 export class UCANGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -79,12 +79,17 @@ export class UCANGateway implements bs.Gateway {
 
     if (email === undefined) {
       if (clockStoreName === undefined) {
-        throw new Error("Cannot operate with an email or clock delegation");
+        throw new Error("Cannot operate without an email address or `clock-store` param");
       }
 
       const clockStore = await stateStore(clockStoreName);
       const clockExport = await clockStore.load();
-      clockDelegation = clockExport ? await extractClockDelegation(clockExport) : undefined;
+
+      clockDelegation = clockExport ? await extractDelegation(clockExport) : undefined;
+
+      if (clockDelegation === undefined) {
+        throw new Error("Cannot operate without an email address or clock delegation");
+      }
     }
 
     // This
