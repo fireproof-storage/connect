@@ -46,32 +46,32 @@ describe("UCANGateway", () => {
     }
   });
 
-  // it.skip("should have loader and options", () => {
-  //   const loader = db.blockstore?.loader;
-  //   expect(loader).toBeDefined();
+  it("should have loader and options", () => {
+    const loader = db.blockstore?.loader;
+    expect(loader).toBeDefined();
 
-  //   if (!loader) {
-  //     throw new Error("Loader is not defined");
-  //   }
+    if (!loader) {
+      throw new Error("Loader is not defined");
+    }
 
-  //   expect(loader.ebOpts).toBeDefined();
-  //   expect(loader.ebOpts.store).toBeDefined();
-  //   expect(loader.ebOpts.store.stores).toBeDefined();
+    expect(loader.ebOpts).toBeDefined();
+    expect(loader.ebOpts.store).toBeDefined();
+    expect(loader.ebOpts.store.stores).toBeDefined();
 
-  //   if (!loader.ebOpts.store.stores) {
-  //     throw new Error("Loader stores is not defined");
-  //   }
+    if (!loader.ebOpts.store.stores) {
+      throw new Error("Loader stores is not defined");
+    }
 
-  //   if (!loader.ebOpts.store.stores.base) {
-  //     throw new Error("Loader stores.base is not defined");
-  //   }
+    if (!loader.ebOpts.store.stores.base) {
+      throw new Error("Loader stores.base is not defined");
+    }
 
-  //   // Test base URL configuration
-  //   const baseUrl = new URL(loader.ebOpts.store.stores.base.toString());
-  //   expect(baseUrl.protocol).toBe("ucan:");
-  //   expect(baseUrl.hostname).toBe("localhost");
-  //   expect(baseUrl.port).toBe("8787");
-  // });
+    // Test base URL configuration
+    const baseUrl = new URL(loader.ebOpts.store.stores.base.toString());
+    expect(baseUrl.protocol).toBe("ucan:");
+    expect(baseUrl.hostname).toBe("localhost");
+    expect(baseUrl.port).toBe("8787");
+  });
 
   it("should initialize and perform basic operations", async () => {
     const docs = await smokeDB(db);
