@@ -3,7 +3,7 @@ import { fireproof } from "@fireproof/core";
 import { ed25519 } from "@ucanto/principal";
 import { Agent, AgentData, StoreIndexedDB } from "@web3-storage/access";
 
-import * as Connector from "./index";
+import * as Connector from "../index";
 
 ///////////////////
 // WORKSHOP TEAM //
@@ -12,17 +12,7 @@ import * as Connector from "./index";
 const WORKSHOP_DB_NAME = "my-db";
 
 export async function workshopSetup() {
-  // Agent
-  const store = new StoreIndexedDB("my-agent");
-  await store.open();
-
-  const principal = await ed25519.generate();
-  const agentData: Partial<AgentData> = {
-    meta: { name: "my-browser-agent", type: "app" },
-    principal,
-  };
-
-  const agent = await Agent.create(agentData, { store });
+  const agent = await Connector.agent();
 
   // Create clock
   const clock = await Connector.createAndSaveClock({
@@ -35,13 +25,7 @@ export async function workshopSetup() {
 }
 
 export async function workshopDelegate(participantAgentId: `did:${string}:${string}`) {
-  // Load agent
-  const store = new StoreIndexedDB("my-agent");
-  await store.open();
-
-  const data = await store.load();
-  if (!data) throw new Error("Run setup first");
-  const agent = Agent.from(data, { store });
+  const agent = await Connector.agent();
 
   // Load clock
   const clock = await Connector.loadSavedClock({
