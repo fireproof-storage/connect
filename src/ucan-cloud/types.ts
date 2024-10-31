@@ -21,7 +21,7 @@ import * as StoreCaps from "./store/capabilities";
 export { Agent } from "@web3-storage/access";
 
 export interface AgentWithStoreName {
-  agent: Agent;
+  agent: Agent<Service>;
   storeName: string;
 }
 
@@ -30,6 +30,7 @@ export interface AgentWithStoreName {
 export interface Clock {
   readonly delegation: Delegation;
   id: Principal<DID<"key">>;
+  isNew: boolean;
   signer: Signer<DID<"key">>;
   storeName: string;
 }

@@ -56,6 +56,7 @@ export async function createClock({ audience }: { audience: Principal }): Promis
   return {
     delegation,
     id: signer,
+    isNew: true,
     signer,
   };
 }
@@ -136,7 +137,7 @@ export async function registerClock({
 // CONNECTION
 ////////////////////////////////////////
 
-export function service(server: Server) {
+export function service(server: Server): ConnectionView<Service> {
   const url = server.uri.toString();
 
   const channel: Channel<Service> = {

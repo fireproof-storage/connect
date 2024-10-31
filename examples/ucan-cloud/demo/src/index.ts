@@ -1,5 +1,5 @@
 import { Database, fireproof, type AllDocsResponse } from "@fireproof/core";
-import * as Connector from "@fireproof/connect/ucan";
+import * as UCAN from "@fireproof/connect/ucan";
 
 let clockId: string = "";
 let rows: AllDocsResponse<{}>["rows"] = [];
@@ -9,6 +9,10 @@ let rows: AllDocsResponse<{}>["rows"] = [];
 let db: Database<{}> | undefined;
 let databaseName = "my-db-0001";
 
+await UCAN.login({
+  email: "steven+001@fireproof.storage",
+});
+
 // Connection + Clock ID
 
 async function connect(ci?: `did:key:${string}`) {
@@ -16,8 +20,8 @@ async function connect(ci?: `did:key:${string}`) {
 
   const email = undefined;
 
-  const connection = await Connector.connect(db, {
-    clock: ci ? Connector.clockId(ci) : undefined,
+  const connection = await UCAN.connect(db, {
+    clock: ci ? UCAN.clockId(ci) : undefined,
     email,
   });
 

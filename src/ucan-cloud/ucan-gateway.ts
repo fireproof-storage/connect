@@ -1,4 +1,4 @@
-import { exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement";
+import { exception2Result, KeyedResolvOnce, Level, Result, URI } from "@adviser/cement";
 import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError, ensureLogger, rt } from "@fireproof/core";
 import { DID } from "@ucanto/core";
 import { ConnectionView, Delegation, Principal } from "@ucanto/interface";
@@ -17,7 +17,7 @@ export class UCANGateway implements bs.Gateway {
   readonly logger: Logger;
 
   inst?: {
-    agent: Agent;
+    agent: Agent<Service>;
     clockDelegation?: Delegation;
     clockId: Principal<`did:key:${string}`>;
     email?: Principal<`did:mailto:${string}`>;
@@ -28,6 +28,7 @@ export class UCANGateway implements bs.Gateway {
   constructor(sthis: SuperThis) {
     this.sthis = ensureSuperLog(sthis, "UCANGateway");
     this.logger = this.sthis.logger;
+    this.logger.EnableLevel(Level.DEBUG);
   }
 
   async buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {
@@ -72,7 +73,7 @@ export class UCANGateway implements bs.Gateway {
     const agentStore = await stateStore(agentStoreName);
     const agentData = await agentStore.load();
     if (!agentData) throw new Error("Could not load agent from store, has it been created yet?");
-    const agent = Agent.from(agentData, { store: agentStore });
+    const agent = Agent.from<Service>(agentData, { store: agentStore, connection: service });
 
     // Clock delegation
     let clockDelegation;
@@ -224,7 +225,7 @@ export class UCANGateway implements bs.Gateway {
 
         const res = await Client.retrieve({
           agent: this.inst.agent.issuer,
-          cid: cid as CID<unknown, 514, number, 1>,
+          cid: cid,
           server: this.inst.server,
           service: this.inst.service,
         });
@@ -242,6 +243,9 @@ export class UCANGateway implements bs.Gateway {
           server: this.inst.server,
           service: this.inst.service,
         });
+
+        console.log(this.proofs());
+        console.log(head.out);
 
         this.logger.Debug().Any("head", head.out).Msg("Meta (head) retrieved");
 
@@ -288,14 +292,11 @@ export class UCANGateway implements bs.Gateway {
 
   proofs(): Delegation[] {
     if (this.inst && this.inst.email) {
-      const proofs = this.inst.agent.proofs();
-      console.log(proofs);
+      const proofs = this.inst.agent.proofs([{ with: /did:mailto:.*/, can: "*" }]);
+      const attestations = proofs.filter((p) => p.capabilities[0].can === "ucan/attest");
+      const delegations = proofs.filter((p) => p.capabilities[0].can === "*");
 
-      // TODO
-      // const attestation = session.proofs.find((p) => p.capabilities[0].can === "ucan/attest");
-      // const delegation = session.proofs.find((p) => p.capabilities[0].can === "*");
-
-      return [];
+      return [...attestations, ...delegations];
     }
 
     if (this.inst && this.inst.clockDelegation) {
