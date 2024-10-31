@@ -18,7 +18,7 @@ export class UCANGateway implements bs.Gateway {
   readonly logger: Logger;
 
   inst?: {
-    agent: Agent;
+    agent: Agent<Service>;
     clockDelegation?: Delegation;
     clockId: Principal<`did:key:${string}`>;
     email?: Principal<DidMailto>;
@@ -73,7 +73,7 @@ export class UCANGateway implements bs.Gateway {
     const agentStore = await stateStore(agentStoreName);
     const agentData = await agentStore.load();
     if (!agentData) throw new Error("Could not load agent from store, has it been created yet?");
-    const agent = Agent.from(agentData, { store: agentStore });
+    const agent = Agent.from(agentData, { store: agentStore, connection: service });
 
     // Clock delegation
     let clockDelegation;
@@ -310,7 +310,10 @@ export class UCANGateway implements bs.Gateway {
       const delegationCids = delegations.map((d) => d.cid.toString());
       const attestations = proofs.filter((p) => {
         const cap = p.capabilities[0];
-        return cap.can === "ucan/attest" && delegationCids.includes((cap.nb as {proof: { toString(): string }}).proof.toString());
+        return (
+          cap.can === "ucan/attest" &&
+          delegationCids.includes((cap.nb as { proof: { toString(): string } }).proof.toString())
+        );
       });
 
       return [...delegations, ...attestations];

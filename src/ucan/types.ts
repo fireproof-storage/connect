@@ -22,6 +22,7 @@ export type { Agent } from "@web3-storage/access/agent";
 
 export interface AgentWithStoreName {
   readonly agent: Agent<Service>;
+  readonly id: Principal<DID<"key">>;
   readonly storeName: string;
 }
 

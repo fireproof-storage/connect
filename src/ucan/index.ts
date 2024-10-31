@@ -11,7 +11,7 @@ import * as Client from "./client";
 import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
 import { registerUCANStoreProtocol } from "./ucan-gateway";
 import stateStore from "./store/state";
-import type { AgentWithStoreName, Clock, ClockWithoutDelegation, Server } from "./types";
+import { Service, type AgentWithStoreName, type Clock, type ClockWithoutDelegation, type Server } from "./types";
 import { exportDelegation, extractDelegation } from "./common";
 
 // Setup
@@ -93,7 +93,11 @@ export async function connect(
 // AGENT
 // -----
 
-export async function agent(options?: { databaseName?: string; storeName?: string }): Promise<AgentWithStoreName> {
+export async function agent(options?: {
+  databaseName?: string;
+  server?: Server;
+  storeName?: string;
+}): Promise<AgentWithStoreName> {
   const agentFromStore = await loadSavedAgent(options);
   if (agentFromStore) return agentFromStore;
   return await createAndSaveAgent(options);
@@ -105,6 +109,7 @@ export function agentStoreName({ databaseName }: { databaseName?: string }) {
 
 export async function createAndSaveAgent(options?: {
   databaseName?: string;
+  server?: Server;
   storeName?: string;
 }): Promise<AgentWithStoreName> {
   let storeName = options?.storeName;
@@ -117,14 +122,19 @@ export async function createAndSaveAgent(options?: {
     principal,
   };
 
+  const connection = Client.service(options?.server || (await server()));
+  const agnt = await Agent.create<Service>(agentData, { store, connection });
+
   return {
-    agent: await Agent.create(agentData, { store }),
+    agent: agnt,
+    id: agnt.issuer,
     storeName,
   };
 }
 
 export async function loadSavedAgent(options?: {
   databaseName?: string;
+  server?: Server;
   storeName?: string;
 }): Promise<AgentWithStoreName | undefined> {
   let storeName = options?.storeName;
@@ -133,8 +143,13 @@ export async function loadSavedAgent(options?: {
 
   const data = await store.load();
   if (!data) return undefined;
+
+  const connection = Client.service(options?.server || (await server()));
+  const agnt = Agent.from<Service>(data, { store, connection });
+
   return {
-    agent: Agent.from(data, { store }),
+    agent: agnt,
+    id: agnt.issuer,
     storeName,
   };
 }
