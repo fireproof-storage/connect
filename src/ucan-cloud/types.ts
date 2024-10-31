@@ -1,5 +1,5 @@
 import { type URI } from "@adviser/cement";
-import { type Agent } from "@web3-storage/access";
+import { type Agent } from "@web3-storage/access/types";
 import type {
   Delegation,
   DID,
@@ -18,7 +18,7 @@ import * as StoreCaps from "./store/capabilities";
 
 // AGENT
 
-export { Agent } from "@web3-storage/access";
+export type { Agent } from "@web3-storage/access/types";
 
 export interface AgentWithStoreName {
   agent: Agent<Service>;

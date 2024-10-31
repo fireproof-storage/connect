@@ -1,7 +1,7 @@
 import { KeyedResolvOnce, runtimeFn, BuildURI, URI } from "@adviser/cement";
 import { bs, Database } from "@fireproof/core";
 import { Principal, SignerArchive } from "@ucanto/interface";
-import { Agent, AgentData, AgentDataExport, AgentMeta } from "@web3-storage/access";
+import { Agent, AgentData, AgentDataExport, AgentMeta } from "@web3-storage/access/agent";
 import { Absentee, ed25519 } from "@ucanto/principal";
 import { DID } from "@ucanto/core";
 import { fromEmail } from "@web3-storage/did-mailto";

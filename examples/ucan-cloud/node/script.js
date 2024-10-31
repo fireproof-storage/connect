@@ -23,10 +23,20 @@ const cli = meow(
 
 // 🚀
 
-await UCAN.login({ email: cli.flags.email });
-const context = await usingEmail(cli.flags.email);
+const acc = await UCAN.login({ email: cli.flags.email });
 
-await UCAN.registerClock(context);
+console.log(
+  acc.model.proofs.map((d) => {
+    return {
+      iss: d.issuer.did(),
+      aud: d.audience.did(),
+    };
+  })
+);
+
+// const context = await usingEmail(cli.flags.email);
+
+// await UCAN.registerClock(context);
 
 // TOOLBOX
 

@@ -2,7 +2,7 @@ import { exception2Result, KeyedResolvOnce, Level, Result, URI } from "@adviser/
 import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError, ensureLogger, rt } from "@fireproof/core";
 import { DID } from "@ucanto/core";
 import { ConnectionView, Delegation, Principal } from "@ucanto/interface";
-import { Agent } from "@web3-storage/access";
+import { Agent } from "@web3-storage/access/agent";
 import { Absentee } from "@ucanto/principal";
 
 import { CID } from "multiformats";
