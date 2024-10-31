@@ -23,30 +23,27 @@ const cli = meow(
 
 // 🚀
 
-const acc = await UCAN.login({ email: cli.flags.email });
+const dbName = "my-db";
+const email = UCAN.email(cli.flags.email);
+const acc = await UCAN.login({ email });
+const clock = await UCAN.clock({ audience: email, databaseName: dbName });
 
-console.log(
-  acc.model.proofs.map((d) => {
-    return {
-      iss: d.issuer.did(),
-      aud: d.audience.did(),
-    };
-  })
-);
+await UCAN.registerClock({
+  clock,
+});
 
-// const context = await usingEmail(cli.flags.email);
+// console.log(
+//   acc.model.proofs.map((d) => {
+//     return {
+//       iss: d.issuer.did(),
+//       aud: d.audience.did(),
+//       xyz: d.capabilities.map(JSON.stringify),
+//     };
+//   })
+// );
 
-// await UCAN.registerClock(context);
+const db = fireproof(dbName);
 
-// TOOLBOX
-
-async function usingEmail(email) {
-  const dbName = "my-db";
-  const db = fireproof(dbName);
-
-  // Automatically creates/loads agent and a clock with the email as the audience
-  // NOTE: You can also provide the agent and/or clock yourself.
-  return await UCAN.connect(db, {
-    email,
-  });
-}
+await UCAN.connect(db, {
+  email,
+});

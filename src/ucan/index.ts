@@ -4,7 +4,8 @@ import { Principal, SignerArchive } from "@ucanto/interface";
 import { Agent, type AgentData, type AgentDataExport } from "@web3-storage/access/agent";
 import { Absentee, ed25519 } from "@ucanto/principal";
 import { DID } from "@ucanto/core";
-import { fromEmail } from "@web3-storage/did-mailto";
+import { DidMailto, fromEmail, toEmail } from "@web3-storage/did-mailto";
+import * as W3 from "@web3-storage/w3up-client/account";
 
 import * as Client from "./client";
 import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
@@ -25,7 +26,7 @@ const connectionCache = new KeyedResolvOnce<bs.Connection>();
 export interface ConnectionParams {
   readonly agent?: AgentWithStoreName;
   readonly clock?: Clock | ClockWithoutDelegation;
-  readonly email?: Principal<`did:mailto:${string}`>;
+  readonly email?: Principal<DidMailto>;
   readonly server?: Server;
 }
 
@@ -199,17 +200,41 @@ export async function loadSavedClock({
   return undefined;
 }
 
-export async function registerClock({ clock, server }: { clock: Clock; server: Server }) {
-  const service = Client.service(server);
-  const registration = await Client.registerClock({ clock, server, service });
+export async function registerClock(params: { clock: Clock; server?: Server }) {
+  const srvr = params.server || (await server());
+  const service = Client.service(srvr);
+  const registration = await Client.registerClock({ clock: params.clock, server: srvr, service });
+  console.log(registration.out);
   if (registration.out.error) throw registration.out.error;
 }
 
 // LOGIN
 // -----
 
-export function email(email: `${string}@${string}`): Principal<`did:mailto:${string}`> {
-  return Absentee.from({ id: fromEmail(email) });
+export function email(string: `${string}@${string}`): Principal<DidMailto> {
+  return Absentee.from({ id: fromEmail(string) });
+}
+
+export async function login(params: { agent?: AgentWithStoreName; email: Principal<DidMailto> }) {
+  const proxy = params.agent || (await agent());
+  const result = await W3.login({ agent: proxy.agent as unknown as Agent }, toEmail(params.email.did()));
+  if (result.error) throw result.error;
+
+  const saved = await result.ok.save();
+  if (saved.error) throw saved.error;
+
+  // Save agent delegations to store
+  const dataExport: AgentDataExport = {
+    meta: AGENT_META,
+    principal: proxy.agent.issuer.toArchive(),
+    spaces: new Map(),
+    delegations: new Map(proxy.agent.proofs().map(exportDelegation)),
+  };
+
+  const store = await stateStore(proxy.storeName);
+  await store.save(dataExport);
+
+  return result.ok;
 }
 
 // SERVER

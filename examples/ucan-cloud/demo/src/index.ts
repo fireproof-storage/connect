@@ -10,7 +10,7 @@ let db: Database | undefined;
 let databaseName = "my-db-0001";
 
 await UCAN.login({
-  email: "steven+001@fireproof.storage",
+  email: UCAN.email("steven+001@fireproof.storage"),
 });
 
 // Connection + Clock ID

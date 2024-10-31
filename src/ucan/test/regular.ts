@@ -18,7 +18,7 @@ async function _usingEmail() {
   // Automatically creates/loads agent and a clock with the email as the audience
   // NOTE: You can also provide the agent and/or clock yourself.
   await Connector.connect(db, {
-    email: "example@fireproof.storage",
+    email: Connector.email("example@fireproof.storage"),
   });
 }
 
@@ -28,6 +28,6 @@ async function _usingExternalClock() {
 
   await Connector.connect(db, {
     clock: Connector.clockId("did:key:EXAMPLE"),
-    email: "example@fireproof.storage",
+    email: Connector.email("example@fireproof.storage"),
   });
 }

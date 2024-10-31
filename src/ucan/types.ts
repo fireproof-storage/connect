@@ -21,21 +21,22 @@ import * as StoreCaps from "./store/capabilities";
 export type { Agent } from "@web3-storage/access/agent";
 
 export interface AgentWithStoreName {
-  agent: Agent;
-  storeName: string;
+  readonly agent: Agent<Service>;
+  readonly storeName: string;
 }
 
 // CLOCK
 
 export interface Clock {
   readonly delegation: Delegation;
-  id: Principal<DID<"key">>;
-  signer: Signer<DID<"key">>;
-  storeName: string;
+  readonly id: Principal<DID<"key">>;
+  readonly isNew: boolean;
+  readonly signer: Signer<DID<"key">>;
+  readonly storeName: string;
 }
 
 export interface ClockWithoutDelegation {
-  id: Principal<DID<"key">>;
+  readonly id: Principal<DID<"key">>;
 }
 
 export type ClockAdvance = InferInvokedCapability<typeof ClockCaps.advance>;
@@ -69,8 +70,8 @@ export interface ClockHeadSuccess {
 // SERVER
 
 export interface Server {
-  id: Principal;
-  uri: URI;
+  readonly id: Principal;
+  readonly uri: URI;
 }
 
 // SERVICE

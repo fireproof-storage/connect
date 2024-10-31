@@ -3,7 +3,7 @@ import { Logger, SuperThis, NotFoundError, ensureLogger, rt, isNotFoundError } f
 import { getStore, bs } from "@fireproof/core";
 import { DID } from "@ucanto/core";
 import { ConnectionView, Delegation, Principal } from "@ucanto/interface";
-import { Agent } from "@web3-storage/access/agent";
+import { Agent, DidMailto } from "@web3-storage/access/agent";
 import { Absentee } from "@ucanto/principal";
 
 import { CID } from "multiformats";
@@ -21,7 +21,7 @@ export class UCANGateway implements bs.Gateway {
     agent: Agent;
     clockDelegation?: Delegation;
     clockId: Principal<`did:key:${string}`>;
-    email?: Principal<`did:mailto:${string}`>;
+    email?: Principal<DidMailto>;
     server: Server;
     service: ConnectionView<Service>;
   };
@@ -58,7 +58,7 @@ export class UCANGateway implements bs.Gateway {
     if (!serverId) throw new Error("Missing `server-id` param");
 
     const clockId = DID.parse(clockIdParam) as Principal<`did:key:${string}`>;
-    const email = emailIdParam ? Absentee.from({ id: emailIdParam as `did:mailto:${string}` }) : undefined;
+    const email = emailIdParam ? Absentee.from({ id: emailIdParam as DidMailto }) : undefined;
 
     // Server Host & ID
     const serverHostUrl = baseUrl.getParam("server-host")?.replace(/\/+$/, "");
@@ -245,6 +245,17 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
+        console.log(
+          this.proofs().map((d) => {
+            return {
+              iss: d.issuer.did(),
+              aud: d.audience.did(),
+              xyz: d.capabilities.map((c) => JSON.stringify(c)),
+            };
+          })
+        );
+        console.log(head.out);
+
         this.logger.Debug().Any("head", head.out).Msg("Meta (head) retrieved");
 
         if (head.out.error) throw head.out.error;
@@ -290,8 +301,17 @@ export class UCANGateway implements bs.Gateway {
 
   proofs(): Delegation[] {
     if (this.inst && this.inst.email) {
-      const proofs = this.inst.agent.proofs();
-      console.log(proofs);
+      const proofs = this.inst.agent.proofs([{ with: /did:mailto:.*/, can: "*" }]);
+
+      const delegations = proofs.filter(
+        (p) => p.capabilities[0].can === "*" && p.issuer.did() === this.inst?.email?.did()
+      );
+
+      const delegationCids = delegations.map((d) => d.cid.toString());
+      const attestations = proofs.filter((p) => {
+        const cap = p.capabilities[0];
+        return cap.can === "ucan/attest" && delegationCids.includes((cap.nb as any).proof.toString());
+      });
 
       // TODO
       // const attestation = session.proofs.find((p) => p.capabilities[0].can === "ucan/attest");
