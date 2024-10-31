@@ -30,7 +30,7 @@ const clock = await UCAN.clock({ audience: email, databaseName: dbName });
 const agent = await UCAN.agent();
 const server = await UCAN.server();
 
-console.log("👮 AGENT DID:", agent.agent.did());
+console.log("👮 AGENT DID:", agent.id.did());
 console.log("⏰ CLOCK DID:", clock.id.did());
 console.log("🤖 SERVER DID:", server.id.did());
 
