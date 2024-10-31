@@ -1,5 +1,5 @@
 import { type Database, fireproof, type AllDocsResponse } from "use-fireproof";
-import * as UCAN from "@fireproof/ucan";
+import * as UCAN from "@fireproof/connect/ucan";
 
 let clockId: string = "";
 let rows: AllDocsResponse<{}>["rows"] = [];

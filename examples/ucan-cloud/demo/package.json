@@ -14,7 +14,7 @@
     "preview": "rsbuild preview"
   },
   "dependencies": {
-    "@fireproof/ucan": "0.19.112-demo",
+    "@fireproof/connect": "../../../",
     "use-fireproof": "^0.19.111"
   },
   "devDependencies": {
