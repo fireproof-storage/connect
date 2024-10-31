@@ -8,7 +8,7 @@ import cloud from "./vitest.cloud.config.ts";
 import s3 from "./vitest.s3.config.ts";
 // import connector from "./vitest.connector.config.ts";
 import netlify from "./vitest.netlify.config.ts";
-import ucanCloud from "./vitest.ucan-cloud.config.ts";
+import ucan from "./vitest.ucan.config.ts";
 // import cf_kv from "./vitest.cf-kv.config.ts";
 
 export default defineWorkspace([
@@ -21,5 +21,5 @@ export default defineWorkspace([
   partykit,
   cloud,
   //cf_kv
-  ucanCloud,
+  ucan,
 ]);

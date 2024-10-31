@@ -1,12 +1,12 @@
-import { Database, fireproof, type AllDocsResponse } from "@fireproof/core";
-import * as UCAN from "@fireproof/connect/ucan";
+import { type Database, fireproof, type AllDocsResponse } from "use-fireproof";
+import * as UCAN from "@fireproof/ucan";
 
 let clockId: string = "";
 let rows: AllDocsResponse<{}>["rows"] = [];
 
 // 🚀
 
-let db: Database<{}> | undefined;
+let db: Database | undefined;
 let databaseName = "my-db-0001";
 
 await UCAN.login({
@@ -16,7 +16,7 @@ await UCAN.login({
 // Connection + Clock ID
 
 async function connect(ci?: `did:key:${string}`) {
-  if (db === undefined) return;
+  if (!db) return;
 
   const email = undefined;
 

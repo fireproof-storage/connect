@@ -8,5 +8,5 @@ cd $tmpDir
 rm -rf try-fp-ucan
 pnpm create vite try-fp-ucan --template react-ts
 cd try-fp-ucan
-pnpm install -f $smokeDir/../../dist/ucan-cloud/fireproof-ucan-*.tgz
+pnpm install -f $smokeDir/../../dist/ucan/fireproof-ucan-*.tgz
 pnpm build

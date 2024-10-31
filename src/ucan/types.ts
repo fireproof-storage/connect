@@ -1,5 +1,5 @@
 import { type URI } from "@adviser/cement";
-import { type Agent } from "@web3-storage/access/types";
+import { type Agent } from "@web3-storage/access/agent";
 import type {
   Delegation,
   DID,
@@ -18,10 +18,10 @@ import * as StoreCaps from "./store/capabilities";
 
 // AGENT
 
-export type { Agent } from "@web3-storage/access/types";
+export type { Agent } from "@web3-storage/access/agent";
 
 export interface AgentWithStoreName {
-  agent: Agent<Service>;
+  agent: Agent;
   storeName: string;
 }
 
@@ -30,7 +30,6 @@ export interface AgentWithStoreName {
 export interface Clock {
   readonly delegation: Delegation;
   id: Principal<DID<"key">>;
-  isNew: boolean;
   signer: Signer<DID<"key">>;
   storeName: string;
 }

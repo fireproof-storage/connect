@@ -1,14 +1,14 @@
-import { registerUCANStoreProtocol } from "./src/ucan-cloud/ucan-gateway.ts";
-import * as Connector from "./src/ucan-cloud/index.ts";
+import { registerUCANStoreProtocol } from "./src/ucan/ucan-gateway.ts";
+import * as Connector from "./src/ucan/index.ts";
 
 registerUCANStoreProtocol();
 
 const dbName = "test";
-const agent = await Connector.agent({ storeName: `fireproof/tests/ucan-cloud/${dbName}/agent` });
+const agent = await Connector.agent({ storeName: `fireproof/tests/ucan/${dbName}/agent` });
 const clock = await Connector.createAndSaveClock({
   audience: agent.agent.issuer,
   databaseName: dbName,
-  storeName: `fireproof/tests/ucan-cloud/${dbName}/clock`,
+  storeName: `fireproof/tests/ucan/${dbName}/clock`,
 });
 
 const serverId = "did:key:z6Mkj3oU3VKyLv1ZNdjC2oKgHPrZDCnzSJLczrefoq3ZQMVf";

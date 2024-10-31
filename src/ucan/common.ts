@@ -1,6 +1,6 @@
-import { Delegation as DelegationClass, extract, importDAG } from "@ucanto/core/delegation";
+import { importDAG } from "@ucanto/core/delegation";
 import { Delegation } from "@ucanto/interface";
-import { AgentDataExport, DelegationMeta } from "@web3-storage/access/types";
+import type { AgentDataExport, DelegationMeta } from "@web3-storage/access/types";
 import { Block } from "multiformats/block";
 import { CID } from "multiformats";
 

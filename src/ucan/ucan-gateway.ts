@@ -1,5 +1,6 @@
-import { exception2Result, KeyedResolvOnce, Level, Result, URI } from "@adviser/cement";
-import { bs, getStore, Logger, SuperThis, ensureSuperLog, NotFoundError, ensureLogger, rt } from "@fireproof/core";
+import { exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement";
+import { Logger, SuperThis, NotFoundError, ensureLogger, rt, isNotFoundError } from "@fireproof/core";
+import { getStore, bs } from "@fireproof/core";
 import { DID } from "@ucanto/core";
 import { ConnectionView, Delegation, Principal } from "@ucanto/interface";
 import { Agent } from "@web3-storage/access/agent";
@@ -17,7 +18,7 @@ export class UCANGateway implements bs.Gateway {
   readonly logger: Logger;
 
   inst?: {
-    agent: Agent<Service>;
+    agent: Agent;
     clockDelegation?: Delegation;
     clockId: Principal<`did:key:${string}`>;
     email?: Principal<`did:mailto:${string}`>;
@@ -26,9 +27,8 @@ export class UCANGateway implements bs.Gateway {
   };
 
   constructor(sthis: SuperThis) {
-    this.sthis = ensureSuperLog(sthis, "UCANGateway");
-    this.logger = this.sthis.logger;
-    this.logger.EnableLevel(Level.DEBUG);
+    this.sthis = sthis;
+    this.logger = ensureLogger(sthis, "UCANGateway");
   }
 
   async buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {
@@ -73,7 +73,7 @@ export class UCANGateway implements bs.Gateway {
     const agentStore = await stateStore(agentStoreName);
     const agentData = await agentStore.load();
     if (!agentData) throw new Error("Could not load agent from store, has it been created yet?");
-    const agent = Agent.from<Service>(agentData, { store: agentStore, connection: service });
+    const agent = Agent.from(agentData, { store: agentStore });
 
     // Clock delegation
     let clockDelegation;
@@ -190,8 +190,9 @@ export class UCANGateway implements bs.Gateway {
 
   async get(url: URI): Promise<bs.GetResult> {
     const result = await exception2Result(() => this.#get(url));
-    if (result.isErr() && result.Err().constructor.name !== "NotFoundError")
-      this.logger.Error().Msg(result.Err().message);
+    if (result.isErr() && !isNotFoundError(result.Err())) {
+      return this.logger.Error().Err(result).Msg("get").ResultError();
+    }
     return result;
   }
 
@@ -225,7 +226,7 @@ export class UCANGateway implements bs.Gateway {
 
         const res = await Client.retrieve({
           agent: this.inst.agent.issuer,
-          cid: cid,
+          cid: cid as CID<unknown, 514, number, 1>,
           server: this.inst.server,
           service: this.inst.service,
         });
@@ -243,9 +244,6 @@ export class UCANGateway implements bs.Gateway {
           server: this.inst.server,
           service: this.inst.service,
         });
-
-        console.log(this.proofs());
-        console.log(head.out);
 
         this.logger.Debug().Any("head", head.out).Msg("Meta (head) retrieved");
 
@@ -292,11 +290,14 @@ export class UCANGateway implements bs.Gateway {
 
   proofs(): Delegation[] {
     if (this.inst && this.inst.email) {
-      const proofs = this.inst.agent.proofs([{ with: /did:mailto:.*/, can: "*" }]);
-      const attestations = proofs.filter((p) => p.capabilities[0].can === "ucan/attest");
-      const delegations = proofs.filter((p) => p.capabilities[0].can === "*");
+      const proofs = this.inst.agent.proofs();
+      console.log(proofs);
 
-      return [...attestations, ...delegations];
+      // TODO
+      // const attestation = session.proofs.find((p) => p.capabilities[0].can === "ucan/attest");
+      // const delegation = session.proofs.find((p) => p.capabilities[0].can === "*");
+
+      return [];
     }
 
     if (this.inst && this.inst.clockDelegation) {

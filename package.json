@@ -11,7 +11,7 @@
     "publish:netlify": "tsx ./publish-package.ts ./dist/netlify/package.json",
     "publish:s3": "tsx ./publish-package.ts ./dist/s3/package.json",
     "publish:partykit": "tsx ./publish-package.ts ./dist/partykit/package.json",
-    "publish:ucan": "tsx ./publish-package.ts ./dist/ucan-cloud/package.json",
+    "publish:ucan": "tsx ./publish-package.ts ./dist/ucan/package.json",
     "prebuild": "rm -rf dist",
     "prepare": "pnpm run build",
     "build": "pnpm run '/^build:/' && pnpm run '/^pub:/'",
@@ -23,7 +23,7 @@
     "pub:netlify": "tsx ./version-copy-package.ts ./dist/netlify/package-netlify.json && cp ./src/netlify/server.ts ./dist/netlify/ && cp ./src/netlify/README.md ./dist/netlify/",
     "pub:s3": "tsx ./version-copy-package.ts ./dist/s3/package-s3.json && cp ./src/s3/README.md ./dist/s3/",
     "pub:partykit": "tsx ./version-copy-package.ts ./dist/partykit/package-partykit.json && cp ./src/partykit/server.ts ./dist/partykit/ && cp ./src/partykit/README.md ./dist/partykit/",
-    "pub:ucan": "tsx ./version-copy-package.ts ./dist/ucan-cloud/package-ucan.json && cp ./src/ucan-cloud/README.md ./dist/ucan-cloud/",
+    "pub:ucan": "tsx ./version-copy-package.ts ./dist/ucan/package-ucan.json && cp ./src/ucan/README.md ./dist/ucan/",
     "xpresmoke": "pnpm run build",
     "smoke": "pnpm run '/smoke:/'",
     "smoke:ucan": "sh smoke/ucan/it.sh",
@@ -37,13 +37,6 @@
     "stop-s3-test": "docker rm -f minio",
     "format": "prettier .",
     "lint": "eslint"
-  },
-  "exports": {
-    "./ucan": {
-      "require": "./dist/ucan-cloud/index.cjs",
-      "types": "./dist/ucan-cloud/index.d.ts",
-      "default": "./dist/ucan-cloud/index.js"
-    }
   },
   "keywords": [
     "database",
@@ -71,7 +64,6 @@
     "@typescript-eslint/typescript-estree": "^8.11.0",
     "@web3-storage/access": "^20.1.0",
     "esbuild": "^0.24.0",
-    "esbuild-plugin-polyfill-node": "^0.3.0",
     "esbuild-plugin-replace": "^1.4.0",
     "esbuild-plugin-resolve": "^2.0.0",
     "eslint": "^9.13.0",
@@ -97,9 +89,10 @@
   },
   "homepage": "https://github.com/fireproof-storage/connector#readme",
   "dependencies": {
-    "@adviser/cement": "^0.2.35",
+    "@adviser/cement": "^0.2.36",
     "@aws-sdk/client-s3": "^3.679.0",
     "@fireproof/core": "0.19.111",
+    "use-fireproof": "0.19.111",
     "@ipld/dag-cbor": "^9.2.1",
     "@jspm/core": "^2.1.0",
     "@netlify/blobs": "^8.1.0",
@@ -114,7 +107,6 @@
     "@web3-storage/clock": "^0.4.1",
     "@web3-storage/did-mailto": "^2.1.0",
     "@web3-storage/pail": "^0.6.0",
-    "@web3-storage/w3up-client": "^15.0.0",
     "assert": "^2.1.0",
     "better-sqlite3": "^11.5.0",
     "cborg": "^4.2.6",

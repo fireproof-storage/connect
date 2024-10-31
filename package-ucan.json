@@ -6,13 +6,14 @@
   "module": "./index.js",
   "exports": {
     ".": {
-      "import": "./index.js",
+      "browser": "./web/index.js",
+      "node": "./index.js",
       "require": "./index.cjs",
-      "script": "./index.global.js",
+      "script": "./web/index.global.js",
       "types": "./index.d.ts"
     }
   },
-  "browser": "./index.global.js",
+  "browser": "./web/index.js",
   "types": "./index.d.ts",
   "type": "module",
   "scripts": {},
@@ -22,6 +23,7 @@
   "devDependencies": {},
   "dependencies": {
     "@fireproof/core": "0.19.111",
+    "use-fireproof": "0.19.111",
     "@ipld/dag-cbor": "^9.2.1",
     "@ucanto/client": "^9.0.1",
     "@ucanto/core": "^10.0.1",
