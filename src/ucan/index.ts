@@ -24,23 +24,21 @@ registerUCANStoreProtocol();
 const connectionCache = new KeyedResolvOnce<bs.Connection>();
 
 export interface ConnectionParams {
-  readonly agent?: AgentWithStoreName;
-  readonly clock?: Clock | ClockWithoutDelegation;
-  readonly email?: Principal<DidMailto>;
-  readonly server?: Server;
+  readonly agent: AgentWithStoreName;
+  readonly clock: Clock | ClockWithoutDelegation;
+  readonly email: Principal<DidMailto>;
+  readonly server: Server;
 }
 
 export async function connect(
   db: Database,
-  params?: ConnectionParams
+  params: Partial<ConnectionParams> = {}
 ): Promise<{
   agent: AgentWithStoreName;
   clock: Clock | ClockWithoutDelegation;
   connection: bs.Connection;
   server: Server;
 }> {
-  params = params || {};
-
   const { sthis, blockstore, name: dbName } = db;
   const { email } = params;
 

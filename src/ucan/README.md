@@ -18,6 +18,6 @@ Then connect:
 import { useFireproof } from "use-fireproof";
 import * as UCAN from "@fireproof/ucan";
 
-const { database } = useFireproof('my-app-database-name')
-const connection = await UCAN.connect(database)
+const { database } = useFireproof("my-app-database-name");
+const connection = await UCAN.connect(database);
 ```

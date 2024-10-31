@@ -310,7 +310,7 @@ export class UCANGateway implements bs.Gateway {
       const delegationCids = delegations.map((d) => d.cid.toString());
       const attestations = proofs.filter((p) => {
         const cap = p.capabilities[0];
-        return cap.can === "ucan/attest" && delegationCids.includes((cap.nb as any).proof.toString());
+        return cap.can === "ucan/attest" && delegationCids.includes((cap.nb as {proof: { toString(): string }}).proof.toString());
       });
 
       return [...delegations, ...attestations];
