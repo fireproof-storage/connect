@@ -1,7 +1,7 @@
 import { KeyedResolvOnce, BuildURI, URI } from "@adviser/cement";
 import { bs, type Database } from "@fireproof/core";
 import { Principal, SignerArchive } from "@ucanto/interface";
-import { Agent, type AgentData, type AgentDataExport } from "@web3-storage/access/agent";
+import { Agent, type AgentMeta, type AgentData, type AgentDataExport } from "@web3-storage/access/agent";
 import { Absentee, ed25519 } from "@ucanto/principal";
 import { DID } from "@ucanto/core";
 import { DidMailto, fromEmail, toEmail } from "@web3-storage/did-mailto";
@@ -30,7 +30,17 @@ export interface ConnectionParams {
   readonly server?: Server;
 }
 
-export async function connect(db: Database, params: ConnectionParams): Promise<bs.Connection> {
+export async function connect(
+  db: Database,
+  params?: ConnectionParams
+): Promise<{
+  agent: AgentWithStoreName;
+  clock: Clock | ClockWithoutDelegation;
+  connection: bs.Connection;
+  server: Server;
+}> {
+  params = params || {};
+
   const { sthis, blockstore, name: dbName } = db;
   const { email } = params;
 
@@ -67,12 +77,19 @@ export async function connect(db: Database, params: ConnectionParams): Promise<b
   if (email) fpUrl.setParam("email-id", email.did());
 
   // Connect
-  return connectionCache.get(fpUrl.toString()).once(() => {
+  const connection = connectionCache.get(fpUrl.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
     const connection = connectionFactory(sthis, fpUrl);
     connection.connect_X(blockstore);
     return connection;
   });
+  // Fin
+  return {
+    agent: agnt,
+    clock: klok,
+    connection,
+    server: serv,
+  };
 }
 
 // AGENT
@@ -192,6 +209,7 @@ export async function loadSavedClock({
     return {
       delegation: delegation,
       id: DID.parse(clockExport.principal.id as `did:key:${string}`),
+      isNew: false,
       signer: ed25519.from(clockExport.principal as SignerArchive<`did:key:${string}`, ed25519.SigAlg>),
       storeName,
     };
@@ -210,6 +228,8 @@ export async function registerClock(params: { clock: Clock; server?: Server }) {
 
 // LOGIN
 // -----
+
+const AGENT_META: AgentMeta = { name: "fireproof-agent", type: "app" };
 
 export function email(string: `${string}@${string}`): Principal<DidMailto> {
   return Absentee.from({ id: fromEmail(string) });

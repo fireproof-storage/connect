@@ -313,11 +313,7 @@ export class UCANGateway implements bs.Gateway {
         return cap.can === "ucan/attest" && delegationCids.includes((cap.nb as any).proof.toString());
       });
 
-      // TODO
-      // const attestation = session.proofs.find((p) => p.capabilities[0].can === "ucan/attest");
-      // const delegation = session.proofs.find((p) => p.capabilities[0].can === "*");
-
-      return [];
+      return [...delegations, ...attestations];
     }
 
     if (this.inst && this.inst.clockDelegation) {

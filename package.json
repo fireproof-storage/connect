@@ -121,5 +121,14 @@
     "path": "^0.12.7",
     "util": "^0.12.5",
     "ws": "^8.18.0"
+  },
+  "exports": {
+    "./ucan": {
+      "browser": "./dist/ucan/web/index.js",
+      "node": "./dist/ucan/index.js",
+      "require": "./dist/ucan/index.cjs",
+      "script": "./dist/ucan/web/index.global.js",
+      "types": "./dist/ucan/index.d.ts"
+    }
   }
 }
