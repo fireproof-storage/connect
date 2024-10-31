@@ -7,15 +7,20 @@ import meow from "meow";
 const cli = meow(
   `
 	Options
-	  --email, -e  Email
+	  --database, -d   Database name
+	  --email, -e      Email
 `,
   {
     importMeta: import.meta,
     flags: {
+      database: {
+        type: "string",
+        shortFlag: "d",
+        isRequired: true,
+      },
       email: {
         type: "string",
         shortFlag: "e",
-        isRequired: true,
       },
     },
   }
@@ -23,30 +28,27 @@ const cli = meow(
 
 // 🚀
 
-const dbName = "my-db";
-const email = UCAN.email(cli.flags.email);
-const acc = await UCAN.login({ email });
-const clock = await UCAN.clock({ audience: email, databaseName: dbName });
 const agent = await UCAN.agent();
+
+const email = cli.flags.email ? UCAN.email(cli.flags.email) : undefined;
+if (email) await UCAN.login({ agent, email });
+
+const dbName = cli.flags.database;
+
+const clock = await UCAN.clock({ audience: email || agent, databaseName: dbName });
 const server = await UCAN.server();
+
+console.log("⌛", clock.delegation.issuer.did(), "→", clock.delegation.audience.did());
 
 console.log("👮 AGENT DID:", agent.id.did());
 console.log("⏰ CLOCK DID:", clock.id.did());
 console.log("🤖 SERVER DID:", server.id.did());
 
-await UCAN.registerClock({
-  clock,
-});
-
-// console.log(
-//   acc.model.proofs.map((d) => {
-//     return {
-//       iss: d.issuer.did(),
-//       aud: d.audience.did(),
-//       xyz: d.capabilities.map(JSON.stringify),
-//     };
-//   })
-// );
+if (clock.isNew) {
+  await UCAN.registerClock({
+    clock,
+  });
+}
 
 const db = fireproof(dbName);
 
@@ -56,3 +58,5 @@ await UCAN.connect(db, {
   email,
   server,
 });
+
+await db.put({ test: "document" });

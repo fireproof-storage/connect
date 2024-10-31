@@ -245,15 +245,6 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
-        console.log(
-          this.proofs().map((d) => {
-            return {
-              iss: d.issuer.did(),
-              aud: d.audience.did(),
-              xyz: d.capabilities.map((c) => JSON.stringify(c)),
-            };
-          })
-        );
         console.log(head.out);
 
         this.logger.Debug().Any("head", head.out).Msg("Meta (head) retrieved");

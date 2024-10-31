@@ -38,6 +38,7 @@ export interface Clock {
 
 export interface ClockWithoutDelegation {
   readonly id: Principal<DID<"key">>;
+  readonly isNew: false;
 }
 
 export type ClockAdvance = InferInvokedCapability<typeof ClockCaps.advance>;

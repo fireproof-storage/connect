@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@fireproof/connect": "../../../",
-    "use-fireproof": "^0.19.111"
+    "use-fireproof": "0.19.111"
   },
   "devDependencies": {
     "@rsbuild/core": "^1.0.12",

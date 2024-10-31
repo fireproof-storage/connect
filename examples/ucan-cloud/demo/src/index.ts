@@ -9,23 +9,50 @@ let rows: AllDocsResponse<{}>["rows"] = [];
 let db: Database | undefined;
 let databaseName = "my-db-0001";
 
+const email = "steven+005@fireproof.storage";
+const timeoutId = setTimeout(() => console.log(`Logging in with the email address '${email}', check your inbox.`), 500);
+
 await UCAN.login({
-  email: UCAN.email("steven+001@fireproof.storage"),
+  email: UCAN.email(email),
 });
+
+clearTimeout(timeoutId);
+console.log(`Logged in successfully.`);
 
 // Connection + Clock ID
 
 async function connect(ci?: `did:key:${string}`) {
   if (!db) return;
 
-  const email = undefined;
+  let clock;
 
-  const connection = await UCAN.connect(db, {
-    clock: ci ? UCAN.clockId(ci) : undefined,
-    email,
+  if (ci === undefined) {
+    clock = await UCAN.clock({ audience: UCAN.email(email), databaseName: db.name || "db-name" });
+    await UCAN.registerClock({ clock });
+
+    console.log("⌛", clock.delegation.issuer.did(), "→", clock.delegation.audience.did());
+  }
+
+  const context = await UCAN.connect(db as any, {
+    clock: ci ? UCAN.clockId(ci) : clock,
+    email: UCAN.email(email),
   });
 
-  clockId = (connection as any).url.getParam("clock-id");
+  console.log("👮 AGENT DID:", context.agent.id.did());
+  console.log("⏰ CLOCK DID:", context.clock.id.did());
+  console.log("🤖 SERVER DID:", context.server.id.did());
+
+  const agentDelegations = context.agent.agent.proofs();
+  if (agentDelegations.length === 0) console.log("NO AGENT PROOFS");
+
+  agentDelegations.forEach((d) => {
+    console.log(`Delegation (${d.cid}):`);
+    console.log("Issuer:", d.issuer.did());
+    console.log("Audience:", d.audience.did());
+    console.log("Capabilities:", JSON.stringify(d.capabilities));
+  });
+
+  clockId = (context.connection as any).url.getParam("clock-id");
 }
 
 // DB ROWS

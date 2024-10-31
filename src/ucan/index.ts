@@ -48,7 +48,7 @@ export async function connect(
   }
 
   // Parts
-  const agnt = params.agent || (await agent({ databaseName: dbName }));
+  const agnt = params.agent || (await agent());
   const serv = params.server || (await server());
 
   // Typescript being weird?
@@ -93,27 +93,22 @@ export async function connect(
 // AGENT
 // -----
 
-export async function agent(options?: {
-  databaseName?: string;
-  server?: Server;
-  storeName?: string;
-}): Promise<AgentWithStoreName> {
+export async function agent(options?: { server?: Server; storeName?: string }): Promise<AgentWithStoreName> {
   const agentFromStore = await loadSavedAgent(options);
   if (agentFromStore) return agentFromStore;
   return await createAndSaveAgent(options);
 }
 
-export function agentStoreName({ databaseName }: { databaseName?: string }) {
-  return databaseName ? `fireproof/${databaseName}/agent` : `fireproof/agent`;
+export function agentStoreName() {
+  return `fireproof/agent`;
 }
 
 export async function createAndSaveAgent(options?: {
-  databaseName?: string;
   server?: Server;
   storeName?: string;
 }): Promise<AgentWithStoreName> {
   let storeName = options?.storeName;
-  storeName = storeName || agentStoreName({ databaseName: options?.databaseName });
+  storeName = storeName || agentStoreName();
   const store = await stateStore(storeName);
 
   const principal = await ed25519.generate();
@@ -133,12 +128,11 @@ export async function createAndSaveAgent(options?: {
 }
 
 export async function loadSavedAgent(options?: {
-  databaseName?: string;
   server?: Server;
   storeName?: string;
 }): Promise<AgentWithStoreName | undefined> {
   let storeName = options?.storeName;
-  storeName = storeName || agentStoreName({ databaseName: options?.databaseName });
+  storeName = storeName || agentStoreName();
   const store = await stateStore(storeName);
 
   const data = await store.load();
@@ -158,7 +152,7 @@ export async function loadSavedAgent(options?: {
 // -----
 
 export async function clock(options: {
-  audience: Principal;
+  audience: Principal | AgentWithStoreName;
   databaseName: string;
   storeName?: string;
 }): Promise<Clock> {
@@ -168,7 +162,7 @@ export async function clock(options: {
 }
 
 export function clockId(id: `did:key:${string}`): ClockWithoutDelegation {
-  return { id: DID.parse(id) };
+  return { id: DID.parse(id), isNew: false };
 }
 
 export function clockStoreName({ databaseName }: { databaseName: string }) {
@@ -180,13 +174,13 @@ export async function createAndSaveClock({
   databaseName,
   storeName,
 }: {
-  audience: Principal;
+  audience: Principal | AgentWithStoreName;
   databaseName: string;
   storeName?: string;
 }): Promise<Clock> {
   storeName = storeName || clockStoreName({ databaseName });
   const store = await stateStore(storeName);
-  const clock = await Client.createClock({ audience });
+  const clock = await Client.createClock({ audience: "agent" in audience ? audience.agent : audience });
   const signer = clock.signer;
 
   if (signer === undefined) {
@@ -235,7 +229,6 @@ export async function registerClock(params: { clock: Clock; server?: Server }) {
   const srvr = params.server || (await server());
   const service = Client.service(srvr);
   const registration = await Client.registerClock({ clock: params.clock, server: srvr, service });
-  console.log(registration.out);
   if (registration.out.error) throw registration.out.error;
 }
 
