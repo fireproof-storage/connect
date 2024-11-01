@@ -181,7 +181,7 @@ export class UCANGateway implements bs.Gateway {
 
         if (advancement.out.error) throw advancement.out.error;
 
-        this.logger.Debug().Str("cid", event.toString()).Msg("Clock advanced");
+        this.logger.Debug().Str("cid", event.cid.toString()).Msg("Clock advanced");
 
         break;
       }
@@ -244,8 +244,6 @@ export class UCANGateway implements bs.Gateway {
           server: this.inst.server,
           service: this.inst.service,
         });
-
-        console.log(head.out);
 
         this.logger.Debug().Any("head", head.out).Msg("Meta (head) retrieved");
 
