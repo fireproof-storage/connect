@@ -6,9 +6,13 @@ export type State = {
   agent: AgentWithStoreName;
   clock: Clock | ClockWithoutDelegation;
   databaseName: string;
+  email?: string;
   server: Server;
 };
 
 // 📣
 
-export type Msg = "CREATE_NEW_CLOCK" | "USE_CLOCK_ID";
+export type Msg =
+  | { type: "-" }
+  | { type: "SET_CLOCK"; clock: Clock | ClockWithoutDelegation }
+  | { type: "SET_DATABASE_NAME"; name: string };
