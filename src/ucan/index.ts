@@ -1,4 +1,4 @@
-import { KeyedResolvOnce, BuildURI, URI } from "@adviser/cement";
+import { KeyedResolvOnce, URI } from "@adviser/cement";
 import { bs, type Database } from "@fireproof/core";
 import { Principal, SignerArchive } from "@ucanto/interface";
 import { Agent, type AgentMeta, type AgentData, type AgentDataExport } from "@web3-storage/access/agent";
@@ -13,6 +13,10 @@ import { registerUCANStoreProtocol } from "./ucan-gateway";
 import stateStore from "./store/state";
 import { Service, type AgentWithStoreName, type Clock, type ClockWithoutDelegation, type Server } from "./types";
 import { exportDelegation, extractDelegation } from "./common";
+
+// Exports
+
+export { Agent, AgentWithStoreName, Clock, ClockWithoutDelegation, Server, Service } from "./types";
 
 // Setup
 
@@ -165,8 +169,8 @@ export function clockId(id: `did:key:${string}`): ClockWithoutDelegation {
   return { id: DID.parse(id), isNew: false };
 }
 
-export function clockStoreName({ databaseName }: { databaseName: string }) {
-  return `fireproof/${databaseName}/clock`;
+export function clockStoreName({ audience, databaseName }: { audience: Principal; databaseName: string }) {
+  return `fireproof/${databaseName}/${audience.did()}/clock`;
 }
 
 export async function createAndSaveClock({
@@ -178,9 +182,10 @@ export async function createAndSaveClock({
   databaseName: string;
   storeName?: string;
 }): Promise<Clock> {
-  storeName = storeName || clockStoreName({ databaseName });
+  const clockAudience = "agent" in audience ? audience.agent : audience;
+  storeName = storeName || clockStoreName({ audience: clockAudience, databaseName });
   const store = await stateStore(storeName);
-  const clock = await Client.createClock({ audience: "agent" in audience ? audience.agent : audience });
+  const clock = await Client.createClock({ audience: clockAudience });
   const signer = clock.signer;
 
   if (signer === undefined) {
@@ -199,13 +204,16 @@ export async function createAndSaveClock({
 }
 
 export async function loadSavedClock({
+  audience,
   databaseName,
   storeName,
 }: {
+  audience: Principal | AgentWithStoreName;
   databaseName: string;
   storeName?: string;
 }): Promise<Clock | undefined> {
-  storeName = storeName || clockStoreName({ databaseName });
+  const clockAudience = "agent" in audience ? audience.agent : audience;
+  storeName = storeName || clockStoreName({ audience: clockAudience, databaseName });
   const store = await stateStore(storeName);
   const clockExport = await store.load();
 
@@ -275,10 +283,10 @@ export async function server(
   url = "https://fireproof-ucan.jchris.workers.dev",
   id?: `did:${string}:${string}`
 ): Promise<Server> {
-  const uri = BuildURI.from(url);
+  const uri = URI.from(url);
 
   if (!id) {
-    id = await fetch(uri.pathname("/did").asURL())
+    id = await fetch(uri.build().pathname("/did").asURL())
       .then((r) => r.text())
       .then((r) => r as `did:${string}:${string}`);
   }
@@ -289,6 +297,6 @@ export async function server(
 
   return {
     id: DID.parse(id),
-    uri: URI.from(uri),
+    uri,
   };
 }

@@ -20,10 +20,11 @@ export async function workshopSetup() {
 }
 
 export async function workshopDelegate(_participantAgentId: `did:${string}:${string}`) {
-  const _agent = await Connector.agent();
+  const agent = await Connector.agent();
 
   // Load clock
   const _clock = await Connector.loadSavedClock({
+    audience: agent.agent,
     databaseName: WORKSHOP_DB_NAME,
   });
 
