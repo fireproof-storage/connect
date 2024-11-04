@@ -18,8 +18,8 @@ importers:
         specifier: 0.19.111
         version: 0.19.111(react@18.3.1)(typescript@5.6.3)
       '@ipld/dag-cbor':
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^9.2.2
+        version: 9.2.2
       '@jspm/core':
         specifier: ^2.1.0
         version: 2.1.0
@@ -1053,8 +1053,8 @@ packages:
     resolution: {integrity: sha512-Bb4XrCFlnsCb9tTzZ1I8zo9O61D9qm7HfvuYrQ9gzdE8YhjyVIjrjmHmnoSWV/uCmyc2/bcqiDPIg+9WljXNzg==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
-  '@ipld/dag-cbor@9.2.1':
-    resolution: {integrity: sha512-nyY48yE7r3dnJVlxrdaimrbloh4RokQaNRdI//btfTkcTEZbpmSrbYcBQ4VKTf8ZxXAOUJy4VsRpkJo+y9RTnA==}
+  '@ipld/dag-cbor@9.2.2':
+    resolution: {integrity: sha512-uIEOuruCqKTP50OBWwgz4Js2+LhiBQaxc57cnP71f45b1mHEAo1OCR1Zn/TbvSW/mV1x+JqhacIktkKyaYqhCw==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
   '@ipld/dag-json@10.2.2':
@@ -4756,7 +4756,7 @@ snapshots:
     dependencies:
       '@adviser/cement': 0.2.36(typescript@5.6.3)
       '@ipld/car': 5.3.2
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-json': 10.2.2
       '@ipld/unixfs': 3.0.0
       '@web3-storage/pail': 0.6.0
@@ -4787,12 +4787,12 @@ snapshots:
 
   '@ipld/car@5.3.2':
     dependencies:
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       cborg: 4.2.6
       multiformats: 13.3.0
       varint: 6.0.0
 
-  '@ipld/dag-cbor@9.2.1':
+  '@ipld/dag-cbor@9.2.2':
     dependencies:
       cborg: 4.2.6
       multiformats: 13.3.0
@@ -4808,7 +4808,7 @@ snapshots:
 
   '@ipld/dag-ucan@3.4.0':
     dependencies:
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-json': 10.2.2
       multiformats: 11.0.2
 
@@ -5462,7 +5462,7 @@ snapshots:
   '@ucanto/core@10.0.1':
     dependencies:
       '@ipld/car': 5.3.2
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-ucan': 3.4.0
       '@ucanto/interface': 10.0.1
       multiformats: 11.0.2
@@ -5497,7 +5497,7 @@ snapshots:
   '@ucanto/validator@9.0.2':
     dependencies:
       '@ipld/car': 5.3.2
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       '@ucanto/core': 10.0.1
       '@ucanto/interface': 10.0.1
       multiformats: 11.0.2
@@ -5565,7 +5565,7 @@ snapshots:
 
   '@web3-storage/blob-index@1.0.4':
     dependencies:
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       '@storacha/one-webcrypto': 1.0.1
       '@ucanto/core': 10.0.1
       '@ucanto/interface': 10.0.1
@@ -5586,7 +5586,7 @@ snapshots:
 
   '@web3-storage/clock@0.4.1':
     dependencies:
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-ucan': 3.4.0
       '@ucanto/client': 9.0.1
       '@ucanto/interface': 10.0.1
@@ -5601,7 +5601,7 @@ snapshots:
 
   '@web3-storage/data-segment@5.2.0':
     dependencies:
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       multiformats: 13.3.0
       sync-multihash-sha2: 1.0.0
 
@@ -5619,7 +5619,7 @@ snapshots:
   '@web3-storage/pail@0.5.0':
     dependencies:
       '@ipld/car': 5.3.2
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       archy: 1.0.0
       cborg: 4.2.6
       cli-color: 2.0.4
@@ -5628,13 +5628,13 @@ snapshots:
 
   '@web3-storage/pail@0.6.0':
     dependencies:
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       multiformats: 13.3.0
 
   '@web3-storage/upload-client@16.1.1(encoding@0.1.13)':
     dependencies:
       '@ipld/car': 5.3.2
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-ucan': 3.4.0
       '@ipld/unixfs': 2.2.0
       '@ucanto/client': 9.0.1
@@ -5936,7 +5936,7 @@ snapshots:
 
   carstream@2.2.0:
     dependencies:
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       multiformats: 13.3.0
       uint8arraylist: 2.4.8
 
@@ -6659,7 +6659,7 @@ snapshots:
 
   ipfs-unixfs-exporter@13.6.1:
     dependencies:
-      '@ipld/dag-cbor': 9.2.1
+      '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-json': 10.2.2
       '@ipld/dag-pb': 4.1.2
       '@multiformats/murmur3': 2.1.8
