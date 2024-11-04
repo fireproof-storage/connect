@@ -122,6 +122,10 @@ export async function registerClock({
   server: Server;
   service: ConnectionView<Service>;
 }) {
+  if (clock.signer === undefined) {
+    throw new Error("Cannot register a delegated clock");
+  }
+
   const invocation = ClockCaps.register.invoke({
     issuer: clock.signer,
     audience: server.id,

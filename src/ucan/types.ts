@@ -32,7 +32,7 @@ export interface Clock {
   readonly delegation: Delegation;
   readonly id: Principal<DID<"key">>;
   readonly isNew: boolean;
-  readonly signer: Signer<DID<"key">>;
+  readonly signer?: Signer<DID<"key">>;
   readonly storeName: string;
 }
 

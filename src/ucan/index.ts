@@ -1,13 +1,16 @@
 import { KeyedResolvOnce, URI } from "@adviser/cement";
 import { bs, type Database } from "@fireproof/core";
-import { Principal, SignerArchive } from "@ucanto/interface";
+import { Delegation, Principal, SignerArchive } from "@ucanto/interface";
 import { Agent, type AgentMeta, type AgentData, type AgentDataExport } from "@web3-storage/access/agent";
 import { Absentee, ed25519 } from "@ucanto/principal";
 import { DID } from "@ucanto/core";
 import { DidMailto, fromEmail, toEmail } from "@web3-storage/did-mailto";
 import * as W3 from "@web3-storage/w3up-client/account";
+import * as Del from "@ucanto/core/delegation";
+import { unwrap } from "@web3-storage/w3up-client/result";
 
 import * as Client from "./client";
+import * as ClockCaps from "./clock/capabilities";
 import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
 import { registerUCANStoreProtocol } from "./ucan-gateway";
 import stateStore from "./store/state";
@@ -17,6 +20,8 @@ import { exportDelegation, extractDelegation } from "./common";
 // Exports
 
 export { Agent, AgentWithStoreName, Clock, ClockWithoutDelegation, Server, Service } from "./types";
+
+export const Capabilities = { Clock: ClockCaps };
 
 // Setup
 
@@ -165,6 +170,59 @@ export async function clock(options: {
   return await createAndSaveClock(options);
 }
 
+/**
+ * Import a clock delegation and then save it
+ * so you can use it with `clock` later on.
+ */
+export async function clockDelegation({
+  audience,
+  databaseName,
+  delegation,
+  storeName,
+}: {
+  audience: Principal | AgentWithStoreName;
+  databaseName: string;
+  delegation: Delegation;
+  storeName?: string;
+}): Promise<Clock> {
+  const clockAudience = "agent" in audience ? audience.agent : audience;
+  storeName = storeName || clockStoreName({ audience: clockAudience, databaseName });
+  const store = await stateStore(storeName);
+
+  let iterator = delegation.iterate();
+  let clockRoot;
+
+  while (clockRoot === undefined) {
+    const del = iterator.next();
+    if (del.value.proofs.length === 0) {
+      clockRoot = del.value;
+    } else {
+      iterator = del.value.iterate();
+    }
+  }
+
+  if (clockRoot === undefined) {
+    throw new Error("Unable to determine clock root");
+  }
+
+  const clock = {
+    delegation,
+    id: clockRoot.issuer,
+    isNew: false,
+    storeName,
+  };
+
+  const raw: AgentDataExport = {
+    meta: { name: storeName, type: "service" },
+    principal: { id: delegation.issuer.did(), keys: {} },
+    spaces: new Map(),
+    delegations: new Map([exportDelegation(delegation)]),
+  };
+
+  await store.save(raw);
+  return { ...clock, storeName };
+}
+
 export function clockId(id: `did:key:${string}`): ClockWithoutDelegation {
   return { id: DID.parse(id), isNew: false };
 }
@@ -300,3 +358,19 @@ export async function server(
     uri,
   };
 }
+
+// UTILS
+// =====
+
+export const delegation = {
+  async archive(delegation: Delegation): Promise<Uint8Array> {
+    const result = await Del.archive(delegation);
+    return unwrap(result);
+  },
+
+  async extract(archive: Uint8Array): Promise<Delegation> {
+    const result = await Del.extract(archive);
+    if (result.ok === undefined) throw result.error;
+    return result.ok;
+  },
+};
