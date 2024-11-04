@@ -16,16 +16,16 @@ jobs:
           run_install: false
           version: 9
 
-      - uses: actions/checkout@v4
-        with:
-          repository: fireproof-storage/fireproof
-          ref: series_0.19
-          path: ./fireproof
-      - name: build-fireproof-package
-        working-directory: ./fireproof
-        run: |
-          pnpm install
-          pnpm run build
+      #- uses: actions/checkout@v4
+      #  with:
+      #    repository: fireproof-storage/fireproof
+      #    ref: series_0.19
+      #    path: ./fireproof
+      #- name: build-fireproof-package
+      #  working-directory: ./fireproof
+      #  run: |
+      #    pnpm install
+      #    pnpm run build
 
       - uses: actions/checkout@v4
         with:
@@ -36,8 +36,8 @@ jobs:
         run: |
           git config --global url."https://".insteadOf git+ssh://
           git config --global -l
-          pnpm remove @fireproof/core
-          pnpm install -f ../fireproof/dist/fireproof-core/fireproof-core-*.tgz
+          #pnpm remove @fireproof/core
+          #pnpm install -f ../fireproof/dist/fireproof-core/fireproof-core-*.tgz
           pnpm install
 
       - name: format-check
