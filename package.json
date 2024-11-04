@@ -88,7 +88,7 @@
     "typescript-eslint": "^8.12.2",
     "vite": "^5.4.10",
     "vite-tsconfig-paths": "^5.0.1",
-    "vitest": "^2.0.5",
+    "vitest": "^2.1.4",
     "wrangler": "^3.83.0",
     "zx": "^8.2.0"
   },
