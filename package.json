@@ -5,7 +5,7 @@
   "description": "Live database connector for the web",
   "type": "module",
   "scripts": {
-    "publish-packages": "pnpm run '/publish:/'",
+    "publish": "pnpm run '/publish:/'",
     "publish:aws": "tsx ./publish-package.ts ./dist/aws/package.json",
     "publish:cloud": "tsx ./publish-package.ts ./dist/cloud/package.json",
     "publish:netlify": "tsx ./publish-package.ts ./dist/netlify/package.json",
