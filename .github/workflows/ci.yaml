@@ -20,11 +20,11 @@ jobs:
           run_install: false
           version: 9
 
-      #      - uses: actions/checkout@v4
-      #        with:
-      #          repository: fireproof-storage/fireproof
-      #          ref: series_0.19
-      #          path: ./fireproof
+      - uses: actions/checkout@v4
+        with:
+          repository: fireproof-storage/fireproof
+          path: ./fireproof
+      #    ref: series_0.19
       #      - name: build-fireproof-package
       #        working-directory: ./fireproof
       #        run: |
