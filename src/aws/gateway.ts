@@ -5,7 +5,7 @@ async function resultFetch(logger: Logger, curl: CoerceURI, init?: RequestInit):
   const url = URI.from(curl);
   try {
     const ret = await fetch(url.asURL(), init);
-    logger.Debug().Url(url).Any("init", init).Int("status", ret.status).Msg("Fetch Done");
+    // logger.Debug().Url(url).Any("init", init).Int("status", ret.status).Msg("Fetch Done");
     return Result.Ok(ret);
   } catch (err) {
     return logger.Error().Url(url).Any("init", init).Err(err).Msg("Fetch Error").ResultError();
@@ -80,20 +80,41 @@ export class AWSGateway implements bs.Gateway {
       .setParam("key", key)
       .setParam("name", name)
       .URI();
-    const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
-    if (bodyRes.isErr()) {
-      return Result.Err(bodyRes.Err());
+
+    // const rPrefetch = await resultFetch(this.logger, fetchUrl, { method: "GET" });
+    // if (rPrefetch.isErr()) {
+    //   return Result.Err(rPrefetch.Err());
+    // }
+    // const prefetch = rPrefetch.Ok();
+    // // if (!prefetch.ok) {
+    // //   return this.logger.Error().Url(fetchUrl).Int("status", prefetch.status).Msg("failed to upload meta").ResultError();
+    // // }
+
+    // const doneJson = await prefetch.json();
+    // if (!doneJson.uploadURL) {
+    //   return this.logger.Error().Url(fetchUrl).Any({doneJson}).Msg("Upload URL not found in the response").ResultError();
+    // }
+
+    const meta = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
+    if (meta.isErr()) {
+      return Result.Err(meta.Err());
     }
+    this.logger.Debug().Url(fetchUrl).Any({ meta }).Msg("putMeta");
     const rDone = await resultFetch(this.logger, fetchUrl, {
       method: "PUT",
-      body: this.sthis.txt.decode(bodyRes.Ok()),
+      body: this.sthis.txt.decode(meta.Ok()),
     });
     if (rDone.isErr()) {
       return Result.Err(rDone.Err());
     }
     const done = rDone.Ok();
     if (!done.ok) {
-      return this.logger.Error().Url(fetchUrl).Int("status", done.status).Msg("failed to upload meta").ResultError();
+      return this.logger
+        .Error()
+        .Url(fetchUrl)
+        .Any({ done, x: await done.text() })
+        .Msg("failed to upload meta")
+        .ResultError();
     }
     return Result.Ok(undefined);
   }
@@ -113,7 +134,7 @@ export class AWSGateway implements bs.Gateway {
     }
     const done = rDone.Ok();
     if (!done.ok) {
-      return this.logger.Error().Url(fetchUrl).Int("status", done.status).Msg("failed to upload meta").ResultError();
+      return this.logger.Error().Any({ resp: done }).Msg("failed to upload meta").ResultError();
     }
 
     const doneJson = await done.json();
@@ -127,7 +148,7 @@ export class AWSGateway implements bs.Gateway {
     }
     const uploadDone = ruploadDone.Ok();
     if (!uploadDone.ok) {
-      return this.logger.Error().Int("status", uploadDone.status).Msg("Upload Data response error").ResultError();
+      return this.logger.Error().Any({ resp: uploadDone }).Msg("Upload Data response error").ResultError();
     }
 
     return Result.Ok(undefined);
@@ -175,18 +196,22 @@ export class AWSGateway implements bs.Gateway {
   }
 
   private async getMeta(url: URI): Promise<bs.GetResult> {
-    const rParams = url.getParamsResult("dataUrl", "name", "key");
+    const rParams = url.getParamsResult("uploadUrl", "name", "key");
     if (rParams.isErr()) {
       return Result.Err(rParams.Err());
     }
-    const { dataUrl, key } = rParams.Ok();
+    const { uploadUrl, key } = rParams.Ok();
     let name = rParams.Ok().name;
     const index = url.getParam("index");
     if (index) {
       name += `-${index}`;
     }
     name += ".fp";
-    const fetchUrl = BuildURI.from(dataUrl).setParam("type", "meta").setParam("key", key).setParam("name", name).URI();
+    const fetchUrl = BuildURI.from(uploadUrl)
+      .setParam("type", "meta")
+      .setParam("key", key)
+      .setParam("name", name)
+      .URI();
     const rresponse = await resultFetch(this.logger, fetchUrl);
     if (rresponse.isErr()) {
       return Result.Err(rresponse.Err());
@@ -194,16 +219,9 @@ export class AWSGateway implements bs.Gateway {
     const response = rresponse.Ok();
     if (!response.ok) {
       if (response.status === 403) {
-        return Result.Err(new NotFoundError(`meta not found: ${url}`));
+        return Result.Err(new NotFoundError(`meta not found: ${url}->${fetchUrl}`));
       }
-      this.logger
-        .Error()
-        .Url(fetchUrl)
-        .Int("status", response.status)
-        .Str("statusText", response.statusText)
-        .Str("response", await response.text()) // security risk
-        .Msg("Download Meta response error");
-      return Result.Err(new NotFoundError(`meta not found: ${url}`));
+      return this.logger.Error().Url(fetchUrl).Any({ response }).Msg("Download Meta response error").ResultError();
     }
 
     const data = new Uint8Array(await response.arrayBuffer());

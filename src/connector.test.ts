@@ -39,9 +39,16 @@ describe("loading the base store", () => {
   let connect: ConnectFunction;
   const sthis = mockSuperThis();
 
+  let resetFPStorageUrl: string;
+  afterEach(async () => {
+    process.env.FP_STORAGE_URL = resetFPStorageUrl;
+  });
+
   beforeEach(async (context: TaskContext) => {
     // console.log(context)
     // const originalEnv = { FP_STORAGE_URL: process.env.FP_STORAGE_URL, FP_KEYBAG_URL: process.env.FP_KEYBAG_URL };
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    resetFPStorageUrl = process.env.FP_STORAGE_URL!;
     process.env.FP_STORAGE_URL = "./dist/fp-dir-file";
     dbName = "test-local-" + sthis.nextId().str;
     emptyDbName = "test-empty-" + sthis.nextId().str;
@@ -51,7 +58,7 @@ describe("loading the base store", () => {
       throw new Error("projectName is undefined");
     }
     connect = await getConnect(context.task.file.projectName);
-    cx = connect(db, remoteDbName);
+    cx = await Promise.resolve(connect(db, remoteDbName));
     await cx.loaded;
     await smokeDB(db);
     await (await db.blockstore.loader?.WALStore())?.process();
@@ -92,14 +99,14 @@ describe("loading the base store", () => {
   });
 
   it("should have data in the remote gateway", async () => {
+    // await sleep(3000);
     const carLog = await db.blockstore.loader?.carLog;
     expect(carLog).toBeDefined();
     expect(carLog?.length).toBe(10);
-    if (!carLog) return;
     await (await db.blockstore.loader?.WALStore())?.process();
     const carStore = (await db.blockstore.loader?.remoteCarStore) as unknown as ExtendedStore;
     const carGateway = carStore?.gateway;
-    const testKey = carLog[0][0].toString();
+    const testKey = carLog?.[0][0].toString() as string;
     const carUrl = await carGateway?.buildUrl(carStore._url, testKey);
     const carGetResult = await carGateway?.get(carUrl.Ok());
     expect(carGetResult.Ok()).toBeDefined();
