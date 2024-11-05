@@ -15,7 +15,7 @@ importers:
         specifier: ^3.685.0
         version: 3.685.0
       '@fireproof/core':
-        specifier: ^0.19.111
+        specifier: 0.19.111
         version: 0.19.111(react@18.3.1)(typescript@5.6.3)
       '@ipld/dag-cbor':
         specifier: ^9.2.2
@@ -98,6 +98,9 @@ importers:
       util:
         specifier: ^0.12.5
         version: 0.12.5
+      wait-on:
+        specifier: ^8.0.1
+        version: 8.0.1
       ws:
         specifier: ^8.18.0
         version: 8.18.0
@@ -174,9 +177,6 @@ importers:
       vitest:
         specifier: ^2.1.4
         version: 2.1.4(@types/node@22.8.7)
-      wait-on:
-        specifier: ^8.0.1
-        version: 8.0.1
       wrangler:
         specifier: ^3.84.1
         version: 3.84.1
@@ -5495,7 +5495,7 @@ snapshots:
 
   '@types/wait-on@5.3.4':
     dependencies:
-      '@types/node': 22.8.1
+      '@types/node': 22.8.7
 
   '@types/ws@8.5.13':
     dependencies:
