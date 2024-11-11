@@ -113,7 +113,7 @@
     "@web3-storage/clock": "^0.4.1",
     "@web3-storage/did-mailto": "^2.1.0",
     "@web3-storage/pail": "^0.6.0",
-    "@web3-storage/w3up-client": "^16.4.0",
+    "@web3-storage/w3up-client": "^16.4.1",
     "assert": "^2.1.0",
     "better-sqlite3": "^11.5.0",
     "cborg": "^4.2.6",
