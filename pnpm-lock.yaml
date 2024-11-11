@@ -87,8 +87,8 @@ importers:
         specifier: ^13.3.1
         version: 13.3.1
       node-sqlite3-wasm:
-        specifier: ^0.8.25
-        version: 0.8.25
+        specifier: ^0.8.26
+        version: 0.8.26
       partykit:
         specifier: ^0.0.111
         version: 0.0.111
@@ -2996,8 +2996,8 @@ packages:
     resolution: {integrity: sha512-U8xa/QBpNz/dc4BERBkMg//XTrBDcj0uIg5YDYPV4ChYgHPEw4JhoT5YWTxQuKBg/3C1kfkTO4MuEYw7fCYHJw==}
     engines: {node: '>=8'}
 
-  node-sqlite3-wasm@0.8.25:
-    resolution: {integrity: sha512-iqaFwW0aokbAWPJyy81xTm4vbQMUgWmGbcxVnn7xLOd5QZagtf5YIOHbXPpZv4AlC2yYw7cl0sM31Gmun8ojJA==}
+  node-sqlite3-wasm@0.8.26:
+    resolution: {integrity: sha512-IgYM5wIitTGLqohphlIy51jUCC7U8/1FrH5nYX5mhFCpKXA+NuhKC/51ncIuHnshir8HqGnqSLvSFKdk1I1Urw==}
 
   noop-x@1.2.1:
     resolution: {integrity: sha512-X+jn3u2YhlAjteZIfrcVxaDLRfnrMvkzQ+jRatOX8UO7PFqU0QKlcyI2DhvLKEK2K4u1cRrZw9QqK3XruvyH2A==}
@@ -7403,7 +7403,7 @@ snapshots:
     dependencies:
       big-integer: 1.6.52
 
-  node-sqlite3-wasm@0.8.25: {}
+  node-sqlite3-wasm@0.8.26: {}
 
   noop-x@1.2.1: {}
 
