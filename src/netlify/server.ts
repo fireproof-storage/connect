@@ -23,7 +23,7 @@ export default async (req: Request) => {
       return new Response(JSON.stringify({ ok: true }), { status: 201 });
     } else if (metaDb) {
       const meta = getStore("meta");
-      const x = (await req.json()) as CRDTEntry[];
+      const x = await req.json<CRDTEntry[]>();
       // fixme, marty changed to [0] as it is a slice of the structure we expected
       const { data, cid, parents } = x[0];
       await meta.setJSON(`${metaDb}/${cid}`, { data, parents });
