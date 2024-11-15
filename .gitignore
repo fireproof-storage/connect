@@ -1,4 +1,5 @@
 # Files
+.wrangler
 .vscode
 .idea
 .DS_Store

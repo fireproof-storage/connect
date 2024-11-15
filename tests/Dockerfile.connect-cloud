@@ -1,0 +1,19 @@
+FROM node:20-slim AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+RUN apt update && apt install -y git
+COPY src/cloud/backend /usr/src/app/cloud/backend
+COPY .gitignore LICENSE.md /usr/src/app/cloud/backend/
+COPY package-cloud-backend.json /usr/src/app/cloud/backend
+COPY version-copy-package.ts /usr/src/app/cloud/backend
+WORKDIR /usr/src/app/cloud/backend
+RUN pnpm install zx cmd-ts
+
+COPY package.json /usr/src/app/cloud/backend
+RUN npx tsx version-copy-package.ts --skip-pack ./dist/package-cloud-backend.json && \
+    cp ./dist/package.json . && \
+    cat package.json && \
+    pnpm i
+
+CMD pnpm run start

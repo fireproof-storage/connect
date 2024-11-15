@@ -1,0 +1,22 @@
+{
+  "name": "@fireproof/fireproof-cloud",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy --keep-vars",
+    "dev": "wrangler dev",
+    "start": "(env | grep -vi npm) > .dev.vars && wrangler dev --port 1968 --ip '::'",
+    "test": "vitest",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@adviser/cement": "from-main-package-json",
+    "@cloudflare/workers-types": "from-main-package-json",
+    "aws4fetch": "from-main-package-json",
+    "partyserver": "from-main-package-json",
+    "partysocket": "from-main-package-json",
+    "valibot": "from-main-package-json",
+    "wrangler": "from-main-package-json"
+  },
+  "devDependencies": {}
+}
