@@ -17,13 +17,11 @@
   "type": "module",
   "scripts": {},
   "keywords": ["fireproof", "partykit", "gateway"],
-  "author": "",
-  "license": "Apache-2.0 OR MIT",
   "devDependencies": {},
   "dependencies": {
-    "partykit": "^0.0.0",
-    "cross-fetch": "^4.0.0",
-    "partysocket": "^1.0.2",
-    "@adviser/cement": "^0.2.34"
+    "@fireproof/core": "from-package-json",
+    "partykit": "from-package-json",
+    "partysocket": "from-package-json",
+    "@adviser/cement": "from-package-json"
   }
 }

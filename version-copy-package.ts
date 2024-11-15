@@ -46,8 +46,19 @@ async function main() {
   }
   patchVersion(destPackageJson);
   // add a dependency to fireproof core with the same tag we're building
-  destPackageJson.dependencies["@fireproof/core"] =
-    process.env.FIREPROOF_CORE_VERSION || mainPackageJson.dependencies["@fireproof/core"] || destPackageJson.version;
+  destPackageJson.dependencies["@fireproof/core"] = mainPackageJson.dependencies["@fireproof/core"];
+  if (!mainPackageJson.dependencies["@fireproof/core"]) {
+    throw new Error("there must be a version of @fireproof/core in main");
+  }
+  for (const i of ["keywords", "contributors", "license"]) {
+    if (typeof mainPackageJson[i] === "string") {
+      destPackageJson[i] = mainPackageJson[i];
+    } else if (Array.isArray(mainPackageJson[i])) {
+      destPackageJson[i] = Array.from(new Set([...mainPackageJson[i], ...(destPackageJson[i] || [])]));
+    } else {
+      destPackageJson[i] = { ...mainPackageJson[i], ...destPackageJson[i] };
+    }
+  }
   const destPackageJsonFile = path.join(destDir, "package.json");
   await fs.writeFile(destPackageJsonFile, JSON.stringify(destPackageJson, null, 2));
   console.log(
