@@ -242,7 +242,7 @@ const LIBRARY_BUNDLES: Options[] = [
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["iife"],
     name: "@fireproof/cloud",
-    entry: ["src/cloud/index.ts"],
+    entry: ["src/cloud/client/index.ts"],
     platform: "browser",
     outDir: "dist/cloud",
     esbuildPlugins: [
@@ -263,7 +263,7 @@ const LIBRARY_BUNDLES: Options[] = [
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["esm", "cjs"],
     name: "@fireproof/cloud",
-    entry: ["src/cloud/index.ts"],
+    entry: ["src/cloud/client/index.ts"],
     platform: "browser",
     outDir: "dist/cloud",
     esbuildPlugins: [

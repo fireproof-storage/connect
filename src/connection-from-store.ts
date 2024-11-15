@@ -1,5 +1,5 @@
-import { BuildURI, CoerceURI, runtimeFn, URI } from "@adviser/cement";
-import { bs, Database, ensureLogger, SuperThis } from "@fireproof/core";
+import { BuildURI, CoerceURI, URI } from "@adviser/cement";
+import { bs, Database, ensureLogger, rt, SuperThis } from "@fireproof/core";
 
 // export interface StoreOptions {
 //   readonly data: bs.DataStore;
@@ -66,15 +66,15 @@ export function connectionFactory(sthis: SuperThis, iurl: CoerceURI): bs.Connect
 }
 
 export function makeKeyBagUrlExtractable(sthis: SuperThis) {
-  let base = sthis.env.get("FP_KEYBAG_URL");
-  if (!base) {
-    if (runtimeFn().isBrowser) {
-      base = "indexdb://fp-keybag";
-    } else {
-      base = "file://./dist/kb-dir-partykit";
-    }
-  }
-  const kbUrl = BuildURI.from(base);
+  // let base = sthis.env.get("FP_KEYBAG_URL");
+  // if (!base) {
+  //   if (runtimeFn().isBrowser) {
+  //     base = "indexdb://fp-keybag";
+  //   } else {
+  //     base = "file://./dist/kb-dir-partykit";
+  //   }
+  // }
+  const kbUrl = BuildURI.from(rt.kb.defaultKeyBagUrl(sthis));
   kbUrl.defParam("extractKey", "_deprecated_internal_api");
   sthis.env.set("FP_KEYBAG_URL", kbUrl.toString());
   sthis.logger.Debug().Url(kbUrl, "keyBagUrl").Msg("Make keybag url extractable");

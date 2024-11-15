@@ -26,11 +26,11 @@ const SYNC_DB_NAME = "fp_sync";
 //   process.env.FP_KEYBAG_URL = "file://./dist/kb-dir-fireproof?fs=mem";
 // }
 
-if (!runtimeFn().isBrowser) {
-  const url = BuildURI.from(process.env.FP_KEYBAG_URL || "file://./dist/kb-dir-FireproofCloud");
-  url.setParam("extractKey", "_deprecated_internal_api");
-  process.env.FP_KEYBAG_URL = url.toString();
-}
+// if (!runtimeFn().isBrowser) {
+//   const url = BuildURI.from(process.env.FP_KEYBAG_URL || rt.kb.defaultKeyBagUrl());
+//   url.setParam("extractKey", "_deprecated_internal_api");
+//   process.env.FP_KEYBAG_URL = url.toString();
+// }
 
 registerFireproofCloudStoreProtocol();
 
@@ -45,19 +45,21 @@ export const rawConnect: ConnectFunction = (
     throw new Error("dbName is required");
   }
   const urlObj = BuildURI.from(url);
+  urlObj.protocol("fireproof:");
   const existingName = urlObj.getParam("name");
   urlObj.defParam("name", remoteDbName || existingName || dbName);
   urlObj.defParam("localName", dbName);
   urlObj.defParam("storekey", `@${dbName}:data@`);
   urlObj.defParam("getBaseUrl", "https://storage.fireproof.direct/");
-  const fpUrl = urlObj
-    .toString()
-    .replace(/^http:\/\//, "fireproof://")
-    .replace(/^https:\/\//, "fireproof://");
-  // console.log("Config URL: " + fpUrl);
-  return connectionCache.get(fpUrl).once(() => {
+  // const fpUrl = urlObj
+  //   .toString()
+  //   .replace(/^http:\/\//, "fireproof://")
+  //   .replace(/^https:\/\//, "fireproof://");
+  // eslint-disable-next-line no-console
+  console.log("Config URL: " + urlObj.toString());
+  return connectionCache.get(urlObj.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
-    const connection = connectionFactory(sthis, fpUrl);
+    const connection = connectionFactory(sthis, urlObj);
     connection.connect_X(blockstore);
     return connection;
   });
