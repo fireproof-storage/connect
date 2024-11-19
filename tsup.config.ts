@@ -15,9 +15,9 @@ function skipper(suffix: string, target: string) {
   function intercept(build) {
     const filter = new RegExp(suffix);
     build.onResolve({ filter }, async (args) => {
-      if (args.path.includes(suffix)) {
-        console.log(">>>>>", args.path, target);
-      }
+      //if (args.path.includes(suffix)) {
+      //  console.log(">>>>>", args.path, target);
+      //}
       return build.resolve(target, { kind: args.kind, resolveDir: args.resolveDir });
     });
   }
