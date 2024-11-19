@@ -16,11 +16,9 @@
   "types": "./dist/types/index.d.ts",
   "type": "module",
   "scripts": {},
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {},
   "dependencies": {
+    "@fireproof/core": "from-package-json",
     "@aws-sdk/client-s3": "^3.614.0"
   }
 }

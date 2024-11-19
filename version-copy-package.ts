@@ -50,6 +50,15 @@ async function main() {
   if (!mainPackageJson.dependencies["@fireproof/core"]) {
     throw new Error("there must be a version of @fireproof/core in main");
   }
+  for (const i of ["keywords", "contributors", "license"]) {
+    if (typeof mainPackageJson[i] === "string") {
+      destPackageJson[i] = mainPackageJson[i];
+    } else if (Array.isArray(mainPackageJson[i])) {
+      destPackageJson[i] = Array.from(new Set([...mainPackageJson[i], ...(destPackageJson[i] || [])]));
+    } else {
+      destPackageJson[i] = { ...mainPackageJson[i], ...destPackageJson[i] };
+    }
+  }
   const destPackageJsonFile = path.join(destDir, "package.json");
   await fs.writeFile(destPackageJsonFile, JSON.stringify(destPackageJson, null, 2));
   console.log(

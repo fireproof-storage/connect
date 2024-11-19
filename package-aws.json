@@ -17,10 +17,8 @@
   "type": "module",
   "scripts": {},
   "keywords": ["fireproof", "aws", "gateway"],
-  "author": "",
-  "license": "Apache-2.0 OR MIT",
   "devDependencies": {},
   "dependencies": {
-    "cross-fetch": "^4.0.0"
+    "@fireproof/core": "from-package-json"
   }
 }
