@@ -3,8 +3,8 @@ on:
   - push
   - pull_request
 
-env:
-  FIREPROOF_CORE_VERSION: "^0.19.111"
+#env:
+#  FIREPROOF_CORE_VERSION: "^0.19.111"
 
 jobs:
   quality-checks:
