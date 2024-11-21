@@ -2,8 +2,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@fireproof/core": "0.19.111",
-    "@fireproof/ucan": "0.19.112-dev-nf1",
+    "@fireproof/core": "0.19.113",
+    "@fireproof/ucan": "../../../../dist/ucan",
     "multiformats": "^13.3.1"
   }
 }
