@@ -115,7 +115,7 @@ export function connect(
       doc.firstConnect = false;
       await syncDb.put(doc);
 
-      window.open(connectURI.toString(), "_blank");
+      // window.open(connectURI.toString(), "_blank");
     }
     connection.dashboardUrl = URI.from(connectURI);
     return connection;
