@@ -17,14 +17,6 @@ import { isNotFoundError } from "@fireproof/core";
 export async function addImage(db, did, image) {
   let images = [image];
 
-  try {
-    /** @type {DocWithId<{ images: Uint8Array[] }>} */
-    const existing = await db.get("images");
-    images = [...existing.images, ...images];
-  } catch (err) {
-    if (!isNotFoundError(err)) throw err;
-  }
-
   await db.put({
     did,
     images,

@@ -73,8 +73,8 @@
     "typescript-eslint": "^8.18.0",
     "vite": "^6.0.3",
     "vite-tsconfig-paths": "^5.1.4",
-    "wait-on": "^8.0.1",
     "vitest": "^2.1.8",
+    "wait-on": "^8.0.1",
     "wrangler": "^3.95.0",
     "zx": "^8.2.4"
   },
@@ -91,6 +91,7 @@
     "@aws-sdk/client-s3": "^3.712.0",
     "@fireproof/core": "0.19.118",
     "@fireproof/vendor": "1.0.0",
+    "@ipld/dag-ucan": "^3.4.0",
     "@jspm/core": "^2.1.0",
     "@netlify/blobs": "^8.1.0",
     "@ucanto/client": "^9.0.1",

@@ -11,7 +11,7 @@ import { CID } from "multiformats";
 import * as Client from "./client.js";
 import { Server, Service } from "./types.js";
 import stateStore from "./store/state/index.js";
-import { extractDelegation } from "./common.js";
+import { agentProofs, extractDelegation } from "./common.js";
 
 export class UCANGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -22,6 +22,7 @@ export class UCANGateway implements bs.Gateway {
     clockDelegation?: Delegation;
     clockId: Principal<`did:key:${string}`>;
     email?: Principal<DidMailto>;
+    polling: boolean;
     server: Server;
     service: ConnectionView<Service>;
   };
@@ -49,6 +50,7 @@ export class UCANGateway implements bs.Gateway {
     const clockStoreName = baseUrl.getParam("clock-store");
     const emailIdParam = baseUrl.getParam("email-id");
     const serverId = baseUrl.getParam("server-id");
+    const polling = baseUrl.getParam("poll") === "t" ? true : false;
 
     // Validate params
     if (!dbName) throw new Error("Missing `name` param");
@@ -94,7 +96,7 @@ export class UCANGateway implements bs.Gateway {
     }
 
     // This
-    this.inst = { agent, clockDelegation, clockId, email, server, service };
+    this.inst = { agent, clockDelegation, clockId, email, polling, server, service };
 
     // Super
     await this.sthis.start();
@@ -136,6 +138,7 @@ export class UCANGateway implements bs.Gateway {
     }
 
     this.logger.Debug().Str("store", store).Str("key", key).Msg("put");
+    console.log("🏗️ PUT", store);
 
     switch (store.toLowerCase()) {
       case "data": {
@@ -219,6 +222,7 @@ export class UCANGateway implements bs.Gateway {
     }
 
     this.logger.Debug().Str("store", store).Str("key", key).Msg("get");
+    console.log("🔮 GET", store);
 
     switch (store.toLowerCase()) {
       case "data": {
@@ -245,10 +249,8 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
-        // eslint-disable-next-line no-console
-        console.log(head.out);
-
         this.logger.Debug().Any("head", head.out).Msg("Meta (head) retrieved");
+        console.log(head.out);
 
         if (head.out.error) throw head.out.error;
         if (head.out.ok.head === undefined) throw new NotFoundError();
@@ -287,28 +289,61 @@ export class UCANGateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
+  private readonly subscriberCallbacks = new Set<(data: Uint8Array) => void>();
+
+  private notifySubscribers(data: Uint8Array): void {
+    for (const callback of this.subscriberCallbacks) {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error(error);
+        this.logger.Error().Err(error).Msg("Error in subscriber callback execution");
+      }
+    }
+  }
+
+  async subscribe(url: URI, callback: (msg: Uint8Array) => void): Promise<bs.UnsubscribeResult> {
+    // eslint-disable-next-line
+    if (!this.inst?.polling) return Result.Ok(() => {});
+
+    // Setup polling
+    url = url.build().setParam("key", "main").URI();
+
+    const interval = 3000;
+    let lastData: Uint8Array | undefined = undefined;
+
+    const fetchData = async () => {
+      const result = await this.get(url);
+
+      if (result.isOk()) {
+        const data = result.Ok();
+
+        if (!lastData || !data.every((value, index) => lastData && value === lastData[index])) {
+          lastData = data;
+          this.notifySubscribers(data);
+        }
+      }
+
+      timeoutId = setTimeout(fetchData, interval);
+    };
+
+    this.subscriberCallbacks.add(callback);
+    let timeoutId = setTimeout(fetchData, interval);
+
+    return Result.Ok(() => {
+      clearTimeout(timeoutId);
+      this.subscriberCallbacks.delete(callback);
+    });
+  }
+
   ////////////////////////////////////////
   // AGENT
   ////////////////////////////////////////
 
   proofs(): Delegation[] {
     if (this.inst && this.inst.email) {
-      const proofs = this.inst.agent.proofs([{ with: /did:mailto:.*/, can: "*" }]);
-
-      const delegations = proofs.filter(
-        (p) => p.capabilities[0].can === "*" && p.issuer.did() === this.inst?.email?.did()
-      );
-
-      const delegationCids = delegations.map((d) => d.cid.toString());
-      const attestations = proofs.filter((p) => {
-        const cap = p.capabilities[0];
-        return (
-          cap.can === "ucan/attest" &&
-          delegationCids.includes((cap.nb as { proof: { toString(): string } }).proof.toString())
-        );
-      });
-
-      return [...delegations, ...attestations];
+      const proofs = agentProofs(this.inst.agent);
+      return [...proofs.delegations, ...proofs.attestations];
     }
 
     if (this.inst && this.inst.clockDelegation) {

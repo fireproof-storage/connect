@@ -53,10 +53,6 @@ export interface ClockAdvanceSuccess {
   readonly head: string;
 }
 
-export interface ClockAuthorizeShareSuccess {
-  readonly url: string;
-}
-
 export interface ClockClaimShareSuccess {
   readonly delegations: Record<string, Uint8Array>;
 }
@@ -87,7 +83,7 @@ export interface Service {
   };
   readonly clock: {
     readonly advance: ServiceMethod<ClockAdvance, ClockAdvanceSuccess, Failure>;
-    readonly "authorize-share": ServiceMethod<ClockAuthorizeShare, ClockAuthorizeShareSuccess, Failure>;
+    readonly "authorize-share": ServiceMethod<ClockAuthorizeShare, Unit, Failure>;
     readonly "claim-share": ServiceMethod<ClockClaimShare, ClockClaimShareSuccess, Failure>;
     readonly "claim-shares": ServiceMethod<ClockClaimShares, ClockClaimSharesSuccess, Failure>;
     readonly "confirm-share": ServiceMethod<ClockConfirmShare, Unit, Failure>;

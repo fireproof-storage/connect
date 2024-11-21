@@ -3,7 +3,7 @@
   "type": "module",
   "dependencies": {
     "@fireproof/connect": "../../../",
-    "@fireproof/core": "0.19.111",
+    "@fireproof/core": "0.19.113",
     "meow": "^13.2.0"
   }
 }

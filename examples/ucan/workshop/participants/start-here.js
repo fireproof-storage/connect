@@ -17,6 +17,6 @@ import { addImage } from "./db.js";
 const dbName = "my-db";
 
 const agent = await FP_UCAN.agent();
-const clock = FP_UCAN.clockId("did:key:z6MkfZwM6XvYbaAi2YF4BcDMXuUNQhPbvoU29NzwMgNtQ5vm");
+const clock = FP_UCAN.clockId("did:key:z6MkhVBdskZ4nC5w5Af2cGUKiC57WkTPo4b5yQ4y7UCQ9DPu");
 
 console.log("Agent DID:", agent.id.did());
