@@ -1,8 +1,34 @@
 import { importDAG } from "@ucanto/core/delegation";
 import { Delegation } from "@ucanto/interface";
-import type { AgentDataExport, DelegationMeta } from "@web3-storage/access/types";
+import type { Agent, AgentDataExport, DelegationMeta } from "@web3-storage/access/types";
 import { Block } from "multiformats/block";
 import { CID } from "multiformats";
+
+import type { Service } from "./types.js";
+
+export function agentProofs(
+  agent: Agent<Service>,
+  mailtoDID?: `did:mailto:${string}:${string}`
+): { attestations: Delegation[]; delegations: Delegation[] } {
+  const proofs = agent.proofs([{ with: /did:mailto:.*/, can: "*" }]);
+  const delegations = proofs.filter(
+    (p) => p.capabilities[0].can === "*" && (mailtoDID ? p.issuer.did() === mailtoDID : true)
+  );
+
+  const delegationCids = delegations.map((d) => d.cid.toString());
+  const attestations = proofs.filter((p) => {
+    const cap = p.capabilities[0];
+    return (
+      cap.can === "ucan/attest" &&
+      delegationCids.includes((cap.nb as { proof: { toString(): string } }).proof.toString())
+    );
+  });
+
+  return {
+    delegations,
+    attestations,
+  };
+}
 
 export async function extractDelegation(dataExport: AgentDataExport): Promise<Delegation | undefined> {
   const delegationKey = Array.from(dataExport.delegations.keys())[0];
