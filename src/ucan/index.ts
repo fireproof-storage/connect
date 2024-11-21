@@ -307,6 +307,16 @@ export function email(string: `${string}@${string}`): Principal<DidMailto> {
   return Absentee.from({ id: fromEmail(string) });
 }
 
+export async function isLoggedIn(params: {
+  agent?: AgentWithStoreName;
+  email: Principal<DidMailto>;
+}): Promise<boolean> {
+  const proxy = params.agent || (await agent());
+  const proofs = proxy.agent.proofs([{ with: params.email.did(), can: "*" }]);
+
+  return proofs.length > 0;
+}
+
 export async function login(params: { agent?: AgentWithStoreName; email: Principal<DidMailto> }) {
   const proxy = params.agent || (await agent());
   const result = await W3.login({ agent: proxy.agent as unknown as Agent }, toEmail(params.email.did()));

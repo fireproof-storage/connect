@@ -39,6 +39,8 @@ const context = await FP_UCAN.connect(db, {
   clock,
 });
 
+await context.connection.loaded;
+
 const img = await imgUrlToUint8Array(
   "https://i0.wp.com/e-realtor.ca/wp-content/uploads/2021/09/Article_Header_DOUBLE-4.jpg?resize=300%2C300&ssl=1?w=512&h=256&ts=1"
 );

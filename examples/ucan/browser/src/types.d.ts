@@ -1,18 +1,35 @@
-import { AgentWithStoreName, Clock, ClockWithoutDelegation, Server } from "@fireproof/connect/ucan";
+import { Database } from "@fireproof/core";
+import { AgentWithStoreName, Clock, ClockWithoutDelegation, Server } from "@fireproof/ucan";
 
 // 🪄
 
 export type State = {
   agent: AgentWithStoreName;
   clock: Clock | ClockWithoutDelegation;
+  clockIdInput?: `did:key:${string}`
+  database?: Database
+  databaseContents: Map<string, string>
   databaseName: string;
-  email?: string;
-  server: Server;
+  email?: `${string}@${string}`
+  loggedIn: boolean
+  server: Server
+  serverInput?: string
 };
 
 // 📣
 
 export type Msg =
   | { type: "-" }
+  | { type: "CONNECT" }
+  | { type: "CONNECTED"; database: Database }
+  | { type: "LOGIN" }
+  | { type: "DATABASE_CONTENTS_CHANGED" }
+  | { type: "SET_AGENT"; agent: AgentWithStoreName }
   | { type: "SET_CLOCK"; clock: Clock | ClockWithoutDelegation }
-  | { type: "SET_DATABASE_NAME"; name: string };
+  | { type: "SET_CLOCK_ID_INPUT"; clockId: string }
+  | { type: "SET_DATABASE_CONTENTS"; contents: Map<string, string> }
+  | { type: "SET_DATABASE_NAME"; name: string }
+  | { type: "SET_EMAIL"; email: string }
+  | { type: "SET_LOGGED_IN"; loggedIn: boolean }
+  | { type: "SET_SERVER"; server: Server }
+  | { type: "SET_SERVER_INPUT"; server: string };
