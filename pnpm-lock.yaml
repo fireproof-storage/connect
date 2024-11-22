@@ -15,8 +15,8 @@ importers:
         specifier: ^3.693.0
         version: 3.693.0
       '@fireproof/core':
-        specifier: 0.19.112-dev-script
-        version: 0.19.112-dev-script(react@18.3.1)(typescript@5.6.3)
+        specifier: 0.19.112
+        version: 0.19.112(react@18.3.1)(typescript@5.6.3)
       '@ipld/dag-cbor':
         specifier: ^9.2.1
         version: 9.2.2
@@ -1035,8 +1035,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@0.19.112-dev-script':
-    resolution: {integrity: sha512-H2SC4udAGo0TSH1cnISlXrD+BpQAy8jilE8hjFI9edss/L6sX75NrxOh9KrKGiMNGEkVCDfjN5FAROc5hQ/VnQ==}
+  '@fireproof/core@0.19.112':
+    resolution: {integrity: sha512-vNWyVKhdPS6qt1DhzF6oU9qDMGnN1lQTtQoaYTsIGUS3zebMrI30h0vgU/ERFgibwdcCyHqNHBwfBI500KiZcg==}
     peerDependencies:
       react: ^18.3.1
 
@@ -4830,7 +4830,7 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.19.112-dev-script(react@18.3.1)(typescript@5.6.3)':
+  '@fireproof/core@0.19.112(react@18.3.1)(typescript@5.6.3)':
     dependencies:
       '@adviser/cement': 0.2.36(typescript@5.6.3)
       '@ipld/car': 5.3.2
