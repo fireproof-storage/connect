@@ -115,8 +115,8 @@ importers:
         specifier: ^3.7.1
         version: 3.7.1
       '@types/better-sqlite3':
-        specifier: ^7.6.11
-        version: 7.6.11
+        specifier: ^7.6.12
+        version: 7.6.12
       '@types/eslint__js':
         specifier: ^8.42.3
         version: 8.42.3
@@ -1506,8 +1506,8 @@ packages:
   '@storacha/one-webcrypto@1.0.1':
     resolution: {integrity: sha512-bD+vWmcgsEBqU0Dz04BR43SA03bBoLTAY29vaKasY9Oe8cb6XIP0/vkm0OS2UwKC13c8uRgFW4rjJUgDCNLejQ==}
 
-  '@types/better-sqlite3@7.6.11':
-    resolution: {integrity: sha512-i8KcD3PgGtGBLl3+mMYA8PdKkButvPyARxA7IQAd6qeslht13qxb1zzO8dRCtE7U3IoJS782zDBAeoKiM695kg==}
+  '@types/better-sqlite3@7.6.12':
+    resolution: {integrity: sha512-fnQmj8lELIj7BSrZQAdBMHEHX8OZLYIHXqAKT1O7tDfLxaINzf00PMjw22r3N/xXh0w/sGHlO6SVaCQ2mj78lg==}
 
   '@types/eslint@9.6.1':
     resolution: {integrity: sha512-FXx2pKgId/WyYo2jXw63kk7/+TY7u7AziEJxJAnSFzHlqTAS3Ync6SvgYAN/k4/PQpnnVuzoMuVnByKK2qp0ag==}
@@ -5421,7 +5421,7 @@ snapshots:
 
   '@storacha/one-webcrypto@1.0.1': {}
 
-  '@types/better-sqlite3@7.6.11':
+  '@types/better-sqlite3@7.6.12':
     dependencies:
       '@types/node': 22.9.0
 
