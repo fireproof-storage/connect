@@ -24,6 +24,7 @@ export interface Env {
   FP_STACK: string;
   FP_FORMAT: string;
   TEST_DATE?: string;
+  MAX_IDLE_TIME?: string;
 
   FP_META_GROUPS: DurableObjectNamespace<FPMetaGroups>;
 }

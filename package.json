@@ -33,10 +33,10 @@
     "pretest:ucan": "bash ./tests/start-ucan.sh",
     "pretest:partykit": "bash ./tests/start-partykit.sh",
     "pretest:netlify": "bash ./tests/start-netlify.sh",
-    "pretest:cloud": "bash ./tests/start-cloud.sh",
+    "xpretest:cloud": "bash ./tests/start-cloud.sh",
     "test": "vitest --run",
     "posttest-docker": "pnpm run '/^posttest:/'",
-    "posttest:cloud": "docker rm -f cloud",
+    "xposttest:cloud": "docker rm -f cloud",
     "posttest:ucan": "docker rm -f ucan",
     "posttest:partykit": "docker rm -f partykit",
     "posttest:netlify": "docker rm -f netlify",
@@ -97,7 +97,7 @@
   },
   "homepage": "https://github.com/fireproof-storage/connect#readme",
   "peerDependencies": {
-    "@adviser/cement": "^0.2.38"
+    "@adviser/cement": "^0.2.40"
   },
   "dependencies": {
     "@adviser/cement": "^0.2.40",
@@ -105,6 +105,7 @@
     "@fireproof/core": "0.19.116",
     "@fireproof/vendor": "1.0.0",
     "@cloudflare/workers-types": "^4.20241112.0",
+    "@fireproof/core": "0.19.114",
     "@hono/node-ws": "^1.0.4",
     "@jspm/core": "^2.1.0",
     "@netlify/blobs": "^8.1.0",
@@ -120,6 +121,12 @@
     "@web3-storage/did-mailto": "^2.1.0",
     "@web3-storage/pail": "^0.6.0",
     "@web3-storage/w3up-client": "^16.5.2",
+    "@ucanto/client": "^9.0.1",
+    "@ucanto/core": "^10.0.1",
+    "@ucanto/interface": "^10.0.1",
+    "@ucanto/principal": "^9.0.1",
+    "@ucanto/transport": "^9.1.1",
+    "@ucanto/validator": "^9.0.2",
     "assert": "^2.1.0",
     "better-sqlite3": "^11.6.0",
     "aws4fetch": "^1.0.20",

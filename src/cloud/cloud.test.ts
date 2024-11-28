@@ -10,19 +10,8 @@ import { mockSuperThis } from "../../node_modules/@fireproof/core/tests/helpers.
 import { AwsClient } from "aws4fetch";
 import { smokeDB } from "../../tests/helper";
 import { registerFireproofCloudStoreProtocol } from "./client/gateway";
-import { calculatePreSignedUrl } from "./backend/server";
+import { calculatePreSignedUrl } from "./pre-signed-url";
 import { newWebSocket } from "./new-websocket";
-// import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
-
-// const IncomingRequest = Request//<unknown, IncomingRequestCfProperties>;
-
-// const env: Env = {
-//   VERSION: "Test",
-//   STORAGE_URL: "http://localhost:8080",
-//   ACCESS_KEY_ID: "accessKeyId",
-//   SECRET_ACCESS_KEY: "secretAccessKey",
-//   TEST_DATE: "20241121T225359Z",
-// } as Env;
 
 function testReqSignedUrl(tid = "test") {
   return {
@@ -33,7 +22,7 @@ function testReqSignedUrl(tid = "test") {
       path: "/hallo",
       name: "test-name",
       method: "GET",
-      tendantId: "tenantId",
+      tenantId: "tenantId",
       store: "wal",
       key: "main",
     },
@@ -41,9 +30,9 @@ function testReqSignedUrl(tid = "test") {
   } satisfies ReqSignedUrl;
 }
 
-async function testResSignedUrl(env: Env, tid = "test"): Promise<ResSignedUrl> {
+async function testResSignedUrl(env: Env, tid?: string, amzDate?: string): Promise<ResSignedUrl> {
   const req = testReqSignedUrl(tid);
-  const rSignedUrl = await calculatePreSignedUrl(req, env);
+  const rSignedUrl = await calculatePreSignedUrl(req, env, amzDate);
   if (rSignedUrl.isErr()) {
     throw rSignedUrl.Err();
   }
@@ -51,7 +40,7 @@ async function testResSignedUrl(env: Env, tid = "test"): Promise<ResSignedUrl> {
     params: req.params,
     signedUrl: rSignedUrl.Ok().toString(),
     // `http://localhost:8080/tenantId/test-name/wal/main.json?tid=${tid}&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=accessKeyId%2F20241121%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20241121T225359Z&X-Amz-Expires=86400&X-Amz-Signature=f52d5ecfbb6be93210dd57cb49ba1e426a8aee24a0738aedb636ae5722fcdded&X-Amz-SignedHeaders=host`,
-    tid: tid,
+    tid: tid || "test",
     type: "resSignedUrl",
     version: env.VERSION,
   } satisfies ResSignedUrl;
@@ -61,7 +50,7 @@ describe("CloudBackendTest", () => {
   const sthis = mockSuperThis();
   let env: Env;
   let pid: number;
-  const port = ~~(1024 + Math.random() * (0x10000 - 1024));
+  const port = +(process.env.FP_WRANGLER_PORT || 0) || ~~(1024 + Math.random() * (0x10000 - 1024));
   const wrangler = BuildURI.from("http://localhost")
     .port("" + port)
     .URI();
@@ -75,7 +64,10 @@ describe("CloudBackendTest", () => {
       env: { test: { vars: Env } };
     };
     env = wranglerFile.env.test.vars;
-    // $.verbose = true
+    if (process.env.FP_WRANGLER_PORT) {
+      return;
+    }
+    $.verbose = !!process.env.FP_DEBUG;
     const runningWrangler = $`
       wrangler dev -c ${tomlFile} --port ${port} --env test --no-show-interactive-dev-session &
       waitPid=$!
@@ -91,16 +83,10 @@ describe("CloudBackendTest", () => {
       if (chunk.includes("Ready on http")) {
         waitReady.resolve(true);
       }
-      if ($.verbose) {
-        // eslint-disable-next-line no-console
-        console.log(">>", chunk.toString());
-      }
     });
     runningWrangler.stderr.on("data", (chunk) => {
-      if ($.verbose) {
-        // eslint-disable-next-line no-console
-        console.error("!!", chunk.toString());
-      }
+      // eslint-disable-next-line no-console
+      console.error("!!", chunk.toString());
     });
     await waitReady.asPromise();
     // await f.asPromise()
@@ -126,7 +112,7 @@ describe("CloudBackendTest", () => {
       });
     });
     it("return 422 invalid json", async () => {
-      const res = await cfFetch("/get-signed-url", { method: "PUT" });
+      const res = await cfFetch("/fp", { method: "PUT" });
       expect(res.status).toBe(422);
       expect(await res.json()).toEqual({
         message: "Unexpected end of JSON input",
@@ -137,7 +123,7 @@ describe("CloudBackendTest", () => {
     });
 
     it("return 422 illegal msg", async () => {
-      const res = await cfFetch("/get-signed-url", {
+      const res = await cfFetch("/fp", {
         method: "PUT",
         body: JSON.stringify({
           bucket: "test",
@@ -154,7 +140,7 @@ describe("CloudBackendTest", () => {
     });
 
     it("return 200 msg", async () => {
-      const res = await cfFetch("/get-signed-url", {
+      const res = await cfFetch("/fp", {
         method: "PUT",
         body: JSON.stringify(testReqSignedUrl()),
       });
@@ -169,14 +155,21 @@ describe("CloudBackendTest", () => {
             const url = wrangler.build().appendRelative("/ws").protocol("ws:");
             const so = await newWebSocket(url);
             const done = new Future();
-            const tid = `test-${Math.random()}`;
+            let total = 10;
+            let tid = `${total}-test-${Math.random()}`;
             so.onopen = () => {
               so.send(JSON.stringify(testReqSignedUrl(tid)));
             };
             so.onmessage = async (msg) => {
               try {
-                expect(JSON.parse(msg.data.toString())).toEqual(await testResSignedUrl(env, tid));
-                done.resolve(true);
+                const res = JSON.parse(msg.data.toString()) as ResSignedUrl;
+                expect(res).toEqual(await testResSignedUrl(env, tid, URI.from(res.signedUrl).getParam("X-Amz-Date")));
+                if (--total === 0) {
+                  done.resolve(true);
+                } else {
+                  tid = `${total}-test-${Math.random()}`;
+                  so.send(JSON.stringify(testReqSignedUrl(tid)));
+                }
               } catch (err) {
                 done.reject(err);
               }
@@ -184,7 +177,7 @@ describe("CloudBackendTest", () => {
             so.onerror = (ev) => {
               assert.fail(`WebSocket error: ${ev}`);
             };
-            return done.asPromise().then(() => so.close());
+            return done.asPromise().then(() => so.close(1000, "done"));
           })
       );
     });
@@ -213,7 +206,11 @@ describe("CloudBackendTest", () => {
       const config = {
         store: {
           stores: {
-            base: wrangler.build().protocol("fireproof:").setParam("protocol", "ws").asURL(),
+            base: wrangler
+              .build()
+              .protocol("fireproof:")
+              .setParam("protocol", "ws")
+              .setParam("testMode", "true")
             // process.env.FP_STORAGE_URL, // || "fireproof://localhost:1968",
           },
         },
@@ -225,8 +222,12 @@ describe("CloudBackendTest", () => {
     afterEach(async () => {
       // Clear the database before each test
       if (db) {
+        setInterval(() => console.log("Waiting for db to close"), 1000);
+        console.log("Closing db");
         await db.close();
+        console.log("Closed db");
         await db.destroy();
+        console.log("Destroyed db");
       }
     });
 
@@ -297,10 +298,12 @@ describe("CloudBackendTest", () => {
 
       let didCall = false;
 
+      expect(metaGateway.subscribe).toBeTypeOf("function");
       if (metaGateway.subscribe) {
         const future = new Future<void>();
 
-        const metaSubscribeResult = await metaGateway.subscribe(metaUrl?.Ok(), async (data: Uint8Array) => {
+        const metaSubscribeResult = await metaGateway.subscribe(metaUrl?.Ok(), (data: Uint8Array) => {
+          // console.log("data", data);
           const decodedData = sthis.txt.decode(data);
           expect(decodedData).toContain("parents");
           didCall = true;
@@ -345,7 +348,7 @@ describe("CloudBackendTest", () => {
           .setParam(
             "X-Amz-Signature",
             sthis.env.get("CF_PRESIGNED_SIGNATURE") ||
-              "bbae4604fbe51a4ce9972183d8871a8a187ab0f4d2415afd6dc728f8ccc9900f"
+            "bbae4604fbe51a4ce9972183d8871a8a187ab0f4d2415afd6dc728f8ccc9900f"
           )
           .asObj()
       );
