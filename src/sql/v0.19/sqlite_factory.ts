@@ -28,7 +28,7 @@ export async function v0_19sqliteMetaFactory(sthis: SuperThis, db: DBConnection)
 //         prepare(sql: string): Sqlite3Statement;
 // }
 
-export type Sqlite3Taste = "better-sqlite3" | "node-sqlite3-wasm";
+export type Sqlite3Taste = "better-sqlite3" | "node-sqlite3-wasm" | "libsql";
 export interface TasteHandler {
   readonly taste: Sqlite3Taste;
   quoteTemplate(o: unknown): Record<string, unknown>;
@@ -67,6 +67,15 @@ export async function v0_19sqliteConnectionFactory(
 ): Promise<SQLConnectionResult> {
   const upUrl = url.build().defParam("taste", "better-sqlite3").URI();
   switch (upUrl.getParam("taste")) {
+    case "libsql": {
+      const { V0_19LS3Connection } = await import("./sqlite/libsql/sqlite-connection.js");
+      sthis.logger.Debug().Str("databaseURL", upUrl.toString()).Msg("connecting to better-sqlite3");
+      return {
+        dbConn: new V0_19LS3Connection(sthis, upUrl, opts),
+        url: upUrl.build().setParam("taste", "libsql").URI(),
+      };
+    }
+
     case "node-sqlite3-wasm": {
       const { V0_19NSWConnection } = await import("./sqlite/node-sqlite3-wasm/sqlite-connection.js");
       sthis.logger.Debug().Str("databaseURL", upUrl.toString()).Msg("connecting to node-sqlite3-wasm");

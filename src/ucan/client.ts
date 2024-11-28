@@ -10,6 +10,7 @@ import { sha256 } from "multiformats/hashes/sha2";
 import * as ClockCaps from "./clock/capabilities.js";
 import * as StoreCaps from "./store/capabilities.js";
 import { Server, type Clock, type Service } from "./types.js";
+import { to_uint8 } from "../coerce-binary.js";
 
 ////////////////////////////////////////
 // CLOCK
@@ -140,6 +141,13 @@ export async function registerClock({
 ////////////////////////////////////////
 // CONNECTION
 ////////////////////////////////////////
+export function coerceHeaders(headers: Record<string, string> | Headers): Record<string, string> {
+  if ("entries" in headers) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return Object.fromEntries((headers as any).entries());
+  }
+  return headers as Record<string, string>;
+}
 
 export function service(server: Server): ConnectionView<Service> {
   const url = server.uri.toString();
@@ -156,8 +164,8 @@ export function service(server: Server): ConnectionView<Service> {
       const buffer = response.ok ? await response.arrayBuffer() : new Uint8Array();
 
       return {
-        headers: response.headers.entries ? Object.fromEntries(response.headers.entries()) : {},
-        body: new Uint8Array(buffer),
+        headers: coerceHeaders(response.headers),
+        body: to_uint8(buffer),
       };
     },
   };

@@ -8,6 +8,7 @@ RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh && deno
 #-- --no-modify-path --yes
 COPY src/netlify /usr/src/app/src/netlify
 COPY tests/connect-netlify/app /usr/src/app/tests/connect-netlify/app
+COPY dist/netlify/server.js /usr/src/app/tests/connect-netlify/app/netlify/edge-functions/fireproof.js 
 WORKDIR /usr/src/app/tests/connect-netlify/app
 RUN rm -rf node_modules && pnpm install && pnpm run copy-server && pnpm install -g netlify-cli
 CMD pnpm dev --no-open

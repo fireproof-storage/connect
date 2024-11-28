@@ -23,3 +23,13 @@ To run a single test by its full name, you can use the `-t` flag followed by the
 ```console
 $ pnpm test-gateways --project partykit -t "should sync to an empty db"
 ```
+
+Cloud Meta Merge Datastructure:
+
+1. PK(reqId,resId,tenant,ledger) accessed(date) (delete after x of time)
+2. PK(tenant,ledger,reqId,resId) meta deliveryCount (delete if deiveryCount > y)
+   if meta is updated deliveryCount = 0
+
+getMeta updates deliveryCount
+getMeta on stream starts updates stream of resGetMeta
+avoid subscribe method
