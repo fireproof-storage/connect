@@ -66,7 +66,7 @@ export class ConnectionImpl implements Connection {
         this.logger.Error().Err(rMsg).Any(event.data).Msg("Invalid message");
         return;
       }
-      const msg = rMsg.Ok();
+      const msg = rMsg.Ok()
       const waitFor = this.waitForTid.get(msg.tid);
       if (waitFor) {
         if (waitFor.type === msg.type || MsgIsError(msg)) {
@@ -470,6 +470,21 @@ export class FireproofCloudGateway implements bs.Gateway {
     return getStoreTypeGateway(this.sthis, uri).delete(uri, this.getCloudConnection(uri));
   }
 
+  async put(uri: URI, body: Uint8Array): Promise<Result<void>> {
+    const ret = await getStoreTypeGateway(this.sthis, uri).put(uri, body, this.getCloudConnection(uri));
+    if (ret.isOk()) {
+      if (uri.getParam("testMode")) {
+        trackPuts.add(uri.toString());
+      }
+    }
+    return ret;
+  }
+
+  async delete(uri: URI): Promise<bs.VoidResult> {
+    trackPuts.delete(uri.toString());
+    return getStoreTypeGateway(this.sthis, uri).delete(uri, this.getCloudConnection(uri));
+  }
+
   async close(uri: URI): Promise<bs.VoidResult> {
     const uriStr = uri.toString();
     // CAUTION here is my happen a mutation of subscriptions caused by unsub
@@ -511,15 +526,11 @@ export class FireproofCloudGateway implements bs.Gateway {
       .build()
       .protocol(params.protocol === "ws" ? "ws" : "wss")
       .appendRelative("ws")
-      .cleanParams();
+      .cleanParams()
+      .toString();
 
-    // forces to open a new websocket connection
-    const connId = uri.getParam("connId");
-    if (connId) {
-      wsUrl.setParam("connId", connId);
-    }
     return Result.Ok(
-      await keyedConnections.get(wsUrl.toString()).once(async (cKey) => {
+      await keyedConnections.get(wsUrl).once(async (cKey) => {
         const ws = await newWebSocket(wsUrl);
         const waitOpen = new Future<void>();
         ws.onopen = () => {
@@ -571,20 +582,11 @@ export class FireproofCloudGateway implements bs.Gateway {
       const fn = (subId: string) => (msg: MsgBase) => {
         if (MsgIsUpdateMetaEvent(msg) && subId === msg.subscriberId) {
           // console.log("onMessage", subId, conn.key, msg.metas);
-          const s = subscriptions.get(subId);
-          if (!s) {
-            return;
-          }
-          this.notifySubscribers(
-            this.sthis.txt.encode(JSON.stringify(msg.metas)),
-            s.map((s) => s.callback)
-          );
+          this.notifySubscribers(this.sthis.txt.encode(JSON.stringify(msg.metas)), subscriptions.get(subId));
         }
       };
       conn.onMessage(fn(subId));
-      return conn.request<ResSubscribeMeta>(buildReqSubscriptMeta(this.sthis, conn.key, subId), {
-        waitType: "resSubscribeMeta",
-      });
+      return conn.request<ResSubscribeMeta>(buildReqSubscriptMeta(this.sthis, conn.key, subId), { waitType: "resSubscribeMeta"});
     });
     if (rResSubscribeMeta.isErr()) {
       return this.logger.Error().Err(rResSubscribeMeta).Msg("Error in subscribe:request").ResultError();
@@ -595,22 +597,14 @@ export class FireproofCloudGateway implements bs.Gateway {
       callbacks = [];
       subscriptions.set(subId, callbacks);
     }
-    const sid = this.sthis.nextId().str;
-    const unsub = () => {
-      const idx = callbacks.findIndex((c) => c.sid === sid);
-      if (idx !== -1) {
-        callbacks.splice(idx, 1);
-      }
-      if (callbacks.length === 0) {
-        subscriptions.delete(subId);
-      }
-    };
-    callbacks.push({ uri: uri.toString(), callback, sid, unsub });
-    return Result.Ok(unsub);
+    callbacks.push(callback);
+    return Result.Ok(() => {
+      subscriptions.delete(subId);
+    });
   }
 
   async destroy(_uri: URI): Promise<Result<void>> {
-    await Promise.all(Array.from(trackPuts).map(async (k) => this.delete(URI.from(k))));
+    await Promise.all(Array.from(trackPuts).map(async (k) => this.delete(URI.from(k))))
     return Result.Ok(undefined);
   }
 }
