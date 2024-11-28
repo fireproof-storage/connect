@@ -2,7 +2,7 @@ import { repeat, tags, text } from "spellcaster/hyperscript.js";
 
 import "./index.css";
 import { state, send } from "./state.js";
-import { computed } from "spellcaster/spellcaster.js";
+import { computed, effect } from "spellcaster/spellcaster.js";
 
 /**
  * @typedef {import("spellcaster/hyperscript.js").Props} Props
@@ -73,7 +73,7 @@ const Clock = () =>
     hgroup({}, [h2({}, text("Clock"))]),
 
     // Form
-    form({}, [
+    form({ onsubmit: preventDefault }, [
       fieldset({}, [
         Label({ for: "clock" }, "Custom clock ID"),
         input(
@@ -229,25 +229,43 @@ const Email = () =>
     ]),
 
     // Logged in
-    Label({}, "Logged in"),
-    computed(() => {
-      const { email, loggedIn } = state()
+    div({}, element => {
+      const signal = computed(() => {
+        const { email, loggedIn } = state()
 
-      if (email === undefined) {
-        return p({}, [ span({}, text("No login needed when not using an email address.")) ])
-      }
+        if (email === undefined) {
+          return div({}, [
+            Label({}, "No login needed when not using an email address"),
+            p({}, [ span({}, text("☑️")) ])
+          ])
+        }
 
-      if (loggedIn) {
-        return p({}, [ span({}, text("Logged in successfully.")) ])
-      }
+        if (loggedIn === true) {
+          return div({}, [
+            Label({}, "Logged in successfully"),
+            p({}, [ span({}, text("☑️")) ])
+          ])
+        }
 
-      return div({}, [
-        p({},text("Login needed.")),
-        p({}, [
-          button({ onclick: () => send({ type: "LOGIN" }) }, text("Log in"))
+        if (loggedIn === "in-progress") {
+          return div({}, [
+            Label({}, "Logging in ..."),
+            p({}, [ span({}, text("Check your email inbox ⚡")) ])
+          ])
+        }
+
+        return div({}, [
+          Label({}, "Login required"),
+          p({}, [
+            button({ onclick: () => send({ type: "LOGIN" }) }, text("Log in"))
+          ])
         ])
-      ])
-    })(),
+      })
+
+      return effect(() => {
+        element.replaceChildren(signal())
+      })
+    }),
 
     // Using
     Label({}, "Utilised clock delegation"),

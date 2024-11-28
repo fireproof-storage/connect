@@ -11,7 +11,7 @@ export type State = {
   databaseContents: Map<string, string>
   databaseName: string;
   email?: `${string}@${string}`
-  loggedIn: boolean
+  loggedIn: boolean | "in-progress"
   server: Server
   serverInput?: string
 };
@@ -30,6 +30,7 @@ export type Msg =
   | { type: "SET_DATABASE_CONTENTS"; contents: Map<string, string> }
   | { type: "SET_DATABASE_NAME"; name: string }
   | { type: "SET_EMAIL"; email: string }
-  | { type: "SET_LOGGED_IN"; loggedIn: boolean }
+  | { type: "SET_LOGGED_IN"; loggedIn: State["loggedIn"] }
   | { type: "SET_SERVER"; server: Server }
-  | { type: "SET_SERVER_INPUT"; server: string };
+  | { type: "SET_SERVER_INPUT"; server: string }
+  | { type: "WAIT_FOR_LOGIN"; promise: Promise<unknown> };

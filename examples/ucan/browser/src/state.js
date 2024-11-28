@@ -17,6 +17,7 @@ import { fxware, store } from "spellcaster/spellcaster.js";
  */
 
 /**
+ * @typedef {import("@fireproof/ucan").Server} Server
  * @typedef {import("./types").Msg} Msg
  * @typedef {import("./types").State} State
  */
@@ -67,6 +68,8 @@ const update = (state, msg) => {
       return { ...state, serverInput }
     }
 
+    case "WAIT_FOR_LOGIN": return { ...state, loggedIn: "in-progress" }
+
     default:
       return state;
   }
@@ -89,17 +92,21 @@ const fx = (msg) => {
     case "SET_AGENT":
       return [determineClock];
     case "SET_CLOCK":
-      return [connect]
+      return [connect, saveConfig]
     case "SET_CLOCK_ID_INPUT":
       return [determineClock];
     case "SET_DATABASE_NAME":
       return [determineClock, saveConfig];
     case "SET_EMAIL":
       return [determineClock, saveConfig];
+    case "SET_LOGGED_IN":
+      return [connect];
     case "SET_SERVER":
-      return [determineAgent, saveConfig];
+      return [checkLoginStatusIfServerChanged(msg.server), determineAgent, saveConfig];
     case "SET_SERVER_INPUT":
       return [determineServer];
+    case "WAIT_FOR_LOGIN":
+      return [waitForLogin(msg.promise)]
     default:
       return [];
   }
@@ -108,19 +115,40 @@ const fx = (msg) => {
 // Effects
 // =======
 
+/** @param {Server} server */
+function checkLoginStatusIfServerChanged(server) {
+  /** @returns Promise<Msg> */
+  return async () => {
+    const s = state()
+
+    if (server.id.did() === s.server.id.did()) {
+      return /** @type {Msg} */({ type: "-" })
+    }
+
+    const loggedIn = s.email
+      ? await UCAN.isLoggedIn({ agent: s.agent, email: UCAN.email(s.email) })
+      : false
+
+    return /** @type {Msg} */({ type: "SET_LOGGED_IN", loggedIn })
+  }
+}
+
 /** @returns {Promise<Msg>} */
 async function connect() {
-  const { agent, clock, databaseName, email, server } = state()
+  const { agent, clock, databaseName, email, loggedIn, server } = state()
 
   const database = fireproof(databaseName)
-  const context = await UCAN.connect(database, {
-    agent,
-    clock,
-    server,
-    email: email ? UCAN.email(email) : undefined
-  })
 
-  await context.connection.loaded;
+  if (!email || (email && loggedIn)) {
+    const context = await UCAN.connect(database, {
+      agent,
+      clock,
+      server,
+      email: email && loggedIn ? UCAN.email(email) : undefined
+    })
+
+    await context.connection.loaded;
+  }
 
   return { type: "CONNECTED", database }
 }
@@ -178,12 +206,12 @@ async function login() {
 
   if (!email) return { type: "-" }
 
-  await UCAN.login({
+  const promise = UCAN.login({
     agent,
     email: UCAN.email(email)
   })
 
-  return { type: "SET_LOGGED_IN", loggedIn: true }
+  return { type: "WAIT_FOR_LOGIN", promise }
 }
 
 /** @returns {Msg} */
@@ -203,6 +231,15 @@ function saveConfig() {
   return { type: "-" };
 }
 
+/** @param {Promise<unknown>} promise */
+function waitForLogin(promise) {
+  /** @returns {Promise<Msg>} */
+  return async () => {
+    await promise
+    return { type: "SET_LOGGED_IN", loggedIn: true }
+  }
+}
+
 // Setup
 // =====
 
@@ -217,11 +254,12 @@ const initialState = await (async () => {
   const agent = await UCAN.agent({ server });
   const email = config?.email ? UCAN.email(config.email) : undefined;
   const databaseName = config?.databaseName || DEFAULT_DB_NAME;
-  const clock = await UCAN.clock({ audience: email || agent.agent, databaseName });
+  const clock = config?.clockId ? UCAN.clockId(config.clockId) : await UCAN.clock({ audience: email || agent.agent, databaseName });
 
   return {
     agent,
     clock,
+    clockIdInput: config?.clockId,
     databaseContents: new Map(),
     databaseName,
     loggedIn: email ? await UCAN.isLoggedIn({ agent, email }) : false,
