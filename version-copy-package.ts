@@ -1,3 +1,26 @@
+/* eslint-disable no-console */
+import { $ } from "zx";
+import { command, flag, positional, run, boolean, string } from "cmd-ts";
+import * as fs from "fs/promises";
+import * as path from "path";
+
+async function patchVersion(packageJson: Record<string, unknown>) {
+  let version = "refs/tags/v0.0.0-smoke";
+  if (process.env.GITHUB_REF && process.env.GITHUB_REF.startsWith("refs/tags/v")) {
+    version = process.env.GITHUB_REF;
+  }
+  version = version.split("/").slice(-1)[0].replace(/^v/, "");
+  console.log(`Patch version ${version} in package.json`);
+  packageJson.version = version;
+}
+
+async function copyFilesToDist(destDir: string) {
+  for (const file of ["./.gitignore", "./LICENSE.md"]) {
+    await fs.copyFile(file, path.join(destDir, file));
+  }
+}
+
+async function main() {
   const cmd = command({
     name: "version-copy-package",
     description: "prepare a package.json for a release",
