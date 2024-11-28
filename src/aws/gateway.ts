@@ -155,7 +155,7 @@ export class AWSGateway implements bs.Gateway {
       return this.logger.Error().Any({ resp: done }).Msg("failed to upload meta").ResultError();
     }
 
-    const doneJson = await done.json<{ uploadURL?: string }>();
+    const doneJson = (await done.json()) as { uploadURL?: string };
     if (!doneJson.uploadURL) {
       return this.logger.Error().Url(fetchUrl).Msg("Upload URL not found in the response").ResultError();
     }
@@ -217,7 +217,7 @@ export class AWSGateway implements bs.Gateway {
       return Result.Err(new NotFoundError(`data not found: ${url}`));
     }
 
-    const data = new Uint8Array(await response.arrayBuffer());
+    const data = to_uint8(await response.arrayBuffer());
     return Result.Ok(data);
   }
 
@@ -284,7 +284,7 @@ export class AWSGateway implements bs.Gateway {
       // console.log("Download Wal response error:", response.status);
       return Result.Err(new NotFoundError(`wal not found: ${url}`));
     }
-    const data = new Uint8Array(await response.arrayBuffer());
+    const data = to_uint8(await response.arrayBuffer());
     return Result.Ok(data);
   }
 
