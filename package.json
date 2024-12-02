@@ -124,7 +124,7 @@
     "@web3-storage/did-mailto": "^2.1.0",
     "@web3-storage/w3up-client": "^16.5.1",
     "assert": "^2.1.0",
-    "better-sqlite3": "^11.5.0",
+    "better-sqlite3": "^11.6.0",
     "cborg": "^4.2.6",
     "cross-fetch": "^4.0.0",
     "events": "^3.3.0",
