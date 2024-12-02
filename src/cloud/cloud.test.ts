@@ -207,11 +207,7 @@ describe("CloudBackendTest", () => {
       const config = {
         store: {
           stores: {
-            base: wrangler
-              .build()
-              .protocol("fireproof:")
-              .setParam("protocol", "ws")
-              .setParam("testMode", "true")
+            base: wrangler.build().protocol("fireproof:").setParam("protocol", "ws").setParam("testMode", "true"),
             // process.env.FP_STORAGE_URL, // || "fireproof://localhost:1968",
           },
         },
@@ -345,7 +341,7 @@ describe("CloudBackendTest", () => {
           .setParam(
             "X-Amz-Signature",
             sthis.env.get("CF_PRESIGNED_SIGNATURE") ||
-            "bbae4604fbe51a4ce9972183d8871a8a187ab0f4d2415afd6dc728f8ccc9900f"
+              "bbae4604fbe51a4ce9972183d8871a8a187ab0f4d2415afd6dc728f8ccc9900f"
           )
           .asObj()
       );

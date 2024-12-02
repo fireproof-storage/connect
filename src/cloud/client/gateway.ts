@@ -66,7 +66,7 @@ export class ConnectionImpl implements Connection {
         this.logger.Error().Err(rMsg).Any(event.data).Msg("Invalid message");
         return;
       }
-      const msg = rMsg.Ok()
+      const msg = rMsg.Ok();
       const waitFor = this.waitForTid.get(msg.tid);
       if (waitFor) {
         if (waitFor.type === msg.type || MsgIsError(msg)) {
@@ -526,7 +526,7 @@ export class FireproofCloudGateway implements bs.Gateway {
       .build()
       .protocol(params.protocol === "ws" ? "ws" : "wss")
       .appendRelative("ws")
-      .cleanParams()
+      .cleanParams();
 
     // forces to open a new websocket connection
     const connId = uri.getParam("connId");
@@ -590,11 +590,16 @@ export class FireproofCloudGateway implements bs.Gateway {
           if (!s) {
             return;
           }
-          this.notifySubscribers(this.sthis.txt.encode(JSON.stringify(msg.metas)), s.map((s) => s.callback));
+          this.notifySubscribers(
+            this.sthis.txt.encode(JSON.stringify(msg.metas)),
+            s.map((s) => s.callback)
+          );
         }
       };
       conn.onMessage(fn(subId));
-      return conn.request<ResSubscribeMeta>(buildReqSubscriptMeta(this.sthis, conn.key, subId), { waitType: "resSubscribeMeta"});
+      return conn.request<ResSubscribeMeta>(buildReqSubscriptMeta(this.sthis, conn.key, subId), {
+        waitType: "resSubscribeMeta",
+      });
     });
     if (rResSubscribeMeta.isErr()) {
       return this.logger.Error().Err(rResSubscribeMeta).Msg("Error in subscribe:request").ResultError();
@@ -614,13 +619,13 @@ export class FireproofCloudGateway implements bs.Gateway {
       if (callbacks.length === 0) {
         subscriptions.delete(subId);
       }
-    }
+    };
     callbacks.push({ uri: uri.toString(), callback, sid, unsub });
     return Result.Ok(unsub);
   }
 
   async destroy(_uri: URI): Promise<Result<void>> {
-    await Promise.all(Array.from(trackPuts).map(async (k) => this.delete(URI.from(k))))
+    await Promise.all(Array.from(trackPuts).map(async (k) => this.delete(URI.from(k))));
     return Result.Ok(undefined);
   }
 }

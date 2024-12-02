@@ -202,11 +202,6 @@ export class FPMetaGroups extends DurableObject<Env> {
     }
   }
 
-  updateMeta(qs: ReqResCtx<ReqPutMeta, ResPutMeta, CtxWithGroup>): void {
-    const wsSocks = qs.ctx.dobj.getWebSockets()
-    const groupWs = wsSocks.map(ws => ({
-      ws, group: ws.deserializeAttachment() as FPMetaGroup
-  // updateMeta(qs: ReqResCtx<ReqPutMeta, ResPutMeta, CtxWithGroup>): void {
   updateMeta(up: UpdateMetaEvent, ctx: CtxWithGroup): void {
     const wsSocks = ctx.dobj.getWebSockets();
     const groupWs = wsSocks.map((ws) => ({
@@ -239,14 +234,13 @@ export class FPMetaGroups extends DurableObject<Env> {
       } satisfies FPMetaGroup);
       ws.send(
         // this is not the best way to do this
-        JSON.stringify(
-          buildUpdateMetaEvent(joinedQS, {
-            subscriberId: group.group.subscriberId,
-            connId: group.group.connId,
-          })
-        )
-      )
-    })
+        JSON.stringify({
+          ...joinedUp,
+          subscriberId: group.group.subscriberId,
+          connId: group.group.connId,
+        })
+      );
+    });
   }
 }
 
@@ -271,9 +265,9 @@ interface CFMsgProcessorParams {
 }
 
 interface CtxBaseParam {
-  readonly env: Env
-  readonly module?: string
-  readonly dobj: DurableObjectState
+  readonly env: Env;
+  readonly module?: string;
+  readonly dobj: DurableObjectState;
 }
 
 interface CtxBase {
@@ -377,7 +371,7 @@ class CFMsgProcessor implements MsgProcessor {
       params: req.params,
       status: "unsupported",
       connId: ctx.group.connId,
-    })
+    });
   }
 
   async getMeta(req: ReqGetMeta, _ctx: CtxWithGroup): Promise<ResGetMeta | ErrorMsg> {
@@ -397,8 +391,8 @@ class CFMsgProcessor implements MsgProcessor {
       signedGetUrl: rSignedUrl.Ok().toString(),
       status: "found",
       metas: [],
-      connId: ""
-    })
+      connId: "",
+    });
   }
 
   async putMeta(req: ReqPutMeta, ctx: CtxWithGroup): Promise<ResPutMeta | ErrorMsg> {
