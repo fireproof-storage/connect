@@ -22,6 +22,7 @@ import {
   ResSubscribeMeta,
 } from "../msg-types.js";
 import { newWebSocket } from "../new-websocket.js";
+import { to_uint8 } from "../../coerce-binary.js";
 
 const VERSION = "v0.1-fp-cloud";
 
@@ -42,8 +43,6 @@ interface WaitForTid {
   // undefined match all
   readonly type?: string;
 }
-
-
 
 export class ConnectionImpl implements Connection {
   readonly ws: WebSocket;
@@ -67,7 +66,7 @@ export class ConnectionImpl implements Connection {
         this.logger.Error().Err(rMsg).Any(event.data).Msg("Invalid message");
         return;
       }
-      const msg = rMsg.Ok()
+      const msg = rMsg.Ok();
       const waitFor = this.waitForTid.get(msg.tid);
       if (waitFor) {
         if (waitFor.type === msg.type || MsgIsError(msg)) {
@@ -93,7 +92,7 @@ export class ConnectionImpl implements Connection {
         timeout: 1000,
       },
       ...opts,
-    }
+    };
     const future = new Future<MsgBase>();
     this.waitForTid.set(req.tid, {
       tid: req.tid,
@@ -105,7 +104,7 @@ export class ConnectionImpl implements Connection {
       .With()
       .Str("tid", req.tid)
       .Uint64("timeout", opts.timeout)
-      .Ref("start", ()=> (new Date()).getTime()-start)
+      .Ref("start", () => new Date().getTime() - start)
       .Any("req", req)
       .Logger();
     this.ws.send(JSON.stringify(req));
@@ -125,7 +124,7 @@ export class ConnectionImpl implements Connection {
       .catch((err) => {
         logger.Error().Err(err).Msg("request-error");
         return Result.Ok(buildErrorMsg(this.logger, req, err) as MsgBase as S);
-      })
+      });
   }
 }
 
@@ -163,7 +162,6 @@ abstract class BaseGateway {
     const conn = rConn.Ok();
     this.logger.Debug().Any("conn", conn.key).Msg("put");
     return this.putConn(uri, body, conn);
-
   }
   abstract delConn(uri: URI, conn: Connection): Promise<Result<void>>;
   async delete(uri: URI, prConn: Promise<Result<Connection>>): Promise<Result<void>> {
@@ -203,7 +201,7 @@ abstract class BaseGateway {
     if (rsu.isErr()) {
       return Result.Err(rsu.Err());
     }
-    return conn.request<ResSignedUrl>(rsu.Ok(), { waitType: "resSignedUrl"});
+    return conn.request<ResSignedUrl>(rsu.Ok(), { waitType: "resSignedUrl" });
   }
 
   async putObject(uri: URI, uploadUrl: string, body: Uint8Array): Promise<Result<void>> {
@@ -239,7 +237,7 @@ abstract class BaseGateway {
       }
       return this.logger.Error().Url(downloadUrl, "uploadUrl").Err(rDownload).Msg("Error in get fetch").ResultError();
     }
-    return Result.Ok(new Uint8Array(await download.arrayBuffer()));
+    return Result.Ok(to_uint8(await download.arrayBuffer()));
   }
 
   async delObject(uri: URI, deleteUrl: string): Promise<Result<void>> {
@@ -257,7 +255,6 @@ abstract class BaseGateway {
     }
     return Result.Ok(undefined);
   }
-
 }
 
 class DataGateway extends BaseGateway implements StoreTypeGateway {
@@ -299,22 +296,20 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
     if (rsu.isErr()) {
       return Result.Err(rsu.Err());
     }
-    const rRes = await conn.request<ResGetMeta>(
-      buildReqGetMeta(this.sthis, conn.key, rsu.Ok().params),
-      {waitType: "resGetMeta"}
-    );
+    const rRes = await conn.request<ResGetMeta>(buildReqGetMeta(this.sthis, conn.key, rsu.Ok().params), {
+      waitType: "resGetMeta",
+    });
     if (rRes.isErr()) {
       return Result.Err(rRes.Err());
     }
     const res = rRes.Ok();
     if (MsgIsError(res)) {
-      return Result.Err(res)
+      return Result.Err(res);
     }
     if (res.signedGetUrl) {
-      return this.getObject(uri, res.signedGetUrl)
+      return this.getObject(uri, res.signedGetUrl);
     }
     return Result.Ok(this.sthis.txt.encode(JSON.stringify(res.metas)));
-
   }
   async putConn(uri: URI, body: Uint8Array, conn: Connection): Promise<Result<void>> {
     const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
@@ -327,35 +322,31 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
     if (rsu.isErr()) {
       return Result.Err(rsu.Err());
     }
-    const res = await conn.request<ResPutMeta>(
-      buildReqPutMeta(this.sthis, conn.key, rsu.Ok().params, dbMetas),
-      { waitType: "resPutMeta" }
-    );
+    const res = await conn.request<ResPutMeta>(buildReqPutMeta(this.sthis, conn.key, rsu.Ok().params, dbMetas), {
+      waitType: "resPutMeta",
+    });
     if (res.isErr()) {
       return Result.Err(res.Err());
     }
     this.putObject(uri, res.Ok().signedPutUrl, bodyRes.Ok());
     return res;
-
   }
   async delConn(uri: URI, conn: Connection): Promise<Result<void>> {
     const rsu = this.prepareReqSignedUrl(uri, "DELETE", conn.key);
     if (rsu.isErr()) {
       return Result.Err(rsu.Err());
     }
-    const res = await conn.request<ResDelMeta>(
-      buildReqDelMeta(this.sthis, conn.key, rsu.Ok().params),
-      { waitType: "resDelMeta"}
-    );
+    const res = await conn.request<ResDelMeta>(buildReqDelMeta(this.sthis, conn.key, rsu.Ok().params), {
+      waitType: "resDelMeta",
+    });
     if (res.isErr()) {
       return Result.Err(res.Err());
     }
     const { signedDelUrl } = res.Ok();
     if (signedDelUrl) {
-      return this.delObject(uri, signedDelUrl)
+      return this.delObject(uri, signedDelUrl);
     }
     return Result.Ok(undefined);
-
   }
 }
 
@@ -369,7 +360,7 @@ class WALGateway extends BaseGateway implements StoreTypeGateway {
     const rKey = uri.getParamsResult({
       key: 0,
       name: 0,
-    })
+    });
     if (rKey.isErr()) {
       return Result.Err(rKey.Err());
     }
@@ -416,7 +407,11 @@ function getStoreTypeGateway(sthis: SuperThis, uri: URI): StoreTypeGateway {
     case "wal":
       return storeTypedGateways.get(store).once(() => new WALGateway(sthis));
     default:
-      throw ensureLogger(sthis, "getStoreTypeGateway").Error().Str("store", store).Msg("Invalid store type").ResultError();
+      throw ensureLogger(sthis, "getStoreTypeGateway")
+        .Error()
+        .Str("store", store)
+        .Msg("Invalid store type")
+        .ResultError();
   }
 }
 
@@ -437,7 +432,7 @@ export class FireproofCloudGateway implements bs.Gateway {
   constructor(sthis: SuperThis) {
     this.sthis = sthis;
     this.logger = ensureLogger(sthis, "FireproofCloudGateway", {
-      this: true
+      this: true,
     });
   }
 
@@ -516,7 +511,7 @@ export class FireproofCloudGateway implements bs.Gateway {
       .build()
       .protocol(params.protocol === "ws" ? "ws" : "wss")
       .appendRelative("ws")
-      .cleanParams()
+      .cleanParams();
 
     // forces to open a new websocket connection
     const connId = uri.getParam("connId");
@@ -580,11 +575,16 @@ export class FireproofCloudGateway implements bs.Gateway {
           if (!s) {
             return;
           }
-          this.notifySubscribers(this.sthis.txt.encode(JSON.stringify(msg.metas)), s.map((s) => s.callback));
+          this.notifySubscribers(
+            this.sthis.txt.encode(JSON.stringify(msg.metas)),
+            s.map((s) => s.callback)
+          );
         }
       };
       conn.onMessage(fn(subId));
-      return conn.request<ResSubscribeMeta>(buildReqSubscriptMeta(this.sthis, conn.key, subId), { waitType: "resSubscribeMeta"});
+      return conn.request<ResSubscribeMeta>(buildReqSubscriptMeta(this.sthis, conn.key, subId), {
+        waitType: "resSubscribeMeta",
+      });
     });
     if (rResSubscribeMeta.isErr()) {
       return this.logger.Error().Err(rResSubscribeMeta).Msg("Error in subscribe:request").ResultError();
@@ -604,13 +604,13 @@ export class FireproofCloudGateway implements bs.Gateway {
       if (callbacks.length === 0) {
         subscriptions.delete(subId);
       }
-    }
+    };
     callbacks.push({ uri: uri.toString(), callback, sid, unsub });
     return Result.Ok(unsub);
   }
 
   async destroy(_uri: URI): Promise<Result<void>> {
-    await Promise.all(Array.from(trackPuts).map(async (k) => this.delete(URI.from(k))))
+    await Promise.all(Array.from(trackPuts).map(async (k) => this.delete(URI.from(k))));
     return Result.Ok(undefined);
   }
 }

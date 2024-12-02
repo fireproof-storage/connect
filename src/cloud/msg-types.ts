@@ -17,7 +17,7 @@ export interface AuthType {
 export interface UCanAuth {
   readonly type: "ucan";
   readonly params: {
-    readonly tbd: string
+    readonly tbd: string;
   };
 }
 
@@ -193,10 +193,11 @@ export function buildResSubscriptMeta(req: ReqSubscribeMeta, ctx: ConnId): ResSu
   };
 }
 
-export function MsgIsResSubscribeMeta<T extends ReqRes<MsgBase, MsgBase>>(qs: T): qs is T & ReqRes<MsgBase, ResSubscribeMeta> {
+export function MsgIsResSubscribeMeta<T extends ReqRes<MsgBase, MsgBase>>(
+  qs: T
+): qs is T & ReqRes<MsgBase, ResSubscribeMeta> {
   return qs.res.type === "resSubscribeMeta";
 }
-
 
 /* Put Meta */
 export interface ReqPutMeta extends MsgBase {
@@ -228,7 +229,7 @@ export function buildReqPutMeta(
   sthis: NextId,
   key: ConnectionKey,
   signedUrlParams: SignedUrlParam,
-  metas: CRDTEntry[],
+  metas: CRDTEntry[]
 ): ReqPutMeta {
   return {
     tid: sthis.nextId().str,
@@ -319,11 +320,7 @@ export interface ResGetMeta extends MsgBase, GetMetaParam {
   readonly key: ConnectionKey;
 }
 
-export function buildReqGetMeta(
-  sthis: NextId,
-  key: ConnectionKey,
-  signedUrlParams: SignedUrlParam
-): ReqGetMeta {
+export function buildReqGetMeta(sthis: NextId, key: ConnectionKey, signedUrlParams: SignedUrlParam): ReqGetMeta {
   return {
     tid: sthis.nextId().str,
     key,
@@ -347,7 +344,6 @@ export function buildResGetMeta(req: ReqGetMeta, metaParam: GetMetaParam): ResGe
 export function MsgIsResGetMeta(qs: ReqRes<MsgBase, MsgBase>): qs is ReqRes<ReqGetMeta, ResGetMeta> {
   return qs.res.type === "resGetMeta" && qs.req.type === "reqGetMeta";
 }
-
 
 /* Del Meta */
 export interface ReqDelMeta extends MsgBase {
@@ -375,11 +371,7 @@ export interface ResDelMeta extends MsgBase, DelMetaParam {
   readonly type: "resDelMeta";
 }
 
-export function buildReqDelMeta(
-  sthis: NextId,
-  key: ConnectionKey,
-  signedUrlParams: SignedUrlParam
-): ReqDelMeta {
+export function buildReqDelMeta(sthis: NextId, key: ConnectionKey, signedUrlParams: SignedUrlParam): ReqDelMeta {
   return {
     tid: sthis.nextId().str,
     key,

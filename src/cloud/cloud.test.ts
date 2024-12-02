@@ -206,11 +206,7 @@ describe("CloudBackendTest", () => {
       const config = {
         store: {
           stores: {
-            base: wrangler
-              .build()
-              .protocol("fireproof:")
-              .setParam("protocol", "ws")
-              .setParam("testMode", "true")
+            base: wrangler.build().protocol("fireproof:").setParam("protocol", "ws").setParam("testMode", "true"),
             // process.env.FP_STORAGE_URL, // || "fireproof://localhost:1968",
           },
         },
@@ -344,165 +340,169 @@ describe("CloudBackendTest", () => {
           .setParam(
             "X-Amz-Signature",
             sthis.env.get("CF_PRESIGNED_SIGNATURE") ||
-            "bbae4604fbe51a4ce9972183d8871a8a187ab0f4d2415afd6dc728f8ccc9900f"
+              "bbae4604fbe51a4ce9972183d8871a8a187ab0f4d2415afd6dc728f8ccc9900f"
           )
           .asObj()
       );
     });
   });
 
-
-
   describe(`store=meta`, () => {
-    const store = "meta"
-    let gw: bs.Gateway
+    const store = "meta";
+    let gw: bs.Gateway;
     const sthis = mockSuperThis();
-    let uri: URI
+    let uri: URI;
     beforeAll(async () => {
-      gw = new FireproofCloudGateway(sthis)
-      const id = sthis.nextId().str
+      gw = new FireproofCloudGateway(sthis);
+      const id = sthis.nextId().str;
       uri = BuildURI.from("fireproof://localhost:1968")
         .setParam("store", store)
         .setParam("name", id)
         .setParam("storekey", id)
-        .URI()
+        .URI();
 
-      const last: Uint8Array[] = []
-      const cnt = 4
-      Array(cnt).fill(null).map(async () => {
-        const rOk = await gw.subscribe?.(uri, (meta: Uint8Array) => {
-          last.push(meta)
-          if (last.length === cnt) {
-            expect(last[0]).toEqual(last[1])
-            expect(last[1]).toEqual(last[2])
-            expect(last[2]).toEqual(last[3])
-            last.length = 0
-          }
-        }) as bs.VoidResult
-        expect(rOk.isOk()).toBeTruthy()
-      })
+      const last: Uint8Array[] = [];
+      const cnt = 4;
+      Array(cnt)
+        .fill(null)
+        .map(async () => {
+          const rOk = (await gw.subscribe?.(uri, (meta: Uint8Array) => {
+            last.push(meta);
+            if (last.length === cnt) {
+              expect(last[0]).toEqual(last[1]);
+              expect(last[1]).toEqual(last[2]);
+              expect(last[2]).toEqual(last[3]);
+              last.length = 0;
+            }
+          })) as bs.VoidResult;
+          expect(rOk.isOk()).toBeTruthy();
+        });
     });
 
     afterAll(async () => {
-      const rOk = await gw.close(uri)
-      expect(rOk.isOk()).toBeTruthy()
-    })
+      const rOk = await gw.close(uri);
+      expect(rOk.isOk()).toBeTruthy();
+    });
 
-    const subscribeCallbacks: ({
-      connId: string
-      uri: URI
-      cb: ReturnType<typeof vitest.fn<(meta: Uint8Array) => void>>
-      unsub: bs.UnsubscribeResult
-    })[] = []
+    const subscribeCallbacks: {
+      connId: string;
+      uri: URI;
+      cb: ReturnType<typeof vitest.fn<(meta: Uint8Array) => void>>;
+      unsub: bs.UnsubscribeResult;
+    }[] = [];
     beforeEach(async () => {
-      await Promise.all(Array(4).fill(null).map(async () => {
-        const cb = vitest.fn()
-        const connId = sthis.nextId().str
-        const uriConnId = uri.build().setParam("connId", connId).URI()
-        const unsub = await gw.subscribe?.(uriConnId,
-          (meta: Uint8Array) => cb(meta, connId)) as bs.UnsubscribeResult
-        subscribeCallbacks.push({ cb, unsub, connId, uri: uriConnId })
-      }))
-    })
+      await Promise.all(
+        Array(4)
+          .fill(null)
+          .map(async () => {
+            const cb = vitest.fn();
+            const connId = sthis.nextId().str;
+            const uriConnId = uri.build().setParam("connId", connId).URI();
+            const unsub = (await gw.subscribe?.(uriConnId, (meta: Uint8Array) =>
+              cb(meta, connId)
+            )) as bs.UnsubscribeResult;
+            subscribeCallbacks.push({ cb, unsub, connId, uri: uriConnId });
+          })
+      );
+    });
     afterEach(() => {
-      subscribeCallbacks.forEach(({ unsub }) => unsub.Ok()())
-      subscribeCallbacks.length = 0
-    })
+      subscribeCallbacks.forEach(({ unsub }) => unsub.Ok()());
+      subscribeCallbacks.length = 0;
+    });
 
     function crdtEntry(connId = "default"): Uint8Array {
-      return sthis.txt.encode(JSON.stringify([
-        {
-          "cid": `${connId}:bafyreidjlylxmmb3yuz7levzzbso3g7ql54zovxl3mkhbbqxmmfnfbkoym`,
-          "data": "MomRkYXRhoWZkYk1ldGFYU3siY2FycyI6W3siLyI6ImJhZzR5dnFhYmNpcWdvdHM3dmFzeHhhdmdoY3FjeHo3ZXJibTdtY21ramQybTV0bXpzcGdhbG91d2lpcjYzZnkifV19Z3BhcmVudHOA",
-          "parents": []
-        },
-        {
-          "cid": `${connId}:bafyreie7izpgpmxd6heoiweoyblgyzoxt74xrp5wcpqo66bmjv2plgmceq`,
-          "data": "MomRkYXRhoWZkYk1ldGFYU3siY2FycyI6W3siLyI6ImJhZzR5dnFhYmNpcWQyZ2l1c2t2YWJoZTZ5ZHdsdXo0aGx4Z3lyNTZ5dmZmbjVpdndqdmhlYXl3cWJ4bHFmeGEifV19Z3BhcmVudHOA",
-          "parents": []
-        },
-      ] satisfies CRDTEntry[]))
+      return sthis.txt.encode(
+        JSON.stringify([
+          {
+            cid: `${connId}:bafyreidjlylxmmb3yuz7levzzbso3g7ql54zovxl3mkhbbqxmmfnfbkoym`,
+            data: "MomRkYXRhoWZkYk1ldGFYU3siY2FycyI6W3siLyI6ImJhZzR5dnFhYmNpcWdvdHM3dmFzeHhhdmdoY3FjeHo3ZXJibTdtY21ramQybTV0bXpzcGdhbG91d2lpcjYzZnkifV19Z3BhcmVudHOA",
+            parents: [],
+          },
+          {
+            cid: `${connId}:bafyreie7izpgpmxd6heoiweoyblgyzoxt74xrp5wcpqo66bmjv2plgmceq`,
+            data: "MomRkYXRhoWZkYk1ldGFYU3siY2FycyI6W3siLyI6ImJhZzR5dnFhYmNpcWQyZ2l1c2t2YWJoZTZ5ZHdsdXo0aGx4Z3lyNTZ5dmZmbjVpdndqdmhlYXl3cWJ4bHFmeGEifV19Z3BhcmVudHOA",
+            parents: [],
+          },
+        ] satisfies CRDTEntry[])
+      );
     }
 
     it(`buildUrl`, async () => {
-      const rOk = await gw.buildUrl(uri, "KEY")
-      const url = rOk.Ok()
-      expect(url.getParam("store")).toBe(store)
-      expect(url.getParam("key")).toBe("KEY")
-    })
+      const rOk = await gw.buildUrl(uri, "KEY");
+      const url = rOk.Ok();
+      expect(url.getParam("store")).toBe(store);
+      expect(url.getParam("key")).toBe("KEY");
+    });
     it(`start`, async () => {
-      const rOk = await gw.start(uri)
-      const url = rOk.Ok()
-      expect(url.getParam("store")).toBe(store)
-      expect(url.getParam("version")).toBeTruthy()
-    })
+      const rOk = await gw.start(uri);
+      const url = rOk.Ok();
+      expect(url.getParam("store")).toBe(store);
+      expect(url.getParam("version")).toBeTruthy();
+    });
 
     it(`unsubscribe`, async () => {
-      subscribeCallbacks.forEach(sub => sub.unsub.Ok()())
-      const rOk = await gw.put(uri, crdtEntry())
-      expect(rOk.isOk()).toBeTruthy()
-      subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled())
-    })
+      subscribeCallbacks.forEach((sub) => sub.unsub.Ok()());
+      const rOk = await gw.put(uri, crdtEntry());
+      expect(rOk.isOk()).toBeTruthy();
+      subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled());
+    });
 
     it(`get-put-delete`, async () => {
       async function getNotFound() {
         for (const u of [...subscribeCallbacks.map(({ uri }) => uri), uri]) {
           for (const key of ["KEY1", "KEY2"]) {
-            const rOk = await gw.get(u.build().setParam("key", key).URI())
-            expect(rOk.isErr()).toBeTruthy()
-            expect(isNotFoundError(rOk.Err())).toBeTruthy()
+            const rOk = await gw.get(u.build().setParam("key", key).URI());
+            expect(rOk.isErr()).toBeTruthy();
+            expect(isNotFoundError(rOk.Err())).toBeTruthy();
           }
         }
-        subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled())
+        subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled());
       }
       // get not found
-      await getNotFound()
+      await getNotFound();
       // put
       async function put() {
         for (const u of [...subscribeCallbacks.map(({ uri }) => uri), uri]) {
           for (const key of ["KEY1", "KEY2"]) {
-            const rOk = await gw.put(u.build().setParam("key", key).URI(),
-            crdtEntry(u.getParam("connId", "default")))
-            expect(rOk.isOk()).toBeTruthy()
+            const rOk = await gw.put(u.build().setParam("key", key).URI(), crdtEntry(u.getParam("connId", "default")));
+            expect(rOk.isOk()).toBeTruthy();
           }
         }
         subscribeCallbacks.forEach(({ cb, connId }) => {
-          expect(cb).toHaveBeenCalledTimes(1)
-          expect(cb).toHaveBeenCalledWith(crdtEntry(connId), connId)
-        })
+          expect(cb).toHaveBeenCalledTimes(1);
+          expect(cb).toHaveBeenCalledWith(crdtEntry(connId), connId);
+        });
       }
-      await put()
-      subscribeCallbacks.forEach(({ cb }) => cb.mockClear())
+      await put();
+      subscribeCallbacks.forEach(({ cb }) => cb.mockClear());
 
       async function get() {
         for (const u of [...subscribeCallbacks.map(({ uri }) => uri), uri]) {
           for (const key of ["KEY1", "KEY2"]) {
-            const rOk = await gw.get(u.build().setParam("key", key).URI())
-            const data = JSON.parse(sthis.txt.decode(rOk.Ok())) as CRDTEntry[]
-            expect(data).toEqual(subscribeCallbacks.map(({ connId }) => crdtEntry(connId)))
+            const rOk = await gw.get(u.build().setParam("key", key).URI());
+            const data = JSON.parse(sthis.txt.decode(rOk.Ok())) as CRDTEntry[];
+            expect(data).toEqual(subscribeCallbacks.map(({ connId }) => crdtEntry(connId)));
           }
         }
-        subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled())
+        subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled());
       }
-      await get()
+      await get();
       async function del() {
         for (const u of [...subscribeCallbacks.map(({ uri }) => uri), uri]) {
           for (const key of ["KEY1", "KEY2"]) {
-            const rOk = await gw.delete(u.build().setParam("key", key).URI())
-            expect(rOk.isOk()).toBeTruthy()
+            const rOk = await gw.delete(u.build().setParam("key", key).URI());
+            expect(rOk.isOk()).toBeTruthy();
           }
         }
-        subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled())
+        subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled());
       }
-      await del()
+      await del();
       // get not found
-      await getNotFound()
-    })
+      await getNotFound();
+    });
     it(`close`, async () => {
-      const rOk = await gw.close(uri)
-      expect(rOk.isOk()).toBeTruthy()
-    })
+      const rOk = await gw.close(uri);
+      expect(rOk.isOk()).toBeTruthy();
+    });
   });
-
-
 });
