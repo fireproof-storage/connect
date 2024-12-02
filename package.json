@@ -84,7 +84,7 @@
     "wait-on": "^8.0.1",
     "vitest": "^2.1.6",
     "wrangler": "^3.90.0",
-    "zx": "^8.2.2"
+    "zx": "^8.2.4"
   },
   "repository": {
     "type": "git",
