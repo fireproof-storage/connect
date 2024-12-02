@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.2.39
-        version: 0.2.39(typescript@5.7.2)
+        specifier: ^0.2.40
+        version: 0.2.40(typescript@5.7.2)
       '@aws-sdk/client-s3':
         specifier: ^3.703.0
         version: 3.703.0
@@ -182,10 +182,6 @@ importers:
         version: 8.2.2
 
 packages:
-
-  '@adviser/cement@0.2.39':
-    resolution: {integrity: sha512-hpDyFsg1FTSfBJZymvk/j+K16AUCaBzUyxRPdginRk3s1zXdWmGoRLx7fF7zL0OrqosKxL2P5sMYkSzYJtCtxQ==}
-    engines: {node: '>=16'}
 
   '@adviser/cement@0.2.40':
     resolution: {integrity: sha512-AJR27jKVGkbXmyFHdmPWGHiHflSeg1GwkUNEeb6t5Vv8I4uNPAnRs9Xw8TumMIj9OYgsn2QHxFEB6mpyk1xdsA==}
@@ -3961,13 +3957,6 @@ packages:
     hasBin: true
 
 snapshots:
-
-  '@adviser/cement@0.2.39(typescript@5.7.2)':
-    dependencies:
-      ts-essentials: 10.0.2(typescript@5.7.2)
-      yaml: 2.5.1
-    transitivePeerDependencies:
-      - typescript
 
   '@adviser/cement@0.2.40(typescript@5.7.2)':
     dependencies:

@@ -95,7 +95,7 @@
   },
   "homepage": "https://github.com/fireproof-storage/connect#readme",
   "dependencies": {
-    "@adviser/cement": "^0.2.39",
+    "@adviser/cement": "^0.2.40",
     "@aws-sdk/client-s3": "^3.703.0",
     "@fireproof/core": "0.19.114",
     "@ipld/dag-cbor": "^9.2.2",
