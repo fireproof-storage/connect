@@ -97,7 +97,7 @@
   "dependencies": {
     "@adviser/cement": "^0.2.39",
     "@aws-sdk/client-s3": "^3.703.0",
-    "@fireproof/core": "0.19.113",
+    "@fireproof/core": "0.19.114",
     "@ipld/dag-cbor": "^9.2.2",
     "@jspm/core": "^2.1.0",
     "@netlify/blobs": "^8.1.0",

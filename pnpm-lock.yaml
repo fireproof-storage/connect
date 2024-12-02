@@ -15,8 +15,8 @@ importers:
         specifier: ^3.703.0
         version: 3.703.0
       '@fireproof/core':
-        specifier: 0.19.113
-        version: 0.19.113(react@18.3.1)(typescript@5.7.2)
+        specifier: 0.19.114
+        version: 0.19.114(react@18.3.1)(typescript@5.7.2)
       '@ipld/dag-cbor':
         specifier: ^9.2.1
         version: 9.2.2
@@ -185,6 +185,10 @@ packages:
 
   '@adviser/cement@0.2.39':
     resolution: {integrity: sha512-hpDyFsg1FTSfBJZymvk/j+K16AUCaBzUyxRPdginRk3s1zXdWmGoRLx7fF7zL0OrqosKxL2P5sMYkSzYJtCtxQ==}
+    engines: {node: '>=16'}
+
+  '@adviser/cement@0.2.40':
+    resolution: {integrity: sha512-AJR27jKVGkbXmyFHdmPWGHiHflSeg1GwkUNEeb6t5Vv8I4uNPAnRs9Xw8TumMIj9OYgsn2QHxFEB6mpyk1xdsA==}
     engines: {node: '>=16'}
 
   '@aws-crypto/crc32@5.2.0':
@@ -1031,8 +1035,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@0.19.113':
-    resolution: {integrity: sha512-LGAgDBd8MePZ2QUaBav2Wd1pa37SvYfngNAaDh00WGCL9skF+y4ZhcVmhUGNcIKG3xcANsyxouFu7h0rgBoNeA==}
+  '@fireproof/core@0.19.114':
+    resolution: {integrity: sha512-b/UTsxqazHYkIglllhKIaZl+veik6zuBO8gJGAKBZhxCwAEz5NQOUPDz4Dhk0c5YIeu1ODi9tv2cQ2VFUUDvBg==}
     peerDependencies:
       react: ^18.3.1
 
@@ -1076,6 +1080,10 @@ packages:
 
   '@ipld/dag-json@10.2.2':
     resolution: {integrity: sha512-NnU8HdHKwAoGyrW3S09NMa8aZw0tImLRyR64hoafpLpDpAbA9g1+fb24JsdlugbL4sXUQVwDVA+qK4Ud8V83lA==}
+    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
+
+  '@ipld/dag-json@10.2.3':
+    resolution: {integrity: sha512-itacv1j1hvYgLox2B42Msn70QLzcr0MEo5yGIENuw2SM/lQzq9bmBiMky+kDsIrsqqblKTXcHBZnnmK7D4a6ZQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
   '@ipld/dag-pb@4.1.2':
@@ -3079,6 +3087,10 @@ packages:
     resolution: {integrity: sha512-JA6nkq6hKyWLLasXQXUrO4z8BUZGUt/LjlJxx8Gb2+2ntodU/SS63YZ8b0LUTbQ8ZB9iwOfhEPhg4ykKnn2KsA==}
     engines: {node: '>=16.17'}
 
+  p-retry@6.2.1:
+    resolution: {integrity: sha512-hEt02O4hUct5wtwg4H4KcWgDdm+l1bOaEy/hWzd8xtXB9BqxTWBBhb+2ImAtH4Cv4rPjV76xN3Zumqk3k3AhhQ==}
+    engines: {node: '>=16.17'}
+
   p-timeout@6.1.2:
     resolution: {integrity: sha512-UbD77BuZ9Bc9aABo74gfXhNvzC9Tx7SxtHSh1fxvx3jTLLYvmVhiQZZrJzqqU0jKbN32kb5VOKiLEQI/3bIjgQ==}
     engines: {node: '>=14.16'}
@@ -3930,6 +3942,13 @@ packages:
 snapshots:
 
   '@adviser/cement@0.2.39(typescript@5.7.2)':
+    dependencies:
+      ts-essentials: 10.0.2(typescript@5.7.2)
+      yaml: 2.5.1
+    transitivePeerDependencies:
+      - typescript
+
+  '@adviser/cement@0.2.40(typescript@5.7.2)':
     dependencies:
       ts-essentials: 10.0.2(typescript@5.7.2)
       yaml: 2.5.1
@@ -4818,12 +4837,12 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.19.113(react@18.3.1)(typescript@5.7.2)':
+  '@fireproof/core@0.19.114(react@18.3.1)(typescript@5.7.2)':
     dependencies:
-      '@adviser/cement': 0.2.39(typescript@5.7.2)
+      '@adviser/cement': 0.2.40(typescript@5.7.2)
       '@ipld/car': 5.3.3
       '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.2
+      '@ipld/dag-json': 10.2.3
       '@ipld/unixfs': 3.0.0
       '@web3-storage/pail': 0.6.0
       cborg: 4.2.6
@@ -4834,7 +4853,7 @@ snapshots:
       multiformats: 13.3.1
       p-limit: 6.1.0
       p-map: 7.0.2
-      p-retry: 6.2.0
+      p-retry: 6.2.1
       prolly-trees: 1.0.4
       react: 18.3.1
     transitivePeerDependencies:
@@ -4879,6 +4898,11 @@ snapshots:
       multiformats: 13.3.1
 
   '@ipld/dag-json@10.2.2':
+    dependencies:
+      cborg: 4.2.6
+      multiformats: 13.3.1
+
+  '@ipld/dag-json@10.2.3':
     dependencies:
       cborg: 4.2.6
       multiformats: 13.3.1
@@ -5712,7 +5736,7 @@ snapshots:
 
   '@web3-storage/pail@0.5.0':
     dependencies:
-      '@ipld/car': 5.3.2
+      '@ipld/car': 5.3.3
       '@ipld/dag-cbor': 9.2.2
       archy: 1.0.0
       cborg: 4.2.6
@@ -5727,7 +5751,7 @@ snapshots:
 
   '@web3-storage/upload-client@17.1.0(encoding@0.1.13)':
     dependencies:
-      '@ipld/car': 5.3.2
+      '@ipld/car': 5.3.3
       '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-ucan': 3.4.0
       '@ipld/unixfs': 2.2.0
@@ -6762,7 +6786,7 @@ snapshots:
   ipfs-unixfs-exporter@13.6.1:
     dependencies:
       '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.2
+      '@ipld/dag-json': 10.2.3
       '@ipld/dag-pb': 4.1.2
       '@multiformats/murmur3': 2.1.8
       hamt-sharding: 3.0.6
@@ -7473,6 +7497,12 @@ snapshots:
       retry: 0.13.1
 
   p-retry@6.2.0:
+    dependencies:
+      '@types/retry': 0.12.2
+      is-network-error: 1.1.0
+      retry: 0.13.1
+
+  p-retry@6.2.1:
     dependencies:
       '@types/retry': 0.12.2
       is-network-error: 1.1.0
