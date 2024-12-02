@@ -1,6 +1,6 @@
 // import PartySocket, { PartySocketOptions } from "partysocket";
 import { Result, URI, KeyedResolvOnce, exception2Result, Future } from "@adviser/cement";
-import { bs, ensureLogger, Logger, NotFoundError, rt, SuperThis } from "@fireproof/core";
+import { bs, CRDTEntry, ensureLogger, Logger, NotFoundError, rt, SuperThis } from "@fireproof/core";
 import {
   buildErrorMsg,
   buildReqDelMeta,
@@ -321,7 +321,7 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
     if (bodyRes.isErr()) {
       return this.logger.Error().Err(bodyRes).Msg("Error in addCryptoKeyToGatewayMetaPayload").ResultError();
     }
-    const dbMetas = JSON.parse(this.sthis.txt.decode(bodyRes.Ok())) as bs.DbMeta[];
+    const dbMetas = JSON.parse(this.sthis.txt.decode(bodyRes.Ok())) as CRDTEntry[];
     this.logger.Debug().Any("dbMetas", dbMetas).Msg("putMeta");
     const rsu = this.prepareReqSignedUrl(uri, "PUT", conn.key);
     if (rsu.isErr()) {
@@ -421,7 +421,13 @@ function getStoreTypeGateway(sthis: SuperThis, uri: URI): StoreTypeGateway {
 }
 
 const keyedConnections = new KeyedResolvOnce<Connection>();
-const subscriptions = new Map<string, ((msg: Uint8Array) => void)[]>();
+interface Subscription {
+  readonly sid: string;
+  readonly uri: string; // optimization
+  readonly callback: (msg: Uint8Array) => void;
+  readonly unsub: () => void;
+}
+const subscriptions = new Map<string, Subscription[]>();
 const doServerSubscribe = new KeyedResolvOnce();
 const trackPuts = new Set<string>();
 export class FireproofCloudGateway implements bs.Gateway {
@@ -469,11 +475,16 @@ export class FireproofCloudGateway implements bs.Gateway {
     return getStoreTypeGateway(this.sthis, uri).delete(uri, this.getCloudConnection(uri));
   }
 
-  async close(_uri: URI): Promise<bs.VoidResult> {
-    console.log("close:gateway");
-    // await this.ready();
-    // this.logger.Debug().Msg("close");
-    // this.party?.close();
+  async close(uri: URI): Promise<bs.VoidResult> {
+    const uriStr = uri.toString();
+    // CAUTION here is my happen a mutation of subscriptions caused by unsub
+    for (const sub of Array.from(subscriptions.values())) {
+      for (const s of sub) {
+        if (s.uri.toString() === uriStr) {
+          s.unsub();
+        }
+      }
+    }
     return Result.Ok(undefined);
   }
 
@@ -506,10 +517,14 @@ export class FireproofCloudGateway implements bs.Gateway {
       .protocol(params.protocol === "ws" ? "ws" : "wss")
       .appendRelative("ws")
       .cleanParams()
-      .toString();
 
+    // forces to open a new websocket connection
+    const connId = uri.getParam("connId");
+    if (connId) {
+      wsUrl.setParam("connId", connId);
+    }
     return Result.Ok(
-      await keyedConnections.get(wsUrl).once(async (cKey) => {
+      await keyedConnections.get(wsUrl.toString()).once(async (cKey) => {
         const ws = await newWebSocket(wsUrl);
         const waitOpen = new Future<void>();
         ws.onopen = () => {
@@ -561,7 +576,11 @@ export class FireproofCloudGateway implements bs.Gateway {
       const fn = (subId: string) => (msg: MsgBase) => {
         if (MsgIsUpdateMetaEvent(msg) && subId === msg.subscriberId) {
           // console.log("onMessage", subId, conn.key, msg.metas);
-          this.notifySubscribers(this.sthis.txt.encode(JSON.stringify(msg.metas)), subscriptions.get(subId));
+          const s = subscriptions.get(subId);
+          if (!s) {
+            return;
+          }
+          this.notifySubscribers(this.sthis.txt.encode(JSON.stringify(msg.metas)), s.map((s) => s.callback));
         }
       };
       conn.onMessage(fn(subId));
@@ -576,10 +595,18 @@ export class FireproofCloudGateway implements bs.Gateway {
       callbacks = [];
       subscriptions.set(subId, callbacks);
     }
-    callbacks.push(callback);
-    return Result.Ok(() => {
-      subscriptions.delete(subId);
-    });
+    const sid = this.sthis.nextId().str;
+    const unsub = () => {
+      const idx = callbacks.findIndex((c) => c.sid === sid);
+      if (idx !== -1) {
+        callbacks.splice(idx, 1);
+      }
+      if (callbacks.length === 0) {
+        subscriptions.delete(subId);
+      }
+    }
+    callbacks.push({ uri: uri.toString(), callback, sid, unsub });
+    return Result.Ok(unsub);
   }
 
   async destroy(_uri: URI): Promise<Result<void>> {

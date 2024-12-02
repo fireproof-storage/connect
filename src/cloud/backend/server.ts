@@ -32,7 +32,7 @@ import {
   ResSubscribeMeta,
 } from "../msg-types";
 // import { Hono } from "hono";
-import { bs, NotFoundError } from "@fireproof/core";
+import { CRDTEntry, NotFoundError } from "@fireproof/core";
 import { DurableObject } from "cloudflare:workers";
 import { calculatePreSignedUrl } from "../pre-signed-url";
 
@@ -108,6 +108,7 @@ export class FPMetaGroups extends DurableObject<Env> {
 
     return CFMsgProcessor.dispatch(() => JSON.parse(msg.toString()), {
       env: this.env,
+      dobj: this.ctx
     }, async (req: MsgBase, ictx: CtxBase) => {
       if (req.auth) {
         // do ucan magic
@@ -130,7 +131,7 @@ export class FPMetaGroups extends DurableObject<Env> {
           this.updateMeta(qs);
           break;
         }
-        case MsgIsResSubscribeMeta(qs.res): {
+        case MsgIsResSubscribeMeta(qs): {
           const group = { ...qs.ctx.group, group: qs.res } satisfies FPMetaGroup;
           ws.serializeAttachment(group);
           this.updateMeta(qs)
@@ -145,7 +146,7 @@ export class FPMetaGroups extends DurableObject<Env> {
     const path = URI.from(req.url).pathname
     switch (path) {
       case "/fp": {
-        const rq = await CFMsgProcessor.dispatch(() => req.json(), { env: this.env });
+        const rq = await CFMsgProcessor.dispatch(() => req.json(), { env: this.env, dobj: this.ctx });
         return json(rq.res, MsgIsQSError(rq) ? 422 : 200);
       }
       case "/ws": {
@@ -163,7 +164,7 @@ export class FPMetaGroups extends DurableObject<Env> {
       }
       default: {
         const logger = ensureLogger(this.env);
-        return json(buildErrorMsg(logger, { tid: "internal", }, new NotFoundError(`Notfound:${c.req.path}`)), 404);
+        return json(buildErrorMsg(logger, { tid: "internal", }, new NotFoundError(`Notfound:${path}`)), 404);
       }
     }
   }
@@ -176,8 +177,8 @@ export class FPMetaGroups extends DurableObject<Env> {
     }
   }
 
-  updateMeta(qs: ReqRes<ReqPutMeta, ResPutMeta>): void {
-    const wsSocks = this.ctx.getWebSockets()
+  updateMeta(qs: ReqResCtx<ReqPutMeta, ResPutMeta, CtxWithGroup>): void {
+    const wsSocks = qs.ctx.dobj.getWebSockets()
     const groupWs = wsSocks.map(ws => ({
       ws, group: ws.deserializeAttachment() as FPMetaGroup
     }));
@@ -186,8 +187,12 @@ export class FPMetaGroups extends DurableObject<Env> {
         acc.push(...group.lastMeta.metas)
       }
       return acc
-    }, [] as bs.DbMeta[])
+    }, [] as CRDTEntry[])
     const now = new Date()
+    const joinedQS = {
+      req: { ...qs.req, metas: joinedMeta },
+      res: qs.res,
+    }
     groupWs.forEach(({ ws, group }) => {
       ws.serializeAttachment({
         ...group,
@@ -195,9 +200,9 @@ export class FPMetaGroups extends DurableObject<Env> {
         lastUsed: now
       } satisfies FPMetaGroup)
       ws.send(
+        // this is not the best way to do this
         JSON.stringify(
-          buildUpdateMetaEvent(qs, {
-            metas: joinedMeta,
+          buildUpdateMetaEvent(joinedQS, {
             subscriberId: group.group.subscriberId,
             connId: group.group.connId,
           })
@@ -212,7 +217,7 @@ export class FPMetaGroups extends DurableObject<Env> {
 interface MsgProcessor {
   dispatch<Q extends MsgBase, S extends MsgBase, C extends CtxBase>(decodeFn: () => Promise<unknown>): Promise<ReqResCtx<Q, S | ErrorMsg, C>>;
 
-  signedUrl(req: ReqSignedUrl): Promise<ResSignedUrl | ErrorMsg>;
+  signedUrl(req: ReqSignedUrl, ctx: CtxBase): Promise<ResSignedUrl | ErrorMsg>;
   subscribeMeta(req: ReqSubscribeMeta, ctx: CtxBase): Promise<ResSubscribeMeta | ErrorMsg>;
 
   delMeta(req: ReqDelMeta, ctx: CtxBase): Promise<ResDelMeta | ErrorMsg>;
@@ -228,9 +233,11 @@ interface CFMsgProcessorParams {
 interface CtxBaseParam {
   readonly env: Env
   readonly module?: string
+  readonly dobj: DurableObjectState
 }
 
 interface CtxBase {
+  readonly dobj: DurableObjectState;
   readonly env: Env;
   readonly logger: Logger;
 }
@@ -330,11 +337,34 @@ class CFMsgProcessor implements MsgProcessor {
   }
 
   async delMeta(req: ReqDelMeta, ctx: CtxWithGroup): Promise<ResDelMeta | ErrorMsg> {
-    return buildResDelMeta(req)
+    // delete meta does nothing in this implementation
+    // if you delete meta basically you are deleting the whole ledger
+    return buildResDelMeta(req, {
+      params: req.params,
+      status: "unsupported",
+      connId: ctx.group.connId,
+    })
   }
 
   async getMeta(req: ReqGetMeta, _ctx: CtxWithGroup): Promise<ResGetMeta | ErrorMsg> {
-    return buildResGetMeta(req)
+    const rSignedUrl = await calculatePreSignedUrl(
+      {
+        tid: req.tid,
+        type: "reqSignedUrl",
+        version: req.version,
+        params: { ...req.params, method: "GET" },
+      },
+      this.env
+    );
+    if (rSignedUrl.isErr()) {
+      return buildErrorMsg(this.logger, req, rSignedUrl.Err());
+    }
+    return buildResGetMeta(req, {
+      signedGetUrl: rSignedUrl.Ok().toString(),
+      status: "found",
+      metas: [],
+      connId: ""
+    })
   }
 
   async putMeta(req: ReqPutMeta, ctx: CtxWithGroup): Promise<ResPutMeta | ErrorMsg> {
@@ -343,7 +373,7 @@ class CFMsgProcessor implements MsgProcessor {
         tid: req.tid,
         type: "reqSignedUrl",
         version: req.version,
-        params: req.params,
+        params: { ...req.params, method: "PUT" },
       },
       this.env
     );

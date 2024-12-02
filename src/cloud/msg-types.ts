@@ -1,5 +1,4 @@
-import { Logger, SuperThis } from "@fireproof/core";
-import { bs } from "@fireproof/core";
+import { CRDTEntry, Logger, SuperThis } from "@fireproof/core";
 
 export interface ConnId {
   readonly connId: string;
@@ -194,8 +193,8 @@ export function buildResSubscriptMeta(req: ReqSubscribeMeta, ctx: ConnId): ResSu
   };
 }
 
-export function MsgIsResSubscribeMeta(msg: MsgBase): msg is ResSubscribeMeta {
-  return msg.type === "resSubscribeMeta";
+export function MsgIsResSubscribeMeta<T extends ReqRes<MsgBase, MsgBase>>(qs: T): qs is T & ReqRes<MsgBase, ResSubscribeMeta> {
+  return qs.res.type === "resSubscribeMeta";
 }
 
 
@@ -204,7 +203,7 @@ export interface ReqPutMeta extends MsgBase {
   readonly type: "reqPutMeta";
   readonly key: ConnectionKey;
   readonly params: SignedUrlParam;
-  readonly metas: bs.DbMeta[];
+  readonly metas: CRDTEntry[];
 }
 
 // export type ReqPutMetaWithConnId = AddConnId<ReqPutMeta, "reqPutMetaWithConnId">;
@@ -215,7 +214,7 @@ export interface ReqPutMeta extends MsgBase {
 
 export interface PutMetaParam {
   readonly metaId: string;
-  readonly metas: bs.DbMeta[];
+  readonly metas: CRDTEntry[];
   readonly signedPutUrl: string;
   readonly connId: string;
 }
@@ -229,7 +228,7 @@ export function buildReqPutMeta(
   sthis: NextId,
   key: ConnectionKey,
   signedUrlParams: SignedUrlParam,
-  metas: bs.DbMeta[],
+  metas: CRDTEntry[],
 ): ReqPutMeta {
   return {
     tid: sthis.nextId().str,
@@ -268,7 +267,7 @@ export interface UpdateMetaEvent extends MsgBase, ConnSubId {
   readonly type: "updateMeta";
   readonly key: ConnectionKey;
   readonly metaId: string;
-  readonly metas: bs.DbMeta[];
+  readonly metas: CRDTEntry[];
 }
 
 export function buildUpdateMetaEvent(rq: ReqRes<ReqPutMeta, ResPutMeta>, consub: ConnSubId): UpdateMetaEvent {
@@ -305,10 +304,10 @@ export function MsgIsReqGetMeta(msg: MsgBase): msg is ReqGetMeta {
 // }
 
 export interface GetMetaParam {
-  readonly params: SignedUrlParam;
-  readonly key: ConnectionKey;
+  // readonly params: SignedUrlParam;
+  // readonly key: ConnectionKey;
   readonly status: "found" | "not-found" | "redirect";
-  readonly metas: bs.DbMeta[];
+  readonly metas: CRDTEntry[];
   readonly connId: string;
   // if set client should query this url to retrieve the meta
   readonly signedGetUrl?: string;
@@ -316,6 +315,8 @@ export interface GetMetaParam {
 
 export interface ResGetMeta extends MsgBase, GetMetaParam {
   readonly type: "resGetMeta";
+  readonly params: SignedUrlParam;
+  readonly key: ConnectionKey;
 }
 
 export function buildReqGetMeta(
@@ -337,6 +338,7 @@ export function buildResGetMeta(req: ReqGetMeta, metaParam: GetMetaParam): ResGe
     ...metaParam,
     tid: req.tid,
     type: "resGetMeta",
+    params: req.params,
     key: req.key,
     version: VERSION,
   };
@@ -362,8 +364,8 @@ export interface ReqDelMeta extends MsgBase {
 
 export interface DelMetaParam {
   readonly params: SignedUrlParam;
-  readonly key: ConnectionKey;
-  readonly status: "found" | "not-found" | "redirect";
+  // readonly key: ConnectionKey;
+  readonly status: "found" | "not-found" | "redirect" | "unsupported";
   readonly connId: string;
   // if set client should query this url to retrieve the meta
   readonly signedDelUrl?: string;
@@ -396,7 +398,7 @@ export function buildResDelMeta(req: ReqDelMeta, metaParam: DelMetaParam): ResDe
     ...metaParam,
     tid: req.tid,
     type: "resDelMeta",
-    key: req.key,
+    // key: req.key,
     version: VERSION,
   };
 }

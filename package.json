@@ -109,6 +109,7 @@
     "@cloudflare/vitest-pool-workers": "^0.5.30",
     "@cloudflare/workers-types": "^4.20241112.0",
     "@fireproof/core": "0.19.114",
+    "@fireproof/encrypted-blockstore": "^0.18.0",
     "@hono/node-ws": "^1.0.4",
     "@jspm/core": "^2.1.0",
     "@netlify/blobs": "^8.1.0",

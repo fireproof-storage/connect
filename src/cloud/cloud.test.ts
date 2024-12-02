@@ -5,11 +5,11 @@ import { Env } from "./backend/env";
 import { $ } from "zx";
 import fs from "fs/promises";
 import * as toml from "smol-toml";
-import { bs, Database, fireproof } from "@fireproof/core";
+import { bs, CRDTEntry, Database, fireproof, isNotFoundError } from "@fireproof/core";
 import { mockSuperThis } from "../../node_modules/@fireproof/core/tests/helpers.js";
 import { AwsClient } from "aws4fetch";
 import { smokeDB } from "../../tests/helper";
-import { registerFireproofCloudStoreProtocol } from "./client/gateway";
+import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway";
 import { calculatePreSignedUrl } from "./pre-signed-url";
 import { newWebSocket } from "./new-websocket";
 
@@ -222,12 +222,8 @@ describe("CloudBackendTest", () => {
     afterEach(async () => {
       // Clear the database before each test
       if (db) {
-        setInterval(() => console.log("Waiting for db to close"), 1000);
-        console.log("Closing db");
         await db.close();
-        console.log("Closed db");
         await db.destroy();
-        console.log("Destroyed db");
       }
     });
 
@@ -354,4 +350,159 @@ describe("CloudBackendTest", () => {
       );
     });
   });
+
+
+
+  describe(`store=meta`, () => {
+    const store = "meta"
+    let gw: bs.Gateway
+    const sthis = mockSuperThis();
+    let uri: URI
+    beforeAll(async () => {
+      gw = new FireproofCloudGateway(sthis)
+      const id = sthis.nextId().str
+      uri = BuildURI.from("fireproof://localhost:1968")
+        .setParam("store", store)
+        .setParam("name", id)
+        .setParam("storekey", id)
+        .URI()
+
+      const last: Uint8Array[] = []
+      const cnt = 4
+      Array(cnt).fill(null).map(async () => {
+        const rOk = await gw.subscribe?.(uri, (meta: Uint8Array) => {
+          last.push(meta)
+          if (last.length === cnt) {
+            expect(last[0]).toEqual(last[1])
+            expect(last[1]).toEqual(last[2])
+            expect(last[2]).toEqual(last[3])
+            last.length = 0
+          }
+        }) as bs.VoidResult
+        expect(rOk.isOk()).toBeTruthy()
+      })
+    });
+
+    afterAll(async () => {
+      const rOk = await gw.close(uri)
+      expect(rOk.isOk()).toBeTruthy()
+    })
+
+    const subscribeCallbacks: ({
+      connId: string
+      uri: URI
+      cb: ReturnType<typeof vitest.fn<(meta: Uint8Array) => void>>
+      unsub: bs.UnsubscribeResult
+    })[] = []
+    beforeEach(async () => {
+      await Promise.all(Array(4).fill(null).map(async () => {
+        const cb = vitest.fn()
+        const connId = sthis.nextId().str
+        const uriConnId = uri.build().setParam("connId", connId).URI()
+        const unsub = await gw.subscribe?.(uriConnId,
+          (meta: Uint8Array) => cb(meta, connId)) as bs.UnsubscribeResult
+        subscribeCallbacks.push({ cb, unsub, connId, uri: uriConnId })
+      }))
+    })
+    afterEach(() => {
+      subscribeCallbacks.forEach(({ unsub }) => unsub.Ok()())
+      subscribeCallbacks.length = 0
+    })
+
+    function crdtEntry(connId = "default"): Uint8Array {
+      return sthis.txt.encode(JSON.stringify([
+        {
+          "cid": `${connId}:bafyreidjlylxmmb3yuz7levzzbso3g7ql54zovxl3mkhbbqxmmfnfbkoym`,
+          "data": "MomRkYXRhoWZkYk1ldGFYU3siY2FycyI6W3siLyI6ImJhZzR5dnFhYmNpcWdvdHM3dmFzeHhhdmdoY3FjeHo3ZXJibTdtY21ramQybTV0bXpzcGdhbG91d2lpcjYzZnkifV19Z3BhcmVudHOA",
+          "parents": []
+        },
+        {
+          "cid": `${connId}:bafyreie7izpgpmxd6heoiweoyblgyzoxt74xrp5wcpqo66bmjv2plgmceq`,
+          "data": "MomRkYXRhoWZkYk1ldGFYU3siY2FycyI6W3siLyI6ImJhZzR5dnFhYmNpcWQyZ2l1c2t2YWJoZTZ5ZHdsdXo0aGx4Z3lyNTZ5dmZmbjVpdndqdmhlYXl3cWJ4bHFmeGEifV19Z3BhcmVudHOA",
+          "parents": []
+        },
+      ] satisfies CRDTEntry[]))
+    }
+
+    it(`buildUrl`, async () => {
+      const rOk = await gw.buildUrl(uri, "KEY")
+      const url = rOk.Ok()
+      expect(url.getParam("store")).toBe(store)
+      expect(url.getParam("key")).toBe("KEY")
+    })
+    it(`start`, async () => {
+      const rOk = await gw.start(uri)
+      const url = rOk.Ok()
+      expect(url.getParam("store")).toBe(store)
+      expect(url.getParam("version")).toBeTruthy()
+    })
+
+    it(`unsubscribe`, async () => {
+      subscribeCallbacks.forEach(sub => sub.unsub.Ok()())
+      const rOk = await gw.put(uri, crdtEntry())
+      expect(rOk.isOk()).toBeTruthy()
+      subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled())
+    })
+
+    it(`get-put-delete`, async () => {
+      async function getNotFound() {
+        for (const u of [...subscribeCallbacks.map(({ uri }) => uri), uri]) {
+          for (const key of ["KEY1", "KEY2"]) {
+            const rOk = await gw.get(u.build().setParam("key", key).URI())
+            expect(rOk.isErr()).toBeTruthy()
+            expect(isNotFoundError(rOk.Err())).toBeTruthy()
+          }
+        }
+        subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled())
+      }
+      // get not found
+      await getNotFound()
+      // put
+      async function put() {
+        for (const u of [...subscribeCallbacks.map(({ uri }) => uri), uri]) {
+          for (const key of ["KEY1", "KEY2"]) {
+            const rOk = await gw.put(u.build().setParam("key", key).URI(),
+            crdtEntry(u.getParam("connId", "default")))
+            expect(rOk.isOk()).toBeTruthy()
+          }
+        }
+        subscribeCallbacks.forEach(({ cb, connId }) => {
+          expect(cb).toHaveBeenCalledTimes(1)
+          expect(cb).toHaveBeenCalledWith(crdtEntry(connId), connId)
+        })
+      }
+      await put()
+      subscribeCallbacks.forEach(({ cb }) => cb.mockClear())
+
+      async function get() {
+        for (const u of [...subscribeCallbacks.map(({ uri }) => uri), uri]) {
+          for (const key of ["KEY1", "KEY2"]) {
+            const rOk = await gw.get(u.build().setParam("key", key).URI())
+            const data = JSON.parse(sthis.txt.decode(rOk.Ok())) as CRDTEntry[]
+            expect(data).toEqual(subscribeCallbacks.map(({ connId }) => crdtEntry(connId)))
+          }
+        }
+        subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled())
+      }
+      await get()
+      async function del() {
+        for (const u of [...subscribeCallbacks.map(({ uri }) => uri), uri]) {
+          for (const key of ["KEY1", "KEY2"]) {
+            const rOk = await gw.delete(u.build().setParam("key", key).URI())
+            expect(rOk.isOk()).toBeTruthy()
+          }
+        }
+        subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled())
+      }
+      await del()
+      // get not found
+      await getNotFound()
+    })
+    it(`close`, async () => {
+      const rOk = await gw.close(uri)
+      expect(rOk.isOk()).toBeTruthy()
+    })
+  });
+
+
 });
