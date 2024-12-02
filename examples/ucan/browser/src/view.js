@@ -16,6 +16,7 @@ const {
   br,
   button,
   div,
+  em,
   fieldset,
   footer,
   form,
@@ -153,17 +154,27 @@ const Data = () =>
     hr(),
 
     // Contents
-    ul({}, repeat(
+    div({}, element => {
 
-      computed(() => {
+      const signal = computed(() => {
         const contents = state().databaseContents
-        return new Map([...contents].filter(([_k, v]) => {
-          return v !== undefined
-        }))
-      }),
-      row => li({}, text(row))
 
-    ))
+        if (contents === "loading") {
+          return p({}, [
+            small({ ariaBusy: "true" }, text("Loading database contents"))
+          ])
+        }
+
+        return ul({}, repeat(
+          computed(() => contents),
+          row => li({}, text(row))
+        ))
+      })
+
+      return effect(() => {
+        element.replaceChildren(signal())
+      })
+    })
   ])
 
 // DATABASE NAME

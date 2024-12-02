@@ -8,7 +8,7 @@ export type State = {
   clock: Clock | ClockWithoutDelegation;
   clockIdInput?: `did:key:${string}`
   database?: Database
-  databaseContents: Map<string, string>
+  databaseContents: Map<string, string> | "loading"
   email?: `${string}@${string}`
   loggedIn: boolean | "in-progress"
   server: Server

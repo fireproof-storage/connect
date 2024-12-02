@@ -89,8 +89,6 @@ const fx = (msg) => {
       return [connect, saveConfig]
     case "SET_CLOCK_ID_INPUT":
       return [determineClock];
-    case "SET_DATABASE_NAME":
-      return [determineClock, saveConfig];
     case "SET_EMAIL":
       return [determineClock, saveConfig];
     case "SET_LOGGED_IN":
@@ -239,7 +237,7 @@ const storedState = localStorage.getItem("config");
 /** @type {Record<string, any> | undefined} */
 const config = storedState ? JSON.parse(storedState) : undefined;
 
-// Initial state
+/** @type {State} */
 const initialState = await (async () => {
   const server = await UCAN.server(config?.server).catch(async () => {
     return await UCAN.server()
@@ -258,7 +256,7 @@ const initialState = await (async () => {
     agent,
     clock,
     clockIdInput: config?.clockId,
-    databaseContents: new Map(),
+    databaseContents: "loading",
     loggedIn: email ? await UCAN.isLoggedIn({ agent, email }) : false,
     server,
     email: config?.email
