@@ -6,12 +6,13 @@ import { $ } from "zx";
 import fs from "fs/promises";
 import * as toml from "smol-toml";
 import { bs, CRDTEntry, Database, fireproof, isNotFoundError } from "@fireproof/core";
+import { bs, CRDTEntry, Database, fireproof, isNotFoundError } from "@fireproof/core";
 import { mockSuperThis } from "../../node_modules/@fireproof/core/tests/helpers.js";
 import { AwsClient } from "aws4fetch";
-import { smokeDB } from "../../tests/helper.js";
-import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway.js";
-import { calculatePreSignedUrl } from "./pre-signed-url.js";
-import { newWebSocket } from "./new-websocket.js";
+import { smokeDB } from "../../tests/helper";
+import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway";
+import { calculatePreSignedUrl } from "./pre-signed-url";
+import { newWebSocket } from "./new-websocket";
 
 function testReqSignedUrl(tid = "test") {
   return {
@@ -222,12 +223,8 @@ describe("CloudBackendTest", () => {
     afterEach(async () => {
       // Clear the database before each test
       if (db) {
-        setInterval(() => console.log("Waiting for db to close"), 1000);
-        console.log("Closing db");
         await db.close();
-        console.log("Closed db");
         await db.destroy();
-        console.log("Destroyed db");
       }
     });
 

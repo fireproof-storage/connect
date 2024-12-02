@@ -527,10 +527,14 @@ export class FireproofCloudGateway implements bs.Gateway {
       .protocol(params.protocol === "ws" ? "ws" : "wss")
       .appendRelative("ws")
       .cleanParams()
-      .toString();
 
+    // forces to open a new websocket connection
+    const connId = uri.getParam("connId");
+    if (connId) {
+      wsUrl.setParam("connId", connId);
+    }
     return Result.Ok(
-      await keyedConnections.get(wsUrl).once(async (cKey) => {
+      await keyedConnections.get(wsUrl.toString()).once(async (cKey) => {
         const ws = await newWebSocket(wsUrl);
         const waitOpen = new Future<void>();
         ws.onopen = () => {
@@ -582,7 +586,11 @@ export class FireproofCloudGateway implements bs.Gateway {
       const fn = (subId: string) => (msg: MsgBase) => {
         if (MsgIsUpdateMetaEvent(msg) && subId === msg.subscriberId) {
           // console.log("onMessage", subId, conn.key, msg.metas);
-          this.notifySubscribers(this.sthis.txt.encode(JSON.stringify(msg.metas)), subscriptions.get(subId));
+          const s = subscriptions.get(subId);
+          if (!s) {
+            return;
+          }
+          this.notifySubscribers(this.sthis.txt.encode(JSON.stringify(msg.metas)), s.map((s) => s.callback));
         }
       };
       conn.onMessage(fn(subId));
@@ -597,10 +605,18 @@ export class FireproofCloudGateway implements bs.Gateway {
       callbacks = [];
       subscriptions.set(subId, callbacks);
     }
-    callbacks.push(callback);
-    return Result.Ok(() => {
-      subscriptions.delete(subId);
-    });
+    const sid = this.sthis.nextId().str;
+    const unsub = () => {
+      const idx = callbacks.findIndex((c) => c.sid === sid);
+      if (idx !== -1) {
+        callbacks.splice(idx, 1);
+      }
+      if (callbacks.length === 0) {
+        subscriptions.delete(subId);
+      }
+    }
+    callbacks.push({ uri: uri.toString(), callback, sid, unsub });
+    return Result.Ok(unsub);
   }
 
   async destroy(_uri: URI): Promise<Result<void>> {

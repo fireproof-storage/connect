@@ -5096,7 +5096,7 @@ snapshots:
     dependencies:
       '@ipld/car': 5.3.3
       '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.2
+      '@ipld/dag-json': 10.2.3
       '@ipld/unixfs': 2.2.0
       '@peculiar/webcrypto': 1.5.0
       '@web3-storage/pail': 0.6.0
