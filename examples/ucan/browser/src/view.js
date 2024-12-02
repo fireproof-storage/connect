@@ -155,7 +155,12 @@ const Data = () =>
     // Contents
     ul({}, repeat(
 
-      computed(() => state().databaseContents),
+      computed(() => {
+        const contents = state().databaseContents
+        return new Map([...contents].filter(([_k, v]) => {
+          return v !== undefined
+        }))
+      }),
       row => li({}, text(row))
 
     ))
@@ -168,31 +173,9 @@ const Database = () =>
     // Header
     hgroup({}, [h2({}, text("Database name"))]),
 
-    // Form
-    form({ onsubmit: preventDefault }, [
-      fieldset({}, [
-        Label({ for: "database" }, "Database name"),
-        input(
-          {
-            "aria-label": "Database name",
-            name: "database",
-            type: "text",
-            value: state().databaseName,
-
-            /**
-             * @param event {object}
-             * @param event.target {HTMLInputElement}
-             */
-            onchange: (event) => send({ type: "SET_DATABASE_NAME", name: event.target.value }),
-          },
-          []
-        ),
-      ]),
-    ]),
-
     // Using
     Label({}, "Utilised database name"),
-    p({}, [mark({}, text(computed(() => state().databaseName)))]),
+    p({}, text("Using the clock DID as the database name.")),
   ]);
 
 // EMAIL

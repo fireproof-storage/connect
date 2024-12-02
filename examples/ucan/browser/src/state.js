@@ -45,12 +45,6 @@ const update = (state, msg) => {
       return { ...state, databaseContents: msg.contents };
     }
 
-    case "SET_DATABASE_NAME": {
-      const val = msg.name.trim()
-      const databaseName = val.length ? val : DEFAULT_DB_NAME;
-      return { ...state, databaseName };
-    }
-
     case "SET_EMAIL": {
       const val = msg.email.trim()
       const email = val.length && val.includes("@") ? /** @type {`${string}@${string}`} */ (val) : undefined
@@ -135,19 +129,17 @@ function checkLoginStatusIfServerChanged(server) {
 
 /** @returns {Promise<Msg>} */
 async function connect() {
-  const { agent, clock, databaseName, email, loggedIn, server } = state()
+  const { agent, clock, email, loggedIn, server } = state()
 
-  const database = fireproof(databaseName)
+  const database = fireproof(clock.id.did())
 
   if (!email || (email && loggedIn)) {
-    const context = await UCAN.connect(database, {
+    await UCAN.connect(database, {
       agent,
       clock,
       server,
       email: email && loggedIn ? UCAN.email(email) : undefined
     })
-
-    await context.connection.loaded;
   }
 
   return { type: "CONNECTED", database }
@@ -163,11 +155,11 @@ async function determineAgent() {
 
 /** @returns {Promise<Msg>} */
 async function determineClock() {
-  const { agent, clockIdInput, databaseName, email, server } = state();
+  const { agent, clockIdInput, email, server } = state();
 
   const clock = clockIdInput
     ? UCAN.clockId(clockIdInput)
-    : await UCAN.clock({ audience: email ? UCAN.email(email) : agent.agent, databaseName });
+    : await UCAN.clock({ audience: email ? UCAN.email(email) : agent.agent });
 
   if (clock.isNew && email) {
     await UCAN.registerClock({ clock, server })
@@ -216,13 +208,12 @@ async function login() {
 
 /** @returns {Msg} */
 function saveConfig() {
-  const { clock, databaseName, email, server } = state();
+  const { clock, email, server } = state();
 
   localStorage.setItem(
     "config",
     JSON.stringify({
       clockId: "storeName" in clock ? undefined : clock.id.did(),
-      databaseName,
       email,
       server: server.uri.toString(),
     })
@@ -250,18 +241,24 @@ const config = storedState ? JSON.parse(storedState) : undefined;
 
 // Initial state
 const initialState = await (async () => {
-  const server = await UCAN.server(config?.server);
+  const server = await UCAN.server(config?.server).catch(async () => {
+    return await UCAN.server()
+  });
+
   const agent = await UCAN.agent({ server });
   const email = config?.email ? UCAN.email(config.email) : undefined;
-  const databaseName = config?.databaseName || DEFAULT_DB_NAME;
-  const clock = config?.clockId ? UCAN.clockId(config.clockId) : await UCAN.clock({ audience: email || agent.agent, databaseName });
+  const clock = config?.clockId ? UCAN.clockId(config.clockId) : await UCAN.clock({ audience: email || agent.agent });
+
+  if (clock.isNew && email) {
+    console.log("Registering clock")
+    await UCAN.registerClock({ clock, server })
+  }
 
   return {
     agent,
     clock,
     clockIdInput: config?.clockId,
     databaseContents: new Map(),
-    databaseName,
     loggedIn: email ? await UCAN.isLoggedIn({ agent, email }) : false,
     server,
     email: config?.email

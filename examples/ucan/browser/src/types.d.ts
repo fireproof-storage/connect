@@ -9,7 +9,6 @@ export type State = {
   clockIdInput?: `did:key:${string}`
   database?: Database
   databaseContents: Map<string, string>
-  databaseName: string;
   email?: `${string}@${string}`
   loggedIn: boolean | "in-progress"
   server: Server
@@ -28,7 +27,6 @@ export type Msg =
   | { type: "SET_CLOCK"; clock: Clock | ClockWithoutDelegation }
   | { type: "SET_CLOCK_ID_INPUT"; clockId: string }
   | { type: "SET_DATABASE_CONTENTS"; contents: Map<string, string> }
-  | { type: "SET_DATABASE_NAME"; name: string }
   | { type: "SET_EMAIL"; email: string }
   | { type: "SET_LOGGED_IN"; loggedIn: State["loggedIn"] }
   | { type: "SET_SERVER"; server: Server }

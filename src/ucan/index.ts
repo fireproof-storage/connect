@@ -90,6 +90,10 @@ export async function connect(
     connection.connect_X(blockstore);
     return connection;
   });
+
+  await connection.loader?.ready();
+  await connection.loader?.remoteMetaStore?.load();
+
   // Fin
   return {
     agent: agnt,
@@ -162,7 +166,7 @@ export async function loadSavedAgent(options?: {
 
 export async function clock(options: {
   audience: Principal | AgentWithStoreName;
-  databaseName: string;
+  databaseName?: string;
   storeName?: string;
 }): Promise<Clock> {
   const clockFromStore = await loadSavedClock(options);
@@ -181,7 +185,7 @@ export async function clockDelegation({
   storeName,
 }: {
   audience: Principal | AgentWithStoreName;
-  databaseName: string;
+  databaseName?: string;
   delegation: Delegation;
   storeName?: string;
 }): Promise<Clock> {
@@ -227,8 +231,8 @@ export function clockId(id: `did:key:${string}`): ClockWithoutDelegation {
   return { id: DID.parse(id), isNew: false };
 }
 
-export function clockStoreName({ audience, databaseName }: { audience: Principal; databaseName: string }) {
-  return `fireproof/${databaseName}/${audience.did()}/clock`;
+export function clockStoreName({ audience, databaseName }: { audience: Principal; databaseName?: string }) {
+  return databaseName ? `fireproof/${databaseName}/${audience.did()}/clock` : `fireproof/${audience.did()}/clock`;
 }
 
 export async function createAndSaveClock({
@@ -237,7 +241,7 @@ export async function createAndSaveClock({
   storeName,
 }: {
   audience: Principal | AgentWithStoreName;
-  databaseName: string;
+  databaseName?: string;
   storeName?: string;
 }): Promise<Clock> {
   const clockAudience = "agent" in audience ? audience.agent : audience;
@@ -267,7 +271,7 @@ export async function loadSavedClock({
   storeName,
 }: {
   audience: Principal | AgentWithStoreName;
-  databaseName: string;
+  databaseName?: string;
   storeName?: string;
 }): Promise<Clock | undefined> {
   const clockAudience = "agent" in audience ? audience.agent : audience;
