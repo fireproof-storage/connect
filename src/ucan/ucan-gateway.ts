@@ -22,6 +22,7 @@ export class UCANGateway implements bs.Gateway {
     clockDelegation?: Delegation;
     clockId: Principal<`did:key:${string}`>;
     email?: Principal<DidMailto>;
+    polling: boolean;
     server: Server;
     service: ConnectionView<Service>;
   };
@@ -49,6 +50,7 @@ export class UCANGateway implements bs.Gateway {
     const clockStoreName = baseUrl.getParam("clock-store");
     const emailIdParam = baseUrl.getParam("email-id");
     const serverId = baseUrl.getParam("server-id");
+    const polling = baseUrl.getParam("poll") === "t" ? true : false;
 
     // Validate params
     if (!dbName) throw new Error("Missing `name` param");
@@ -94,7 +96,7 @@ export class UCANGateway implements bs.Gateway {
     }
 
     // This
-    this.inst = { agent, clockDelegation, clockId, email, server, service };
+    this.inst = { agent, clockDelegation, clockId, email, polling, server, service };
 
     // Super
     await this.sthis.start();
@@ -287,9 +289,54 @@ export class UCANGateway implements bs.Gateway {
     return Result.Ok(undefined);
   }
 
-  async subscribe(): Promise<bs.UnsubscribeResult> {
+  private readonly subscriberCallbacks = new Set<(data: Uint8Array) => void>();
+
+  private notifySubscribers(data: Uint8Array): void {
+    console.log("Notify", data);
+
+    for (const callback of this.subscriberCallbacks) {
+      try {
+        console.log("Call");
+        callback(data);
+      } catch (error) {
+        console.error(error);
+        this.logger.Error().Err(error).Msg("Error in subscriber callback execution");
+      }
+    }
+  }
+
+  async subscribe(url: URI, callback: (msg: Uint8Array) => void): Promise<bs.UnsubscribeResult> {
     // eslint-disable-next-line
-    return Result.Ok(() => {});
+    if (!this.inst?.polling) return Result.Ok(() => {});
+
+    // Setup polling
+    url = url.build().setParam("key", "main").URI();
+
+    const interval = 3000;
+    let lastData: Uint8Array | undefined = undefined;
+
+    const fetchData = async () => {
+      const result = await this.get(url);
+
+      if (result.isOk()) {
+        const data = result.Ok();
+
+        if (!lastData || !data.every((value, index) => lastData && value === lastData[index])) {
+          lastData = data;
+          this.notifySubscribers(data);
+        }
+      }
+
+      timeoutId = setTimeout(fetchData, interval);
+    };
+
+    this.subscriberCallbacks.add(callback);
+    let timeoutId = setTimeout(fetchData, interval);
+
+    return Result.Ok(() => {
+      clearTimeout(timeoutId);
+      this.subscriberCallbacks.delete(callback);
+    });
   }
 
   ////////////////////////////////////////

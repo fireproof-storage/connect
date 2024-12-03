@@ -36,6 +36,7 @@ export interface ConnectionParams {
   readonly agent: AgentWithStoreName;
   readonly clock: Clock | ClockWithoutDelegation;
   readonly email: Principal<DidMailto>;
+  readonly poll: boolean;
   readonly server: Server;
 }
 
@@ -76,6 +77,7 @@ export async function connect(
     .setParam("agent-store", agnt.storeName)
     .setParam("clock-id", klok.id.did())
     .setParam("name", name)
+    .setParam("poll", params.poll === true ? "t" : "f")
     .setParam("server-host", serv.uri.toString())
     .setParam("server-id", serv.id.did())
     .setParam("storekey", `@${dbName}:data@`);
@@ -86,9 +88,9 @@ export async function connect(
   // Connect
   const connection = connectionCache.get(fpUrl.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
-    const connection = connectionFactory(sthis, fpUrl);
-    connection.connect_X(blockstore);
-    return connection;
+    const conn = connectionFactory(sthis, fpUrl);
+    conn.connect_X(blockstore);
+    return conn;
   });
 
   await connection.loader?.ready();
