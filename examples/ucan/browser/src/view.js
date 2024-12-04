@@ -101,6 +101,24 @@ const Clock = () =>
     p({}, [mark({}, text(computed(() => state().clock.id.did())))]),
   ]);
 
+// CLAIM SHARE
+
+const ClaimShare = () => section({}, [
+
+  // Header
+  hgroup({}, [
+    h2({}, text("Claim share")),
+    p({}, [
+      small({}, [
+        span({}, text("Load a database that was shared to you by redeeming a share.")),
+      ]),
+    ]),
+  ]),
+
+  // alert("🚧 Work in progress")
+
+])
+
 // DATABASE DATA
 
 const Data = () =>
@@ -136,7 +154,8 @@ const Data = () =>
           {
             "aria-label": "Add data",
             name: "data",
-            type: "text"
+            type: "text",
+            required: true
           },
           []
         ),
@@ -149,9 +168,6 @@ const Data = () =>
         ),
       ]),
     ]),
-
-    // ---
-    hr(),
 
     // Contents
     div({}, element => {
@@ -311,6 +327,63 @@ const Server = () =>
     p({}, [mark({}, text(computed(() => state().server.uri.toString())))]),
   ]);
 
+// SHARE
+
+export const Share = () =>
+  section({}, [
+    // Header
+    hgroup({}, [
+      h2({}, text("Share")),
+      p({}, [
+        small({}, [
+          span({}, text("Share the database with an email address. Note that sharing with a specific agent is possible too, but not enabled here.")),
+        ]),
+      ]),
+    ]),
+
+    // Form
+    form({
+
+      /**
+       * @param event {Event & { target: HTMLElement }}
+       */
+      onsubmit: async (event) => {
+        event.preventDefault()
+
+        const {loggedIn} = state()
+
+        if (loggedIn !== true) {
+          alert("Need to be logged in first before you can share.")
+          return
+        }
+
+        alert("🚧 Work in progress")
+      }
+
+    }, [
+      Label({ for: "shareTarget" }, "Email address"),
+      fieldset({ role: "group" }, [
+        input(
+          {
+            "aria-label": "Email address",
+            name: "shareTarget",
+            type: "email",
+            required: true
+          },
+          []
+        ),
+        input(
+          {
+            value: "Share",
+            type: "submit"
+          },
+          []
+        ),
+      ]),
+    ]),
+
+  ]);
+
 // 🔮
 
 export const Header = () =>
@@ -322,4 +395,4 @@ export const Header = () =>
   ]);
 
 export const Main = () =>
-  main({ className: "container" }, [Database(), hr(), Server(), hr(), Agent(), hr(), Email(), hr(), Clock(), hr(), Data()]);
+  main({ className: "container" }, [Data(), hr(), ClaimShare(), hr(), Share(), hr(), Clock(), hr(), Email(), hr(), Agent(), hr(), Server(), hr(), Database()]);

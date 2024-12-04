@@ -385,13 +385,18 @@ export async function server(
  * This checks the server if the sharer has authorized
  * the share, and if so retrieves the share delegation.
  *
+ * ⚠️ If you don't pass in the CID of the share you're looking for,
+ * it will pick the last confirmed share it can find. That means if
+ * a share hasn't been confirmed yet and you're waiting for that one,
+ * you will get the previous confirmed share instead.
+ *
  * @param context
  * @param context.from The (principal) email of the sharer.
  * @param context.to The (principal) email of the receiver of the share.
- * @param context.cid The CID communicated by the sharer.
+ * @param [context.cid] The CID communicated by the sharer.
  */
 export async function claimShare(
-  context: { from: Principal<DidMailto>; to: Principal<DidMailto>; cid: string },
+  context: { from: Principal<DidMailto>; to: Principal<DidMailto>; cid?: string },
   {
     agent,
     server,
@@ -404,23 +409,41 @@ export async function claimShare(
   const attestation = proofs.attestations[0];
   const delegation = proofs.delegations[0];
 
+  const nb = {
+    issuer: context.from.did(),
+    recipient: context.to.did(),
+  };
+
+  const invokeParams = {
+    issuer: agent.agent.issuer,
+    audience: server.id,
+    with: agent.id.did(),
+    proofs: [attestation, delegation],
+  };
+
   const claim = async () => {
-    const resp = await ClockCaps.claimShare
-      .invoke({
-        issuer: agent.agent.issuer,
-        audience: server.id,
-        with: agent.id.did(),
-        nb: {
-          issuer: context.from.did(),
-          recipient: context.to.did(),
-          proof: parseLink(context.cid),
-        },
-        proofs: [attestation, delegation],
-      })
-      .execute(agent.agent.connection);
+    const resp = context.cid
+      ? await ClockCaps.claimShare
+          .invoke({
+            ...invokeParams,
+            nb: { ...nb, proof: parseLink(context.cid) },
+          })
+          .execute(agent.agent.connection)
+      : await ClockCaps.claimShares
+          .invoke({
+            ...invokeParams,
+            nb,
+          })
+          .execute(agent.agent.connection);
 
     if (resp.out.error) throw resp.out.error;
-    return Object.values(resp.out.ok.delegations).flatMap((proof) => bytesToDelegations(proof));
+    return Object.values(resp.out.ok.delegations)
+      .flatMap((proof) => bytesToDelegations(proof))
+      .map((a) => {
+        // TODO: Sort by data, latest first, unless context.cid was provided.
+        console.log(a.data.nbf);
+        return a;
+      });
   };
 
   const poll = async () => {
