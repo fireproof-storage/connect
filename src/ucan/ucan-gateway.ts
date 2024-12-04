@@ -11,7 +11,7 @@ import { CID } from "multiformats";
 import * as Client from "./client";
 import { Server, Service } from "./types";
 import stateStore from "./store/state";
-import { extractDelegation } from "./common";
+import { agentProofs, extractDelegation } from "./common";
 
 export class UCANGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -292,11 +292,8 @@ export class UCANGateway implements bs.Gateway {
   private readonly subscriberCallbacks = new Set<(data: Uint8Array) => void>();
 
   private notifySubscribers(data: Uint8Array): void {
-    console.log("Notify", data);
-
     for (const callback of this.subscriberCallbacks) {
       try {
-        console.log("Call");
         callback(data);
       } catch (error) {
         console.error(error);
@@ -345,22 +342,8 @@ export class UCANGateway implements bs.Gateway {
 
   proofs(): Delegation[] {
     if (this.inst && this.inst.email) {
-      const proofs = this.inst.agent.proofs([{ with: /did:mailto:.*/, can: "*" }]);
-
-      const delegations = proofs.filter(
-        (p) => p.capabilities[0].can === "*" && p.issuer.did() === this.inst?.email?.did()
-      );
-
-      const delegationCids = delegations.map((d) => d.cid.toString());
-      const attestations = proofs.filter((p) => {
-        const cap = p.capabilities[0];
-        return (
-          cap.can === "ucan/attest" &&
-          delegationCids.includes((cap.nb as { proof: { toString(): string } }).proof.toString())
-        );
-      });
-
-      return [...delegations, ...attestations];
+      const proofs = agentProofs(this.inst.agent);
+      return [...proofs.delegations, ...proofs.attestations];
     }
 
     if (this.inst && this.inst.clockDelegation) {

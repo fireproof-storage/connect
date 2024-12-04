@@ -1,13 +1,14 @@
 import { KeyedResolvOnce, URI } from "@adviser/cement";
 import { bs, type Database } from "@fireproof/core";
-import { Delegation, Principal, SignerArchive } from "@ucanto/interface";
+import { Delegation, Principal, Signer, SignerArchive } from "@ucanto/interface";
 import { Agent, type AgentMeta, type AgentData, type AgentDataExport } from "@web3-storage/access/agent";
 import { Absentee, ed25519 } from "@ucanto/principal";
-import { DID } from "@ucanto/core";
+import { DID, parseLink } from "@ucanto/core";
 import { DidMailto, fromEmail, toEmail } from "@web3-storage/did-mailto";
 import * as W3 from "@web3-storage/w3up-client/account";
 import * as Del from "@ucanto/core/delegation";
 import { unwrap } from "@web3-storage/w3up-client/result";
+import { bytesToDelegations } from "@web3-storage/access/encoding";
 
 import * as Client from "./client";
 import * as ClockCaps from "./clock/capabilities";
@@ -15,7 +16,7 @@ import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-
 import { registerUCANStoreProtocol } from "./ucan-gateway";
 import stateStore from "./store/state";
 import { Service, type AgentWithStoreName, type Clock, type ClockWithoutDelegation, type Server } from "./types";
-import { exportDelegation, extractDelegation } from "./common";
+import { agentProofs, exportDelegation, extractDelegation } from "./common";
 
 // Exports
 
@@ -375,6 +376,123 @@ export async function server(
   };
 }
 
+// SHARING
+// -------
+
+/**
+ * Claim a (write-access) share.
+ *
+ * This checks the server if the sharer has authorized
+ * the share, and if so retrieves the share delegation.
+ *
+ * @param context
+ * @param context.from The (principal) email of the sharer.
+ * @param context.to The (principal) email of the receiver of the share.
+ * @param context.cid The CID communicated by the sharer.
+ */
+export async function claimShare(
+  context: { from: Principal<DidMailto>; to: Principal<DidMailto>; cid: string },
+  {
+    agent,
+    server,
+  }: {
+    agent: AgentWithStoreName;
+    server: Server;
+  }
+) {
+  const proofs = agentProofs(agent.agent);
+  const attestation = proofs.attestations[0];
+  const delegation = proofs.delegations[0];
+
+  const claim = async () => {
+    const resp = await ClockCaps.claimShare
+      .invoke({
+        issuer: agent.agent.issuer,
+        audience: server.id,
+        with: agent.id.did(),
+        nb: {
+          issuer: context.from.did(),
+          recipient: context.to.did(),
+          proof: parseLink(context.cid),
+        },
+        proofs: [attestation, delegation],
+      })
+      .execute(agent.agent.connection);
+
+    if (resp.out.error) throw resp.out.error;
+    return Object.values(resp.out.ok.delegations).flatMap((proof) => bytesToDelegations(proof));
+  };
+
+  const poll = async () => {
+    const proofs = await claim();
+    const attestation = proofs.find((p) => p.capabilities[0].can === "ucan/attest");
+
+    if (!attestation) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2500);
+      });
+
+      return await poll();
+    }
+
+    return attestation;
+  };
+
+  return await poll();
+}
+
+/**
+ * Share database write access to a given email address.
+ *
+ * This makes a delegation to the email address and starts
+ * the authorization process. The sharer will receive an email
+ * with a link that will validate the share. Returns a CID
+ * that has to be communicated to the receiver of the share.
+ */
+export async function shareWriteAccess(
+  context: {
+    from: Principal<DidMailto>;
+    to: Principal<DidMailto>;
+  },
+  {
+    agent,
+    clock,
+    server,
+  }: {
+    agent: AgentWithStoreName;
+    clock: Clock;
+    server: Server;
+  }
+): Promise<{ cid: string }> {
+  if (clock.delegation.audience.did() !== context.from.did()) {
+    throw new Error("The audience of the given clock (delegation) does not match the `from` email address.");
+  }
+
+  const delegation = await delegateClock({
+    audience: context.to,
+    clockDID: clock.id.did(),
+    issuer: agent.agent.issuer,
+    proof: clock.delegation,
+  });
+
+  const authorizeShareResp = await ClockCaps.authorizeShare
+    .invoke({
+      issuer: agent.agent.issuer,
+      audience: server.id,
+      with: agent.agent.issuer.did(),
+      nb: {
+        issuer: context.from.did(),
+        recipient: context.to.did(),
+        proof: delegation.cid,
+      },
+      proofs: [delegation],
+    })
+    .execute(agent.agent.connection);
+
+  if (authorizeShareResp.out.error) throw authorizeShareResp.out.error;
+  return { cid: delegation.cid.toString() };
+}
+
 // UTILS
 // =====
 
@@ -390,3 +508,23 @@ export const delegation = {
     return result.ok;
   },
 };
+
+async function delegateClock({
+  audience,
+  clockDID,
+  issuer,
+  proof,
+}: {
+  audience: Principal;
+  clockDID: `did:key:${string}`;
+  issuer: Signer;
+  proof: Delegation;
+}): Promise<Delegation> {
+  return await ClockCaps.clock.delegate({
+    issuer,
+    audience,
+    with: clockDID,
+    proofs: [proof],
+    expiration: Infinity,
+  });
+}
