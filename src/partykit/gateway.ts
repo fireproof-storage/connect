@@ -1,6 +1,7 @@
 import { PartySocket, PartySocketOptions } from "partysocket";
 import { Result, URI, BuildURI, KeyedResolvOnce, runtimeFn, exception2Result } from "@adviser/cement";
 import { bs, ensureLogger, getStore, Logger, rt, SuperThis } from "@fireproof/core";
+import { to_uint8 } from "../coerce-binary.js";
 
 export class PartyKitGateway implements bs.Gateway {
   readonly logger: Logger;
@@ -182,7 +183,7 @@ export class PartyKitGateway implements bs.Gateway {
       if (response.status === 404) {
         throw new Error(`Failure in downloading ${store}!`);
       }
-      const body = new Uint8Array(await response.arrayBuffer());
+      const body = to_uint8(await response.arrayBuffer());
       if (store === "meta") {
         const resKeyInfo = await bs.setCryptoKeyFromGatewayMetaPayload(uri, this.sthis, body);
         if (resKeyInfo.isErr()) {

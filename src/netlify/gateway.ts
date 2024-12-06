@@ -1,5 +1,6 @@
 import { KeyedResolvOnce, Result, URI, BuildURI, exception2Result } from "@adviser/cement";
 import { bs, getStore, Logger, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
+import { to_uint8 } from "../coerce-binary.js";
 
 export class NetlifyGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -149,7 +150,7 @@ export class NetlifyGateway implements bs.Gateway {
       return Result.Err(new NotFoundError(`${store} not found: ${url}`));
     }
 
-    const data = new Uint8Array(await response.arrayBuffer());
+    const data = to_uint8(await response.arrayBuffer());
     if (store === "meta") {
       const res = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
       if (res.isErr()) {
