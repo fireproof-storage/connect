@@ -1,7 +1,7 @@
 import { BuildURI, CoerceURI, KeyedResolvOnce, runtimeFn, URI } from "@adviser/cement";
 import { bs, Database, fireproof } from "@fireproof/core";
-import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
-import { registerFireproofCloudStoreProtocol } from "./gateway";
+import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store.js";
+import { registerFireproofCloudStoreProtocol } from "./gateway.js";
 
 interface ConnectData {
   readonly remoteName: string;

@@ -4,12 +4,12 @@ import { ed25519 } from "@ucanto/principal";
 import { CAR as CARTransport } from "@ucanto/transport";
 import * as Block from "multiformats/block";
 import { CID } from "multiformats/cid";
-import * as CBOR from "@ipld/dag-cbor";
+import * as CBOR from "@fireproof/vendor/@ipld/dag-cbor";
 import { sha256 } from "multiformats/hashes/sha2";
 
-import * as ClockCaps from "./clock/capabilities";
-import * as StoreCaps from "./store/capabilities";
-import { Server, type Clock, type Service } from "./types";
+import * as ClockCaps from "./clock/capabilities.js";
+import * as StoreCaps from "./store/capabilities.js";
+import { Server, type Clock, type Service } from "./types.js";
 
 ////////////////////////////////////////
 // CLOCK

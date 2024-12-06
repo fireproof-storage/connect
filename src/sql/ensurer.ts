@@ -1,5 +1,5 @@
 import { SuperThis } from "@fireproof/core";
-import { SQLOpts, SQLTableNames, DefaultSQLTableNames, SQLGestalt } from "./types";
+import { SQLOpts, SQLTableNames, DefaultSQLTableNames, SQLGestalt } from "./types.js";
 import { URI } from "@adviser/cement";
 
 function sqlTableName(...names: string[]): string {

@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { ensureSuperThis, fireproof } from "@fireproof/core";
-import { connectionFactory } from "./connection-from-store";
+import { connectionFactory } from "./connection-from-store.js";
 import { URI } from "@adviser/cement";
 
 async function main() {

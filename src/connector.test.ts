@@ -2,10 +2,10 @@
 // import { registerS3StoreProtocol } from "./s3/s3-gateway";
 import { URI, runtimeFn } from "@adviser/cement";
 import { type Database, type SuperThis, bs, fireproof } from "@fireproof/core";
-import { mockSuperThis } from "../node_modules/@fireproof/core/tests/helpers";
+import { mockSuperThis } from "../node_modules/@fireproof/core/tests/helpers.js";
 import { type TaskContext, describe } from "vitest";
-import type { ConnectFunction } from "./connection-from-store";
-import { smokeDB } from "../tests/helper";
+import type { ConnectFunction } from "./connection-from-store.js";
+import { smokeDB } from "../tests/helper.js";
 
 // import { registerPartyKitStoreProtocol } from "./partykit/gateway";
 // import { a } from "@adviser/cement/base-sys-abstraction-C9WW3w57";

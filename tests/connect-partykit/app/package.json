@@ -2,12 +2,13 @@
   "name": "app",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "partykit dev",
     "deploy": "partykit deploy"
   },
   "dependencies": {
-    "@adviser/cement": "^0.2.35",
+    "@adviser/cement": "^0.2.40",
     "partysocket": "^1.0.2"
   },
   "devDependencies": {

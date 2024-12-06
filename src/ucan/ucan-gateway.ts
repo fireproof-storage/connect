@@ -8,10 +8,10 @@ import { Absentee } from "@ucanto/principal";
 
 import { CID } from "multiformats";
 
-import * as Client from "./client";
-import { Server, Service } from "./types";
-import stateStore from "./store/state";
-import { extractDelegation } from "./common";
+import * as Client from "./client.js";
+import { Server, Service } from "./types.js";
+import stateStore from "./store/state/index.js";
+import { extractDelegation } from "./common.js";
 
 export class UCANGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -245,6 +245,7 @@ export class UCANGateway implements bs.Gateway {
           service: this.inst.service,
         });
 
+        // eslint-disable-next-line no-console
         console.log(head.out);
 
         this.logger.Debug().Any("head", head.out).Msg("Meta (head) retrieved");

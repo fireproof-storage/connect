@@ -1,8 +1,8 @@
 import { fireproof, Database, bs } from "@fireproof/core";
-import { registerFireproofCloudStoreProtocol } from "./gateway";
+import { registerFireproofCloudStoreProtocol } from "./gateway.js";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { URI } from "@adviser/cement";
-import { smokeDB } from "../../tests/helper";
+import { smokeDB } from "../../tests/helper.js";
 import { mockSuperThis } from "../../node_modules/@fireproof/core/tests/helpers.js";
 
 // has to leave

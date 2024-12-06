@@ -1,6 +1,6 @@
-import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
+import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store.js";
 import { bs, Database } from "@fireproof/core";
-import { registerPartyKitStoreProtocol } from "./gateway";
+import { registerPartyKitStoreProtocol } from "./gateway.js";
 import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
 
 // Usage:

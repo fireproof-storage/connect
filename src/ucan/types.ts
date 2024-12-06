@@ -13,8 +13,8 @@ import type {
 } from "@ucanto/interface";
 import * as W3 from "@web3-storage/capabilities/types";
 
-import * as ClockCaps from "./clock/capabilities";
-import * as StoreCaps from "./store/capabilities";
+import * as ClockCaps from "./clock/capabilities.js";
+import * as StoreCaps from "./store/capabilities.js";
 
 // AGENT
 

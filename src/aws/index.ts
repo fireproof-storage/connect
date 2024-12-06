@@ -1,6 +1,6 @@
-import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
+import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store.js";
 import { bs, Database } from "@fireproof/core";
-import { registerAWSStoreProtocol } from "./gateway";
+import { registerAWSStoreProtocol } from "./gateway.js";
 import { BuildURI, KeyedResolvOnce } from "@adviser/cement";
 
 // Usage:

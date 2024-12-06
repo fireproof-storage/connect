@@ -1,4 +1,4 @@
-import PartySocket, { PartySocketOptions } from "partysocket";
+import { PartySocket, PartySocketOptions } from "partysocket";
 import { Result, URI, BuildURI, KeyedResolvOnce, runtimeFn, exception2Result } from "@adviser/cement";
 import { bs, ensureLogger, getStore, Logger, rt, SuperThis } from "@fireproof/core";
 

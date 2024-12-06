@@ -1,7 +1,7 @@
 import { fireproof, Database } from "@fireproof/core";
-import { registerAWSStoreProtocol } from "./gateway";
+import { registerAWSStoreProtocol } from "./gateway.js";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { smokeDB } from "../../tests/helper";
+import { smokeDB } from "../../tests/helper.js";
 import { URI } from "@adviser/cement";
 
 describe("AWSGateway", () => {

@@ -9,17 +9,17 @@ import * as W3 from "@web3-storage/w3up-client/account";
 import * as Del from "@ucanto/core/delegation";
 import { unwrap } from "@web3-storage/w3up-client/result";
 
-import * as Client from "./client";
-import * as ClockCaps from "./clock/capabilities";
-import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store";
-import { registerUCANStoreProtocol } from "./ucan-gateway";
-import stateStore from "./store/state";
-import { Service, type AgentWithStoreName, type Clock, type ClockWithoutDelegation, type Server } from "./types";
-import { exportDelegation, extractDelegation } from "./common";
+import * as Client from "./client.js";
+import * as ClockCaps from "./clock/capabilities.js";
+import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store.js";
+import { registerUCANStoreProtocol } from "./ucan-gateway.js";
+import stateStore from "./store/state/index.js";
+import { Service, type AgentWithStoreName, type Clock, type ClockWithoutDelegation, type Server } from "./types.js";
+import { exportDelegation, extractDelegation } from "./common.js";
 
 // Exports
 
-export { Agent, AgentWithStoreName, Clock, ClockWithoutDelegation, Server, Service } from "./types";
+export { Agent, AgentWithStoreName, Clock, ClockWithoutDelegation, Server, Service } from "./types.js";
 
 export const Capabilities = { Clock: ClockCaps };
 

@@ -15,11 +15,11 @@ importers:
         specifier: ^3.703.0
         version: 3.703.0
       '@fireproof/core':
-        specifier: 0.19.114
-        version: 0.19.114(react@18.3.1)(typescript@5.7.2)
-      '@ipld/dag-cbor':
-        specifier: ^9.2.1
-        version: 9.2.2
+        specifier: 0.19.116
+        version: 0.19.116(react@18.3.1)(typescript@5.7.2)
+      '@fireproof/vendor':
+        specifier: 1.0.0
+        version: 1.0.0
       '@jspm/core':
         specifier: ^2.1.0
         version: 2.1.0
@@ -48,7 +48,7 @@ importers:
         specifier: ^20.1.0
         version: 20.1.0
       '@web3-storage/capabilities':
-        specifier: ^17.4.0
+        specifier: ^17.4.1
         version: 17.4.1
       '@web3-storage/clock':
         specifier: ^0.4.1
@@ -1031,10 +1031,13 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@0.19.114':
-    resolution: {integrity: sha512-b/UTsxqazHYkIglllhKIaZl+veik6zuBO8gJGAKBZhxCwAEz5NQOUPDz4Dhk0c5YIeu1ODi9tv2cQ2VFUUDvBg==}
+  '@fireproof/core@0.19.116':
+    resolution: {integrity: sha512-QwxOG3Ck+j0uMTSTqg9Uy13dSB5U6QUvaNhQGeetc/BALhxTR82gS0QfnK6A6loc9kqzvKHp599gvl/rVEetVA==}
     peerDependencies:
       react: ^18.3.1
+
+  '@fireproof/vendor@1.0.0':
+    resolution: {integrity: sha512-ucN0ICj7xbpbO3NWjAKKjMHkBn4vSRUdKn14LLaA0MILJowty+H4XBB8dCobwKemhW49ha5p520NOLRzJSKsow==}
 
   '@hapi/hoek@9.3.0':
     resolution: {integrity: sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==}
@@ -1076,10 +1079,6 @@ packages:
 
   '@ipld/dag-json@10.2.2':
     resolution: {integrity: sha512-NnU8HdHKwAoGyrW3S09NMa8aZw0tImLRyR64hoafpLpDpAbA9g1+fb24JsdlugbL4sXUQVwDVA+qK4Ud8V83lA==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-
-  '@ipld/dag-json@10.2.3':
-    resolution: {integrity: sha512-itacv1j1hvYgLox2B42Msn70QLzcr0MEo5yGIENuw2SM/lQzq9bmBiMky+kDsIrsqqblKTXcHBZnnmK7D4a6ZQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
   '@ipld/dag-pb@4.1.2':
@@ -2489,9 +2488,6 @@ packages:
   interface-store@6.0.2:
     resolution: {integrity: sha512-KSFCXtBlNoG0hzwNa0RmhHtrdhzexp+S+UY2s0rWTBJyfdEIgn6i6Zl9otVqrcFYbYrneBT7hbmHQ8gE0C3umA==}
 
-  ipfs-unixfs-exporter@13.6.1:
-    resolution: {integrity: sha512-pYPI4oBTWao2//sFzAL0pURyojn79q/u5BuK6L5/nVbVUQVw6DcVP5uB1ySdWlTM2H+0Zlhp9+OL9aJBRIICpg==}
-
   ipfs-unixfs@11.2.0:
     resolution: {integrity: sha512-J8FN1qM5nfrDo8sQKQwfj0+brTg1uBfZK2vY9hxci33lcl3BFrsELS9+1+4q/8tO1ASKfxZO8W3Pi2O4sVX2Lg==}
 
@@ -2828,8 +2824,8 @@ packages:
     resolution: {integrity: sha512-mQ2o1VayrZ6Jaz8VyP8B7h/hdn2iAnbUOrQh4rTiwbpULhktpD8IpHGBw8Qo2fmv97Z1P3YzLF3X/DkbIHBQmA==}
     engines: {node: '>=8.11.4', npm: 6.10.1}
 
-  memfs@4.14.0:
-    resolution: {integrity: sha512-JUeY0F/fQZgIod31Ja1eJgiSxLn7BfQlCnqhwXFBzFHEw63OdLK7VJUJ7bnzNsWgCyoUP5tEp1VRY8rDaYzqOA==}
+  memfs@4.14.1:
+    resolution: {integrity: sha512-Fq5CMEth+2iprLJ5mNizRcWuiwRZYjNkUD0zKk224jZunE9CRacTRDK8QLALbMBlNX2y3nY6lKZbesCwDwacig==}
     engines: {node: '>= 4.0.0'}
 
   memoizee@0.4.17:
@@ -4866,19 +4862,14 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.19.114(react@18.3.1)(typescript@5.7.2)':
+  '@fireproof/core@0.19.116(react@18.3.1)(typescript@5.7.2)':
     dependencies:
       '@adviser/cement': 0.2.40(typescript@5.7.2)
-      '@ipld/car': 5.3.3
-      '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.3
+      '@fireproof/vendor': 1.0.0
       '@ipld/unixfs': 3.0.0
-      '@web3-storage/pail': 0.6.0
-      cborg: 4.2.6
       charwise: 3.0.1
       idb: 8.0.0
-      ipfs-unixfs-exporter: 13.6.1
-      memfs: 4.14.0
+      memfs: 4.14.1
       multiformats: 13.3.1
       p-limit: 6.1.0
       p-map: 7.0.2
@@ -4887,6 +4878,24 @@ snapshots:
       react: 18.3.1
     transitivePeerDependencies:
       - typescript
+
+  '@fireproof/vendor@1.0.0':
+    dependencies:
+      '@ipld/dag-pb': 4.1.2
+      '@multiformats/murmur3': 2.1.8
+      hamt-sharding: 3.0.6
+      interface-blockstore: 5.3.1
+      ipfs-unixfs: 11.2.0
+      it-filter: 3.1.1
+      it-last: 3.0.6
+      it-map: 3.1.1
+      it-parallel: 3.0.8
+      it-pipe: 3.0.1
+      it-pushable: 3.2.3
+      multiformats: 13.3.1
+      p-queue: 8.0.1
+      progress-events: 1.0.1
+      varint: 6.0.0
 
   '@hapi/hoek@9.3.0': {}
 
@@ -4927,11 +4936,6 @@ snapshots:
       multiformats: 13.3.1
 
   '@ipld/dag-json@10.2.2':
-    dependencies:
-      cborg: 4.2.6
-      multiformats: 13.3.1
-
-  '@ipld/dag-json@10.2.3':
     dependencies:
       cborg: 4.2.6
       multiformats: 13.3.1
@@ -6806,25 +6810,6 @@ snapshots:
 
   interface-store@6.0.2: {}
 
-  ipfs-unixfs-exporter@13.6.1:
-    dependencies:
-      '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.3
-      '@ipld/dag-pb': 4.1.2
-      '@multiformats/murmur3': 2.1.8
-      hamt-sharding: 3.0.6
-      interface-blockstore: 5.3.1
-      ipfs-unixfs: 11.2.0
-      it-filter: 3.1.1
-      it-last: 3.0.6
-      it-map: 3.1.1
-      it-parallel: 3.0.8
-      it-pipe: 3.0.1
-      it-pushable: 3.2.3
-      multiformats: 13.3.1
-      p-queue: 8.0.1
-      progress-events: 1.0.1
-
   ipfs-unixfs@11.2.0:
     dependencies:
       protons-runtime: 5.5.0
@@ -7236,7 +7221,7 @@ snapshots:
       is-nan-x: 2.1.1
       to-number-x: 3.2.2
 
-  memfs@4.14.0:
+  memfs@4.14.1:
     dependencies:
       '@jsonjoy.com/json-pack': 1.1.0(tslib@2.7.0)
       '@jsonjoy.com/util': 1.5.0(tslib@2.7.0)

@@ -1,7 +1,7 @@
 import { Logger, SuperThis, SysFileSystem, rt } from "@fireproof/core";
-import { DataSQLStore, DBConnection, MetaSQLStore, SQLOpts, WalSQLStore } from "../types";
+import { DataSQLStore, DBConnection, MetaSQLStore, SQLOpts, WalSQLStore } from "../types.js";
 import { ResolveOnce, URI } from "@adviser/cement";
-import { SQLConnectionResult } from "../sql-connection-factory";
+import { SQLConnectionResult } from "../sql-connection-factory.js";
 
 export async function v0_19sqliteWalFactory(sthis: SuperThis, db: DBConnection): Promise<WalSQLStore> {
   const { V0_19_Sqlite_WalStore } = await import("./sqlite/sqlite-wal-store.js");

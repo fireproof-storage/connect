@@ -1,6 +1,6 @@
 import { fireproof } from "@fireproof/core";
-import { registerS3StoreProtocol } from "./s3-gateway";
-import { smokeDB } from "../../tests/helper";
+import { registerS3StoreProtocol } from "./s3-gateway.js";
+import { smokeDB } from "../../tests/helper.js";
 
 describe("store-register", () => {
   it("test unregister", async () => {

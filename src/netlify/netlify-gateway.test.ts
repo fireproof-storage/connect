@@ -1,8 +1,8 @@
 import { fireproof, Database } from "@fireproof/core";
-import { registerNetlifyStoreProtocol } from "./gateway";
+import { registerNetlifyStoreProtocol } from "./gateway.js";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { URI } from "@adviser/cement";
-import { smokeDB } from "../../tests/helper";
+import { smokeDB } from "../../tests/helper.js";
 
 describe("NetlifyGateway", () => {
   let db: Database;
