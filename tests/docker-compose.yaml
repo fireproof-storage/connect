@@ -2,16 +2,16 @@ services:
   netlify:
     image: connect-netlify
     build:
-      # context: netlify
-      dockerfile: ./Dockerfile.connect-netlify
+      context: ..
+      dockerfile: ./tests/Dockerfile.connect-netlify
     ports:
       - 8888:8888
 
   partykit:
     image: connect-partykit
     build:
-      # context: partykit
-      dockerfile: ./Dockerfile.connect-partykit
+      context: ..
+      dockerfile: ./tests/Dockerfile.connect-partykit
     ports:
       - 1999:1999
 
@@ -55,7 +55,8 @@ services:
   ucan:
     build:
       # context: ucan
-      dockerfile: ./Dockerfile.fp-ucan
+      context: ..
+      dockerfile: ./tests/Dockerfile.fp-ucan
     ports:
       - 8787:8787
 

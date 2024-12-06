@@ -28,7 +28,7 @@
     "smoke": "pnpm run '/smoke:/'",
     "smoke:ucan": "sh smoke/ucan/it.sh",
     "clean": "rm -rf node_modules dist",
-    "pretest-docker": "tsx tests/docker-compose.ts -f tests/docker-compose.yaml up -d --wait",
+    "pretest-docker": "tsx tests/docker-compose.ts -f tests/docker-compose.yaml up -d --wait --build",
     "test": "vitest --run",
     "posttest-docker": "tsx tests/docker-compose.ts -f tests/docker-compose.yaml down",
     "format": "prettier .",
