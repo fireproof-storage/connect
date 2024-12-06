@@ -1,10 +1,11 @@
 import { $ } from "zx";
 
 async function main() {
+  $.verbose = true;
   const out = await $`which docker-compose`;
   const dockerComposePrg = out.exitCode === 0 ? "docker-compose" : "docker compose";
-  $.verbose = true;
-  await $`${dockerComposePrg} ${process.argv.slice(2)}`;
+  const res = await $`${dockerComposePrg} ${process.argv.slice(2)}`;
+  process.exit(res.exitCode);
 }
 
 // eslint-disable-next-line no-console
