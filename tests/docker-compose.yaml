@@ -1,0 +1,85 @@
+services:
+  netlify:
+    image: connect-netlify
+    build:
+      context: ..
+      dockerfile: ./tests/Dockerfile.connect-netlify
+    ports:
+      - 8888:8888
+
+  partykit:
+    image: connect-partykit
+    build:
+      context: ..
+      dockerfile: ./tests/Dockerfile.connect-partykit
+    ports:
+      - 1999:1999
+
+  minio:
+    image: minio/minio
+    ports:
+      - 9000:9000
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    volumes:
+      - /tmp/data:/data
+      - /tmp/config:/root/.minio
+    command: server /data
+
+  create-bucket:
+    image: amazon/aws-cli
+    environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_EC2_METADATA_DISABLED: true
+    command: --endpoint-url http://minio:9000/ s3 mb s3://testbucket
+    depends_on:
+      minio:
+        condition: service_started
+
+  #docker run -d -p 9000:9000 --name minio  \
+  #                     -e "MINIO_ACCESS_KEY=minioadmin"  \
+  #                     -e "MINIO_SECRET_KEY=minioadmin"  \
+  #                     -v /tmp/data:/data  \
+  #                     -v /tmp/config:/root/.minio  \
+  #                     minio/minio server /data
+  #
+  #sleep 5
+  #aws --endpoint-url http://127.0.0.1:9000/ s3 mb s3://testbucket
+  #export          AWS_S3_BUCKET=testbucket
+  #export          AWS_S3_ACCESS_KEY=minioadmin
+  #export          AWS_S3_SECRET_KEY=minioadmin
+  #export          AWS_S3_ENDPOINT=http://127.0.0.1:9000
+
+  ucan:
+    build:
+      # context: ucan
+      context: ..
+      dockerfile: ./tests/Dockerfile.fp-ucan
+    ports:
+      - 8787:8787
+
+  #docker buildx build -t fireproof-ucan:latest -f ./tests/Dockerfile.fp-ucan .
+  #docker run --name ucan -d -p 8787:8787 fireproof-ucan
+
+  wait-for-ready:
+    image: curlimages/curl
+    command: "sleep 86400"
+    depends_on:
+      netlify:
+        condition: service_started
+      partykit:
+        condition: service_started
+      ucan:
+        condition: service_started
+      minio:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "-c"
+        - "curl http://netlify:8888 ; curl http://minio:9000 ; curl http://ucan:8787 ; curl http://partykit:1999"
+      interval: 5s
+      retries: 30
+      timeout: 2s
