@@ -3,7 +3,7 @@ import { Delegation } from "@ucanto/interface";
 import type { AgentDataExport, DelegationMeta } from "@web3-storage/access/types";
 import { Block } from "multiformats/block";
 import { CID } from "multiformats";
-import { to_arraybuf } from "../coerce-binary";
+import { to_arraybuf } from "../coerce-binary.js";
 
 export async function extractDelegation(dataExport: AgentDataExport): Promise<Delegation | undefined> {
   const delegationKey = Array.from(dataExport.delegations.keys())[0];

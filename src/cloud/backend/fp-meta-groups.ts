@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import { Env } from "./env";
+import { Env } from "./env.js";
 
 export class FPMetaGroups extends DurableObject {
   currentlyConnectedWebSockets: number;

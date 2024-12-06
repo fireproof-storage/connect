@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import { to_blob } from "../coerce-binary";
+import { to_blob } from "../coerce-binary.js";
 
 // eslint-disable-next-line no-console
 console.log("fireproof edge function loaded netlify");

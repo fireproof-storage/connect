@@ -1,7 +1,7 @@
 import { PartySocket, PartySocketOptions } from "partysocket";
 import { Result, URI, BuildURI, KeyedResolvOnce, runtimeFn, exception2Result } from "@adviser/cement";
 import { bs, ensureLogger, getStore, Logger, rt, SuperThis } from "@fireproof/core";
-import { to_uint8 } from "../coerce-binary";
+import { to_uint8 } from "../coerce-binary.js";
 
 export class PartyKitGateway implements bs.Gateway {
   readonly logger: Logger;

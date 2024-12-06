@@ -1,7 +1,7 @@
 import { Result, URI, BuildURI } from "@adviser/cement";
 import { AwsClient } from "aws4fetch";
-import { Env } from "./backend/env";
-import { ReqSignedUrl } from "./msg-types";
+import { Env } from "./backend/env.js";
+import { ReqSignedUrl } from "./msg-types.js";
 
 export async function calculatePreSignedUrl(req: ReqSignedUrl, env: Env, amzDate?: string): Promise<Result<URI>> {
   let store: string = req.params.store;

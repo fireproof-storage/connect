@@ -1,5 +1,5 @@
 // / <reference types="@cloudflare/workers-types" />
-import type { Env } from "./env";
+import type { Env } from "./env.js";
 import { exception2Result, Logger, LoggerImpl, URI } from "@adviser/cement";
 import {
   buildErrorMsg,
@@ -32,12 +32,12 @@ import {
   ResSignedUrl,
   ResSubscribeMeta,
   UpdateMetaEvent,
-} from "../msg-types";
+} from "../msg-types.js";
 // import { Hono } from "hono";
 import { CRDTEntry, NotFoundError } from "@fireproof/core";
 // import { DurableObject } from "cloudflare:workers";
 import { DurableObject } from "cloudflare:workers";
-import { calculatePreSignedUrl } from "../pre-signed-url";
+import { calculatePreSignedUrl } from "../pre-signed-url.js";
 
 const CORS = {
   "Content-Type": "application/json",

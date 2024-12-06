@@ -1,6 +1,6 @@
 import { KeyedResolvOnce, Result, URI, BuildURI, exception2Result } from "@adviser/cement";
 import { bs, getStore, Logger, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
-import { to_uint8 } from "../coerce-binary";
+import { to_uint8 } from "../coerce-binary.js";
 
 export class NetlifyGateway implements bs.Gateway {
   readonly sthis: SuperThis;

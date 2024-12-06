@@ -1,17 +1,17 @@
 // import { env } from "cloudflare:test"
 import { BuildURI, Future, URI } from "@adviser/cement";
-import { ReqSignedUrl, ResSignedUrl } from "./msg-types";
-import { Env } from "./backend/env";
+import { ReqSignedUrl, ResSignedUrl } from "./msg-types.js";
+import { Env } from "./backend/env.js";
 import { $ } from "zx";
 import fs from "fs/promises";
 import * as toml from "smol-toml";
 import { bs, CRDTEntry, Database, fireproof, isNotFoundError } from "@fireproof/core";
 import { mockSuperThis } from "../../node_modules/@fireproof/core/tests/helpers.js";
 import { AwsClient } from "aws4fetch";
-import { smokeDB } from "../../tests/helper";
-import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway";
-import { calculatePreSignedUrl } from "./pre-signed-url";
-import { newWebSocket } from "./new-websocket";
+import { smokeDB } from "../../tests/helper.js";
+import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway.js";
+import { calculatePreSignedUrl } from "./pre-signed-url.js";
+import { newWebSocket } from "./new-websocket.js";
 
 function testReqSignedUrl(tid = "test") {
   return {
