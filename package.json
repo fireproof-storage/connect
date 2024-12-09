@@ -115,7 +115,7 @@
     "@web3-storage/w3up-client": "^16.5.2",
     "assert": "^2.1.0",
     "better-sqlite3": "^11.7.0",
-    "cborg": "^4.2.6",
+    "cborg": "^4.2.7",
     "cross-fetch": "^4.0.0",
     "events": "^3.3.0",
     "idb-keyval": "^6.2.1",
