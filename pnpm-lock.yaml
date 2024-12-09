@@ -21,11 +21,8 @@ importers:
         specifier: ^4.20241127.0
         version: 4.20241205.0
       '@fireproof/core':
-        specifier: 0.19.114
-        version: 0.19.114(react@18.3.1)(typescript@5.7.2)
-      '@fireproof/encrypted-blockstore':
-        specifier: ^0.18.0
-        version: 0.18.0(encoding@0.1.13)(eslint@9.16.0)
+        specifier: 0.19.116
+        version: 0.19.116(react@18.3.1)(typescript@5.7.2)
       '@fireproof/vendor':
         specifier: 1.0.0
         version: 1.0.0
@@ -140,12 +137,22 @@ importers:
       wait-on:
         specifier: ^8.0.1
         version: 8.0.1
+<<<<<<< HEAD
       wrangler:
         specifier: ^3.87.0
         version: 3.93.0(@cloudflare/workers-types@4.20241205.0)
       ws:
         specifier: ^8.18.0
         version: 8.18.0
+||||||| parent of 9801ea3 (WIP)
+      wrangler:
+        specifier: ^3.87.0
+        version: 3.92.0(@cloudflare/workers-types@4.20241205.0)
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
+=======
+>>>>>>> 9801ea3 (WIP)
     devDependencies:
       '@eslint/js':
         specifier: ^9.16.0
@@ -213,6 +220,12 @@ importers:
       vitest:
         specifier: ^2.1.8
         version: 2.1.8(@types/node@22.10.1)
+      wrangler:
+        specifier: ^3.93.0
+        version: 3.93.0(@cloudflare/workers-types@4.20241205.0)
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
       zx:
         specifier: ^8.2.4
         version: 8.2.4
@@ -1077,13 +1090,10 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@0.19.114':
-    resolution: {integrity: sha512-b/UTsxqazHYkIglllhKIaZl+veik6zuBO8gJGAKBZhxCwAEz5NQOUPDz4Dhk0c5YIeu1ODi9tv2cQ2VFUUDvBg==}
+  '@fireproof/core@0.19.116':
+    resolution: {integrity: sha512-QwxOG3Ck+j0uMTSTqg9Uy13dSB5U6QUvaNhQGeetc/BALhxTR82gS0QfnK6A6loc9kqzvKHp599gvl/rVEetVA==}
     peerDependencies:
       react: ^18.3.1
-
-  '@fireproof/encrypted-blockstore@0.18.0':
-    resolution: {integrity: sha512-W9uUl3LH2o6+TqE4uv9879w9GyRw+YA7aMc4RLfwBr+uZU/12qLPFBCd90YCyIUsYboX4AhghBRLCc2K2yOWiw==}
 
   '@fireproof/vendor@1.0.0':
     resolution: {integrity: sha512-ucN0ICj7xbpbO3NWjAKKjMHkBn4vSRUdKn14LLaA0MILJowty+H4XBB8dCobwKemhW49ha5p520NOLRzJSKsow==}
@@ -1140,10 +1150,6 @@ packages:
 
   '@ipld/dag-json@10.2.2':
     resolution: {integrity: sha512-NnU8HdHKwAoGyrW3S09NMa8aZw0tImLRyR64hoafpLpDpAbA9g1+fb24JsdlugbL4sXUQVwDVA+qK4Ud8V83lA==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-
-  '@ipld/dag-json@10.2.3':
-    resolution: {integrity: sha512-itacv1j1hvYgLox2B42Msn70QLzcr0MEo5yGIENuw2SM/lQzq9bmBiMky+kDsIrsqqblKTXcHBZnnmK7D4a6ZQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
   '@ipld/dag-pb@4.1.2':
@@ -1235,17 +1241,6 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
-
-  '@peculiar/asn1-schema@2.3.13':
-    resolution: {integrity: sha512-3Xq3a01WkHRZL8X04Zsfg//mGaA21xlL4tlVn4v2xGT0JStiztATRkMwa5b+f/HXmY2smsiLXYK46Gwgzvfg3g==}
-
-  '@peculiar/json-schema@1.1.12':
-    resolution: {integrity: sha512-coUfuoMeIB7B8/NMekxaDzLhaYmp0HZNPEjYRm9goRou8UZIC3z21s0sL9AWoCw4EG876QyO3kYrc61WNF9B/w==}
-    engines: {node: '>=8.0.0'}
-
-  '@peculiar/webcrypto@1.5.0':
-    resolution: {integrity: sha512-BRs5XUAwiyCDQMsVA9IDvDa7UBR9gAvPHgugOeGng3YN6vJ9JYonyDc0lNczErgtCWtucjR5N7VtaonboD/ezg==}
-    engines: {node: '>=10.12.0'}
 
   '@perma/map@1.0.3':
     resolution: {integrity: sha512-Bf5njk0fnJGTFE2ETntq0N1oJ6YdCPIpTDn3R3KYZJQdeYSOCNL7mBrFlGnbqav8YQhJA/p81pvHINX9vAtHkQ==}
@@ -1879,10 +1874,6 @@ packages:
   as-table@1.0.55:
     resolution: {integrity: sha512-xvsWESUJn0JN421Xb9MQw6AsMHRCUknCe0Wjlxvjud80mU4E6hQf1A6NzQKcYNmYw62MfzEtXc+badstZP3JpQ==}
 
-  asn1js@3.0.5:
-    resolution: {integrity: sha512-FVnvrKJwpt9LP2lAMl8qZswRNm3T4q9CON+bxldk2iwk3FFpuwhx2FfinyitizWHsVYyaY+y5JzDR0rCMV5yTQ==}
-    engines: {node: '>=12.0.0'}
-
   assert-is-function-x@3.1.2:
     resolution: {integrity: sha512-FiMv0RYR/eMQk2EOMYJKvm+QFQa2AQzjccI9rN4cpvNd6M+UuobnV6m0sqIO5U+Q2LillGwaya16MRGa2Sr6+w==}
     engines: {node: '>=8.11.4', npm: 6.10.1}
@@ -1972,13 +1963,6 @@ packages:
 
   buffer@6.0.3:
     resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
-
-  builtin-modules@3.3.0:
-    resolution: {integrity: sha512-zhaCDicdLuWN5UbN5IMnFqNMhNfo919sH85y2/ea+5Yg9TsTkeZxpL+JLbp6cgYFS4sRLp3YV4S6yDuqVWHYOw==}
-    engines: {node: '>=6'}
-
-  builtins@5.1.0:
-    resolution: {integrity: sha512-SW9lzGTLvWTP1AY8xeAMZimqDrIaSdLQUcVr9DMef51niJ022Ri87SwRRKYm4A6iHfkPaiVUu/Duw2Wc4J7kKg==}
 
   bundle-require@5.0.0:
     resolution: {integrity: sha512-GuziW3fSSmopcx4KRymQEJVbZUfqlCqcq7dvs6TYwKRZiegK/2buMxQTPs6MGlNv50wms1699qYO54R8XfRX4w==}
@@ -2245,24 +2229,6 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-compat-utils@0.5.1:
-    resolution: {integrity: sha512-3z3vFexKIEnjHE3zCMRo6fn/e44U7T1khUjg+Hp0ZQMCigh28rALD0nPFBcGZuiLC5rLZa2ubQHDRln09JfU2Q==}
-    engines: {node: '>=12'}
-    peerDependencies:
-      eslint: '>=6.0.0'
-
-  eslint-plugin-es-x@7.8.0:
-    resolution: {integrity: sha512-7Ds8+wAAoV3T+LAKeu39Y5BzXCrGKrcISfgKEqTS4BDN8SFEDQd0S43jiQ8vIa3wUKD07qitZdfzlenSi8/0qQ==}
-    engines: {node: ^14.18.0 || >=16.0.0}
-    peerDependencies:
-      eslint: '>=8'
-
-  eslint-plugin-n@16.6.2:
-    resolution: {integrity: sha512-6TyDmZ1HXoFQXnhCTUjVFULReoBPOAjpuiKELMkeP40yffI/1ZRO+d9ug/VC6fqISo2WkuIBk3cvuRPALaWlOQ==}
-    engines: {node: '>=16.0.0'}
-    peerDependencies:
-      eslint: '>=7.0.0'
-
   eslint-scope@8.2.0:
     resolution: {integrity: sha512-PHlWUfG6lvPc3yvP5A4PNyBL1W8fkDUccmI21JUu/+GKZBoH/W5u6usENXUrWFRsyoW5ACUjFGgAFQp5gUlb/A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -2494,10 +2460,6 @@ packages:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
     hasBin: true
 
-  globals@13.24.0:
-    resolution: {integrity: sha512-AhO5QUcj8llrbG09iWhPU2B204J1xnPeL8kQmVorSsy+Sjj1sk8gIyh6cUocGmH4L0UuhAJy+hJMRA4mgA4mFQ==}
-    engines: {node: '>=8'}
-
   globals@14.0.0:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
     engines: {node: '>=18'}
@@ -2582,9 +2544,6 @@ packages:
   idb-keyval@6.2.1:
     resolution: {integrity: sha512-8Sb3veuYCyrZL+VBt9LJfZjLUPWVvqn8tG28VqYNFCo43KHcKuq+b4EiXGeuaLAQWL2YmyDgMp2aSpH9JHsEQg==}
 
-  idb@7.1.1:
-    resolution: {integrity: sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==}
-
   idb@8.0.0:
     resolution: {integrity: sha512-l//qvlAKGmQO31Qn7xdzagVPPaHTxXx199MhrAFuVBTPqydcPYBWjkrbv4Y0ktB+GmWOiwHl237UUOrLmQxLvw==}
 
@@ -2626,9 +2585,6 @@ packages:
   interface-store@6.0.2:
     resolution: {integrity: sha512-KSFCXtBlNoG0hzwNa0RmhHtrdhzexp+S+UY2s0rWTBJyfdEIgn6i6Zl9otVqrcFYbYrneBT7hbmHQ8gE0C3umA==}
 
-  ipfs-unixfs-exporter@13.6.1:
-    resolution: {integrity: sha512-pYPI4oBTWao2//sFzAL0pURyojn79q/u5BuK6L5/nVbVUQVw6DcVP5uB1ySdWlTM2H+0Zlhp9+OL9aJBRIICpg==}
-
   ipfs-unixfs@11.2.0:
     resolution: {integrity: sha512-J8FN1qM5nfrDo8sQKQwfj0+brTg1uBfZK2vY9hxci33lcl3BFrsELS9+1+4q/8tO1ASKfxZO8W3Pi2O4sVX2Lg==}
 
@@ -2665,10 +2621,6 @@ packages:
   is-buffer@2.0.5:
     resolution: {integrity: sha512-i2R6zNFDwgEHJyQUtJEk0XFi1i0dPFn/oqjK3/vPCcDeJvW5NQ83V8QbicfF1SupOaB0h8ntgBC2YiE7dfyctQ==}
     engines: {node: '>=4'}
-
-  is-builtin-module@3.2.1:
-    resolution: {integrity: sha512-BSLE3HnV2syZ0FK0iMA/yUGplUeMmNz4AW5fnTunbCIqZi4vG3WjJT9FHMy5D69xmAYBHXQhJdALdpwVxV501A==}
-    engines: {node: '>=6'}
 
   is-callable@1.2.7:
     resolution: {integrity: sha512-1BC0BVFhS/p0qtw6enp8e+8OD0UrK0oFLztSjNzhcKA3WDuJxxAPXzPuPtKkjEY9UUoEWlX/8fgKeu2S8i9JTA==}
@@ -3201,10 +3153,6 @@ packages:
     resolution: {integrity: sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==}
     engines: {node: '>=10'}
 
-  p-limit@4.0.0:
-    resolution: {integrity: sha512-5b0R4txpzjPWVw/cXXUResoD4hb6U/x9BH08L7nw+GN1sezDzPdxeRvpc9c433fZhBan/wusjbCsqwqm4EIBIQ==}
-    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-
   p-limit@6.1.0:
     resolution: {integrity: sha512-H0jc0q1vOzlEk0TqAKXKZxdl7kX3OFUzCnNVUnq5Pc3DGo0kpeaMuPqxQn235HibwBEb0/pm9dgKTjXy66fBkg==}
     engines: {node: '>=18'}
@@ -3380,13 +3328,6 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
-
-  pvtsutils@1.3.6:
-    resolution: {integrity: sha512-PLgQXQ6H2FWCaeRak8vvk1GW462lMxB5s3Jm673N82zI4vqtVUPuZdffdZbPDFRoU8kAhItWFtPCWiPpp4/EDg==}
-
-  pvutils@1.1.3:
-    resolution: {integrity: sha512-pMpnA0qRdFp32b1sJl1wOJNxZLQ2cbQx+k6tjNtZ8CpvVhNqEPRgivZ2WOUev2YMajecdH7ctUPDvEe87nariQ==}
-    engines: {node: '>=6.0.0'}
 
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
@@ -3831,10 +3772,6 @@ packages:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
 
-  type-fest@0.20.2:
-    resolution: {integrity: sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==}
-    engines: {node: '>=10'}
-
   type-fest@2.19.0:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
@@ -3908,10 +3845,6 @@ packages:
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
-    hasBin: true
-
-  uuidv7@0.6.3:
-    resolution: {integrity: sha512-zV3eW2NlXTsun/aJ7AixxZjH/byQcH/r3J99MI0dDEkU2cJIBJxhEWUHDTpOaLPRNhebPZoeHuykYREkI9HafA==}
     hasBin: true
 
   valibot@1.0.0-beta.7:
@@ -4041,9 +3974,6 @@ packages:
     resolution: {integrity: sha512-1wWQOyR2LVVtaqrcIL2+OM+x7bkpmzVROa0Nf6FryXkS+er5Sa1kzFGjzZRqLnHa3n1rACFLeTwUqE1ETL9Mig==}
     engines: {node: '>=12.0.0'}
     hasBin: true
-
-  webcrypto-core@1.8.1:
-    resolution: {integrity: sha512-P+x1MvlNCXlKbLSOY4cYrdreqPG5hbzkmawbcXLKN/mf6DZW0SdNNkZ+sjwsqVkI4A4Ko2sPZmkZtCKY58w83A==}
 
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
@@ -5070,19 +5000,30 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.19.114(react@18.3.1)(typescript@5.7.2)':
+  '@fireproof/core@0.19.116(react@18.3.1)(typescript@5.7.2)':
     dependencies:
       '@adviser/cement': 0.2.41(typescript@5.7.2)
-      '@ipld/car': 5.3.3
-      '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.3
+      '@fireproof/vendor': 1.0.0
       '@ipld/unixfs': 3.0.0
+<<<<<<< HEAD
       '@web3-storage/pail': 0.6.0
       cborg: 4.2.7
+||||||| parent of 9801ea3 (WIP)
+      '@web3-storage/pail': 0.6.0
+      cborg: 4.2.6
+=======
+>>>>>>> 9801ea3 (WIP)
       charwise: 3.0.1
       idb: 8.0.0
+<<<<<<< HEAD
       ipfs-unixfs-exporter: 13.6.1
       memfs: 4.15.0
+||||||| parent of 9801ea3 (WIP)
+      ipfs-unixfs-exporter: 13.6.1
+      memfs: 4.14.1
+=======
+      memfs: 4.14.1
+>>>>>>> 9801ea3 (WIP)
       multiformats: 13.3.1
       p-limit: 6.1.0
       p-map: 7.0.3
@@ -5091,27 +5032,6 @@ snapshots:
       react: 18.3.1
     transitivePeerDependencies:
       - typescript
-
-  '@fireproof/encrypted-blockstore@0.18.0(encoding@0.1.13)(eslint@9.16.0)':
-    dependencies:
-      '@ipld/car': 5.3.3
-      '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.3
-      '@ipld/unixfs': 2.2.0
-      '@peculiar/webcrypto': 1.5.0
-      '@web3-storage/pail': 0.6.0
-      charwise: 3.0.1
-      cross-fetch: 4.0.0(encoding@0.1.13)
-      eslint-plugin-n: 16.6.2(eslint@9.16.0)
-      idb: 7.1.1
-      ipfs-unixfs-exporter: 13.6.1
-      multiformats: 12.1.3
-      p-limit: 4.0.0
-      prolly-trees: 1.0.4
-      uuidv7: 0.6.3
-    transitivePeerDependencies:
-      - encoding
-      - eslint
 
   '@fireproof/vendor@1.0.0':
     dependencies:
@@ -5186,11 +5106,20 @@ snapshots:
       cborg: 4.2.7
       multiformats: 13.3.1
 
+<<<<<<< HEAD
   '@ipld/dag-json@10.2.3':
     dependencies:
       cborg: 4.2.7
       multiformats: 13.3.1
 
+||||||| parent of 9801ea3 (WIP)
+  '@ipld/dag-json@10.2.3':
+    dependencies:
+      cborg: 4.2.6
+      multiformats: 13.3.1
+
+=======
+>>>>>>> 9801ea3 (WIP)
   '@ipld/dag-pb@4.1.2':
     dependencies:
       multiformats: 13.3.1
@@ -5297,6 +5226,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
 
+<<<<<<< HEAD
   '@peculiar/asn1-schema@2.3.13':
     dependencies:
       asn1js: 3.0.5
@@ -5315,6 +5245,27 @@ snapshots:
       tslib: 2.8.1
       webcrypto-core: 1.8.1
 
+||||||| parent of 9801ea3 (WIP)
+  '@peculiar/asn1-schema@2.3.13':
+    dependencies:
+      asn1js: 3.0.5
+      pvtsutils: 1.3.6
+      tslib: 2.7.0
+
+  '@peculiar/json-schema@1.1.12':
+    dependencies:
+      tslib: 2.7.0
+
+  '@peculiar/webcrypto@1.5.0':
+    dependencies:
+      '@peculiar/asn1-schema': 2.3.13
+      '@peculiar/json-schema': 1.1.12
+      pvtsutils: 1.3.6
+      tslib: 2.7.0
+      webcrypto-core: 1.8.1
+
+=======
+>>>>>>> 9801ea3 (WIP)
   '@perma/map@1.0.3':
     dependencies:
       '@multiformats/murmur3': 2.1.8
@@ -6220,12 +6171,22 @@ snapshots:
     dependencies:
       printable-characters: 1.0.42
 
+<<<<<<< HEAD
   asn1js@3.0.5:
     dependencies:
       pvtsutils: 1.3.6
       pvutils: 1.1.3
       tslib: 2.8.1
 
+||||||| parent of 9801ea3 (WIP)
+  asn1js@3.0.5:
+    dependencies:
+      pvtsutils: 1.3.6
+      pvutils: 1.1.3
+      tslib: 2.7.0
+
+=======
+>>>>>>> 9801ea3 (WIP)
   assert-is-function-x@3.1.2:
     dependencies:
       is-function-x: 4.1.2
@@ -6333,12 +6294,6 @@ snapshots:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
-
-  builtin-modules@3.3.0: {}
-
-  builtins@5.1.0:
-    dependencies:
-      semver: 7.6.3
 
   bundle-require@5.0.0(esbuild@0.24.0):
     dependencies:
@@ -6726,33 +6681,6 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-compat-utils@0.5.1(eslint@9.16.0):
-    dependencies:
-      eslint: 9.16.0
-      semver: 7.6.3
-
-  eslint-plugin-es-x@7.8.0(eslint@9.16.0):
-    dependencies:
-      '@eslint-community/eslint-utils': 4.4.0(eslint@9.16.0)
-      '@eslint-community/regexpp': 4.12.1
-      eslint: 9.16.0
-      eslint-compat-utils: 0.5.1(eslint@9.16.0)
-
-  eslint-plugin-n@16.6.2(eslint@9.16.0):
-    dependencies:
-      '@eslint-community/eslint-utils': 4.4.0(eslint@9.16.0)
-      builtins: 5.1.0
-      eslint: 9.16.0
-      eslint-plugin-es-x: 7.8.0(eslint@9.16.0)
-      get-tsconfig: 4.8.1
-      globals: 13.24.0
-      ignore: 5.3.2
-      is-builtin-module: 3.2.1
-      is-core-module: 2.15.1
-      minimatch: 3.1.2
-      resolve: 1.22.8
-      semver: 7.6.3
-
   eslint-scope@8.2.0:
     dependencies:
       esrecurse: 4.3.0
@@ -7026,10 +6954,6 @@ snapshots:
       package-json-from-dist: 1.0.1
       path-scurry: 1.11.1
 
-  globals@13.24.0:
-    dependencies:
-      type-fest: 0.20.2
-
   globals@14.0.0: {}
 
   globrex@0.1.2: {}
@@ -7101,8 +7025,6 @@ snapshots:
 
   idb-keyval@6.2.1: {}
 
-  idb@7.1.1: {}
-
   idb@8.0.0: {}
 
   ieee754@1.2.1: {}
@@ -7146,25 +7068,6 @@ snapshots:
       multiformats: 13.3.1
 
   interface-store@6.0.2: {}
-
-  ipfs-unixfs-exporter@13.6.1:
-    dependencies:
-      '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.3
-      '@ipld/dag-pb': 4.1.2
-      '@multiformats/murmur3': 2.1.8
-      hamt-sharding: 3.0.6
-      interface-blockstore: 5.3.1
-      ipfs-unixfs: 11.2.0
-      it-filter: 3.1.1
-      it-last: 3.0.6
-      it-map: 3.1.1
-      it-parallel: 3.0.8
-      it-pipe: 3.0.1
-      it-pushable: 3.2.3
-      multiformats: 13.3.1
-      p-queue: 8.0.1
-      progress-events: 1.0.1
 
   ipfs-unixfs@11.2.0:
     dependencies:
@@ -7232,10 +7135,6 @@ snapshots:
       which-boxed-primitive: 1.0.2
 
   is-buffer@2.0.5: {}
-
-  is-builtin-module@3.2.1:
-    dependencies:
-      builtin-modules: 3.3.0
 
   is-callable@1.2.7: {}
 
@@ -7846,10 +7745,6 @@ snapshots:
     dependencies:
       yocto-queue: 0.1.0
 
-  p-limit@4.0.0:
-    dependencies:
-      yocto-queue: 1.1.1
-
   p-limit@6.1.0:
     dependencies:
       yocto-queue: 1.1.1
@@ -8033,12 +7928,6 @@ snapshots:
       once: 1.4.0
 
   punycode@2.3.1: {}
-
-  pvtsutils@1.3.6:
-    dependencies:
-      tslib: 2.8.1
-
-  pvutils@1.1.3: {}
 
   queue-microtask@1.2.3: {}
 
@@ -8516,8 +8405,6 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
 
-  type-fest@0.20.2: {}
-
   type-fest@2.19.0: {}
 
   type-fest@4.26.1: {}
@@ -8602,8 +8489,6 @@ snapshots:
       which-typed-array: 1.1.15
 
   uuid@9.0.1: {}
-
-  uuidv7@0.6.3: {}
 
   valibot@1.0.0-beta.7(typescript@5.7.2):
     optionalDependencies:
@@ -8707,6 +8592,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
+<<<<<<< HEAD
   webcrypto-core@1.8.1:
     dependencies:
       '@peculiar/asn1-schema': 2.3.13
@@ -8715,6 +8601,17 @@ snapshots:
       pvtsutils: 1.3.6
       tslib: 2.8.1
 
+||||||| parent of 9801ea3 (WIP)
+  webcrypto-core@1.8.1:
+    dependencies:
+      '@peculiar/asn1-schema': 2.3.13
+      '@peculiar/json-schema': 1.1.12
+      asn1js: 3.0.5
+      pvtsutils: 1.3.6
+      tslib: 2.7.0
+
+=======
+>>>>>>> 9801ea3 (WIP)
   webidl-conversions@3.0.1: {}
 
   webidl-conversions@4.0.2: {}

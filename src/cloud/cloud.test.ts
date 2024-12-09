@@ -5,14 +5,13 @@ import { Env } from "./backend/env.js";
 import { $ } from "zx";
 import fs from "fs/promises";
 import * as toml from "smol-toml";
-import { bs, CRDTEntry, Database, fireproof, isNotFoundError } from "@fireproof/core";
-import { bs, CRDTEntry, Database, fireproof, isNotFoundError } from "@fireproof/core";
+import { bs, CRDTEntry, Database, fireproof, isNotFoundError, rt } from "@fireproof/core";
 import { mockSuperThis } from "../../node_modules/@fireproof/core/tests/helpers.js";
 import { AwsClient } from "aws4fetch";
-import { smokeDB } from "../../tests/helper";
-import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway";
-import { calculatePreSignedUrl } from "./pre-signed-url";
-import { newWebSocket } from "./new-websocket";
+import { smokeDB } from "../../tests/helper.js";
+import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway.js";
+import { calculatePreSignedUrl } from "./pre-signed-url.js";
+import { newWebSocket } from "./new-websocket.js";
 
 function testReqSignedUrl(tid = "test") {
   return {
@@ -207,7 +206,10 @@ describe("CloudBackendTest", () => {
       const config = {
         store: {
           stores: {
-            base: wrangler.build().protocol("fireproof:").setParam("protocol", "ws").setParam("testMode", "true"),
+            base: wrangler.build()
+              .protocol("fireproof:")
+              .setParam("protocol", "ws")
+              .setParam("testMode", "true"),
             // process.env.FP_STORAGE_URL, // || "fireproof://localhost:1968",
           },
         },
@@ -356,10 +358,13 @@ describe("CloudBackendTest", () => {
     beforeAll(async () => {
       gw = new FireproofCloudGateway(sthis);
       const id = sthis.nextId().str;
-      uri = BuildURI.from("fireproof://localhost:1968")
+      uri = BuildURI.from("fireproof://localhost")
+        .port("" + port)
         .setParam("store", store)
         .setParam("name", id)
+        .setParam("protocol", "ws")
         .setParam("storekey", id)
+        .setParam("testMode", "true")
         .URI();
 
       const last: Uint8Array[] = [];
@@ -378,6 +383,9 @@ describe("CloudBackendTest", () => {
           })) as bs.VoidResult;
           expect(rOk.isOk()).toBeTruthy();
         });
+
+        const keyBag = await rt.kb.getKeyBag(sthis)
+        await keyBag.getNamedKey(`@${id}:data@`)
     });
 
     afterAll(async () => {
@@ -400,7 +408,7 @@ describe("CloudBackendTest", () => {
             const connId = sthis.nextId().str;
             const uriConnId = uri.build().setParam("connId", connId).URI();
             const unsub = (await gw.subscribe?.(uriConnId, (meta: Uint8Array) =>
-              cb(meta, connId)
+              cb(sthis.txt.decode(meta), connId)
             )) as bs.UnsubscribeResult;
             subscribeCallbacks.push({ cb, unsub, connId, uri: uriConnId });
           })
@@ -443,7 +451,8 @@ describe("CloudBackendTest", () => {
 
     it(`unsubscribe`, async () => {
       subscribeCallbacks.forEach((sub) => sub.unsub.Ok()());
-      const rOk = await gw.put(uri, crdtEntry());
+      const rOk = await gw.put(uri.build().setParam("key", "main").URI(), crdtEntry());
+      // console.log(rOk);
       expect(rOk.isOk()).toBeTruthy();
       subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled());
     });
@@ -459,21 +468,27 @@ describe("CloudBackendTest", () => {
         }
         subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled());
       }
+      console.log('getNotFound-pre')
       // get not found
       await getNotFound();
       // put
       async function put() {
         for (const u of [...subscribeCallbacks.map(({ uri }) => uri), uri]) {
           for (const key of ["KEY1", "KEY2"]) {
-            const rOk = await gw.put(u.build().setParam("key", key).URI(), crdtEntry(u.getParam("connId", "default")));
+
+            const rOk = await gw.put(u.build().setParam("key", key).URI(),
+              crdtEntry(`${key}:${u.getParam("connId", "default")}`)
+            );
             expect(rOk.isOk()).toBeTruthy();
           }
         }
+        // console.log('put', subscribeCallbacks.map(({ cb }) => cb.mock.calls));
         subscribeCallbacks.forEach(({ cb, connId }) => {
-          expect(cb).toHaveBeenCalledTimes(1);
-          expect(cb).toHaveBeenCalledWith(crdtEntry(connId), connId);
+          expect(cb).toHaveBeenCalledTimes(subscribeCallbacks.length * 2);
+          expect(cb).toHaveBeenCalledWith(sthis.txt.decode(crdtEntry(connId)), connId);
         });
       }
+      // console.log('put-pre')
       await put();
       subscribeCallbacks.forEach(({ cb }) => cb.mockClear());
 
@@ -487,6 +502,7 @@ describe("CloudBackendTest", () => {
         }
         subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled());
       }
+      console.log('get-pre')
       await get();
       async function del() {
         for (const u of [...subscribeCallbacks.map(({ uri }) => uri), uri]) {
@@ -497,8 +513,10 @@ describe("CloudBackendTest", () => {
         }
         subscribeCallbacks.forEach(({ cb }) => expect(cb).not.toHaveBeenCalled());
       }
+      console.log('del-pre')
       await del();
       // get not found
+      console.log('getNotFound-pre')
       await getNotFound();
     });
     it(`close`, async () => {

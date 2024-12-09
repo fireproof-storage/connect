@@ -28,13 +28,14 @@ const VERSION = "v0.1-fp-cloud";
 
 interface RequestOpts {
   readonly waitType: string;
-  readonly timeout: number; // ms
+  readonly timeout?: number; // ms
 }
 interface Connection {
   readonly ws: WebSocket;
   readonly key: ConnectionKey;
-  request<T extends MsgBase>(msg: MsgBase, opts?: Partial<RequestOpts>): Promise<Result<T>>;
+  request<T extends MsgBase>(msg: MsgBase, opts: RequestOpts): Promise<Result<T>>;
   onMessage(msgFn: (msg: MsgBase) => void): () => void;
+  close(): Promise<void>;
 }
 
 interface WaitForTid {
@@ -51,14 +52,17 @@ export class ConnectionImpl implements Connection {
   readonly msgCallbacks = new Map<string, (msg: MsgBase) => void>();
   readonly sthis: SuperThis;
   readonly logger: Logger;
-  constructor(sthis: SuperThis, ws: WebSocket, key: ConnectionKey) {
+  readonly onClose: () => void;
+  readonly id: string;
+  constructor(sthis: SuperThis, ws: WebSocket, key: ConnectionKey, onClose: () => void) {
     this.ws = ws;
     this.key = key;
     this.sthis = sthis;
+    this.onClose = onClose;
     this.logger = ensureLogger(sthis, "ConnectionImpl", {
       this: true,
     });
-    this.logger.Debug().Any("key", key).Msg("constructor");
+    this.id = sthis.nextId().str;
     // this.params = params;
     ws.onmessage = async (event) => {
       const rMsg = await exception2Result(() => JSON.parse(event.data) as MsgBase);
@@ -69,13 +73,36 @@ export class ConnectionImpl implements Connection {
       const msg = rMsg.Ok();
       const waitFor = this.waitForTid.get(msg.tid);
       if (waitFor) {
-        if (waitFor.type === msg.type || MsgIsError(msg)) {
+        if (MsgIsError(msg)) {
           this.msgCallbacks.forEach((cb) => cb(msg));
+          this.waitForTid.delete(msg.tid);
+          waitFor.future.resolve(msg);
+        } else if (waitFor.type) {
+          // what for a specific type
+          if (waitFor.type === msg.type) {
+            this.msgCallbacks.forEach((cb) => cb(msg));
+            this.waitForTid.delete(msg.tid);
+            waitFor.future.resolve(msg);
+          } else {
+            this.msgCallbacks.forEach((cb) => cb(msg));
+          }
+        } else {
+          // wild-card
+          this.msgCallbacks.forEach((cb) => cb(msg));
+          this.waitForTid.delete(msg.tid);
+          waitFor.future.resolve(msg);
         }
-        this.waitForTid.delete(msg.tid);
-        waitFor.future.resolve(msg);
+      } else {
+        this.msgCallbacks.forEach((cb) => cb(msg));
       }
-    };
+    }
+  }
+
+  async close(): Promise<void> {
+    this.logger.Debug().Msg("close");
+    console.log("ConnectionImpl.close", this.id);
+    this.ws.close();
+    this.onClose();
   }
 
   onMessage(msgFn: (msg: MsgBase) => void): () => void {
@@ -86,7 +113,7 @@ export class ConnectionImpl implements Connection {
     };
   }
 
-  async request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: Partial<RequestOpts> = {}): Promise<Result<S>> {
+  async request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<Result<S>> {
     opts = {
       ...{
         timeout: 1000,
@@ -291,12 +318,19 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
   constructor(sthis: SuperThis) {
     super(sthis, "MetaGateway");
   }
+
   async getConn(uri: URI, conn: Connection): Promise<Result<Uint8Array>> {
-    const rsu = this.prepareReqSignedUrl(uri, "GET", conn.key);
-    if (rsu.isErr()) {
-      return Result.Err(rsu.Err());
+    const rkey = uri.getParamResult("key");
+    if (rkey.isErr()) {
+      return Result.Err(rkey.Err());
     }
-    const rRes = await conn.request<ResGetMeta>(buildReqGetMeta(this.sthis, conn.key, rsu.Ok().params), {
+    const rsu = buildReqGetMeta(this.sthis, conn.key, {
+      ...conn.key,
+      method: "GET",
+      store: "meta",
+      key: rkey.Ok(),
+    })
+    const rRes = await conn.request<ResGetMeta>(rsu, {
       waitType: "resGetMeta",
     });
     if (rRes.isErr()) {
@@ -312,22 +346,23 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
     return Result.Ok(this.sthis.txt.encode(JSON.stringify(res.metas)));
   }
   async putConn(uri: URI, body: Uint8Array, conn: Connection): Promise<Result<void>> {
-    const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
+    const bodyRes = Result.Ok(body)// await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
     if (bodyRes.isErr()) {
       return this.logger.Error().Err(bodyRes).Msg("Error in addCryptoKeyToGatewayMetaPayload").ResultError();
     }
-    const dbMetas = JSON.parse(this.sthis.txt.decode(bodyRes.Ok())) as CRDTEntry[];
-    this.logger.Debug().Any("dbMetas", dbMetas).Msg("putMeta");
     const rsu = this.prepareReqSignedUrl(uri, "PUT", conn.key);
     if (rsu.isErr()) {
       return Result.Err(rsu.Err());
     }
-    const res = await conn.request<ResPutMeta>(buildReqPutMeta(this.sthis, conn.key, rsu.Ok().params, dbMetas), {
-      waitType: "resPutMeta",
-    });
+    const dbMetas = JSON.parse(this.sthis.txt.decode(bodyRes.Ok())) as CRDTEntry[];
+    this.logger.Debug().Any("dbMetas", dbMetas).Msg("putMeta");
+    const req = buildReqPutMeta(this.sthis, conn.key, rsu.Ok().params, dbMetas)
+    const res = await conn.request<ResPutMeta>(req, { waitType: "resPutMeta" });
     if (res.isErr()) {
       return Result.Err(res.Err());
     }
+    console.log("putMeta", JSON.stringify({dbMetas, res}));
+    this.logger.Debug().Any("qs", { req, res}).Msg("putMeta");
     this.putObject(uri, res.Ok().signedPutUrl, bodyRes.Ok());
     return res;
   }
@@ -495,6 +530,12 @@ export class FireproofCloudGateway implements bs.Gateway {
         }
       }
     }
+    const rConn = await this.getCloudConnection(uri)
+    if (rConn.isErr()) {
+      return this.logger.Error().Err(rConn).Msg("Error in getCloudConnection").ResultError();
+    }
+    const conn = rConn.Ok();
+    conn.close();
     return Result.Ok(undefined);
   }
 
@@ -502,12 +543,12 @@ export class FireproofCloudGateway implements bs.Gateway {
   async getCloudConnection(uri: URI): Promise<Result<Connection>> {
     const rParams = uri.getParamsResult({
       name: 0,
-      protocol: 0,
+      protocol: "wss",
       store: 0,
       storekey: 0,
     });
     if (rParams.isErr()) {
-      return this.logger.Error().Err(rParams).Msg("Error in getParamsResult").ResultError();
+      return this.logger.Error().Url(uri).Err(rParams).Msg("getCloudConnection:err").ResultError();
     }
     const params = rParams.Ok();
     const dataKey = params.storekey.replace(/:(meta|wal)@$/, `:data@`);
@@ -550,7 +591,9 @@ export class FireproofCloudGateway implements bs.Gateway {
           this.logger.Debug().Url(wsUrl).Msg("ws close");
         };
         await waitOpen.asPromise();
-        return new ConnectionImpl(this.sthis, ws, connectionKey);
+        return new ConnectionImpl(this.sthis, ws, connectionKey, () => {
+          keyedConnections.unget(cKey);
+        });
       })
     );
   }
@@ -590,6 +633,7 @@ export class FireproofCloudGateway implements bs.Gateway {
           if (!s) {
             return;
           }
+          console.log("msg", JSON.stringify(msg));
           this.notifySubscribers(
             this.sthis.txt.encode(JSON.stringify(msg.metas)),
             s.map((s) => s.callback)
