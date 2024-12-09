@@ -169,7 +169,7 @@ importers:
         specifier: ^8.5.13
         version: 8.5.13
       '@typescript-eslint/typescript-estree':
-        specifier: ^8.16.0
+        specifier: ^8.17.0
         version: 8.17.0(typescript@5.7.2)
       esbuild:
         specifier: ^0.24.0
