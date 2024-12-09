@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.2.40
+        specifier: ^0.2.41
         version: 0.2.41(typescript@5.7.2)
       '@aws-sdk/client-s3':
         specifier: ^3.703.0
