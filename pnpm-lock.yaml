@@ -9,10 +9,10 @@ importers:
   .:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.3.0
-        version: 0.3.0(typescript@5.7.2)
+        specifier: ^0.2.41
+        version: 0.2.41(typescript@5.7.2)
       '@aws-sdk/client-s3':
-        specifier: ^3.705.0
+        specifier: ^3.703.0
         version: 3.705.0
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.5.30
@@ -21,10 +21,10 @@ importers:
         specifier: ^4.20241127.0
         version: 4.20241205.0
       '@fireproof/core':
-        specifier: ^0.19.119
-        version: 0.19.119(react@18.3.1)(typescript@5.7.2)
+        specifier: 0.19.116
+        version: 0.19.116(react@18.3.1)(typescript@5.7.2)
       '@fireproof/vendor':
-        specifier: ^1.0.0
+        specifier: 1.0.0
         version: 1.0.0
       '@hono/node-server':
         specifier: ^1.13.7
@@ -216,8 +216,8 @@ importers:
 
 packages:
 
-  '@adviser/cement@0.3.0':
-    resolution: {integrity: sha512-E0J+oHIHCfBsRX3IVYSXKtMczfsyuPS8CbAVYZeNYtaJFItq29IGMMXi0s9B9Y8BpLycHCaPvSydOxCKE/sPYw==}
+  '@adviser/cement@0.2.41':
+    resolution: {integrity: sha512-Vam1JYxC1lOSkJZJa7CQJWL7jbjkPw5MzhYxMGWjLIK5l3tKDk5Q4SeLVEvPp2xhRGiBBzE9rZrQdt+0GtefFA==}
     engines: {node: '>=16'}
 
   '@aws-crypto/crc32@5.2.0':
@@ -1074,8 +1074,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@0.19.119':
-    resolution: {integrity: sha512-PSluwTsob3i5+tnrxGIQDNGsJJZ2xzs1uxAaBHyPoeo+wqoDkH86XTJTDpIR2SuL2RfMhX2t8EvtsF5sz4C8/Q==}
+  '@fireproof/core@0.19.116':
+    resolution: {integrity: sha512-QwxOG3Ck+j0uMTSTqg9Uy13dSB5U6QUvaNhQGeetc/BALhxTR82gS0QfnK6A6loc9kqzvKHp599gvl/rVEetVA==}
     peerDependencies:
       react: ^18.3.1
 
@@ -4074,7 +4074,7 @@ packages:
 
 snapshots:
 
-  '@adviser/cement@0.3.0(typescript@5.7.2)':
+  '@adviser/cement@0.2.41(typescript@5.7.2)':
     dependencies:
       ts-essentials: 10.0.2(typescript@5.7.2)
       yaml: 2.5.1
@@ -4984,9 +4984,9 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.19.119(react@18.3.1)(typescript@5.7.2)':
+  '@fireproof/core@0.19.116(react@18.3.1)(typescript@5.7.2)':
     dependencies:
-      '@adviser/cement': 0.3.0(typescript@5.7.2)
+      '@adviser/cement': 0.2.41(typescript@5.7.2)
       '@fireproof/vendor': 1.0.0
       '@ipld/unixfs': 3.0.0
       charwise: 3.0.1
