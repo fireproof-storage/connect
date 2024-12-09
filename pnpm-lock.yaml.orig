@@ -15,14 +15,22 @@ importers:
         specifier: ^3.705.0
         version: 3.705.0
       '@fireproof/core':
+<<<<<<< HEAD
         specifier: 0.19.116
         version: 0.19.116(react@18.3.1)(typescript@5.7.2)
       '@fireproof/vendor':
         specifier: 1.0.0
         version: 1.0.0
+=======
+        specifier: 0.19.113
+        version: 0.19.113(react@18.3.1)(typescript@5.7.2)
+      '@ipld/dag-cbor':
+        specifier: ^9.2.1
+        version: 9.2.2
       '@ipld/dag-ucan':
         specifier: ^3.4.0
         version: 3.4.0
+>>>>>>> 7ae4cc0 (feat: Add sharing, fix sync & finish ucan examples)
       '@jspm/core':
         specifier: ^2.1.0
         version: 2.1.0
