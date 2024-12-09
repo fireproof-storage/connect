@@ -130,7 +130,7 @@
     "aws4fetch": "^1.0.20",
     "better-sqlite3": "^11.6.0",
     "aws4fetch": "^1.0.20",
-    "cborg": "^4.2.6",
+    "cborg": "^4.2.7",
     "cmd-ts": "^0.13.0",
     "cross-fetch": "^4.0.0",
     "dotenv": "^16.4.5",
