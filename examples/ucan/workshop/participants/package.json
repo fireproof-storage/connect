@@ -2,7 +2,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@fireproof/core": "0.19.113",
+    "@fireproof/core": "0.19.116",
     "@fireproof/ucan": "../../../../dist/ucan",
     "multiformats": "^13.3.1"
   }
