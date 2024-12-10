@@ -7,7 +7,7 @@
     "preview": "rsbuild preview"
   },
   "dependencies": {
-    "@fireproof/core": "0.19.113",
+    "@fireproof/core": "0.19.116",
     "@fireproof/ucan": "../../../../dist/ucan",
     "@picocss/pico": "^2.0.6",
     "@ucanto/core": "^10.0.1",

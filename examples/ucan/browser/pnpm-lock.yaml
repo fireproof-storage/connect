@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@fireproof/core':
-        specifier: 0.19.113
-        version: 0.19.113(react@18.3.1)(typescript@5.6.3)
+        specifier: 0.19.116
+        version: 0.19.116(react@18.3.1)(typescript@5.6.3)
       '@fireproof/ucan':
         specifier: ../../../dist/ucan
         version: link:../../../dist/ucan
@@ -42,8 +42,8 @@ importers:
 
 packages:
 
-  '@adviser/cement@0.2.36':
-    resolution: {integrity: sha512-Zhmr4f0/UohFh3O/6H63DoBenYjh72uGZOcEnDZ/VxmBvZelACkCR4g06c8rbZbJTu20f3gRSNnJZbmtdMOFgQ==}
+  '@adviser/cement@0.2.41':
+    resolution: {integrity: sha512-Vam1JYxC1lOSkJZJa7CQJWL7jbjkPw5MzhYxMGWjLIK5l3tKDk5Q4SeLVEvPp2xhRGiBBzE9rZrQdt+0GtefFA==}
     engines: {node: '>=16'}
 
   '@babel/code-frame@7.26.2':
@@ -88,10 +88,13 @@ packages:
     resolution: {integrity: sha512-CXtq5nR4Su+2I47WPOlWud98Y5Lv8Kyxp2ukhgFx/eW6Blm18VXJO5WuQylPugRo8nbluoi6GvvxBLqHcvqUUw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@fireproof/core@0.19.113':
-    resolution: {integrity: sha512-LGAgDBd8MePZ2QUaBav2Wd1pa37SvYfngNAaDh00WGCL9skF+y4ZhcVmhUGNcIKG3xcANsyxouFu7h0rgBoNeA==}
+  '@fireproof/core@0.19.116':
+    resolution: {integrity: sha512-QwxOG3Ck+j0uMTSTqg9Uy13dSB5U6QUvaNhQGeetc/BALhxTR82gS0QfnK6A6loc9kqzvKHp599gvl/rVEetVA==}
     peerDependencies:
       react: ^18.3.1
+
+  '@fireproof/vendor@1.0.0':
+    resolution: {integrity: sha512-ucN0ICj7xbpbO3NWjAKKjMHkBn4vSRUdKn14LLaA0MILJowty+H4XBB8dCobwKemhW49ha5p520NOLRzJSKsow==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -112,18 +115,6 @@ packages:
   '@humanwhocodes/retry@0.4.0':
     resolution: {integrity: sha512-xnRgu9DxZbkWak/te3fcytNyp8MTbuiZIaueg2rgEvBuN55n04nwLYLU9TX/VVlusc9L2ZNXi99nUFNkHXtr5g==}
     engines: {node: '>=18.18'}
-
-  '@ipld/car@5.3.3':
-    resolution: {integrity: sha512-4vgV5Ml4HCJ2iTx7vYhu0ui+Xxo1HQTtVeYgD+JKd5Wij8TlOFZnxOSickqpLcuf1fdGEStgqVItx15UWfzDYA==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-
-  '@ipld/dag-cbor@9.2.2':
-    resolution: {integrity: sha512-uIEOuruCqKTP50OBWwgz4Js2+LhiBQaxc57cnP71f45b1mHEAo1OCR1Zn/TbvSW/mV1x+JqhacIktkKyaYqhCw==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-
-  '@ipld/dag-json@10.2.3':
-    resolution: {integrity: sha512-itacv1j1hvYgLox2B42Msn70QLzcr0MEo5yGIENuw2SM/lQzq9bmBiMky+kDsIrsqqblKTXcHBZnnmK7D4a6ZQ==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
   '@ipld/dag-pb@4.1.3':
     resolution: {integrity: sha512-ueULCaaSCcD+dQga6nKiRr+RSeVgdiYiEPKVUu5iQMNYDN+9osd0KpR3UDd9uQQ+6RWuv9L34SchfEwj7YIbOA==}
@@ -364,10 +355,6 @@ packages:
     resolution: {integrity: sha512-PChz8UaKQAVNHghsHcPyx1OMHoFRUEA7rJSK/mDhdq85bk+PLsUHUBqTQTFt18VJZbmxBovM65fezlheQRsSDA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@web3-storage/pail@0.6.0':
-    resolution: {integrity: sha512-/lIBu8pR92AEcCqYqjcxc3kUSLLRGQLomUes7PAyoK4lNe4ttm8Wr7WFcrbJmWTBJZmYE6npbYcVio8U+OexpA==}
-    hasBin: true
-
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
@@ -488,10 +475,6 @@ packages:
 
   caniuse-lite@1.0.30001676:
     resolution: {integrity: sha512-Qz6zwGCiPghQXGJvgQAem79esjitvJ+CxSbSQkW9H/UX5hg8XM88d4lp2W+MEQ81j+Hip58Il+jGVdazk1z9cw==}
-
-  cborg@4.2.6:
-    resolution: {integrity: sha512-77vo4KlSwfjCIXcyZUVei4l2gdjesSCeYSx4U/Upwix7pcWZq8uw21sVRpjwn7mjEi//ieJPTj1MRWDHmud1Rg==}
-    hasBin: true
 
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
@@ -827,9 +810,6 @@ packages:
   interface-store@6.0.2:
     resolution: {integrity: sha512-KSFCXtBlNoG0hzwNa0RmhHtrdhzexp+S+UY2s0rWTBJyfdEIgn6i6Zl9otVqrcFYbYrneBT7hbmHQ8gE0C3umA==}
 
-  ipfs-unixfs-exporter@13.6.1:
-    resolution: {integrity: sha512-pYPI4oBTWao2//sFzAL0pURyojn79q/u5BuK6L5/nVbVUQVw6DcVP5uB1ySdWlTM2H+0Zlhp9+OL9aJBRIICpg==}
-
   ipfs-unixfs@11.2.0:
     resolution: {integrity: sha512-J8FN1qM5nfrDo8sQKQwfj0+brTg1uBfZK2vY9hxci33lcl3BFrsELS9+1+4q/8tO1ASKfxZO8W3Pi2O4sVX2Lg==}
 
@@ -973,8 +953,8 @@ packages:
   md5.js@1.3.5:
     resolution: {integrity: sha512-xitP+WxNPcTTOgnTJcrhM0xvdPepipPSf3I8EIpGKeFLjt3PlJLIDG3u8EX53ZIubkb+5U2+3rELYpEhHhzdkg==}
 
-  memfs@4.14.0:
-    resolution: {integrity: sha512-JUeY0F/fQZgIod31Ja1eJgiSxLn7BfQlCnqhwXFBzFHEw63OdLK7VJUJ7bnzNsWgCyoUP5tEp1VRY8rDaYzqOA==}
+  memfs@4.15.0:
+    resolution: {integrity: sha512-q9MmZXd2rRWHS6GU3WEm3HyiXZyyoA1DqdOhEq0lxPBmKb5S7IAOwX0RgUCwJfqjelDCySa5h8ujOy24LqsWcw==}
     engines: {node: '>= 4.0.0'}
 
   merge2@1.4.1:
@@ -1479,7 +1459,7 @@ packages:
 
 snapshots:
 
-  '@adviser/cement@0.2.36(typescript@5.6.3)':
+  '@adviser/cement@0.2.41(typescript@5.6.3)':
     dependencies:
       ts-essentials: 10.0.3(typescript@5.6.3)
       yaml: 2.6.1
@@ -1533,19 +1513,14 @@ snapshots:
     dependencies:
       levn: 0.4.1
 
-  '@fireproof/core@0.19.113(react@18.3.1)(typescript@5.6.3)':
+  '@fireproof/core@0.19.116(react@18.3.1)(typescript@5.6.3)':
     dependencies:
-      '@adviser/cement': 0.2.36(typescript@5.6.3)
-      '@ipld/car': 5.3.3
-      '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.3
+      '@adviser/cement': 0.2.41(typescript@5.6.3)
+      '@fireproof/vendor': 1.0.0
       '@ipld/unixfs': 3.0.0
-      '@web3-storage/pail': 0.6.0
-      cborg: 4.2.6
       charwise: 3.0.1
       idb: 8.0.0
-      ipfs-unixfs-exporter: 13.6.1
-      memfs: 4.14.0
+      memfs: 4.15.0
       multiformats: 13.3.1
       p-limit: 6.1.0
       p-map: 7.0.2
@@ -1554,6 +1529,24 @@ snapshots:
       react: 18.3.1
     transitivePeerDependencies:
       - typescript
+
+  '@fireproof/vendor@1.0.0':
+    dependencies:
+      '@ipld/dag-pb': 4.1.3
+      '@multiformats/murmur3': 2.1.8
+      hamt-sharding: 3.0.6
+      interface-blockstore: 5.3.1
+      ipfs-unixfs: 11.2.0
+      it-filter: 3.1.1
+      it-last: 3.0.6
+      it-map: 3.1.1
+      it-parallel: 3.0.8
+      it-pipe: 3.0.1
+      it-pushable: 3.2.3
+      multiformats: 13.3.1
+      p-queue: 8.0.1
+      progress-events: 1.0.1
+      varint: 6.0.0
 
   '@humanfs/core@0.19.1': {}
 
@@ -1567,23 +1560,6 @@ snapshots:
   '@humanwhocodes/retry@0.3.1': {}
 
   '@humanwhocodes/retry@0.4.0': {}
-
-  '@ipld/car@5.3.3':
-    dependencies:
-      '@ipld/dag-cbor': 9.2.2
-      cborg: 4.2.6
-      multiformats: 13.3.1
-      varint: 6.0.0
-
-  '@ipld/dag-cbor@9.2.2':
-    dependencies:
-      cborg: 4.2.6
-      multiformats: 13.3.1
-
-  '@ipld/dag-json@10.2.3':
-    dependencies:
-      cborg: 4.2.6
-      multiformats: 13.3.1
 
   '@ipld/dag-pb@4.1.3':
     dependencies:
@@ -1862,11 +1838,6 @@ snapshots:
       '@typescript-eslint/types': 8.12.2
       eslint-visitor-keys: 3.4.3
 
-  '@web3-storage/pail@0.6.0':
-    dependencies:
-      '@ipld/dag-cbor': 9.2.2
-      multiformats: 13.3.1
-
   abort-controller@3.0.0:
     dependencies:
       event-target-shim: 5.0.1
@@ -2020,8 +1991,6 @@ snapshots:
   callsites@3.1.0: {}
 
   caniuse-lite@1.0.30001676: {}
-
-  cborg@4.2.6: {}
 
   chalk@4.1.2:
     dependencies:
@@ -2408,25 +2377,6 @@ snapshots:
 
   interface-store@6.0.2: {}
 
-  ipfs-unixfs-exporter@13.6.1:
-    dependencies:
-      '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.3
-      '@ipld/dag-pb': 4.1.3
-      '@multiformats/murmur3': 2.1.8
-      hamt-sharding: 3.0.6
-      interface-blockstore: 5.3.1
-      ipfs-unixfs: 11.2.0
-      it-filter: 3.1.1
-      it-last: 3.0.6
-      it-map: 3.1.1
-      it-parallel: 3.0.8
-      it-pipe: 3.0.1
-      it-pushable: 3.2.3
-      multiformats: 13.3.1
-      p-queue: 8.0.1
-      progress-events: 1.0.1
-
   ipfs-unixfs@11.2.0:
     dependencies:
       protons-runtime: 5.5.0
@@ -2559,7 +2509,7 @@ snapshots:
       inherits: 2.0.4
       safe-buffer: 5.2.1
 
-  memfs@4.14.0:
+  memfs@4.15.0:
     dependencies:
       '@jsonjoy.com/json-pack': 1.1.0(tslib@2.8.1)
       '@jsonjoy.com/util': 1.5.0(tslib@2.8.1)

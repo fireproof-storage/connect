@@ -7,15 +7,16 @@ import { Delegation } from "@ucanto/interface";
 export type State = {
   agent: AgentWithStoreName;
   clock: Clock | ClockWithoutDelegation;
-  clockIdInput?: `did:key:${string}`
-  database?: Database
-  databaseContents: Map<string, string> | "loading"
-  email?: `${string}@${string}`
-  loggedIn: boolean | "in-progress"
-  server: Server
-  serverInput?: string
-  shareClaims?: Delegation[] | "loading"
-  shareStatus?: { type: "SHARED"; cid: string; email: `${string}@${string}` } | { type: "LOADING" }
+  clockIdInput?: `did:key:${string}`;
+  database?: Database;
+  databaseContents: Map<string, string> | "loading";
+  databaseSubscriptions: Array<() => void>;
+  email?: `${string}@${string}`;
+  loggedIn: boolean | "in-progress";
+  server: Server;
+  serverInput?: string;
+  shareClaims?: Delegation[] | "loading";
+  shareStatus?: { type: "SHARED"; cid: string; email: `${string}@${string}` } | { type: "LOADING" };
 };
 
 // 📣
@@ -23,9 +24,9 @@ export type State = {
 export type Msg =
   | { type: "-" }
   | { type: "CLAIM_ALL_SHARES" }
-  | { type: "CLAIMED_SHARES", delegations: Delegation[] }
+  | { type: "CLAIMED_SHARES"; delegations: Delegation[] }
   | { type: "CONNECT" }
-  | { type: "CONNECTED"; database: Database }
+  | { type: "CONNECTED"; database: Database; disconnect: () => void }
   | { type: "LOGIN" }
   | { type: "DATABASE_CONTENTS_CHANGED" }
   | { type: "SET_AGENT"; agent: AgentWithStoreName }
