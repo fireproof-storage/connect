@@ -38,7 +38,6 @@ export const claimShare = capability({
   can: "clock/claim-share",
   with: DID.match({ method: "key" }).or(DID.match({ method: "mailto" })),
   nb: Schema.struct({
-    issuer: DID.match({ method: "mailto" }),
     proof: Link.match({ version: 1 }),
     recipient: DID.match({ method: "mailto" }),
   }),
@@ -51,7 +50,6 @@ export const claimShares = capability({
   can: "clock/claim-shares",
   with: DID.match({ method: "key" }).or(DID.match({ method: "mailto" })),
   nb: Schema.struct({
-    issuer: DID.match({ method: "mailto" }),
     recipient: DID.match({ method: "mailto" }),
   }),
 });

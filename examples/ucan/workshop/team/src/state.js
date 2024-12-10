@@ -50,7 +50,7 @@ const fx = (msg) => {
 
 const db = fireproof("workshop-db");
 const clock = await UCAN.clock({ audience: await UCAN.agent(), databaseName: "workshop-db" });
-const context = await UCAN.connect(db, { clock });
+const context = await UCAN.connect(db, { clock, poll: true });
 
 // await addImage(db, byteArray);
 
