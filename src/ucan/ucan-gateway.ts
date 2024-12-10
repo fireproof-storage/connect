@@ -309,7 +309,7 @@ export class UCANGateway implements bs.Gateway {
     // Setup polling
     url = url.build().setParam("key", "main").URI();
 
-    const interval = 3000;
+    const interval = 10000;
     let lastData: Uint8Array | undefined = undefined;
 
     const fetchData = async () => {
