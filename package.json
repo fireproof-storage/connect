@@ -58,7 +58,7 @@
     "@types/node": "^22.10.2",
     "@types/wait-on": "^5.3.4",
     "@types/ws": "^8.5.13",
-    "@typescript-eslint/typescript-estree": "^8.17.0",
+    "@typescript-eslint/typescript-estree": "^8.18.0",
     "@web3-storage/access": "^20.1.1",
     "esbuild": "^0.24.0",
     "esbuild-plugin-replace": "^1.4.0",
