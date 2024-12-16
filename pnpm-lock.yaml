@@ -48,8 +48,8 @@ importers:
         specifier: ^20.1.0
         version: 20.1.0
       '@web3-storage/capabilities':
-        specifier: ^17.4.1
-        version: 17.4.1
+        specifier: ^18.0.0
+        version: 18.0.0
       '@web3-storage/clock':
         specifier: ^0.4.1
         version: 0.4.1
@@ -1672,6 +1672,9 @@ packages:
 
   '@web3-storage/capabilities@17.4.1':
     resolution: {integrity: sha512-GogLfON8PZabi03CUyncBvMcCi36yQ/0iR5P8kr4pxdnZm7OuAn4sEwbEB8rTKbah5V10Vwgb3O5dh0FBgyjHg==}
+
+  '@web3-storage/capabilities@18.0.0':
+    resolution: {integrity: sha512-sG0GmHrNNR+nT7wB1sIz91FG55PWJvrquMZyY8GD20r0l49kojDTlz/n14bEhof9uKE0T9KinmxitknOx/B+4Q==}
 
   '@web3-storage/clock@0.4.1':
     resolution: {integrity: sha512-VHAyvbl7ZrNls6yltS5Djuwjz9Rw0rcA8tpv7qQp1WoheY00YBdqa8gjR1V4egVkqV1ZugGA06XH+ug0OhGXDg==}
@@ -5718,6 +5721,16 @@ snapshots:
       uint8arrays: 5.1.0
 
   '@web3-storage/capabilities@17.4.1':
+    dependencies:
+      '@ucanto/core': 10.0.1
+      '@ucanto/interface': 10.0.1
+      '@ucanto/principal': 9.0.1
+      '@ucanto/transport': 9.1.1
+      '@ucanto/validator': 9.0.2
+      '@web3-storage/data-segment': 5.2.0
+      uint8arrays: 5.1.0
+
+  '@web3-storage/capabilities@18.0.0':
     dependencies:
       '@ucanto/core': 10.0.1
       '@ucanto/interface': 10.0.1
