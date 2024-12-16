@@ -55,7 +55,7 @@
     "@smithy/types": "^3.7.1",
     "@types/better-sqlite3": "^7.6.12",
     "@types/eslint__js": "^8.42.3",
-    "@types/node": "^22.10.1",
+    "@types/node": "^22.10.2",
     "@types/wait-on": "^5.3.4",
     "@types/ws": "^8.5.13",
     "@typescript-eslint/typescript-estree": "^8.17.0",
