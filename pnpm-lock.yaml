@@ -45,8 +45,8 @@ importers:
         specifier: ^9.0.2
         version: 9.0.2
       '@web3-storage/access':
-        specifier: ^20.1.0
-        version: 20.1.0
+        specifier: ^20.1.1
+        version: 20.1.1
       '@web3-storage/capabilities':
         specifier: ^18.0.0
         version: 18.0.0
@@ -1667,8 +1667,8 @@ packages:
   '@vitest/utils@2.1.8':
     resolution: {integrity: sha512-dwSoui6djdwbfFmIgbIjX2ZhIoG7Ex/+xpxyiEgIGzjliY8xGkcpITKTlp6B4MgtGkF2ilvm97cPM96XZaAgcA==}
 
-  '@web3-storage/access@20.1.0':
-    resolution: {integrity: sha512-IY6ICPRWE8++2jxvy+LzAiFvwAOIHR8cu9eNt+VT5sAFE796o4ma7GSU0eXRCiShmV2n6iSWAwWRT6XD5zIqPA==}
+  '@web3-storage/access@20.1.1':
+    resolution: {integrity: sha512-W2C9sn8NTWw7zIUVzEk5MtwWQLFsOREF6Ju6VK+MYcuAkQ6yVll6Q7YtB5zLPwu29xJ7KIR6e5KzbDNSXHSfrA==}
 
   '@web3-storage/blob-index@1.0.4':
     resolution: {integrity: sha512-04+PrmVHFT+xzRhyIPdcvGc8Y2NDffUe8R1gJOyErVzEVz5N1I9Q/BrlFHYt/A4HrjM5JBsxqSrZgTIkjfPmLA==}
@@ -5694,9 +5694,9 @@ snapshots:
       loupe: 3.1.2
       tinyrainbow: 1.2.0
 
-  '@web3-storage/access@20.1.0':
+  '@web3-storage/access@20.1.1':
     dependencies:
-      '@ipld/car': 5.3.2
+      '@ipld/car': 5.3.3
       '@ipld/dag-ucan': 3.4.0
       '@scure/bip39': 1.4.0
       '@storacha/one-webcrypto': 1.0.1
@@ -5706,7 +5706,7 @@ snapshots:
       '@ucanto/principal': 9.0.1
       '@ucanto/transport': 9.1.1
       '@ucanto/validator': 9.0.2
-      '@web3-storage/capabilities': 17.4.1
+      '@web3-storage/capabilities': 18.0.0
       '@web3-storage/did-mailto': 2.1.0
       bigint-mod-arith: 3.3.1
       conf: 11.0.2
@@ -5822,7 +5822,7 @@ snapshots:
       '@ucanto/interface': 10.0.1
       '@ucanto/principal': 9.0.1
       '@ucanto/transport': 9.1.1
-      '@web3-storage/access': 20.1.0
+      '@web3-storage/access': 20.1.1
       '@web3-storage/blob-index': 1.0.4
       '@web3-storage/capabilities': 17.4.1
       '@web3-storage/did-mailto': 2.1.0
