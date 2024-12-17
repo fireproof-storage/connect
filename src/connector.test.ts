@@ -1,8 +1,7 @@
 // import { connectionFactory } from "./connection-from-store";
 // import { registerS3StoreProtocol } from "./s3/s3-gateway";
 import { URI, runtimeFn } from "@adviser/cement";
-import { type Database, type SuperThis, bs, fireproof } from "@fireproof/core";
-import { mockSuperThis } from "../node_modules/@fireproof/core/tests/helpers.js";
+import { type Database, type SuperThis, bs, ensureSuperThis, fireproof } from "@fireproof/core";
 import { type TaskContext, describe } from "vitest";
 import type { ConnectFunction } from "./connection-from-store.js";
 import { smokeDB } from "../tests/helper.js";
@@ -37,7 +36,7 @@ describe("loading the base store", () => {
   let emptyDbName: string;
   let remoteDbName: string;
   let connect: ConnectFunction;
-  const sthis = mockSuperThis();
+  const sthis = ensureSuperThis();
 
   let resetFPStorageUrl: string;
   afterEach(async () => {

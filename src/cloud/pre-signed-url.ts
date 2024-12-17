@@ -4,6 +4,7 @@ import { Env } from "./backend/env.js";
 import { ReqSignedUrl } from "./msg-types.js";
 
 export async function calculatePreSignedUrl(req: ReqSignedUrl, env: Env, amzDate?: string): Promise<Result<URI>> {
+  // verify if you are not overriding
   let store: string = req.params.store;
   if (req.params.index?.length) {
     store = `${store}-${req.params.index}`;

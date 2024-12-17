@@ -1,6 +1,6 @@
 // / <reference types="@cloudflare/workers-types" />
 import type { Env } from "./env.js";
-import { exception2Result, JSONFormatter, Logger, LoggerImpl, URI, YAMLFormatter } from "@adviser/cement";
+import { JSONFormatter, Logger, LoggerImpl, URI, YAMLFormatter } from "@adviser/cement";
 import {
   buildErrorMsg,
   buildResDelMeta,
@@ -12,18 +12,12 @@ import {
   ErrorMsg,
   MsgBase,
   MsgIsQSError,
-  MsgIsReqDelMeta,
-  MsgIsReqGetMeta,
   MsgIsReqPutMeta,
-  MsgIsReqSignedUrl,
-  MsgIsReqSubscribeMeta,
   MsgIsResPutMeta,
   MsgIsResSubscribeMeta,
   ReqDelMeta,
   ReqGetMeta,
-  ReqOptRes,
   ReqPutMeta,
-  ReqRes,
   ReqSignedUrl,
   ReqSubscribeMeta,
   ResDelMeta,
@@ -38,6 +32,7 @@ import { CRDTEntry, NotFoundError } from "@fireproof/core";
 // import { DurableObject } from "cloudflare:workers";
 import { DurableObject } from "cloudflare:workers";
 import { calculatePreSignedUrl } from "../pre-signed-url.js";
+import { CtxBase, MsgProcessorBase, ReqOptResCtx, ReqResCtx, WithErrorMsg } from "../msg-processor.js";
 
 const CORS = {
   "Content-Type": "application/json",
@@ -55,7 +50,7 @@ function ensureLogger(env: Env, module = "Fireproof"): Logger {
     .With()
     .Module(module)
     .SetDebug(env.FP_DEBUG)
-    .SetExposeStack(!!env.FP_STACK || false)
+    .SetExposeStack(!!env.FP_STACK || false);
   switch (env.FP_FORMAT) {
     case "jsonice":
       logger.SetFormatter(new JSONFormatter(logger.TxtEnDe(), 2));
@@ -110,7 +105,7 @@ export class FPMetaGroups extends DurableObject<Env> {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-    this.logger = ensureLogger(env, "FPMetaGroups")
+    this.logger = ensureLogger(env, "FPMetaGroups");
     // this.ctx.getWebSockets().forEach((webSocket) => {
     //   const fpMetaGroup = webSocket.deserializeAttachment() as FPMetaGroup;
     //   if (MsgIsResSubscribeMeta(fpMetaGroup.group)) {
@@ -126,8 +121,9 @@ export class FPMetaGroups extends DurableObject<Env> {
     }
 
     return CFMsgProcessor.dispatch(
-      () => JSON.parse(msg.toString()), { env: this.env, },
-      async (req: MsgBase, ictx: CtxBase) => {
+      () => JSON.parse(msg.toString()),
+      { env: this.env },
+      async (req: MsgBase, ictx: CFCtxBase) => {
         if (req.auth) {
           // do ucan magic
         }
@@ -147,7 +143,7 @@ export class FPMetaGroups extends DurableObject<Env> {
           lastUsed: new Date(),
         } satisfies FPMetaGroup;
         ws.serializeAttachment(group);
-        const ctx = { ...ictx, group } satisfies CtxHasGroup;
+        const ctx = { ...ictx, group } satisfies CFCtxWithGroup;
         return { req, ctx };
       }
     ).then((qs) => {
@@ -159,28 +155,31 @@ export class FPMetaGroups extends DurableObject<Env> {
             ...qs.ctx.group.qs.s,
             [qs.req.type]: {
               msgSeq: qs.ctx.group.qs?.s?.[qs.req.type]?.msgSeq + 1,
-            }
+            },
           },
-        }
-       } satisfies FPMetaGroup;
+        },
+      } satisfies FPMetaGroup;
       switch (true) {
-        case MsgIsReqPutMeta(qs.req) && MsgIsResPutMeta(qs): {
-          group = { ...group, lastMeta: qs.req } satisfies FPMetaGroup
-          ws.serializeAttachment(group);
-          (qs.res as {metas: CRDTEntry[]}).metas = this.updateMeta(
-            buildUpdateMetaEvent(qs, {
-              connId: qs.res.connId,
-              subscriberId: "later-overriden",
-            }));
-          this.logger.Debug().Any("putMeta", qs.res).Msg("webSocketMessage");
+        case MsgIsReqPutMeta(qs.req) && MsgIsResPutMeta(qs):
+          {
+            group = { ...group, lastMeta: qs.req } satisfies FPMetaGroup;
+            ws.serializeAttachment(group);
+            // console.log("putMeta group", group);
+            (qs.res as { metas: CRDTEntry[] }).metas = this.updateMeta(
+              buildUpdateMetaEvent(qs, {
+                connId: qs.res.connId,
+                subscriberId: "later-overriden",
+              })
+            );
+            this.logger.Debug().Any("putMeta", qs.res).Msg("webSocketMessage");
+          }
           break;
-        }
-        case MsgIsResSubscribeMeta(qs): {
-          group = { ...group, group: qs.res } satisfies FPMetaGroup
-          // console.log("subscribeMeta group", group);
-          ws.serializeAttachment(group);
-          this.updateMeta(
-            {
+        case MsgIsResSubscribeMeta(qs):
+          {
+            group = { ...group, group: qs.res } satisfies FPMetaGroup;
+            // console.log("subscribeMeta group", group);
+            ws.serializeAttachment(group);
+            this.updateMeta({
               connId: qs.res.connId,
               subscriberId: "later-overriden",
               tid: qs.res.tid,
@@ -189,10 +188,9 @@ export class FPMetaGroups extends DurableObject<Env> {
               metaId: "later-overriden",
               metas: [],
               version: qs.res.version,
-            }
-          );
+            });
+          }
           break;
-        }
       }
       // this.logger.Debug().Any("ws.send", qs).Msg("webSocketMessage");
       ws.send(JSON.stringify(qs.res));
@@ -232,8 +230,7 @@ export class FPMetaGroups extends DurableObject<Env> {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       // ignore
-    }
-    finally {
+    } finally {
       this.logger.Debug().Str("code", code.toString()).Str("reason", reason).Msg("webSocketClose");
     }
   }
@@ -257,6 +254,9 @@ export class FPMetaGroups extends DurableObject<Env> {
     }
       return acc;
     }, [] as CRDTEntry[]);
+    if (joinedMeta.length === 0) {
+      return [];
+    }
     const now = new Date();
     const joinedUp = {
       ...up,
@@ -276,11 +276,11 @@ export class FPMetaGroups extends DurableObject<Env> {
             ...group.qs.s,
             [up.type]: {
               msgSeq: group.qs?.s?.[up.type]?.msgSeq + 1,
-            }
-          }
+            },
+          },
         },
         lastUsed: now,
-      } satisfies FPMetaGroup
+      } satisfies FPMetaGroup;
       ws.serializeAttachment(group);
       const toSend = {
         ...joinedUp,
@@ -299,119 +299,50 @@ export class FPMetaGroups extends DurableObject<Env> {
 
 // const app = new Hono<{ Bindings: Env }>();
 
-interface MsgProcessor {
-  dispatch<Q extends MsgBase, S extends MsgBase, C extends CtxBase>(
-    decodeFn: () => Promise<unknown>
-  ): Promise<ReqResCtx<Q, S | ErrorMsg, C>>;
 
-  signedUrl(req: ReqSignedUrl, ctx: CtxBase): Promise<ResSignedUrl | ErrorMsg>;
-  subscribeMeta(req: ReqSubscribeMeta, ctx: CtxBase): Promise<ResSubscribeMeta | ErrorMsg>;
-
-  delMeta(req: ReqDelMeta, ctx: CtxBase): Promise<ResDelMeta | ErrorMsg>;
-  putMeta(req: ReqPutMeta, ctx: CtxBase): Promise<ResPutMeta | ErrorMsg>;
-  getMeta(req: ReqGetMeta, ctx: CtxBase): Promise<ResGetMeta | ErrorMsg>;
-}
-
-interface CtxBaseParam {
+interface CFCtxBaseParam {
   readonly env: Env;
   readonly module?: string;
 }
 
-interface CtxBase {
+interface CFCtxBase extends CtxBase {
   readonly env: Env;
-  readonly logger: Logger;
 }
 
-type CtxHasGroup = CtxBase & { readonly group: FPMetaGroup };
+type CFCtxWithGroup = CFCtxBase & { readonly group: FPMetaGroup };
 
-interface ReqOptResCtx<Q extends MsgBase, S extends MsgBase, C extends CtxBase> extends ReqOptRes<Q, S> {
-  readonly ctx?: C;
-}
+const serverId = "Cloudflare-Fireproof";
 
-interface ReqResCtx<Q extends MsgBase, S extends MsgBase, C extends CtxBase> extends ReqRes<Q, S> {
-  readonly ctx: C;
-}
+class CFMsgProcessor extends MsgProcessorBase<CFCtxBase> {
 
-class CFMsgProcessor implements MsgProcessor {
-  private readonly env: Env;
-  private readonly logger: Logger;
-
-  static dispatch<Q extends MsgBase, S extends MsgBase, C extends CtxBase>(
+  static dispatch<Q extends MsgBase, S extends MsgBase>(
     decodeFn: () => Promise<unknown>,
-    ctx: CtxBaseParam,
-    reqFn?: (msg: Q, ctx: C) => Promise<ReqOptResCtx<Q, S, C>>
-  ): Promise<ReqResCtx<Q, S | ErrorMsg, C>> {
+    ctx: CFCtxBaseParam,
+    reqFn?: (msg: Q, ctx: CFCtxBase) => Promise<ReqOptResCtx<Q, S, CFCtxBase>>
+  ): Promise<ReqResCtx<Q, WithErrorMsg<S | ErrorMsg>, CFCtxWithGroup>> {
     return new CFMsgProcessor({
       env: ctx.env,
       logger: ensureLogger(ctx.env, ctx.module || "CFMsgProcessor"),
-    }).dispatch<Q, S, C>(decodeFn, reqFn);
+    }).dispatch<Q, S>(decodeFn, reqFn);
   }
 
-  constructor(cfp: CtxBase) {
-    this.env = cfp.env;
-    this.logger = cfp.logger;
+  constructor(cfp: CFCtxBase) {
+    super(cfp.logger, cfp, "CFMsgProcessor")
   }
 
-  async dispatch<Q extends MsgBase, S extends MsgBase, C extends CtxBase>(
+  async dispatch<Q extends MsgBase, S extends MsgBase>(
     decodeFn: () => Promise<unknown>,
-    reqFn: (msg: Q, ctx: C) => Promise<ReqOptResCtx<Q, S, C>> = async (req) => ({ req })
-  ): Promise<ReqResCtx<Q, S | ErrorMsg, C>> {
-    const ictx = {
-      // dobj: this.env.FP_META_GROUPS,
-      env: this.env,
-      logger: this.logger,
-    } satisfies CtxBase;
-    const rReqMsg = await exception2Result(async () => (await decodeFn()) as Q);
-    if (rReqMsg.isErr()) {
-      const errMsg = buildErrorMsg(this.logger, { tid: "internal" } as MsgBase, rReqMsg.Err());
-      return {
-        req: errMsg as unknown as Q,
-        res: errMsg,
-        ctx: ictx as C,
-      };
-    }
-    const { req, ctx: optCtx } = await reqFn(rReqMsg.Ok() as Q, ictx as C);
-    const ctx = { ...ictx, ...optCtx } as C & { readonly group: FPMetaGroup };
-    switch (true) {
-      case MsgIsReqSignedUrl(req):
-        return {
-          req,
-          res: (await this.signedUrl(req, ctx)) as S | ErrorMsg,
-          ctx,
-        };
-      case MsgIsReqSubscribeMeta(req):
-        return {
-          req,
-          res: (await this.subscribeMeta(req, ctx)) as S | ErrorMsg,
-          ctx,
-        };
-      case MsgIsReqPutMeta(req):
-        return {
-          req,
-          res: (await this.putMeta(req, ctx)) as S | ErrorMsg,
-          ctx,
-        };
-      case MsgIsReqGetMeta(req):
-        return {
-          req,
-          res: (await this.getMeta(req, ctx)) as S | ErrorMsg,
-          ctx,
-        };
-      case MsgIsReqDelMeta(req):
-        return {
-          req,
-          res: (await this.delMeta(req, ctx)) as S | ErrorMsg,
-          ctx,
-        };
-    }
-    return {
-      req: req,
-      res: buildErrorMsg(this.logger, req, new Error(`unknown msg.type=${req.type}`)) as S | ErrorMsg,
-      ctx,
-    };
+    reqFn: (msg: Q, ctx: CFCtxBase) => Promise<ReqOptResCtx<Q, S, CFCtxBase>> = async (req) => ({ req })
+  ): Promise<ReqResCtx<Q, WithErrorMsg<S>, CFCtxWithGroup>> {
+    return super.dispatch(decodeFn, async (msg: Q, ctx: CFCtxBase) => {
+      const { req, res, ctx: optCtx } = await reqFn(msg, ctx)
+      return { req, res, ctx: optCtx || ctx}
+    })
   }
 
-  async delMeta(req: ReqDelMeta, ctx: CtxHasGroup): Promise<ResDelMeta | ErrorMsg> {
+
+
+  async delMeta(req: ReqDelMeta, ctx: CFCtxWithGroup): Promise<ResDelMeta | ErrorMsg> {
     // delete meta does nothing in this implementation
     // if you delete meta basically you are deleting the whole ledger
     return buildResDelMeta(req, {
@@ -421,7 +352,7 @@ class CFMsgProcessor implements MsgProcessor {
     });
   }
 
-  async getMeta(req: ReqGetMeta, _ctx: CtxHasGroup): Promise<ResGetMeta | ErrorMsg> {
+  async getMeta(req: ReqGetMeta, ctx: CFCtxWithGroup): Promise<ResGetMeta | ErrorMsg> {
     const rSignedUrl = await calculatePreSignedUrl(
       {
         tid: req.tid,
@@ -429,7 +360,7 @@ class CFMsgProcessor implements MsgProcessor {
         version: req.version,
         params: { ...req.params, method: "GET" },
       },
-      this.env
+      ctx.env
     );
     if (rSignedUrl.isErr()) {
       return buildErrorMsg(this.logger, req, rSignedUrl.Err());
@@ -442,7 +373,7 @@ class CFMsgProcessor implements MsgProcessor {
     });
   }
 
-  async putMeta(req: ReqPutMeta, ctx: CtxHasGroup): Promise<ResPutMeta | ErrorMsg> {
+  async putMeta(req: ReqPutMeta, ctx: CFCtxWithGroup): Promise<ResPutMeta | ErrorMsg> {
     const rSignedUrl = await calculatePreSignedUrl(
       {
         tid: req.tid,
@@ -450,13 +381,14 @@ class CFMsgProcessor implements MsgProcessor {
         version: req.version,
         params: { ...req.params, method: "PUT" },
       },
-      this.env
+      ctx.env
     );
     if (rSignedUrl.isErr()) {
       return buildErrorMsg(this.logger, req, rSignedUrl.Err());
     }
     // roughly time ordered
     return buildResPutMeta(req, {
+      // metaId should be a hash of metas.
       metaId: new Date().getTime().toString(),
       metas: req.metas,
       signedPutUrl: rSignedUrl.Ok().toString(),
@@ -464,8 +396,8 @@ class CFMsgProcessor implements MsgProcessor {
     });
   }
 
-  async signedUrl(req: ReqSignedUrl, _ctx: CtxBase): Promise<ResSignedUrl | ErrorMsg> {
-    const rSignedUrl = await calculatePreSignedUrl(req, this.env);
+  async signedUrl<Q extends ReqSignedUrl>(req: Q, ctx: CFCtxBase): Promise<ResSignedUrl | ErrorMsg> {
+    const rSignedUrl = await calculatePreSignedUrl(req, ctx.env);
     if (rSignedUrl.isErr()) {
       return buildErrorMsg(this.logger, req, rSignedUrl.Err());
     }
@@ -473,7 +405,8 @@ class CFMsgProcessor implements MsgProcessor {
     return resSignedUrl;
   }
 
-  async subscribeMeta(req: ReqSubscribeMeta, ctx: CtxHasGroup): Promise<ResSubscribeMeta | ErrorMsg> {
+
+  async subscribeMeta(req: ReqSubscribeMeta, ctx: CFCtxWithGroup): Promise<ResSubscribeMeta | ErrorMsg> {
     // console.log("subscribeMeta", req)
     return buildResSubscriptMeta(req, ctx.group);
   }

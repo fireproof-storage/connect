@@ -27,7 +27,6 @@ export interface MsgBase {
   readonly version: string;
   readonly auth?: AuthType;
 }
-
 export interface ErrorMsg extends MsgBase {
   readonly type: "error";
   readonly message: string;
@@ -42,6 +41,166 @@ export function MsgIsQSError(rq: ReqRes<MsgBase, MsgBase>): rq is ReqRes<ErrorMs
 export type HttpMethods = "GET" | "PUT" | "DELETE";
 export type FPStoreTypes = "meta" | "data" | "wal";
 
+export interface Gestalt {
+  /**
+   * Describes StoreTypes which are handled
+   */
+  readonly storeTypes: FPStoreTypes[];
+  /**
+   * A unique identifier
+   */
+  readonly id: string;
+  /**
+   * HttpEndpoints (URL) required atleast one
+   * could be absolute or relative
+   */
+  readonly httpEndpoints: string[];
+  /**
+   * WebsocketEndpoints (URL) required atleast one
+   * could be absolute or relative
+   */
+  readonly wsEndpoints: string[];
+  /**
+   * Encodings supported
+   * JSON, CBOR
+   */
+  readonly encodings: ("JSON"|"CBOR")[];
+  /**
+   * Authentication methods supported
+   */
+  readonly auth: AuthType[];
+  /**
+   * Requires Authentication
+   */
+  readonly requiresAuth: boolean;
+  /**
+   * In|Outband Data | Meta | WAL Support
+   * Inband Means that the Payload is part of the message
+   * Outband Means that the Payload is PUT/GET to a different URL
+   * A Clien implementation usally not support reading or writing
+   * support
+   */
+  readonly data?: {
+    readonly inband: boolean;
+    readonly outband: boolean;
+  }
+  readonly meta?: {
+    readonly inband: true; // meta inband is mandatory
+    readonly outband: boolean;
+  }
+  readonly wal?: {
+    readonly inband: boolean;
+    readonly outband: boolean;
+  }
+  /**
+   * Request Types supported
+   * reqGestalt, reqSubscribeMeta, reqPutMeta, reqGetMeta, reqDelMeta, reqUpdateMeta
+   */
+  readonly reqTypes: string[];
+  /**
+   * Response Types supported
+   * resGestalt, resSubscribeMeta, resPutMeta, resGetMeta, resDelMeta, updateMeta
+   */
+  readonly resTypes: string[];
+  /**
+   * Event Types supported
+   * updateMeta
+   */
+  readonly eventTypes: string[];
+}
+
+export function defaultGestalt(uniqServerId: string, hasPersitance: boolean): Gestalt {
+  return {
+    storeTypes: ["meta", "data", "wal"],
+    id: uniqServerId,
+    httpEndpoints: ["/fp"],
+    wsEndpoints: ["/ws"],
+    encodings: ["JSON"],
+    auth: [],
+    requiresAuth: false,
+    data: hasPersitance ? {
+      inband: true,
+      outband: true,
+    }: undefined,
+    meta: hasPersitance ? {
+      inband: true,
+      outband: true,
+    }: undefined,
+    wal: hasPersitance ? {
+      inband: true,
+      outband: true,
+    }: undefined,
+    reqTypes: [
+      "reqGestalt",
+      // "reqSignedUrl",
+      "reqSubscribeMeta",
+      "reqPutMeta",
+      "reqGetMeta",
+      "reqDelMeta",
+      "reqPutData",
+      "reqGetData",
+      "reqDelData",
+      "reqPutWAL",
+      "reqGetWAL",
+      "reqDelWAL",
+      "reqUpdateMeta",
+    ],
+    resTypes: [
+      "resGestalt",
+      // "resSignedUrl",
+      "resSubscribeMeta",
+      "resPutMeta",
+      "resGetMeta",
+      "resDelMeta",
+      "resPutData",
+      "resGetData",
+      "resDelData",
+      "resPutWAL",
+      "resGetWAL",
+      "resDelWAL",
+      "updateMeta",
+    ],
+    eventTypes: ["updateMeta"],
+  }
+}
+
+/**
+ * The ReqGestalt message is used to request the
+ * features of the Responder.
+ */
+export interface ReqGestalt extends MsgBase {
+  readonly type: "reqGestalt";
+  readonly gestalt: Gestalt;
+}
+
+export function MsgIsReqGestalt(msg: MsgBase): msg is ReqGestalt {
+  return msg.type === "reqGestalt";
+}
+
+/**
+ * The ResGestalt message is used to respond with
+ * the features of the Responder.
+ */
+export interface ResGestalt extends MsgBase {
+  readonly type: "resGestalt";
+  readonly params: Gestalt;
+}
+
+export function buildResGestalt(req: ReqGestalt, gestalt: Gestalt): ResGestalt | ErrorMsg {
+  return {
+    tid: req.tid,
+    type: "resGestalt",
+    version: VERSION,
+    params: gestalt
+  };
+}
+
+export function MsgIsResGestalt(msg: MsgBase): msg is ResGestalt {
+  return msg.type === "resGestalt";
+}
+
+
+
 export interface ConnectionKey {
   // readonly protocol: "ws" | "wss"; // ws or wss
   readonly tenantId: string;
@@ -55,11 +214,6 @@ export interface SignedUrlParam extends ConnectionKey {
   readonly key: string;
   readonly expires?: number; // seconds
   readonly index?: string;
-}
-
-export interface Connection {
-  readonly ws: WebSocket;
-  readonly params: ConnectionKey;
 }
 
 export interface ReqRes<Q extends MsgBase, S extends MsgBase> {
@@ -93,12 +247,9 @@ const VERSION = "FP-MSG-1.0";
 
 /* Signed URL */
 
-export function buildReqSignedUrl(sthis: NextId, req: ReqSignedUrlParam): ReqSignedUrl {
+export function buildReqSignedUrl(req: ReqSignedUrlParam): ReqSignedUrlParam {
   return {
-    tid: sthis.nextId().str,
-    type: "reqSignedUrl",
-    version: VERSION,
-    ...req,
+    tid: req.tid,
     params: {
       // protocol: "wss",
       ...req.params,
@@ -106,14 +257,31 @@ export function buildReqSignedUrl(sthis: NextId, req: ReqSignedUrlParam): ReqSig
   };
 }
 
-export function MsgIsReqSignedUrl(msg: MsgBase): msg is ReqSignedUrl {
-  return msg.type === "reqSignedUrl";
+// export function MsgIsReqSignedUrl(msg: MsgBase): msg is ReqSignedUrl {
+//   return msg.type === "reqSignedUrl";
+// }
+
+interface StoreAndType {
+  readonly store: FPStoreTypes;
+  readonly resType: string;
+}
+const reqToRes: Record<string, StoreAndType>  = {
+  reqGetData: { store: "data", resType: "resGetData" },
+  reqPutData: { store: "data", resType: "resPutData" },
+  reqDelData: { store: "data", resType: "resDelData" },
+  reqGetWAL: { store: "wal", resType: "resGetWAL" },
+  reqPutWAL: { store: "wal", resType: "resPutWAL" },
+  reqDelWAL: { store: "wal", resType: "resDelWAL" },
+}
+
+export function getStoreFromType(req: MsgBase): StoreAndType {
+  return reqToRes[req.type] || (() => { throw new Error(`unknown req.type=${req.type}`) })();
 }
 
 export function buildResSignedUrl(req: ReqSignedUrl, signedUrl: string): ResSignedUrl {
   return {
     tid: req.tid,
-    type: "resSignedUrl",
+    type: getStoreFromType(req).resType,
     version: VERSION,
     params: req.params,
     signedUrl,
@@ -132,17 +300,12 @@ export function buildErrorMsg(logger: Logger, base: Partial<MsgBase>, error: Err
 }
 
 export interface ReqSignedUrl extends MsgBase {
-  readonly type: "reqSignedUrl";
-  readonly params: SignedUrlParam;
-}
-
-export interface ReqSignedUrl extends MsgBase {
-  readonly type: "reqSignedUrl";
+  // readonly type: "reqSignedUrl";
   readonly params: SignedUrlParam;
 }
 
 export interface ResSignedUrl extends MsgBase {
-  readonly type: "resSignedUrl";
+  // readonly type: "resSignedUrl";
   readonly params: SignedUrlParam;
   readonly signedUrl: string;
 }
@@ -262,6 +425,17 @@ export function MsgIsResPutMeta(qs: ReqRes<MsgBase, MsgBase>): qs is ReqRes<ReqP
 export interface ConnSubId {
   readonly connId: string;
   readonly subscriberId: string;
+}
+
+/**
+ * This is used for non WebSocket server implementations
+ * to retrieve the meta data. It should be done by polling
+ * and might implement long polling.
+ * It will answer with a UpdateMetaEvent.
+ */
+export interface ReqUpdateMeta extends MsgBase, ConnSubId {
+  readonly type: "reqUpdateMeta";
+  readonly key: ConnectionKey;
 }
 
 export interface UpdateMetaEvent extends MsgBase, ConnSubId {
@@ -397,4 +571,81 @@ export function buildResDelMeta(req: ReqDelMeta, metaParam: DelMetaParam): ResDe
 
 export function MsgIsResDelMeta(qs: ReqRes<MsgBase, MsgBase>): qs is ReqRes<ReqDelMeta, ResDelMeta> {
   return qs.res.type === "resDelMeta" && qs.req.type === "reqDelMeta";
+}
+
+export interface ReqGetData extends ReqSignedUrl {
+  readonly type: "reqGetData";
+}
+
+export function MsgIsReqGetData(msg: MsgBase): msg is ReqGetData {
+  return msg.type === "reqGetData";
+}
+
+export interface ResGetData extends ResSignedUrl {
+  readonly type: "resGetData";
+  readonly payload: Uint8Array; // transfered via JSON base64
+}
+
+export interface ReqPutData extends ReqSignedUrl {
+  readonly type: "reqPutData";
+  readonly payload: Uint8Array; // transfered via JSON base64
+}
+
+export function MsgIsReqPutData(msg: MsgBase): msg is ReqPutData {
+  return msg.type === "reqPutData";
+}
+
+export interface ResPutData extends ResSignedUrl {
+  readonly type: "resPutData";
+}
+
+export interface ReqDelData extends ReqSignedUrl {
+  readonly type: "reqGetData";
+}
+
+export function MsgIsReqDelData(msg: MsgBase): msg is ReqDelData {
+  return msg.type === "reqDelData";
+}
+
+export interface ResDelData extends ResSignedUrl {
+  readonly type: "resDelData";
+}
+
+export interface ReqGetWAL extends ReqSignedUrl {
+  readonly type: "reqGetWAL";
+}
+
+export function MsgIsReqGetWAL(msg: MsgBase): msg is ReqGetWAL {
+  return msg.type === "reqGetWAL";
+}
+
+export interface ResGetWAL extends ResSignedUrl {
+  readonly type: "resGetWAL";
+  readonly payload: Uint8Array; // transfered via JSON base64
+}
+
+
+export interface ReqPutWAL extends Omit<ReqSignedUrl, "type"> {
+  readonly type: "reqPutWAL";
+  readonly payload: Uint8Array; // transfered via JSON base64
+}
+
+export function MsgIsReqPutWAL(msg: MsgBase): msg is ReqPutWAL {
+  return msg.type === "reqPutWAL";
+}
+
+export interface ResPutWAL extends Omit<ResSignedUrl, "type"> {
+  readonly type: "resPutWAL";
+}
+
+export interface ReqDelWAL extends Omit<ReqSignedUrl, "type"> {
+  readonly type: "reqGetWAL";
+}
+
+export function MsgIsReqDelWAL(msg: MsgBase): msg is ReqDelWAL {
+  return msg.type === "reqDelWAL";
+}
+
+export interface ResDelWAL extends Omit<ResSignedUrl, "type"> {
+  readonly type: "resDelWAL";
 }

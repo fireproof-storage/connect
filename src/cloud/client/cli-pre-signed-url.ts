@@ -2,15 +2,15 @@
 // curl $(npx tsx src/cloud/client/cli-pre-signed-url.ts GET)
 // curl -X PUT --data-binary @/etc/protocols  $(npx tsx src/cloud/client/cli-pre-signed-url.ts)
 import { BuildURI } from "@adviser/cement";
-import { mockSuperThis } from "../../../node_modules/@fireproof/core/tests/helpers.js";
 import { AwsClient } from "aws4fetch";
 import dotenv from "dotenv";
 import { command, run, option, oneOf, string } from "cmd-ts";
+import { ensureSuperThis } from "@fireproof/core";
 // import * as t from 'io-ts';
 
 (async () => {
   dotenv.config();
-  const sthis = mockSuperThis();
+  const sthis = ensureSuperThis();
   const cmd = command({
     name: "cli-pre-signed-url",
     description: "sign a url for cloud storage",
