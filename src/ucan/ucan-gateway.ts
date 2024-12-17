@@ -138,7 +138,6 @@ export class UCANGateway implements bs.Gateway {
     }
 
     this.logger.Debug().Str("store", store).Str("key", key).Msg("put");
-    console.log("🏗️ PUT", store);
 
     switch (store.toLowerCase()) {
       case "data": {
@@ -222,7 +221,6 @@ export class UCANGateway implements bs.Gateway {
     }
 
     this.logger.Debug().Str("store", store).Str("key", key).Msg("get");
-    console.log("🔮 GET", store);
 
     switch (store.toLowerCase()) {
       case "data": {
@@ -250,7 +248,6 @@ export class UCANGateway implements bs.Gateway {
         });
 
         this.logger.Debug().Any("head", head.out).Msg("Meta (head) retrieved");
-        console.log(head.out);
 
         if (head.out.error) throw head.out.error;
         if (head.out.ok.head === undefined) throw new NotFoundError();
