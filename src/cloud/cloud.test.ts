@@ -8,7 +8,7 @@ import * as toml from "smol-toml";
 import { bs, CRDTEntry, Database, ensureSuperThis, fireproof, isNotFoundError, rt } from "@fireproof/core";
 import { AwsClient } from "aws4fetch";
 import { smokeDB } from "../../tests/helper.js";
-import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway.js";
+import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway.ts-off";
 import { calculatePreSignedUrl } from "./pre-signed-url.js";
 import { newWebSocket } from "./new-websocket.js";
 
@@ -19,7 +19,7 @@ function testReqSignedUrl(tid = "test") {
     params: {
       // protocol: "ws",
       path: "/hallo",
-      name: "test-name",
+      ledgerName: "test-name",
       method: "GET",
       tenantId: "tenantId",
       store: "wal",
@@ -146,6 +146,16 @@ describe("CloudBackendTest", () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual(await testResSignedUrl(env));
     });
+
+    it("reqOpen without websocket", async () => {
+      const conn = await msgOpen(cfURL, { }
+    });
+
+    it("reqOpen with websocket", async () => {
+    });
+
+
+
     it("use websockets SignedUrl", async () => {
       await Promise.all(
         Array(100)

@@ -6,7 +6,6 @@ import {
   buildReqGetMeta,
   buildReqPutMeta,
   buildReqSubscriptMeta,
-  Connection,
   ConnectionKey,
   HttpMethods,
   MsgBase,
@@ -21,13 +20,14 @@ import {
 } from "../msg-types.js";
 import { newWebSocket } from "../new-websocket.js";
 import { to_uint8 } from "../../coerce-binary.js";
+import { MsgConnection } from "../msger.js";
 
 const VERSION = "v0.1-fp-cloud";
 
 export interface StoreTypeGateway {
-  get(uri: URI, conn: Promise<Result<Connection>>): Promise<Result<Uint8Array>>;
-  put(uri: URI, body: Uint8Array, conn: Promise<Result<Connection>>): Promise<Result<void>>;
-  delete(uri: URI, conn: Promise<Result<Connection>>): Promise<Result<void>>;
+  get(uri: URI, conn: Promise<Result<MsgConnection>>): Promise<Result<Uint8Array>>;
+  put(uri: URI, body: Uint8Array, conn: Promise<Result<MsgConnection>>): Promise<Result<void>>;
+  delete(uri: URI, conn: Promise<Result<MsgConnection>>): Promise<Result<void>>;
 }
 
 abstract class BaseGateway {

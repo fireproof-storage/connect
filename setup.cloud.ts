@@ -1,8 +1,8 @@
 import { BuildURI } from "@adviser/cement";
-import { registerFireproofCloudStoreProtocol } from "./src/cloud/client/gateway.ts";
+// import { registerFireproofCloudStoreProtocol } from "./src/cloud/client/gateway.ts";
 import dotenv from "dotenv";
 
-registerFireproofCloudStoreProtocol();
+// registerFireproofCloudStoreProtocol();
 
 dotenv.config();
 

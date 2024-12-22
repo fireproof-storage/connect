@@ -414,6 +414,9 @@ class CFMsgProcessor extends MsgProcessorBase<CFCtxBase> {
 
 export default {
   async fetch(req, env, _ctx): Promise<Response> {
+ 
+
+    
     const id = env.FP_META_GROUPS.idFromName("fireproof");
     const stub = env.FP_META_GROUPS.get(id);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

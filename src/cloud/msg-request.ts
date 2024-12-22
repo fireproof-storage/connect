@@ -1,10 +1,11 @@
 import { Future, Logger, exception2Result, Result, CoerceURI, KeyedResolvOnce, URI } from "@adviser/cement";
-import { SuperThis, ensureLogger } from "@fireproof/core";
-import { RequestOpts, WithErrorMsg } from "./msg-processor.js";
-import { MsgBase, AuthType, Gestalt, defaultGestalt, ResGestalt, ReqGestalt, buildErrorMsg } from "./msg-types.js";
+import { SuperThis, } from "@fireproof/core";
+import { RequestOpts, } from "./msg-processor.js";
+import { MsgBase, AuthType, Gestalt, defaultGestalt, ResGestalt, ReqGestalt, MsgIsResGestalt, MsgIsError, } from "./msg-types.js";
 
 import * as json from 'multiformats/codecs/json';
 import * as cborg from '@fireproof/vendor/cborg';
+import { MsgConnection } from "./msger.js";
 
 export interface EnDeCoder {
   encode<T>(node: T): Uint8Array;
@@ -15,14 +16,7 @@ export interface WaitForTid {
   readonly tid: string;
   readonly future: Future<MsgBase>;
   // undefined match all
-  readonly type?: string;
-}
-
-export interface Connection {
-  // readonly ws: WebSocket;
-  // readonly params: ConnectionKey;
-  request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<Result<WithErrorMsg<S>>>
-
+  readonly waitFor: (msg: MsgBase) => boolean;
 }
 
 export interface FetchGestaltParams {
@@ -30,12 +24,12 @@ export interface FetchGestaltParams {
   readonly sthis: SuperThis;
   readonly gestaltURL: URI;
   readonly uniqServerId?: string;
-  readonly getConn: () => Promise<Connection>;
+  readonly getConn: () => Promise<MsgConnection>;
 }
 
 export interface HttpConnectionParams {
   readonly gestaltURL: CoerceURI;
-  readonly fetchConnection?: Connection;
+  readonly fetchConnection?: MsgConnection;
   readonly ende?: EnDeCoder;
   readonly uniqServerId?: string;
 }
@@ -44,7 +38,8 @@ export interface GestaltItem {
   readonly ende: EnDeCoder;
   readonly mime: string;
   readonly auth?: AuthType;
-  readonly params: Gestalt;
+  readonly hasPersistent?: boolean;
+  readonly gestalt: Gestalt;
 }
 
 export type RequestFN<Q extends MsgBase, S extends MsgBase> = (req: Q, opts: RequestOpts) => Promise<Result<S>>
@@ -78,83 +73,24 @@ async function fetchGestalt(fgp: FetchGestaltParams): Promise<GestaltItem> {
       type: "reqGestalt",
       tid: fgp.sthis.nextId().str,
       version: serverId,
-      gestalt: defaultGestalt(fgp.uniqServerId || serverId, false),
-    }, { waitType: "resGestalt" });
-    if (rGestalt.isErr()) {
-      throw rGestalt.Err();
+      gestalt: defaultGestalt({ id: fgp.uniqServerId || serverId }),
+    }, { waitFor: MsgIsResGestalt });
+    if (MsgIsError(rGestalt)) {
+      throw Error(rGestalt.message)
     }
-    const gestalt = rGestalt.Ok() as ResGestalt;
-    const ende = encoded(fgp.sthis.logger, gestalt.params.encodings[0])
+    const gestalt = rGestalt.gestalt
+    const ende = encoded(fgp.sthis.logger, gestalt.encodings[0])
     return {
       ende: ende.ende,
       mime: ende.mime,
       auth: gestalt.auth,
-      params: gestalt.params
+      gestalt: gestalt
     }
   })
 }
 
-function selectRandom<T>(arr: T[]): T {
+export function selectRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
-}
-
-export class HttpConnection implements Connection {
-  readonly sthis: SuperThis;
-  readonly logger: Logger;
-  readonly gestaltItem: GestaltItem;
-  readonly mec: MsgErrorClose;
-  constructor(sthis: SuperThis, gi: GestaltItem, mec: MsgErrorClose = {}) {
-    this.sthis = sthis;
-    this.logger = ensureLogger(sthis, "HttpConnection");
-    this.gestaltItem = gi;
-    this.mec = mec;
-  }
-
-  async request<Q extends MsgBase, S extends MsgBase>(req: Q, _opts: RequestOpts): Promise<Result<WithErrorMsg<S>>> {
-    const headers = new Headers();
-    headers.append("Content-Type", this.gestaltItem.mime);
-    headers.append("Accept", this.gestaltItem.mime);
-    const rReqBody = exception2Result(() => this.gestaltItem.ende.encode(req));
-    if (rReqBody.isErr()) {
-      return this.toOnMessage(buildErrorMsg(this.logger, req,
-        this.logger.Error().Err(rReqBody.Err()).Msg("encode error").AsError()
-      ));
-    }
-    headers.append("Content-Length", rReqBody.Ok().byteLength.toString());
-    const url = selectRandom(this.gestaltItem.params.httpEndpoints)
-    const rRes = await exception2Result(() => fetch(url, {
-      method: "PUT",
-      headers,
-      body: rReqBody.Ok(),
-    }));
-    if (rRes.isErr()) {
-      return this.toOnMessage(buildErrorMsg(this.logger, req,
-        this.logger.Error().Err(rRes.Ok()).Msg("fetch error").AsError()
-      ));
-    }
-    const res = rRes.Ok();
-    if (!res.ok) {
-      return this.toOnMessage(
-        buildErrorMsg(this.logger, req, this.logger.Error()
-        .Url(url)
-        .Str("status", res.status.toString())
-        .Str("statusText", res.statusText).Msg("HTTP Error").AsError()));
-    }
-    const data = new Uint8Array(await res.arrayBuffer());
-    const ret = await exception2Result(async () => this.gestaltItem.ende.decode(data) as S);
-    if (ret.isErr()) {
-      return this.toOnMessage(buildErrorMsg(this.logger, req,
-        this.logger.Error().Err(ret.Err()).Msg("decode error").AsError()
-      ));
-    }
-    return this.toOnMessage(ret.Ok())
-  }
-
-  toOnMessage<T extends MsgBase>(msg: WithErrorMsg<T>): Result<WithErrorMsg<T>> {
-    this.mec.msgFn?.(msg as unknown as MessageEvent<MsgBase>);
-    return Result.Ok(msg);
-  }
-
 }
 
 export interface MsgErrorClose {
@@ -162,79 +98,6 @@ export interface MsgErrorClose {
   readonly errFn: (err: Event) => void;
   readonly closeFn: () => void;
   readonly openFn: () => void;
-}
-
-export class WSAttachConnection implements Connection {
-  readonly ws: WebSocket;
-  // readonly key: ConnectionKey;
-  readonly sthis: SuperThis;
-  readonly logger: Logger;
-
-  // readonly errFns = new Map<string, (err: Error) => void>();
-  // readonly closeFns = new Map<string, () => void>();
-  // readonly msgFns = new Map<string, (msg: MsgBase) => void>();
-
-  readonly waitForTid: WSAttachable["waitForTid"];
-  constructor(sthis: SuperThis, ws: WebSocket, waitForTid: WSAttachable["waitForTid"], mec: MsgErrorClose) {
-    this.ws = ws;
-    // this.key = key;
-    this.sthis = sthis;
-    // this.onClose = onClose;
-    this.logger = ensureLogger(sthis, "WSAttachConnection", {
-      this: true,
-    });
-    this.waitForTid = waitForTid;
-    ws.onmessage = mec.msgFn
-    ws.onopen = mec.openFn;
-    ws.onerror = mec.errFn
-    ws.onclose = mec.closeFn
-  }
-
-  async close(): Promise<void> {
-    this.logger.Debug().Msg("close");
-    this.ws.close();
-  }
-
-  async request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<Result<S>> {
-    opts = {
-      ...{
-        timeout: 1000,
-      },
-      ...opts,
-    };
-    const future = new Future<MsgBase>();
-    this.waitForTid.set(req.tid, {
-      tid: req.tid,
-      future,
-      type: opts.waitType,
-    });
-    const start = Date.now();
-    const logger = ensureLogger(this.sthis, "ConnectionImpl.request")
-      .With()
-      .Str("tid", req.tid)
-      .Uint64("timeout", opts.timeout)
-      .Ref("start", () => new Date().getTime() - start)
-      .Any("req", req)
-      .Logger();
-    this.ws.send(JSON.stringify(req));
-    const clean = setTimeout(() => {
-      this.waitForTid.delete(req.tid);
-      future.reject(new Error("Timeout"));
-    }, opts.timeout);
-    // add timeout handling
-    logger.Debug().Msg("request-enter");
-    return future
-      .asPromise()
-      .finally(() => clearTimeout(clean))
-      .then((res) => {
-        logger.Debug().Any("res", res).Msg("request-ok");
-        return Result.Ok(res as S);
-      })
-      .catch((err) => {
-        logger.Error().Err(err).Msg("request-error");
-        return Result.Ok(buildErrorMsg(this.logger, req, err) as MsgBase as S);
-      });
-  }
 }
 
 

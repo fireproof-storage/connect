@@ -1,5 +1,16 @@
-export function to_uint8(input: ArrayBuffer | ArrayBufferView | Uint8Array): Uint8Array {
-  if (input instanceof ArrayBuffer) {
+export async function top_uint8(input: string | ArrayBuffer | ArrayBufferView | Uint8Array | SharedArrayBuffer | Blob): Promise<Uint8Array> {
+  if (input instanceof Blob) {
+    return new Uint8Array(await input.arrayBuffer());
+  }
+  return to_uint8(input);
+}
+
+export function to_uint8(input: string | ArrayBuffer | ArrayBufferView | Uint8Array | SharedArrayBuffer): Uint8Array {
+  if (typeof input === "string") {
+    // eslint-disable-next-line no-restricted-globals
+    return new TextEncoder().encode(input);
+  }
+  if (input instanceof ArrayBuffer || input instanceof SharedArrayBuffer) {
     return new Uint8Array(input);
   }
 

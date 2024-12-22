@@ -62,16 +62,16 @@ export interface MsgProcessor<O extends CtxBase> {
 }
 
 export interface RequestOpts {
-  readonly waitType: string;
+  readonly waitFor: (msg: MsgBase) => boolean;
   readonly timeout?: number; // ms
 }
-export interface Connection {
-  readonly ws: WebSocket;
-  readonly key: ConnectionKey;
-  request<T extends MsgBase>(msg: MsgBase, opts: RequestOpts): Promise<Result<T>>;
-  onMessage(msgFn: (msg: MsgBase) => void): () => void;
-  close(): Promise<void>;
-}
+// export interface Connection {
+//   readonly ws: WebSocket;
+//   readonly key: ConnectionKey;
+//   request<T extends MsgBase>(msg: MsgBase, opts: RequestOpts): Promise<Result<T>>;
+//   onMessage(msgFn: (msg: MsgBase) => void): () => void;
+//   close(): Promise<void>;
+// }
 
 
 export abstract class MsgProcessorBase<I extends CtxBase, O extends CtxBase = I> implements MsgProcessor<O> {
