@@ -123,7 +123,6 @@
     "aws4fetch": "^1.0.20",
     "better-sqlite3": "^11.7.0",
     "cmd-ts": "^0.13.0",
-    "cross-fetch": "^4.0.0",
     "dotenv": "^16.4.5",
     "events": "^3.3.0",
     "hono": "^4.6.13",
