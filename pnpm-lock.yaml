@@ -71,12 +71,6 @@ importers:
       better-sqlite3:
         specifier: ^11.7.0
         version: 11.7.0
-      cborg:
-        specifier: ^4.2.7
-        version: 4.2.7
-      cross-fetch:
-        specifier: ^4.1.0
-        version: 4.1.0(encoding@0.1.13)
       events:
         specifier: ^3.3.0
         version: 3.3.0
@@ -2120,9 +2114,6 @@ packages:
   cookie@0.7.2:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
     engines: {node: '>= 0.6'}
-
-  cross-fetch@4.1.0:
-    resolution: {integrity: sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw==}
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -6387,12 +6378,6 @@ snapshots:
   consola@3.2.3: {}
 
   cookie@0.7.2: {}
-
-  cross-fetch@4.1.0(encoding@0.1.13):
-    dependencies:
-      node-fetch: 2.7.0(encoding@0.1.13)
-    transitivePeerDependencies:
-      - encoding
 
   cross-spawn@7.0.6:
     dependencies:
