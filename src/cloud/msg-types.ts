@@ -1,12 +1,12 @@
 import { CRDTEntry, Logger, SuperThis } from "@fireproof/core";
-import { GestaltItem } from "./msg-request.js";
+import { EnDeCoder } from "./msg-request.js";
 
-export interface ConnId {
-  readonly connId: string;
-}
+export const VERSION = "FP-MSG-1.0";
 
+// export interface ConnId {
+//   readonly connId: string;
+// }
 // type AddConnId<T extends MsgBase, N> = Omit<T, "type"> & ConnId & { readonly type: N };
-
 interface NextId {
   readonly nextId: SuperThis["nextId"];
 }
@@ -22,21 +22,40 @@ export interface UCanAuth {
   };
 }
 
+export interface ConnectionKey {
+  readonly tenantId: string;
+  readonly ledgerName: string;
+}
+
+export interface Connection {
+  readonly key: ConnectionKey;
+  readonly reqId: string;
+  readonly resId: string;
+}
+
+export interface Connected {
+  readonly conn: Connection;
+}
+
 export interface MsgBase {
   readonly tid: string;
   readonly type: string;
   readonly version: string;
   readonly auth?: AuthType;
+  readonly conn?: Connection;
 }
+
 export interface ErrorMsg extends MsgBase {
   readonly type: "error";
   readonly message: string;
   readonly body?: string;
   readonly stack?: string[];
 }
+
 export function MsgIsError(rq: MsgBase): rq is ErrorMsg {
   return rq.type === "error";
 }
+
 export function MsgIsQSError(rq: ReqRes<MsgBase, MsgBase>): rq is ReqRes<ErrorMsg, ErrorMsg> {
   return rq.res.type === "error" || rq.req.type === "error";
 }
@@ -44,10 +63,7 @@ export function MsgIsQSError(rq: ReqRes<MsgBase, MsgBase>): rq is ReqRes<ErrorMs
 export type HttpMethods = "GET" | "PUT" | "DELETE";
 export type FPStoreTypes = "meta" | "data" | "wal";
 
-export interface ConnectionKey {
-  readonly tenantId: string;
-  readonly ledgerName: string;
-}
+
 
 // reqRes is http
 // stream is WebSocket
@@ -126,11 +142,21 @@ export interface Gestalt {
   readonly eventTypes: string[];
 }
 
+export interface MsgerParams {
+  readonly ende: EnDeCoder;
+  readonly mime: string;
+  readonly auth?: AuthType;
+  readonly hasPersistent?: boolean;
+  readonly protocol: "http" | "ws";
+  readonly timeout: number; // msec
+}
+
 // force the server id
-export type GestaltParam = Partial<GestaltItem> & { readonly id: string };
+export type GestaltParam = Partial<MsgerParams & { gestalt: Gestalt}> & { readonly id: string };
 
 export function defaultGestalt(gs: GestaltParam & {
   hasPersitance?: boolean;
+  protocol?: "http" | "ws";
 }): Gestalt {
   const hasPersitance = gs.hasPersitance || false;
   delete gs.hasPersitance;
@@ -138,9 +164,9 @@ export function defaultGestalt(gs: GestaltParam & {
     storeTypes: ["meta", "data", "wal"],
     id: gs.id,
     httpEndpoints: ["/fp"],
-    wsEndpoints: ["/ws"],
+    wsEndpoints: gs.protocol === 'ws' ? ["/ws"] : [],
     encodings: ["JSON"],
-    protocolCapabilities: ["stream", "reqRes"],
+    protocolCapabilities: gs.protocol === 'ws' ? ["stream"] : ["reqRes"],
     auth: [],
     requiresAuth: false,
     data: hasPersitance ? {
@@ -236,23 +262,23 @@ export function MsgIsResGestalt(msg: MsgBase): msg is ResGestalt {
   return msg.type === "resGestalt";
 }
 
+export interface ReqOpenConnection {
+  readonly key: ConnectionKey;
+  readonly reqId?: string;
+}
 
 export interface ReqOpen extends MsgBase {
   readonly type: "reqOpen";
-  readonly key: ConnectionKey;
-  readonly streamId: {
-    readonly req: string;
-  };
 }
 
-export function buildReqOpen(sthis: NextId, key: ConnectionKey, reqStreamId = sthis.nextId().str): ReqOpen {
+export function buildReqOpen(sthis: NextId, conn: ReqOpenConnection): ReqOpen {
   return {
     tid: sthis.nextId().str,
     type: "reqOpen",
     version: VERSION,
-    key,
-    streamId: {
-      req: reqStreamId
+    conn: {
+      ...conn as Connection,
+      reqId: conn.reqId || sthis.nextId().str
     }
   };
 }
@@ -263,20 +289,19 @@ export function MsgIsReqOpen(msg: MsgBase): msg is ReqOpen {
 
 export interface ResOpen extends MsgBase {
   readonly type: "resOpen";
-  readonly key: ConnectionKey;
-  readonly streamId: {
-    readonly req: string;
-    readonly res: string;
-  };
+  readonly conn: Connection;
 }
 
-export function buildResOpen(req: ReqOpen, resStreamId = 'res-'+req.streamId.req): ResOpen {
+export function buildResOpen(sthis: NextId, req: ReqOpen, resStreamId?: string): ResOpen {
+  if (!(req.conn && req.conn.reqId)) {
+    throw new Error("req.conn.reqId is required");
+  }
   return {
     ...req,
     type: "resOpen",
-    streamId: {
-      ...req.streamId,
-      res: resStreamId
+    conn: {
+      ...req.conn as Connection,
+      resId: resStreamId || sthis.nextId().str
     }
   };
 }
@@ -284,56 +309,6 @@ export function buildResOpen(req: ReqOpen, resStreamId = 'res-'+req.streamId.req
 export function MsgIsResOpen(msg: MsgBase): msg is ResOpen {
   return msg.type === "resOpen";
 }
-
-
-// /*
-//  * This behavios somekind of strange if it comes to WebSocket
-//  * if the requesting Gestalt wants http it responds with http
-//  * if the requesting Gestalt wants WebSocket and the requested
-//  * is capable of WebSocket this response is sent via WebSocket
-//  */
-// export interface ResOpen extends MsgBase {
-//   readonly type: "resOpen";
-//   readonly key: ConnectionKey;
-//   readonly connId: string;
-//   // reguester Gestalt
-//   readonly gestalt: Gestalt;
-// }
-
-// export function buildReqOpen(sthis: NextId, key: ConnectionKey, gestalt: Gestalt): ReqOpen {
-//   return {
-//     tid: sthis.nextId().str,
-//     type: "reqOpen",
-//     version: VERSION,
-//     key,
-//     gestalt,
-//   };
-// }
-
-// export function MsgIsReqOpen(msg: MsgBase): msg is ReqOpen {
-//   return msg.type === "reqOpen";
-// }
-
-// export function buildResOpen(req: ReqOpen, connId: string, gestalt: Gestalt): ResOpen {
-//   return {
-//     tid: req.tid,
-//     type: "resOpen",
-//     version: VERSION,
-//     key: req.key,
-//     connId,
-//     gestalt,
-//   };
-// }
-
-// export function MsgIsResOpen(msg: MsgBase): msg is ResOpen {
-//   return msg.type === "resOpen";
-// }
-
-// export interface ConnectionKey {
-//   // readonly protocol: "ws" | "wss"; // ws or wss
-//   readonly tenantId: string;
-//   readonly name: string;
-// }
 
 export interface SignedUrlParam extends ConnectionKey {
   readonly path?: string;
@@ -372,7 +347,6 @@ export interface ReqSignedUrlParam {
   };
 }
 
-const VERSION = "FP-MSG-1.0";
 
 /* Signed URL */
 
@@ -474,15 +448,15 @@ export function buildReqSubscriptMeta(sthis: NextId, ck: ConnectionKey, subscrib
 export interface ResSubscribeMeta extends MsgBase {
   readonly type: "resSubscribeMeta";
   readonly subscriberId: string;
-  readonly connId: string;
+  readonly conn: Connection;
   readonly key: ConnectionKey;
 }
 
-export function buildResSubscriptMeta(req: ReqSubscribeMeta, ctx: ConnId): ResSubscribeMeta {
+export function buildResSubscriptMeta(req: ReqSubscribeMeta, ctx: Connection): ResSubscribeMeta {
   return {
     tid: req.tid,
     type: "resSubscribeMeta",
-    connId: ctx.connId,
+    conn: ctx,
     subscriberId: req.subscriberId,
     key: req.key,
     version: VERSION,

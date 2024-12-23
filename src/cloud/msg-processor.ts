@@ -31,6 +31,7 @@ import {
   ResPutMeta,
 } from "./msg-types.js";
 import { calculatePreSignedUrl } from "./pre-signed-url.js";
+import { SuperThis } from "@fireproof/core";
 
 export type WithErrorMsg<T extends MsgBase> = T | ErrorMsg
 
@@ -79,10 +80,12 @@ export abstract class MsgProcessorBase<I extends CtxBase, O extends CtxBase = I>
   readonly logger: Logger;
   readonly serverId: string
   readonly ctx: O
-  constructor(logger: Logger, ctx: O, serverId: string) {
+  readonly sthis: SuperThis
+  constructor(sthis: SuperThis, logger: Logger, ctx: O, serverId: string) {
     this.serverId = serverId
     this.logger = logger
     this.ctx = ctx
+    this.sthis = sthis
   }
 
   async dispatch<Q extends MsgBase, S extends MsgBase>(
@@ -91,7 +94,7 @@ export abstract class MsgProcessorBase<I extends CtxBase, O extends CtxBase = I>
   ): Promise<ReqResCtx<Q, S | ErrorMsg, O>> {
     const rReqMsg = await exception2Result(async () => (await decodeFn()) as Q);
     if (rReqMsg.isErr()) {
-      const errMsg = buildErrorMsg(this.logger, { tid: "internal" } as MsgBase, rReqMsg.Err());
+      const errMsg = buildErrorMsg(this.sthis, this.logger, { tid: "internal" } as MsgBase, rReqMsg.Err());
       return {
         req: errMsg as unknown as Q,
         res: errMsg,

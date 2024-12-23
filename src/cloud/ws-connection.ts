@@ -76,9 +76,9 @@
 import { exception2Result, Future, Logger, Result } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
 import { RequestOpts, WithErrorMsg } from "./msg-processor.js";
-import { GestaltItem, WaitForTid } from "./msg-request.js";
-import { MsgBase, MsgIsError, buildErrorMsg, ReqOpen, ResOpen, MsgIsResOpen } from "./msg-types.js";
-import { MsgConnection, OnMsgFn, UnReg } from "./msger.js";
+import { WaitForTid } from "./msg-request.js";
+import { MsgBase, MsgIsError, buildErrorMsg, ReqOpen, ResOpen, MsgIsResOpen, MsgerParams } from "./msg-types.js";
+import { ExchangedGestalt, MsgConnection, OnMsgFn, UnReg } from "./msger.js";
 
 export interface WSReqOpen {
   readonly reqOpen: ReqOpen;
@@ -92,7 +92,8 @@ interface WSQSOpen extends WSReqOpen {
 export class WSConnection implements MsgConnection {
   readonly sthis: SuperThis;
   readonly logger: Logger;
-  readonly gestaltItem: GestaltItem;
+  readonly msgP: MsgerParams;
+  readonly exchangedGestalt: ExchangedGestalt;
   // readonly baseURI: URI;
   readonly wqs: WSQSOpen;
 
@@ -106,22 +107,29 @@ export class WSConnection implements MsgConnection {
     return this.wqs.resOpen
   }
 
-  constructor(sthis: SuperThis, wsq: WSReqOpen, gi: GestaltItem) {
+  constructor(sthis: SuperThis, wsq: WSReqOpen, msgP: MsgerParams, exGestalt: ExchangedGestalt) {
     this.sthis = sthis;
     this.logger = ensureLogger(sthis, "WSConnection");
-    this.gestaltItem = gi;
-    // this.baseURI = uri;
+    this.msgP = msgP;
+    this.exchangedGestalt = exGestalt;
     this.wqs = { ...wsq };
   }
 
   async start(): Promise<Result<void>> {
-    const onOpenFuture = new Future<void>();
+    const onOpenFuture: Future<Result<unknown>> = new Future<Result<unknown>>();
+    const timer = setTimeout(() => {
+      const err = this.logger.Error().Dur("timeout", this.msgP.timeout).Msg("Timeout").AsError()
+      this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal" } as MsgBase, err));
+      onOpenFuture.resolve(Result.Err(err));
+    }, this.msgP.timeout);
     this.wqs.ws.onopen = () => {
-        onOpenFuture.resolve();
+        onOpenFuture.resolve(Result.Ok(undefined));
         this.opened = true;
     }
-    this.wqs.ws.onerror = (err) => {
-        this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal" } as MsgBase, this.logger.Error().Err(err).Msg("WS Error").AsError()));
+    this.wqs.ws.onerror = (ierr) => {
+        const err =  this.logger.Error().Err(ierr).Msg("WS Error").AsError()
+        onOpenFuture.resolve(Result.Err(err));
+        this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal", conn: this.conn } as MsgBase, err));
     }
     this.wqs.ws.onmessage = (evt) => {
         if (!this.opened) {
@@ -131,10 +139,17 @@ export class WSConnection implements MsgConnection {
     }
     this.wqs.ws.onclose = () => {
       this.opened = false;
-      this.close().catch((err) => this.logger.Error().Err(err).Msg("close error"));
+      this.close().catch((ierr) => {
+        const err = this.logger.Error().Err(ierr).Msg("close error").AsError()
+        onOpenFuture.resolve(Result.Err(err));
+        this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal" } as MsgBase, err));
+      });
     }
     /* wait for onOpen */
-    await onOpenFuture.asPromise()
+    const rOpen = await onOpenFuture.asPromise().finally(() => clearTimeout(timer));
+    if (rOpen.isErr()) {
+      return rOpen;
+    }
     const resOpen = await this.request(this.wqs.reqOpen, { waitFor: MsgIsResOpen })
     if (!MsgIsResOpen(resOpen)) {
       return Result.Err(this.logger.Error().Any("ErrMsg", resOpen).Msg("Invalid response").AsError());
@@ -144,7 +159,7 @@ export class WSConnection implements MsgConnection {
   }
 
   readonly #wsOnMessage = async (event: MessageEvent) => {
-    const rMsg = await exception2Result(() => this.gestaltItem.ende.decode(event.data) as MsgBase);
+    const rMsg = await exception2Result(() => this.msgP.ende.decode(event.data) as MsgBase);
     if (rMsg.isErr()) {
       this.logger.Error().Err(rMsg).Any(event.data).Msg("Invalid message");
       return;
@@ -182,7 +197,7 @@ export class WSConnection implements MsgConnection {
   }
 
   async sendMsg(msg: MsgBase): Promise<void> {
-    this.wqs.ws.send(this.gestaltItem.ende.encode(msg));
+    this.wqs.ws.send(this.msgP.ende.encode(msg));
   }
 
   onMsg(fn: OnMsgFn): UnReg {

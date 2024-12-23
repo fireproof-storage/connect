@@ -1,9 +1,9 @@
 import { BuildURI, CoerceURI, Result, runtimeFn, URI } from "@adviser/cement";
-import { buildReqGestalt, defaultGestalt, GestaltParam, MsgBase, MsgIsResGestalt, ReqGestalt, ReqOpen, ResGestalt, ResOpen } from "./msg-types.js";
+import { buildReqGestalt, defaultGestalt, Gestalt, GestaltParam, MsgBase, MsgerParams, MsgIsResGestalt, ReqGestalt, ReqOpen, ResGestalt, ResOpen } from "./msg-types.js";
 import { SuperThis } from "@fireproof/core";
 import { RequestOpts, WithErrorMsg } from "./msg-processor.js";
 import { HttpConnection } from "./http-connection.js";
-import { EnDeCoder, GestaltItem, selectRandom } from "./msg-request.js";
+import { EnDeCoder, selectRandom } from "./msg-request.js";
 import { WSConnection } from "./ws-connection.js";
 
 // const headers = {
@@ -11,13 +11,31 @@ import { WSConnection } from "./ws-connection.js";
 //     "Accept": "application/json",
 // };
 
+export function timeout<T>(ms: number, promise: Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error(`TIMEOUT after ${ms}ms`))
+      }, ms)
+      promise
+        .then(resolve)
+        .catch(reject)
+        .finally(() => clearTimeout(timer))
+    })
+  }
+
 export type OnMsgFn = (msg: WithErrorMsg<MsgBase>) => void
 export type UnReg = () => void
+
+export interface ExchangedGestalt {
+    readonly my: Gestalt;
+    readonly remote: Gestalt;
+}
 
 export interface MsgConnection {
   // readonly ws: WebSocket;
   // readonly params: ConnectionKey;
   conn?: ResOpen;
+  readonly exchangedGestalt: ExchangedGestalt;
   request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<WithErrorMsg<S>>
   start(): Promise<Result<void>>;
   close(): Promise<Result<void>>;
@@ -31,20 +49,26 @@ function jsonEnDe(sthis: SuperThis) {
     } satisfies EnDeCoder;
 }
 
-export function defaultGestaltItem(sthis: SuperThis, igs: GestaltParam): GestaltItem {
+export function defaultMsgParams(sthis: SuperThis, igs: Partial<MsgerParams>): MsgerParams {
     return {
         ende: igs.ende || jsonEnDe(sthis),
         mime: igs.mime || "application/json",
-        gestalt: defaultGestalt(igs),
-    } satisfies GestaltItem;
+        protocol: igs.protocol || "http",
+        timeout: igs.timeout || 3000,
+    } satisfies MsgerParams;
 }
+
+export interface OpenParams {
+    readonly timeout: number;
+}
+
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Msger {
-    static async openHttp(sthis: SuperThis, reqOpen: ReqOpen|undefined, urls: URI[], gi: GestaltItem): Promise<Result<MsgConnection>> {
-        return Result.Ok(new HttpConnection(sthis, reqOpen, urls, gi))
+    static async openHttp(sthis: SuperThis, reqOpen: ReqOpen|undefined, urls: URI[], msgP: MsgerParams, exGestalt: ExchangedGestalt): Promise<Result<MsgConnection>> {
+        return Result.Ok(new HttpConnection(sthis, reqOpen, urls, msgP, exGestalt));
     }
-    static async openWS(sthis: SuperThis, qOpen: ReqOpen, url: URI, gs: GestaltItem): Promise<Result<MsgConnection>> {
+    static async openWS(sthis: SuperThis, qOpen: ReqOpen, url: URI, msgP: MsgerParams, exGestalt: ExchangedGestalt): Promise<Result<MsgConnection>> {
         let ws: WebSocket;
         const { encode } = jsonEnDe(sthis);
         url = url.build().setParam("reqOpen", sthis.txt.decode(encode(qOpen))).URI();
@@ -57,31 +81,32 @@ export class Msger {
         return Result.Ok(new WSConnection(sthis, {
             reqOpen: qOpen,
             ws,
-        }, gs))
+        }, msgP, exGestalt))
     }
     static async open(sthis: SuperThis, curl: CoerceURI, qOpen: ReqOpen, igs: GestaltParam): Promise<Result<MsgConnection>> {
         // initial exchange with JSON encoding
-        const jsGI = defaultGestaltItem(sthis, { ...igs, ende: jsonEnDe(sthis) });
+        const jsGI = defaultMsgParams(sthis, { ...igs, ende: jsonEnDe(sthis) });
         const url = URI.from(curl)
+        const gs = defaultGestalt({id: "FP-Universal-Client"});
         /*
          * request Gestalt with Http
          */
-        const rHC = await Msger.openHttp(sthis, undefined, [url], jsGI);
+        const rHC = await Msger.openHttp(sthis, undefined, [url], jsGI, { my: gs, remote: gs });
         if (rHC.isErr()) {
             return rHC;
         }
         const hc = rHC.Ok();
-        const resGestalt = await hc.request<ReqGestalt, ResGestalt>(buildReqGestalt(sthis, jsGI.gestalt), { waitFor: MsgIsResGestalt });
+        const resGestalt = await hc.request<ReqGestalt, ResGestalt>(buildReqGestalt(sthis, gs), { waitFor: MsgIsResGestalt });
         if (!MsgIsResGestalt(resGestalt)) {
             return Result.Err(new Error("Invalid Gestalt"));
         }
         await hc.close();
-        const gt = resGestalt.gestalt
-        const gi = defaultGestaltItem(sthis, igs);
-        if (gt.protocolCapabilities.includes("reqRes") && !gt.protocolCapabilities.includes("stream")) {
-            return Msger.openHttp(sthis, qOpen, gi.gestalt.httpEndpoints.map(i => BuildURI.from(url).resolve(i).URI()), gi);
+        const exGt = { my: gs, remote: resGestalt.gestalt } satisfies ExchangedGestalt;
+        const msgP = defaultMsgParams(sthis, igs);
+        if (exGt.remote.protocolCapabilities.includes("reqRes") && !exGt.remote.protocolCapabilities.includes("stream")) {
+            return Msger.openHttp(sthis, qOpen, exGt.remote.httpEndpoints.map(i => BuildURI.from(url).resolve(i).URI()), msgP, exGt);
         }
-        return Msger.openWS(sthis, qOpen, BuildURI.from(url).resolve(selectRandom(gi.gestalt.wsEndpoints)).URI(), gi);
+        return Msger.openWS(sthis, qOpen, BuildURI.from(url).resolve(selectRandom(exGt.remote.wsEndpoints)).URI(), msgP, exGt);
     }
 
     private constructor() {

@@ -34,12 +34,13 @@ export interface HttpConnectionParams {
   readonly uniqServerId?: string;
 }
 
-export interface GestaltItem {
+export interface MsgerParams {
   readonly ende: EnDeCoder;
   readonly mime: string;
   readonly auth?: AuthType;
   readonly hasPersistent?: boolean;
-  readonly gestalt: Gestalt;
+  readonly protocol: "http" | "ws";
+  readonly timeout: number; // msec
 }
 
 export type RequestFN<Q extends MsgBase, S extends MsgBase> = (req: Q, opts: RequestOpts) => Promise<Result<S>>
@@ -66,7 +67,7 @@ export function encoded(logger: Logger, g: "JSON" | "CBOR") {
 
 const getGestalts = new KeyedResolvOnce<Gestalt>();
 
-async function fetchGestalt(fgp: FetchGestaltParams): Promise<GestaltItem> {
+async function fetchGestalt(fgp: FetchGestaltParams): Promise<MsgerParams> {
   return getGestalts.get(fgp.gestaltURL.toString()).once(async () => {
     const conn = await fgp.getConn();
     const rGestalt = await conn.request<ReqGestalt, ResGestalt>({
@@ -128,10 +129,10 @@ export interface Attachable<T> {
 }
 
 export class WSAttachable implements Attachable<WebSocket> {
-  readonly gestalt: GestaltItem
+  readonly gestalt: MsgerParams
   readonly sthis: SuperThis
   readonly waitForTid = new Map<string, WaitForTid>();
-  constructor(sthis: SuperThis, gestalt: GestaltItem) {
+  constructor(sthis: SuperThis, gestalt: MsgerParams) {
     this.gestalt = gestalt
     this.sthis = sthis
   }

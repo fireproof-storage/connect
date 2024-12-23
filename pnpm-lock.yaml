@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.2.43
-        version: 0.2.43(typescript@5.7.2)
+        specifier: ^0.2.44
+        version: 0.2.44(typescript@5.7.2)
       '@aws-sdk/client-s3':
         specifier: ^3.705.0
         version: 3.705.0
@@ -216,8 +216,8 @@ importers:
 
 packages:
 
-  '@adviser/cement@0.2.43':
-    resolution: {integrity: sha512-jBxv0bbzHODe7KrCrknQgy6g0KV/vq92olbXNgI+O87hiThALTv0FKfBgxY7NrMoHmEM4+89s+hHCuoH+l7NSg==}
+  '@adviser/cement@0.2.44':
+    resolution: {integrity: sha512-IxmNkCSpST2FBeHqhk1RGxcb6pF8FZMSFbPpNUi0Drx3v219gNl5Q1gOQ2TWPqblTvMO942MqSE/QlgEppshgg==}
     engines: {node: '>=16'}
 
   '@aws-crypto/crc32@5.2.0':
@@ -4074,7 +4074,7 @@ packages:
 
 snapshots:
 
-  '@adviser/cement@0.2.43(typescript@5.7.2)':
+  '@adviser/cement@0.2.44(typescript@5.7.2)':
     dependencies:
       ts-essentials: 10.0.2(typescript@5.7.2)
       yaml: 2.5.1
@@ -4986,7 +4986,7 @@ snapshots:
 
   '@fireproof/core@0.19.118(react@18.3.1)(typescript@5.7.2)':
     dependencies:
-      '@adviser/cement': 0.2.43(typescript@5.7.2)
+      '@adviser/cement': 0.2.44(typescript@5.7.2)
       '@fireproof/vendor': 1.0.0
       '@ipld/unixfs': 3.0.0
       charwise: 3.0.1
