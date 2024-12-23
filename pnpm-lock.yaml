@@ -51,8 +51,8 @@ importers:
         specifier: ^20.1.1
         version: 20.1.1
       '@web3-storage/capabilities':
-        specifier: ^18.0.0
-        version: 18.0.0
+        specifier: ^18.0.1
+        version: 18.0.1
       '@web3-storage/clock':
         specifier: ^0.4.1
         version: 0.4.1
@@ -1817,9 +1817,6 @@ packages:
   '@web3-storage/blob-index@1.0.5':
     resolution: {integrity: sha512-mhzupWeRfxLljoULcagU++mOmQOriCBMKniUhsmrCXrtRV8voF7op/ymqix1f9uX1M5iB93YXcfxAVBwGWWKoA==}
     engines: {node: '>=16.15'}
-
-  '@web3-storage/capabilities@18.0.0':
-    resolution: {integrity: sha512-sG0GmHrNNR+nT7wB1sIz91FG55PWJvrquMZyY8GD20r0l49kojDTlz/n14bEhof9uKE0T9KinmxitknOx/B+4Q==}
 
   '@web3-storage/capabilities@18.0.1':
     resolution: {integrity: sha512-FLAUpuuFYkLrMkXy/W7iVNQdFlqGCZUrQr30L2C05SbQdpb/4tN6jqRG+l2nvAYTaYjWTYzsYLHGy2illsuNZQ==}
@@ -5936,7 +5933,7 @@ snapshots:
       '@ucanto/principal': 9.0.1
       '@ucanto/transport': 9.1.1
       '@ucanto/validator': 9.0.2
-      '@web3-storage/capabilities': 18.0.0
+      '@web3-storage/capabilities': 18.0.1
       '@web3-storage/did-mailto': 2.1.0
       bigint-mod-arith: 3.3.1
       conf: 11.0.2
@@ -5954,16 +5951,6 @@ snapshots:
       '@web3-storage/capabilities': 18.0.1
       carstream: 2.2.0
       multiformats: 13.3.1
-      uint8arrays: 5.1.0
-
-  '@web3-storage/capabilities@18.0.0':
-    dependencies:
-      '@ucanto/core': 10.0.1
-      '@ucanto/interface': 10.0.1
-      '@ucanto/principal': 9.0.1
-      '@ucanto/transport': 9.1.1
-      '@ucanto/validator': 9.0.2
-      '@web3-storage/data-segment': 5.2.0
       uint8arrays: 5.1.0
 
   '@web3-storage/capabilities@18.0.1':
