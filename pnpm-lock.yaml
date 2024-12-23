@@ -63,8 +63,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0
       '@web3-storage/w3up-client':
-        specifier: ^16.5.2
-        version: 16.5.2(encoding@0.1.13)
+        specifier: ^17.1.1
+        version: 17.1.1(encoding@0.1.13)
       assert:
         specifier: ^2.1.0
         version: 2.1.0
@@ -1654,15 +1654,15 @@ packages:
   '@web3-storage/access@20.1.1':
     resolution: {integrity: sha512-W2C9sn8NTWw7zIUVzEk5MtwWQLFsOREF6Ju6VK+MYcuAkQ6yVll6Q7YtB5zLPwu29xJ7KIR6e5KzbDNSXHSfrA==}
 
-  '@web3-storage/blob-index@1.0.4':
-    resolution: {integrity: sha512-04+PrmVHFT+xzRhyIPdcvGc8Y2NDffUe8R1gJOyErVzEVz5N1I9Q/BrlFHYt/A4HrjM5JBsxqSrZgTIkjfPmLA==}
+  '@web3-storage/blob-index@1.0.5':
+    resolution: {integrity: sha512-mhzupWeRfxLljoULcagU++mOmQOriCBMKniUhsmrCXrtRV8voF7op/ymqix1f9uX1M5iB93YXcfxAVBwGWWKoA==}
     engines: {node: '>=16.15'}
-
-  '@web3-storage/capabilities@17.4.1':
-    resolution: {integrity: sha512-GogLfON8PZabi03CUyncBvMcCi36yQ/0iR5P8kr4pxdnZm7OuAn4sEwbEB8rTKbah5V10Vwgb3O5dh0FBgyjHg==}
 
   '@web3-storage/capabilities@18.0.0':
     resolution: {integrity: sha512-sG0GmHrNNR+nT7wB1sIz91FG55PWJvrquMZyY8GD20r0l49kojDTlz/n14bEhof9uKE0T9KinmxitknOx/B+4Q==}
+
+  '@web3-storage/capabilities@18.0.1':
+    resolution: {integrity: sha512-FLAUpuuFYkLrMkXy/W7iVNQdFlqGCZUrQr30L2C05SbQdpb/4tN6jqRG+l2nvAYTaYjWTYzsYLHGy2illsuNZQ==}
 
   '@web3-storage/clock@0.4.1':
     resolution: {integrity: sha512-VHAyvbl7ZrNls6yltS5Djuwjz9Rw0rcA8tpv7qQp1WoheY00YBdqa8gjR1V4egVkqV1ZugGA06XH+ug0OhGXDg==}
@@ -1674,8 +1674,8 @@ packages:
     resolution: {integrity: sha512-TRmfSXj1IhtX3ESurSNOylZSBKi0z/VJNoMLpof+AVRdovgZjjocpiePQTs2pfHKqHTHfJXc9AboWyK4IKTWMw==}
     engines: {node: '>=16.15'}
 
-  '@web3-storage/filecoin-client@3.3.4':
-    resolution: {integrity: sha512-T2xur1NPvuH09yajyjCWEl7MBH712nqHERj51w4nDp6f8libMCKY6lca0frCrm4OC5s8oy0ZtoRFhsRYxgTzSg==}
+  '@web3-storage/filecoin-client@3.3.5':
+    resolution: {integrity: sha512-3JFKnHFizlljRSJyyCdNN3Np4MN5riBvjAXweqNmu4s2sChMB8kopnCkAFoMeEom9r7ZAnBAkMO3Wacjs6Nlcw==}
 
   '@web3-storage/pail@0.5.0':
     resolution: {integrity: sha512-BUuunK6ZQQfNvECB2st0G7/rd0Vfsn6jFg01tfMLEsitFJWI9J503ixKJ8jWpoNW/3juJ32HQpo8ar3pmgG5uA==}
@@ -1685,11 +1685,11 @@ packages:
     resolution: {integrity: sha512-/lIBu8pR92AEcCqYqjcxc3kUSLLRGQLomUes7PAyoK4lNe4ttm8Wr7WFcrbJmWTBJZmYE6npbYcVio8U+OexpA==}
     hasBin: true
 
-  '@web3-storage/upload-client@17.1.1':
-    resolution: {integrity: sha512-PIPrg8uF1+NjLLNyiYQoT5gHBIO1aCiyFhYAZtg5JZZGYq/hRLh8xBTQLEBsSzSPGNm0Xpx8o4I3YQ/tTE0wUA==}
+  '@web3-storage/upload-client@17.1.3':
+    resolution: {integrity: sha512-pOD5EM6RJgsJ3gRZWfhwfbD21OLvNQ239aD4D5BsQsEEgEoqR8aXdrjDWU4T8DA4YXU6VIai/VGIsDXgw+eg7g==}
 
-  '@web3-storage/w3up-client@16.5.2':
-    resolution: {integrity: sha512-yJNh3r2QWZbn2jQ1ZfsnDJ1HIyhv9akEXeFWx+xFxKViT6df8IzT6BtCnxxFL2ED3Tx7rKVVG1pNatKRO3T+Uw==}
+  '@web3-storage/w3up-client@17.1.1':
+    resolution: {integrity: sha512-ngKDS82sFF0XEvJe7IsS0JHOVawSx2XQ2CN9xuberx/FNrmlHhDYsi86J7y7+yJXhQkFyh3hSVvQ7mmPz2HJwQ==}
     engines: {node: '>=18'}
 
   acorn-jsx@5.3.2:
@@ -5689,18 +5689,18 @@ snapshots:
       type-fest: 4.26.1
       uint8arrays: 4.0.10
 
-  '@web3-storage/blob-index@1.0.4':
+  '@web3-storage/blob-index@1.0.5':
     dependencies:
       '@ipld/dag-cbor': 9.2.2
       '@storacha/one-webcrypto': 1.0.1
       '@ucanto/core': 10.0.1
       '@ucanto/interface': 10.0.1
-      '@web3-storage/capabilities': 17.4.1
+      '@web3-storage/capabilities': 18.0.1
       carstream: 2.2.0
       multiformats: 13.3.1
       uint8arrays: 5.1.0
 
-  '@web3-storage/capabilities@17.4.1':
+  '@web3-storage/capabilities@18.0.0':
     dependencies:
       '@ucanto/core': 10.0.1
       '@ucanto/interface': 10.0.1
@@ -5710,7 +5710,7 @@ snapshots:
       '@web3-storage/data-segment': 5.2.0
       uint8arrays: 5.1.0
 
-  '@web3-storage/capabilities@18.0.0':
+  '@web3-storage/capabilities@18.0.1':
     dependencies:
       '@ucanto/core': 10.0.1
       '@ucanto/interface': 10.0.1
@@ -5743,14 +5743,14 @@ snapshots:
 
   '@web3-storage/did-mailto@2.1.0': {}
 
-  '@web3-storage/filecoin-client@3.3.4':
+  '@web3-storage/filecoin-client@3.3.5':
     dependencies:
       '@ipld/dag-ucan': 3.4.0
       '@ucanto/client': 9.0.1
       '@ucanto/core': 10.0.1
       '@ucanto/interface': 10.0.1
       '@ucanto/transport': 9.1.1
-      '@web3-storage/capabilities': 17.4.1
+      '@web3-storage/capabilities': 18.0.1
 
   '@web3-storage/pail@0.5.0':
     dependencies:
@@ -5767,7 +5767,7 @@ snapshots:
       '@ipld/dag-cbor': 9.2.2
       multiformats: 13.3.1
 
-  '@web3-storage/upload-client@17.1.1(encoding@0.1.13)':
+  '@web3-storage/upload-client@17.1.3(encoding@0.1.13)':
     dependencies:
       '@ipld/car': 5.3.3
       '@ipld/dag-cbor': 9.2.2
@@ -5777,10 +5777,10 @@ snapshots:
       '@ucanto/core': 10.0.1
       '@ucanto/interface': 10.0.1
       '@ucanto/transport': 9.1.1
-      '@web3-storage/blob-index': 1.0.4
-      '@web3-storage/capabilities': 17.4.1
+      '@web3-storage/blob-index': 1.0.5
+      '@web3-storage/capabilities': 18.0.1
       '@web3-storage/data-segment': 5.2.0
-      '@web3-storage/filecoin-client': 3.3.4
+      '@web3-storage/filecoin-client': 3.3.5
       ipfs-utils: 9.0.14(encoding@0.1.13)
       multiformats: 12.1.3
       p-retry: 5.1.2
@@ -5788,7 +5788,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@web3-storage/w3up-client@16.5.2(encoding@0.1.13)':
+  '@web3-storage/w3up-client@17.1.1(encoding@0.1.13)':
     dependencies:
       '@ipld/dag-ucan': 3.4.0
       '@ucanto/client': 9.0.1
@@ -5797,11 +5797,11 @@ snapshots:
       '@ucanto/principal': 9.0.1
       '@ucanto/transport': 9.1.1
       '@web3-storage/access': 20.1.1
-      '@web3-storage/blob-index': 1.0.4
-      '@web3-storage/capabilities': 17.4.1
+      '@web3-storage/blob-index': 1.0.5
+      '@web3-storage/capabilities': 18.0.1
       '@web3-storage/did-mailto': 2.1.0
-      '@web3-storage/filecoin-client': 3.3.4
-      '@web3-storage/upload-client': 17.1.1(encoding@0.1.13)
+      '@web3-storage/filecoin-client': 3.3.5
+      '@web3-storage/upload-client': 17.1.3(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
 
