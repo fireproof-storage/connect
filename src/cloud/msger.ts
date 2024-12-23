@@ -1,5 +1,5 @@
 import { BuildURI, CoerceURI, Result, runtimeFn, URI } from "@adviser/cement";
-import { buildReqGestalt, defaultGestalt, Gestalt, GestaltParam, MsgBase, MsgerParams, MsgIsResGestalt, ReqGestalt, ReqOpen, ResGestalt, ResOpen } from "./msg-types.js";
+import { buildReqGestalt, defaultGestalt, Gestalt, MsgBase, MsgerParams, MsgIsResGestalt, ReqGestalt, ReqOpen, ResGestalt, ResOpen } from "./msg-types.js";
 import { SuperThis } from "@fireproof/core";
 import { RequestOpts, WithErrorMsg } from "./msg-processor.js";
 import { HttpConnection } from "./http-connection.js";
@@ -62,6 +62,20 @@ export interface OpenParams {
     readonly timeout: number;
 }
 
+export async function applyStart(prC: Promise<Result<MsgConnection>>): Promise<Result<MsgConnection>> {
+    const rC = await prC
+    if (rC.isErr()) {
+        return rC
+    }
+    const c = rC.Ok()
+    const r = await c.start()
+    if (r.isErr()) {
+        return Result.Err(r.Err())
+    }
+    return rC
+}
+
+
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Msger {
@@ -83,7 +97,7 @@ export class Msger {
             ws,
         }, msgP, exGestalt))
     }
-    static async open(sthis: SuperThis, curl: CoerceURI, qOpen: ReqOpen, igs: GestaltParam): Promise<Result<MsgConnection>> {
+    static async open(sthis: SuperThis, curl: CoerceURI, qOpen: ReqOpen, igs: MsgerParams): Promise<Result<MsgConnection>> {
         // initial exchange with JSON encoding
         const jsGI = defaultMsgParams(sthis, { ...igs, ende: jsonEnDe(sthis) });
         const url = URI.from(curl)
@@ -104,9 +118,9 @@ export class Msger {
         const exGt = { my: gs, remote: resGestalt.gestalt } satisfies ExchangedGestalt;
         const msgP = defaultMsgParams(sthis, igs);
         if (exGt.remote.protocolCapabilities.includes("reqRes") && !exGt.remote.protocolCapabilities.includes("stream")) {
-            return Msger.openHttp(sthis, qOpen, exGt.remote.httpEndpoints.map(i => BuildURI.from(url).resolve(i).URI()), msgP, exGt);
+            return applyStart(Msger.openHttp(sthis, qOpen, exGt.remote.httpEndpoints.map(i => BuildURI.from(url).resolve(i).URI()), msgP, exGt));
         }
-        return Msger.openWS(sthis, qOpen, BuildURI.from(url).resolve(selectRandom(exGt.remote.wsEndpoints)).URI(), msgP, exGt);
+        return applyStart(Msger.openWS(sthis, qOpen, BuildURI.from(url).resolve(selectRandom(exGt.remote.wsEndpoints)).URI(), msgP, exGt));
     }
 
     private constructor() {

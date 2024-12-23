@@ -34,15 +34,6 @@ export interface HttpConnectionParams {
   readonly uniqServerId?: string;
 }
 
-export interface MsgerParams {
-  readonly ende: EnDeCoder;
-  readonly mime: string;
-  readonly auth?: AuthType;
-  readonly hasPersistent?: boolean;
-  readonly protocol: "http" | "ws";
-  readonly timeout: number; // msec
-}
-
 export type RequestFN<Q extends MsgBase, S extends MsgBase> = (req: Q, opts: RequestOpts) => Promise<Result<S>>
 
 const serverId = "FP-Universal-Client"
