@@ -23,6 +23,7 @@ export interface Env {
   FP_DEBUG: string;
   FP_STACK: string;
   FP_FORMAT: string;
+  FP_PROTOCOL: string;
   TEST_DATE?: string;
   MAX_IDLE_TIME?: string;
 

@@ -147,14 +147,12 @@ describe("CloudBackendTest", () => {
       expect(await res.json()).toEqual(await testResSignedUrl(env));
     });
 
-    it("reqOpen without websocket", async () => {
-      const conn = await msgOpen(cfURL, { }
-    });
+    // it("reqOpen without websocket", async () => {
+    //   const conn = await msgOpen(cfURL, { }
+    // });
 
-    it("reqOpen with websocket", async () => {
-    });
-
-
+    // it("reqOpen with websocket", async () => {
+    // });
 
     it("use websockets SignedUrl", async () => {
       await Promise.all(

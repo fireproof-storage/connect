@@ -33,12 +33,11 @@ import {
 import { calculatePreSignedUrl } from "./pre-signed-url.js";
 import { SuperThis } from "@fireproof/core";
 
-export type WithErrorMsg<T extends MsgBase> = T | ErrorMsg
+export type WithErrorMsg<T extends MsgBase> = T | ErrorMsg;
 
 export interface CtxBase {
   readonly logger: Logger;
 }
-
 
 export interface ReqOptResCtx<Q extends MsgBase, S extends MsgBase, C extends CtxBase> extends ReqOptRes<Q, S> {
   readonly ctx?: C;
@@ -47,7 +46,6 @@ export interface ReqOptResCtx<Q extends MsgBase, S extends MsgBase, C extends Ct
 export interface ReqResCtx<Q extends MsgBase, S extends MsgBase, C extends CtxBase> extends ReqRes<Q, S> {
   readonly ctx: C;
 }
-
 
 export interface MsgProcessor<O extends CtxBase> {
   dispatch<Q extends MsgBase, S extends MsgBase>(
@@ -74,18 +72,16 @@ export interface RequestOpts {
 //   close(): Promise<void>;
 // }
 
-
 export abstract class MsgProcessorBase<I extends CtxBase, O extends CtxBase = I> implements MsgProcessor<O> {
-
   readonly logger: Logger;
-  readonly serverId: string
-  readonly ctx: O
-  readonly sthis: SuperThis
+  readonly serverId: string;
+  readonly ctx: O;
+  readonly sthis: SuperThis;
   constructor(sthis: SuperThis, logger: Logger, ctx: O, serverId: string) {
-    this.serverId = serverId
-    this.logger = logger
-    this.ctx = ctx
-    this.sthis = sthis
+    this.serverId = serverId;
+    this.logger = logger;
+    this.ctx = ctx;
+    this.sthis = sthis;
   }
 
   async dispatch<Q extends MsgBase, S extends MsgBase>(
@@ -98,11 +94,11 @@ export abstract class MsgProcessorBase<I extends CtxBase, O extends CtxBase = I>
       return {
         req: errMsg as unknown as Q,
         res: errMsg,
-        ctx: this.ctx
+        ctx: this.ctx,
       };
     }
     const { req, ctx: optCtx } = await reqFn(rReqMsg.Ok() as Q, this.ctx);
-    const ctx = { ...(optCtx || this.ctx) }
+    const ctx = { ...(optCtx || this.ctx) };
     switch (true) {
       case MsgIsReqGestalt(req):
         return {
@@ -115,13 +111,17 @@ export abstract class MsgProcessorBase<I extends CtxBase, O extends CtxBase = I>
       case MsgIsReqGetWAL(req):
         return {
           req,
-          res: (await this.signedUrl({
-            ...req, params: {
-              ...req.params,
-              method: "GET",
-              store: getStoreFromType(req).store
-            }
-          }, ctx)) as S | ErrorMsg,
+          res: (await this.signedUrl(
+            {
+              ...req,
+              params: {
+                ...req.params,
+                method: "GET",
+                store: getStoreFromType(req).store,
+              },
+            },
+            ctx
+          )) as S | ErrorMsg,
           ctx,
         };
 
@@ -136,13 +136,17 @@ export abstract class MsgProcessorBase<I extends CtxBase, O extends CtxBase = I>
         }
         return {
           req,
-          res: (await this.signedUrl({
-            ...req, params: {
-              ...req.params,
-              method: "PUT",
-              store: getStoreFromType(req).store
-            }
-          }, ctx)) as S | ErrorMsg,
+          res: (await this.signedUrl(
+            {
+              ...req,
+              params: {
+                ...req.params,
+                method: "PUT",
+                store: getStoreFromType(req).store,
+              },
+            },
+            ctx
+          )) as S | ErrorMsg,
           ctx,
         };
 
@@ -150,16 +154,19 @@ export abstract class MsgProcessorBase<I extends CtxBase, O extends CtxBase = I>
       case MsgIsReqDelWAL(req):
         return {
           req,
-          res: (await this.signedUrl({
-            ...req, params: {
-              ...req.params,
-              method: "DELETE",
-              store: getStoreFromType(req).store
-            }
-          }, ctx)) as S | ErrorMsg,
+          res: (await this.signedUrl(
+            {
+              ...req,
+              params: {
+                ...req.params,
+                method: "DELETE",
+                store: getStoreFromType(req).store,
+              },
+            },
+            ctx
+          )) as S | ErrorMsg,
           ctx,
         };
-
 
       // case MsgIsReqSignedUrl(req):
       //   return {
@@ -252,5 +259,4 @@ export abstract class MsgProcessorBase<I extends CtxBase, O extends CtxBase = I>
       connId: ctx.group.connId,
     });
   }
-
 }

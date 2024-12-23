@@ -1,8 +1,16 @@
 import { exception2Result, Future, Logger, Result } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
 import { RequestOpts, WithErrorMsg } from "./msg-processor.js";
-import { WaitForTid } from "./msg-request.js";
-import { MsgBase, MsgIsError, buildErrorMsg, ReqOpen, ResOpen, MsgIsResOpen, MsgerParams } from "./msg-types.js";
+import {
+  MsgBase,
+  MsgIsError,
+  buildErrorMsg,
+  ReqOpen,
+  ResOpen,
+  MsgIsResOpen,
+  MsgerParams,
+  WaitForTid,
+} from "./msg-types.js";
 import { ExchangedGestalt, MsgConnection, OnMsgFn, UnReg } from "./msger.js";
 
 export interface WSReqOpen {
@@ -28,8 +36,8 @@ export class WSConnection implements MsgConnection {
   readonly waitForTid = new Map<string, WaitForTid>();
   opened = false;
 
-  get conn(): ResOpen|undefined {
-    return this.wqs.resOpen
+  get conn(): ResOpen | undefined {
+    return this.wqs.resOpen;
   }
 
   constructor(sthis: SuperThis, wsq: WSReqOpen, msgP: MsgerParams, exGestalt: ExchangedGestalt) {
@@ -43,39 +51,46 @@ export class WSConnection implements MsgConnection {
   async start(): Promise<Result<void>> {
     const onOpenFuture: Future<Result<unknown>> = new Future<Result<unknown>>();
     const timer = setTimeout(() => {
-      const err = this.logger.Error().Dur("timeout", this.msgP.timeout).Msg("Timeout").AsError()
+      const err = this.logger.Error().Dur("timeout", this.msgP.timeout).Msg("Timeout").AsError();
       this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal" } as MsgBase, err));
       onOpenFuture.resolve(Result.Err(err));
     }, this.msgP.timeout);
     this.wqs.ws.onopen = () => {
-        onOpenFuture.resolve(Result.Ok(undefined));
-        this.opened = true;
-    }
+      onOpenFuture.resolve(Result.Ok(undefined));
+      this.opened = true;
+    };
     this.wqs.ws.onerror = (ierr) => {
-        const err =  this.logger.Error().Err(ierr).Msg("WS Error").AsError()
-        onOpenFuture.resolve(Result.Err(err));
-        this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal", conn: this.conn } as MsgBase, err));
-    }
+      const err = this.logger.Error().Err(ierr).Msg("WS Error").AsError();
+      onOpenFuture.resolve(Result.Err(err));
+      this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal", conn: this.conn } as MsgBase, err));
+    };
     this.wqs.ws.onmessage = (evt) => {
-        if (!this.opened) {
-          this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal" } as MsgBase, this.logger.Error().Msg("Received message before onOpen").AsError()));
-        }
-        this.#wsOnMessage(evt);
-    }
+      if (!this.opened) {
+        this.toMsg(
+          buildErrorMsg(
+            this.sthis,
+            this.logger,
+            { tid: "internal" } as MsgBase,
+            this.logger.Error().Msg("Received message before onOpen").AsError()
+          )
+        );
+      }
+      this.#wsOnMessage(evt);
+    };
     this.wqs.ws.onclose = () => {
       this.opened = false;
       this.close().catch((ierr) => {
-        const err = this.logger.Error().Err(ierr).Msg("close error").AsError()
+        const err = this.logger.Error().Err(ierr).Msg("close error").AsError();
         onOpenFuture.resolve(Result.Err(err));
         this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal" } as MsgBase, err));
       });
-    }
+    };
     /* wait for onOpen */
     const rOpen = await onOpenFuture.asPromise().finally(() => clearTimeout(timer));
     if (rOpen.isErr()) {
       return rOpen;
     }
-    const resOpen = await this.request(this.wqs.reqOpen, { waitFor: MsgIsResOpen })
+    const resOpen = await this.request(this.wqs.reqOpen, { waitFor: MsgIsResOpen });
     if (!MsgIsResOpen(resOpen)) {
       return Result.Err(this.logger.Error().Any("ErrMsg", resOpen).Msg("Invalid response").AsError());
     }
@@ -106,7 +121,7 @@ export class WSConnection implements MsgConnection {
         waitFor.future.resolve(msg);
       }
     }
-  }
+  };
 
   async close(): Promise<Result<void>> {
     this.#onClose.forEach((fn) => fn());
@@ -126,13 +141,13 @@ export class WSConnection implements MsgConnection {
   }
 
   onMsg(fn: OnMsgFn): UnReg {
-    const key = this.sthis.nextId().str
+    const key = this.sthis.nextId().str;
     this.#onMsg.set(key, fn);
     return () => this.#onMsg.delete(key);
   }
 
   onClose(fn: UnReg): UnReg {
-    const key = this.sthis.nextId().str
+    const key = this.sthis.nextId().str;
     this.#onClose.set(key, fn);
     return () => this.#onClose.delete(key);
   }
@@ -144,12 +159,11 @@ export class WSConnection implements MsgConnection {
     const future = new Future<S>();
     this.waitForTid.set(req.tid, { tid: req.tid, future, waitFor: opts.waitFor });
     await this.sendMsg(req);
-    return future.asPromise()
+    return future.asPromise();
   }
 
   // toOnMessage<T extends MsgBase>(msg: WithErrorMsg<T>): Result<WithErrorMsg<T>> {
   //   this.mec.msgFn?.(msg as unknown as MessageEvent<MsgBase>);
   //   return Result.Ok(msg);
   // }
-
 }

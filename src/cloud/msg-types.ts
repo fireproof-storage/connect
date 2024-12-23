@@ -1,7 +1,19 @@
+import { Future } from "@adviser/cement";
 import { CRDTEntry, Logger, SuperThis } from "@fireproof/core";
-import { EnDeCoder } from "./msg-request.js";
 
 export const VERSION = "FP-MSG-1.0";
+
+export interface EnDeCoder {
+  encode<T>(node: T): Uint8Array;
+  decode<T>(data: Uint8Array): T;
+}
+
+export interface WaitForTid {
+  readonly tid: string;
+  readonly future: Future<MsgBase>;
+  // undefined match all
+  readonly waitFor: (msg: MsgBase) => boolean;
+}
 
 // export interface ConnId {
 //   readonly connId: string;
@@ -63,11 +75,9 @@ export function MsgIsQSError(rq: ReqRes<MsgBase, MsgBase>): rq is ReqRes<ErrorMs
 export type HttpMethods = "GET" | "PUT" | "DELETE";
 export type FPStoreTypes = "meta" | "data" | "wal";
 
-
-
 // reqRes is http
 // stream is WebSocket
-export type ProtocolCapabilities = "reqRes" | "stream"
+export type ProtocolCapabilities = "reqRes" | "stream";
 
 export interface Gestalt {
   /**
@@ -97,7 +107,7 @@ export interface Gestalt {
    * Encodings supported
    * JSON, CBOR
    */
-  readonly encodings: ("JSON"|"CBOR")[];
+  readonly encodings: ("JSON" | "CBOR")[];
   /**
    * Authentication methods supported
    */
@@ -116,15 +126,15 @@ export interface Gestalt {
   readonly data?: {
     readonly inband: boolean;
     readonly outband: boolean;
-  }
+  };
   readonly meta?: {
     readonly inband: true; // meta inband is mandatory
     readonly outband: boolean;
-  }
+  };
   readonly wal?: {
     readonly inband: boolean;
     readonly outband: boolean;
-  }
+  };
   /**
    * Request Types supported
    * reqGestalt, reqSubscribeMeta, reqPutMeta, reqGetMeta, reqDelMeta, reqUpdateMeta
@@ -158,23 +168,29 @@ export function defaultGestalt(msgP: MsgerParams, gestalt: GestaltParam): Gestal
   return {
     storeTypes: ["meta", "data", "wal"],
     httpEndpoints: ["/fp"],
-    wsEndpoints: msgP.protocol === 'ws' ? ["/ws"] : [],
+    wsEndpoints: msgP.protocol === "ws" ? ["/ws"] : [],
     encodings: ["JSON"],
-    protocolCapabilities: msgP.protocol === 'ws' ? ["stream"] : ["reqRes"],
+    protocolCapabilities: msgP.protocol === "ws" ? ["stream"] : ["reqRes"],
     auth: [],
     requiresAuth: false,
-    data: msgP.hasPersistent ? {
-      inband: true,
-      outband: true,
-    }: undefined,
-    meta: msgP.hasPersistent ? {
-      inband: true,
-      outband: true,
-    }: undefined,
-    wal: msgP.hasPersistent ? {
-      inband: true,
-      outband: true,
-    }: undefined,
+    data: msgP.hasPersistent
+      ? {
+          inband: true,
+          outband: true,
+        }
+      : undefined,
+    meta: msgP.hasPersistent
+      ? {
+          inband: true,
+          outband: true,
+        }
+      : undefined,
+    wal: msgP.hasPersistent
+      ? {
+          inband: true,
+          outband: true,
+        }
+      : undefined,
     reqTypes: [
       "reqOpen",
       "reqGestalt",
@@ -208,8 +224,8 @@ export function defaultGestalt(msgP: MsgerParams, gestalt: GestaltParam): Gestal
       "updateMeta",
     ],
     eventTypes: ["updateMeta"],
-    ...gestalt
-  }
+    ...gestalt,
+  };
 }
 
 /**
@@ -230,7 +246,7 @@ export function buildReqGestalt(sthis: NextId, gestalt: Gestalt): ReqGestalt {
     tid: sthis.nextId().str,
     type: "reqGestalt",
     version: VERSION,
-    gestalt
+    gestalt,
   };
 }
 
@@ -248,7 +264,7 @@ export function buildResGestalt(req: ReqGestalt, gestalt: Gestalt): ResGestalt |
     tid: req.tid,
     type: "resGestalt",
     version: VERSION,
-    gestalt
+    gestalt,
   };
 }
 
@@ -271,9 +287,9 @@ export function buildReqOpen(sthis: NextId, conn: ReqOpenConnection): ReqOpen {
     type: "reqOpen",
     version: VERSION,
     conn: {
-      ...conn as Connection,
-      reqId: conn.reqId || sthis.nextId().str
-    }
+      ...(conn as Connection),
+      reqId: conn.reqId || sthis.nextId().str,
+    },
   };
 }
 
@@ -294,9 +310,9 @@ export function buildResOpen(sthis: NextId, req: ReqOpen, resStreamId?: string):
     ...req,
     type: "resOpen",
     conn: {
-      ...req.conn as Connection,
-      resId: resStreamId || sthis.nextId().str
-    }
+      ...(req.conn as Connection),
+      resId: resStreamId || sthis.nextId().str,
+    },
   };
 }
 
@@ -341,7 +357,6 @@ export interface ReqSignedUrlParam {
   };
 }
 
-
 /* Signed URL */
 
 export function buildReqSignedUrl(req: ReqSignedUrlParam): ReqSignedUrlParam {
@@ -362,17 +377,22 @@ interface StoreAndType {
   readonly store: FPStoreTypes;
   readonly resType: string;
 }
-const reqToRes: Record<string, StoreAndType>  = {
+const reqToRes: Record<string, StoreAndType> = {
   reqGetData: { store: "data", resType: "resGetData" },
   reqPutData: { store: "data", resType: "resPutData" },
   reqDelData: { store: "data", resType: "resDelData" },
   reqGetWAL: { store: "wal", resType: "resGetWAL" },
   reqPutWAL: { store: "wal", resType: "resPutWAL" },
   reqDelWAL: { store: "wal", resType: "resDelWAL" },
-}
+};
 
 export function getStoreFromType(req: MsgBase): StoreAndType {
-  return reqToRes[req.type] || (() => { throw new Error(`unknown req.type=${req.type}`) })();
+  return (
+    reqToRes[req.type] ||
+    (() => {
+      throw new Error(`unknown req.type=${req.type}`);
+    })()
+  );
 }
 
 export function buildResSignedUrl(req: ReqSignedUrl, signedUrl: string): ResSignedUrl {
@@ -385,7 +405,14 @@ export function buildResSignedUrl(req: ReqSignedUrl, signedUrl: string): ResSign
   };
 }
 
-export function buildErrorMsg(sthis: SuperThis, logger: Logger, base: Partial<MsgBase>, error: Error, body?: string, stack?: string[]): ErrorMsg {
+export function buildErrorMsg(
+  sthis: SuperThis,
+  logger: Logger,
+  base: Partial<MsgBase>,
+  error: Error,
+  body?: string,
+  stack?: string[]
+): ErrorMsg {
   if (!stack && sthis.env.get("FP_STACK")) {
     stack = error.stack?.split("\n");
   }
@@ -394,7 +421,8 @@ export function buildErrorMsg(sthis: SuperThis, logger: Logger, base: Partial<Ms
     tid: base.tid || "internal",
     message: error.message,
     version: VERSION,
-    body, stack
+    body,
+    stack,
   } satisfies ErrorMsg;
   logger.Error().Any("msg", msg).Msg("error");
   return msg;
@@ -724,7 +752,6 @@ export interface ResGetWAL extends ResSignedUrl {
   readonly type: "resGetWAL";
   readonly payload: Uint8Array; // transfered via JSON base64
 }
-
 
 export interface ReqPutWAL extends Omit<ReqSignedUrl, "type"> {
   readonly type: "reqPutWAL";

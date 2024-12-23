@@ -1,4 +1,6 @@
-export async function top_uint8(input: string | ArrayBuffer | ArrayBufferView | Uint8Array | SharedArrayBuffer | Blob): Promise<Uint8Array> {
+export async function top_uint8(
+  input: string | ArrayBuffer | ArrayBufferView | Uint8Array | SharedArrayBuffer | Blob
+): Promise<Uint8Array> {
   if (input instanceof Blob) {
     return new Uint8Array(await input.arrayBuffer());
   }

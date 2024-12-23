@@ -18,16 +18,31 @@ new_classes = ["FPMetaGroups"]
 enabled = true
 head_sampling_rate = 1
 
-[env.test.vars]
+[env.test-reqRes.vars]
 VERSION = "FP-MSG-1.0"
 STORAGE_URL = "http://localhost:9000/testbucket"
 ACCESS_KEY_ID = "minioadmin"
 SECRET_ACCESS_KEY = "minioadmin"
 FP_DEBUG = "FPMetaGroups"
+FP_PROTOCOL = "http"
+
+[env.test-stream.vars]
+VERSION = "FP-MSG-1.0"
+STORAGE_URL = "http://localhost:9000/testbucket"
+ACCESS_KEY_ID = "minioadmin"
+SECRET_ACCESS_KEY = "minioadmin"
+FP_DEBUG = "FPMetaGroups"
+FP_PROTOCOL = "ws"
+
 #FP_FORMAT = "yaml"
 # TEST_DATE = "20241121T225359Z"
 
-[env.test.durable_objects]
+[env.test-reqRes.durable_objects]
+bindings = [
+  { name = "FP_META_GROUPS", class_name = "FPMetaGroups" },
+]
+
+[env.test-stream.durable_objects]
 bindings = [
   { name = "FP_META_GROUPS", class_name = "FPMetaGroups" },
 ]
