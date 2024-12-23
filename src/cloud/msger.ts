@@ -97,11 +97,11 @@ export class Msger {
             ws,
         }, msgP, exGestalt))
     }
-    static async open(sthis: SuperThis, curl: CoerceURI, qOpen: ReqOpen, igs: MsgerParams): Promise<Result<MsgConnection>> {
+    static async open(sthis: SuperThis, curl: CoerceURI, qOpen: ReqOpen, imsgP: MsgerParams): Promise<Result<MsgConnection>> {
         // initial exchange with JSON encoding
-        const jsGI = defaultMsgParams(sthis, { ...igs, ende: jsonEnDe(sthis) });
+        const jsGI = defaultMsgParams(sthis, { ...imsgP, ende: jsonEnDe(sthis) });
         const url = URI.from(curl)
-        const gs = defaultGestalt({id: "FP-Universal-Client"});
+        const gs = defaultGestalt(imsgP, {id: "FP-Universal-Client"});
         /*
          * request Gestalt with Http
          */
@@ -116,7 +116,7 @@ export class Msger {
         }
         await hc.close();
         const exGt = { my: gs, remote: resGestalt.gestalt } satisfies ExchangedGestalt;
-        const msgP = defaultMsgParams(sthis, igs);
+        const msgP = defaultMsgParams(sthis, imsgP);
         if (exGt.remote.protocolCapabilities.includes("reqRes") && !exGt.remote.protocolCapabilities.includes("stream")) {
             return applyStart(Msger.openHttp(sthis, qOpen, exGt.remote.httpEndpoints.map(i => BuildURI.from(url).resolve(i).URI()), msgP, exGt));
         }

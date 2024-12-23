@@ -8,7 +8,7 @@ import * as toml from "smol-toml";
 import { bs, CRDTEntry, Database, ensureSuperThis, fireproof, isNotFoundError, rt } from "@fireproof/core";
 import { AwsClient } from "aws4fetch";
 import { smokeDB } from "../../tests/helper.js";
-import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway.ts-off";
+// import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./client/gateway.ts-off";
 import { calculatePreSignedUrl } from "./pre-signed-url.js";
 import { newWebSocket } from "./new-websocket.js";
 

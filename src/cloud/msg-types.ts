@@ -152,32 +152,26 @@ export interface MsgerParams {
 }
 
 // force the server id
-export type GestaltParam = Partial<MsgerParams & { gestalt: Gestalt}> & { readonly id: string };
+export type GestaltParam = Partial<Gestalt> & { readonly id: string };
 
-export function defaultGestalt(gs: GestaltParam & {
-  hasPersitance?: boolean;
-  protocol?: "http" | "ws";
-}): Gestalt {
-  const hasPersitance = gs.hasPersitance || false;
-  delete gs.hasPersitance;
+export function defaultGestalt(msgP: MsgerParams, gestalt: GestaltParam): Gestalt {
   return {
     storeTypes: ["meta", "data", "wal"],
-    id: gs.id,
     httpEndpoints: ["/fp"],
-    wsEndpoints: gs.protocol === 'ws' ? ["/ws"] : [],
+    wsEndpoints: msgP.protocol === 'ws' ? ["/ws"] : [],
     encodings: ["JSON"],
-    protocolCapabilities: gs.protocol === 'ws' ? ["stream"] : ["reqRes"],
+    protocolCapabilities: msgP.protocol === 'ws' ? ["stream"] : ["reqRes"],
     auth: [],
     requiresAuth: false,
-    data: hasPersitance ? {
+    data: msgP.hasPersistent ? {
       inband: true,
       outband: true,
     }: undefined,
-    meta: hasPersitance ? {
+    meta: msgP.hasPersistent ? {
       inband: true,
       outband: true,
     }: undefined,
-    wal: hasPersitance ? {
+    wal: msgP.hasPersistent ? {
       inband: true,
       outband: true,
     }: undefined,
@@ -214,7 +208,7 @@ export function defaultGestalt(gs: GestaltParam & {
       "updateMeta",
     ],
     eventTypes: ["updateMeta"],
-    ...gs.gestalt
+    ...gestalt
   }
 }
 

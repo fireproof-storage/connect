@@ -23,7 +23,8 @@ import { createNodeWebSocket } from '@hono/node-ws'
 import { Hono } from 'hono'
 import { applyStart, defaultMsgParams, MsgConnection, Msger, } from "./msger.js";
 import { top_uint8 } from "../coerce-binary.js";
-import exp from "constants";
+import { HttpConnection } from "./http-connection.js";
+import { WSConnection } from "./ws-connection.js";
 
 class Dispatcher {
     readonly sthis: SuperThis
@@ -139,11 +140,12 @@ class HonoServer {
 
 
 function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParams, qOpen: ReqOpen, my: Gestalt) {
-    const remote = defaultGestalt({ id: "HTTP-server", hasPersistent: true, protocol: "http" })
+    const remote = defaultGestalt(defaultMsgParams(sthis, { hasPersistent: true, protocol: "http" }), { id: "HTTP-server" })
     const exGt = { my, remote }
     return {
         name: "HTTP",
         remoteGestalt: remote,
+        cInstance: HttpConnection,
         ok: {
             url: () => URI.from(`http://127.0.0.1:${port}/fp`),
             open: () => applyStart(Msger.openHttp(sthis, qOpen, [URI.from(`http://localhost:${port}/fp`)], {
@@ -172,11 +174,12 @@ function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParams, qOpen: Req
 }
 
 function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParams, qOpen: ReqOpen, my: Gestalt) {
-    const remote = defaultGestalt({ id: "WS-server", hasPersistent: true, protocol: "ws" })
+    const remote = defaultGestalt(defaultMsgParams(sthis, { hasPersistent: true, protocol: "ws" }), { id: "WS-server" })
     const exGt = { my, remote }
     return {
         name: "WS",
         remoteGestalt: remote,
+        cInstance: WSConnection,
         ok: {
             url: () => URI.from(`http://127.0.0.1:${port}/ws`),
             open: () => applyStart(Msger.openWS(sthis, qOpen, URI.from(`http://localhost:${port}/ws`), {
@@ -216,8 +219,8 @@ describe("Connection", () => {
         },
         reqId: "req-open-test",
     })
-    const my = defaultGestalt({ id: "test" })
-    for (const style of [httpStyle(sthis, port, msgP, qOpen, my)/*, wsStyle(sthis, port, msgP, qOpen, my)*/]) {
+    const my = defaultGestalt(msgP, { id: "FP-Universal-Client" })
+    for (const style of [httpStyle(sthis, port, msgP, qOpen, my), wsStyle(sthis, port, msgP, qOpen, my)]) {
         describe(style.name, () => {
             let server: HonoServer
             beforeAll(async () => {
@@ -281,7 +284,7 @@ describe("Connection", () => {
                 })
                 it("gestalt url http", async () => {
                     const msgP = defaultMsgParams(sthis, {})
-                    const req = buildReqGestalt(sthis, defaultGestalt({ id: "test", ...msgP }))
+                    const req = buildReqGestalt(sthis, defaultGestalt(msgP, { id: "test" }))
                     const r = await c.request(req, { waitFor: MsgIsResGestalt })
                     if (!MsgIsResGestalt(r)) {
                         assert.fail("expected MsgError", JSON.stringify(r))
@@ -304,22 +307,38 @@ describe("Connection", () => {
                         "version": "FP-MSG-1.0",
                     })
                 })
+            })
 
-                it("open", async () => {
-                    const qOpen = buildReqOpen(sthis, {
-                        key: {
-                            ledgerName: "test",
-                            tenantId: "test",
-                        },
-                        reqId: "req-open-test",
-                    })
-                    const rC = await Msger.open(sthis, URI.from(`http://localhost:${port}`), qOpen, msgP)
-                    expect(rC.isOk()).toBeTruthy()
-                    const c = rC.Ok()
-                    expect(c.conn).toEqual({})
-                    expect(c.exchangedGestalt).toEqual({})
-
+            it("open", async () => {
+                const qOpen = buildReqOpen(sthis, {
+                    key: {
+                        ledgerName: "test",
+                        tenantId: "test",
+                    },
+                    reqId: "req-open-test",
                 })
+                const rC = await Msger.open(sthis, URI.from(`http://localhost:${port}/fp`), qOpen, msgP)
+                expect(rC.isOk()).toBeTruthy()
+                const c = rC.Ok()
+                expect(c.conn).toEqual({
+                    "conn": {
+                        "key": {
+                            "ledgerName": "test",
+                            "tenantId": "test",
+                        },
+                        "reqId": "req-open-test",
+                        "resId": c.conn?.conn.resId,
+                    },
+                    "tid": c.conn?.tid,
+                    "type": "resOpen",
+                    "version": "FP-MSG-1.0",
+                })
+                expect(c).toBeInstanceOf(style.cInstance)
+                expect(c.exchangedGestalt).toEqual({
+                    my, remote: style.remoteGestalt
+                })
+                await c.close()
+
             })
         })
     }
