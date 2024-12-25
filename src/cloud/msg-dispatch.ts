@@ -1,4 +1,4 @@
-import { HttpHeader, Logger, Result } from "@adviser/cement";
+import { Logger, Result } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
 import {
   Gestalt,
@@ -10,36 +10,55 @@ import {
   buildResOpen,
   Connection,
 } from "./msg-types.js";
+import {
+  MsgIsReqGetData,
+  buildResGetData,
+  MsgIsReqPutData,
+  MsgIsReqDelData,
+  buildResDelData,
+  buildResPutData,
+} from "./msg-types-data.js";
+import {
+  MsgIsReqDelWAL,
+  MsgIsReqGetWAL,
+  MsgIsReqPutWAL,
+  buildResDelWAL,
+  buildResGetWAL,
+  buildResPutWAL,
+} from "./msg-types-wal.js";
+import { PreSignedMsg } from "./pre-signed-url.js";
+import { HonoServerImpl } from "./hono-server.js";
+
+export interface MsgContext {
+  calculatePreSignedUrl(p: PreSignedMsg): Promise<string>;
+}
 
 export class MsgDispatcher {
   readonly sthis: SuperThis;
   readonly logger: Logger;
-  readonly conns = new Map<string, Connection>();
+  conn?: Connection;
   readonly gestalt: Gestalt;
+  readonly id: string;
 
   constructor(sthis: SuperThis, gestalt: Gestalt) {
     this.sthis = sthis;
     this.logger = ensureLogger(sthis, "Dispatcher");
     this.gestalt = gestalt;
+    this.id = sthis.nextId().str;
   }
 
   addConn(aConn: Connection): Result<Connection> {
-    const key = [aConn.key.ledgerName, aConn.key.tenantId].join(":");
-    let conn = this.conns.get(key);
-    if (!conn) {
-      if (this.conns.size > 0) {
-        return Result.Err("connection");
-      }
-      conn = { ...aConn, resId: this.sthis.nextId().str };
-      this.conns.set(key, conn);
+    if (!this.conn) {
+      this.conn = { ...aConn, resId: this.sthis.nextId().str };
+      return Result.Ok(this.conn);
     }
-    if (conn.reqId !== aConn.reqId) {
-      return Result.Err("unexpected reqId");
+    if (aConn.reqId === this.conn.reqId) {
+      return Result.Ok(this.conn);
     }
-    return Result.Ok(conn);
+    return this.logger.Error().Msg(`unexpected reqId: ${aConn.reqId}!==${this.conn.reqId}`).ResultError();
   }
 
-  dispatch(msg: MsgBase, send: (msg: MsgBase) => void) {
+  async dispatch(ctx: HonoServerImpl, msg: MsgBase, send: (msg: MsgBase) => void) {
     switch (true) {
       case MsgIsReqGestalt(msg):
         return send(buildResGestalt(msg, this.gestalt));
@@ -54,6 +73,27 @@ export class MsgDispatcher {
         }
         return send(buildResOpen(this.sthis, msg, rConn.Ok().resId));
       }
+
+      case MsgIsReqGetData(msg): {
+        return send(await buildResGetData(this.sthis, this.logger, msg, ctx));
+      }
+      case MsgIsReqPutData(msg): {
+        return send(await buildResPutData(this.sthis, this.logger, msg, ctx));
+      }
+      case MsgIsReqDelData(msg): {
+        return send(await buildResDelData(this.sthis, this.logger, msg, ctx));
+      }
+
+      case MsgIsReqGetWAL(msg): {
+        return send(await buildResGetWAL(this.sthis, this.logger, msg, ctx));
+      }
+      case MsgIsReqPutWAL(msg): {
+        return send(await buildResPutWAL(this.sthis, this.logger, msg, ctx));
+      }
+      case MsgIsReqDelWAL(msg): {
+        return send(await buildResDelWAL(this.sthis, this.logger, msg, ctx));
+      }
+
       default:
         return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("unexpected message")));
     }

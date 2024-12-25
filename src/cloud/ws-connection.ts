@@ -1,6 +1,5 @@
 import { exception2Result, Future, Logger, Result } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
-import { RequestOpts, WithErrorMsg } from "./msg-processor.js";
 import {
   MsgBase,
   MsgIsError,
@@ -10,6 +9,9 @@ import {
   MsgIsResOpen,
   MsgerParams,
   WaitForTid,
+  Connection,
+  WithErrorMsg,
+  RequestOpts,
 } from "./msg-types.js";
 import { ExchangedGestalt, MsgConnection, OnMsgFn, UnReg } from "./msger.js";
 
@@ -36,8 +38,9 @@ export class WSConnection implements MsgConnection {
   readonly waitForTid = new Map<string, WaitForTid>();
   opened = false;
 
-  get conn(): ResOpen | undefined {
-    return this.wqs.resOpen;
+  get conn(): Connection {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return this.wqs.resOpen!.conn!;
   }
 
   constructor(sthis: SuperThis, wsq: WSReqOpen, msgP: MsgerParams, exGestalt: ExchangedGestalt) {
@@ -52,17 +55,29 @@ export class WSConnection implements MsgConnection {
     const onOpenFuture: Future<Result<unknown>> = new Future<Result<unknown>>();
     const timer = setTimeout(() => {
       const err = this.logger.Error().Dur("timeout", this.msgP.timeout).Msg("Timeout").AsError();
-      this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal" } as MsgBase, err));
+      this.toMsg(buildErrorMsg(this.sthis, this.logger, {} as MsgBase, err));
+      console.log("WSConnection.start-timer");
       onOpenFuture.resolve(Result.Err(err));
     }, this.msgP.timeout);
     this.wqs.ws.onopen = () => {
+      console.log("WSConnection.onopen");
       onOpenFuture.resolve(Result.Ok(undefined));
       this.opened = true;
     };
     this.wqs.ws.onerror = (ierr) => {
       const err = this.logger.Error().Err(ierr).Msg("WS Error").AsError();
       onOpenFuture.resolve(Result.Err(err));
-      this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal", conn: this.conn } as MsgBase, err));
+      let conn: Connection;
+      try {
+        conn = this.conn;
+      } catch (_err) {
+        conn = {
+          key: { tenant: "not-connect", ledger: "not-connect" },
+          reqId: "not-connect",
+          resId: "not-connect",
+        };
+      }
+      this.toMsg(buildErrorMsg(this.sthis, this.logger, { conn } as MsgBase, err));
     };
     this.wqs.ws.onmessage = (evt) => {
       if (!this.opened) {
@@ -70,7 +85,7 @@ export class WSConnection implements MsgConnection {
           buildErrorMsg(
             this.sthis,
             this.logger,
-            { tid: "internal" } as MsgBase,
+            {} as MsgBase,
             this.logger.Error().Msg("Received message before onOpen").AsError()
           )
         );
@@ -86,11 +101,14 @@ export class WSConnection implements MsgConnection {
       });
     };
     /* wait for onOpen */
-    const rOpen = await onOpenFuture.asPromise().finally(() => clearTimeout(timer));
+    const rOpen = await onOpenFuture.asPromise().finally(() => {
+      clearTimeout(timer);
+    });
     if (rOpen.isErr()) {
       return rOpen;
     }
     const resOpen = await this.request(this.wqs.reqOpen, { waitFor: MsgIsResOpen });
+    console.log("WSConnection.start-4");
     if (!MsgIsResOpen(resOpen)) {
       return Result.Err(this.logger.Error().Any("ErrMsg", resOpen).Msg("Invalid response").AsError());
     }
@@ -157,7 +175,7 @@ export class WSConnection implements MsgConnection {
       return buildErrorMsg(this.sthis, this.logger, req, this.logger.Error().Msg("Connection not open").AsError());
     }
     const future = new Future<S>();
-    this.waitForTid.set(req.tid, { tid: req.tid, future, waitFor: opts.waitFor });
+    this.waitForTid.set(req.tid, { tid: req.tid, future, waitFor: opts.waitFor, timeout: opts.timeout });
     await this.sendMsg(req);
     return future.asPromise();
   }

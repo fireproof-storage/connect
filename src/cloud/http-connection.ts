@@ -1,7 +1,17 @@
-import { Logger, Result, URI, exception2Result } from "@adviser/cement";
+import { HttpHeader, Logger, Result, URI, exception2Result } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
-import { RequestOpts, WithErrorMsg } from "./msg-processor.js";
-import { MsgBase, MsgIsResOpen, ReqOpen, ResOpen, buildErrorMsg, MsgerParams } from "./msg-types.js";
+import {
+  MsgBase,
+  MsgIsResOpen,
+  ReqOpen,
+  ResOpen,
+  buildErrorMsg,
+  MsgerParams,
+  Connection,
+  UpdateReqRes,
+  WithErrorMsg,
+  RequestOpts,
+} from "./msg-types.js";
 import { ExchangedGestalt, MsgConnection, OnMsgFn, selectRandom, timeout, UnReg } from "./msger.js";
 
 export class HttpConnection implements MsgConnection {
@@ -12,13 +22,11 @@ export class HttpConnection implements MsgConnection {
 
   readonly baseURIs: URI[];
 
-  readonly qsOpen: {
-    readonly req?: ReqOpen;
-    res?: ResOpen;
-  };
+  readonly _qsOpen: Partial<UpdateReqRes<ReqOpen, ResOpen>>;
 
-  get conn(): ResOpen | undefined {
-    return this.qsOpen.res;
+  get conn(): Connection {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return this._qsOpen.res!.conn;
   }
 
   readonly #onMsg = new Map<string, OnMsgFn>();
@@ -34,17 +42,17 @@ export class HttpConnection implements MsgConnection {
     this.logger = ensureLogger(sthis, "HttpConnection");
     this.msgParam = msgP;
     this.baseURIs = uris;
-    this.qsOpen = { req: reqOpen };
+    this._qsOpen = { req: reqOpen };
     this.exchangedGestalt = exGestalt;
   }
 
   async start(): Promise<Result<void>> {
-    if (this.qsOpen.req) {
-      const sOpen = await this.request(this.qsOpen.req, { waitFor: MsgIsResOpen });
+    if (this._qsOpen.req) {
+      const sOpen = await this.request(this._qsOpen.req, { waitFor: MsgIsResOpen });
       if (!MsgIsResOpen(sOpen)) {
         return Result.Err(this.logger.Error().Any("Err", sOpen).Msg("unexpected response").AsError());
       }
-      this.qsOpen.res = sOpen;
+      this._qsOpen.res = sOpen;
     }
     return Result.Ok(undefined);
   }
@@ -66,9 +74,9 @@ export class HttpConnection implements MsgConnection {
   }
 
   async request<Q extends MsgBase, S extends MsgBase>(req: Q, _opts: RequestOpts): Promise<WithErrorMsg<S>> {
-    const headers = new Headers();
-    headers.append("Content-Type", this.msgParam.mime);
-    headers.append("Accept", this.msgParam.mime);
+    const headers = HttpHeader.from();
+    headers.Set("Content-Type", this.msgParam.mime);
+    headers.Set("Accept", this.msgParam.mime);
     const rReqBody = exception2Result(() => this.msgParam.ende.encode(req));
     if (rReqBody.isErr()) {
       return this.toMsg(
@@ -80,7 +88,7 @@ export class HttpConnection implements MsgConnection {
         )
       );
     }
-    headers.append("Content-Length", rReqBody.Ok().byteLength.toString());
+    headers.Set("Content-Length", rReqBody.Ok().byteLength.toString());
     const url = selectRandom(this.baseURIs);
     this.logger.Debug().Url(url).Any("body", req).Msg("request");
     const rRes = await exception2Result(() =>
@@ -88,7 +96,7 @@ export class HttpConnection implements MsgConnection {
         this.msgParam.timeout,
         fetch(url.toString(), {
           method: "PUT",
-          headers,
+          headers: headers.AsHeaderInit(),
           body: rReqBody.Ok(),
         })
       )

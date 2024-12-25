@@ -1,11 +1,10 @@
-import { exception2Result, Logger, Result } from "@adviser/cement";
+import { exception2Result, Logger, } from "@adviser/cement";
 import {
   buildErrorMsg,
   buildResDelMeta,
   buildResGestalt,
   buildResGetMeta,
   buildResPutMeta,
-  ConnectionKey,
   defaultGestalt,
   ErrorMsg,
   getStoreFromType,

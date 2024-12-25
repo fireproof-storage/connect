@@ -1,6 +1,7 @@
 import { BuildURI, CoerceURI, Result, runtimeFn, URI } from "@adviser/cement";
 import {
   buildReqGestalt,
+  Connection,
   defaultGestalt,
   EnDeCoder,
   Gestalt,
@@ -9,11 +10,11 @@ import {
   MsgIsResGestalt,
   ReqGestalt,
   ReqOpen,
+  RequestOpts,
   ResGestalt,
-  ResOpen,
+  WithErrorMsg,
 } from "./msg-types.js";
 import { SuperThis } from "@fireproof/core";
-import { RequestOpts, WithErrorMsg } from "./msg-processor.js";
 import { HttpConnection } from "./http-connection.js";
 import { WSConnection } from "./ws-connection.js";
 
@@ -49,7 +50,8 @@ export interface ExchangedGestalt {
 export interface MsgConnection {
   // readonly ws: WebSocket;
   // readonly params: ConnectionKey;
-  conn?: ResOpen;
+  // qsOpen: ReqRes<ReqOpen, ResOpen>;
+  conn: Connection;
   readonly exchangedGestalt: ExchangedGestalt;
   request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<WithErrorMsg<S>>;
   start(): Promise<Result<void>>;

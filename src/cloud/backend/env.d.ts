@@ -3,6 +3,7 @@
 
 import type { DurableObjectNamespace } from "@cloudflare/workers-types";
 import { FPMetaGroups } from "./fp-meta-groups.js";
+import { WSEvents } from "hono/ws";
 
 export interface Env {
   // bucket: R2Bucket;
@@ -28,6 +29,8 @@ export interface Env {
   MAX_IDLE_TIME?: string;
 
   FP_META_GROUPS: DurableObjectNamespace<FPMetaGroups>;
+
+  WS_EVENTS: WSEvents;
 }
 
 // declare module "cloudflare:test" {
