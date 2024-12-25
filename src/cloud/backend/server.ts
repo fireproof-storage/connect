@@ -414,7 +414,11 @@ export default {
       });
       const msgP = defaultMsgParams(sthis, {
         hasPersistent: true,
-        protocol: env.FP_PROTOCOL === "ws" ? "ws" : "http",
+        protocolCapabilities: env.FP_PROTOCOL
+          ? env.FP_PROTOCOL === "ws"
+            ? ["stream"]
+            : ["reqRes"]
+          : ["reqRes", "stream"],
       });
       const gs = defaultGestalt(msgP, {
         id: env.FP_PROTOCOL ? (env.FP_PROTOCOL === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",

@@ -1,4 +1,4 @@
-import { VERSION, Logger, Result, URI } from "@adviser/cement";
+import { Logger, Result, URI } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core";
 import {
   ReqSignedUrl,
@@ -9,6 +9,7 @@ import {
   WithErrorMsg,
   buildRes,
   ReqSignedUrlParam,
+  buildReqSignedUrl,
 } from "./msg-types.js";
 import { PreSignedMsg } from "./pre-signed-url.js";
 
@@ -17,14 +18,7 @@ export interface ReqGetData extends ReqSignedUrl {
 }
 
 export function buildReqGetData(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqGetData {
-  return {
-    params: sup,
-    conn,
-    tid: sthis.nextId().str,
-    type: "reqGetData",
-    // key: req.key,
-    version: VERSION,
-  };
+  return buildReqSignedUrl<ReqGetData>(sthis, "reqGetData", sup, conn);
 }
 
 export function MsgIsReqGetData(msg: MsgBase): msg is ReqGetData {
@@ -63,14 +57,7 @@ export function MsgIsReqPutData(msg: MsgBase): msg is ReqPutData {
 }
 
 export function buildReqPutData(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqPutData {
-  return {
-    params: sup,
-    conn,
-    tid: sthis.nextId().str,
-    type: "reqPutData",
-    // key: req.key,
-    version: VERSION,
-  };
+  return buildReqSignedUrl<ReqPutData>(sthis, "reqPutData", sup, conn);
 }
 
 export interface ResPutData extends ResSignedUrl {
@@ -99,14 +86,7 @@ export function MsgIsReqDelData(msg: MsgBase): msg is ReqDelData {
 }
 
 export function buildReqDelData(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqDelData {
-  return {
-    params: sup,
-    conn,
-    tid: sthis.nextId().str,
-    type: "reqDelData",
-    // key: req.key,
-    version: VERSION,
-  };
+  return buildReqSignedUrl<ReqDelData>(sthis, "reqDelData", sup, conn);
 }
 
 export interface ResDelData extends ResSignedUrl {

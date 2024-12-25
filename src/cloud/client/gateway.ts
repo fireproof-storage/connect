@@ -1,26 +1,22 @@
 // import PartySocket, { PartySocketOptions } from "partysocket";
-import { Result, URI, KeyedResolvOnce, exception2Result, Future } from "@adviser/cement";
-import { bs, CRDTEntry, ensureLogger, Logger, NotFoundError, rt, SuperThis } from "@fireproof/core";
+import { Result, URI, KeyedResolvOnce, exception2Result, key } from "@adviser/cement";
+import { bs, ensureLogger, Logger, NotFoundError, rt, SuperThis } from "@fireproof/core";
 import {
-  buildReqDelMeta,
-  buildReqGetMeta,
-  buildReqPutMeta,
-  buildReqSubscriptMeta,
-  ConnectionKey,
+  buildErrorMsg,
+  buildReqOpen,
+  Connection,
+  FPStoreTypes,
   HttpMethods,
+  keyTenantLedger,
   MsgBase,
   MsgIsError,
-  MsgIsUpdateMetaEvent,
   ReqSignedUrl,
-  ResDelMeta,
-  ResGetMeta,
-  ResPutMeta,
-  ResSignedUrl,
-  ResSubscribeMeta,
+  TenantLedger,
+  WithErrorMsg,
 } from "../msg-types.js";
-import { newWebSocket } from "../new-websocket.js";
 import { to_uint8 } from "../../coerce-binary.js";
-import { MsgConnection } from "../msger.js";
+import { MsgConnection, Msger } from "../msger.js";
+import { MsgIsResGetData, MsgIsResPutData, ResDelData, ResGetData, ResPutData } from "../msg-types-data.js";
 
 const VERSION = "v0.1-fp-cloud";
 
@@ -38,66 +34,85 @@ abstract class BaseGateway {
     this.logger = ensureLogger(sthis, module);
   }
 
-  abstract getConn(uri: URI, conn: Connection): Promise<Result<Uint8Array>>;
-  async get(uri: URI, prConn: Promise<Result<Connection>>): Promise<Result<Uint8Array>> {
+  abstract getConn(uri: URI, conn: MsgConnection): Promise<Result<Uint8Array>>;
+  async get(uri: URI, prConn: Promise<Result<MsgConnection>>): Promise<Result<Uint8Array>> {
     const rConn = await prConn;
     if (rConn.isErr()) {
       return this.logger.Error().Err(rConn).Msg("Error in getConn").ResultError();
     }
     const conn = rConn.Ok();
-    this.logger.Debug().Any("conn", conn.key).Msg("get");
+    // this.logger.Debug().Any("conn", conn.key).Msg("get");
     return this.getConn(uri, conn);
   }
-  abstract putConn(uri: URI, body: Uint8Array, conn: Connection): Promise<Result<void>>;
 
-  async put(uri: URI, body: Uint8Array, prConn: Promise<Result<Connection>>): Promise<Result<void>> {
+  abstract putConn(uri: URI, body: Uint8Array, conn: MsgConnection): Promise<Result<void>>;
+  async put(uri: URI, body: Uint8Array, prConn: Promise<Result<MsgConnection>>): Promise<Result<void>> {
     const rConn = await prConn;
     if (rConn.isErr()) {
       return this.logger.Error().Err(rConn).Msg("Error in putConn").ResultError();
     }
     const conn = rConn.Ok();
-    this.logger.Debug().Any("conn", conn.key).Msg("put");
+    // this.logger.Debug().Any("conn", conn.key).Msg("put");
     return this.putConn(uri, body, conn);
   }
-  abstract delConn(uri: URI, conn: Connection): Promise<Result<void>>;
-  async delete(uri: URI, prConn: Promise<Result<Connection>>): Promise<Result<void>> {
+
+  abstract delConn(uri: URI, conn: MsgConnection): Promise<Result<void>>;
+  async delete(uri: URI, prConn: Promise<Result<MsgConnection>>): Promise<Result<void>> {
     const rConn = await prConn;
     if (rConn.isErr()) {
       return this.logger.Error().Err(rConn).Msg("Error in putConn").ResultError();
     }
     const conn = rConn.Ok();
-    this.logger.Debug().Any("conn", conn.key).Msg("del");
+    // this.logger.Debug().Any("conn", conn.key).Msg("del");
     return this.delConn(uri, conn);
   }
 
-  prepareReqSignedUrl(uri: URI, method: HttpMethods, cKey: ConnectionKey): Result<ReqSignedUrl> {
+  // prepareReqSignedUrl(type: string, method: HttpMethods, store: FPStoreTypes, uri: URI, conn: Connection): Result<ReqSignedUrl> {
+
+  //   const sig = {
+  //     conn,
+  //     params: {
+  //       method,
+  //       store,
+  //       key: uri.getParam("
+  //   } satisfies ReqSignedUrl;
+  //   return Result.Ok(buildReqSignedUrl(this.sthis, type, sig, conn))
+  // }
+
+  async getResSignedUrl<S extends ReqSignedUrl>(
+    type: string,
+    method: HttpMethods,
+    store: FPStoreTypes,
+    waitForFn: (msg: MsgBase) => boolean,
+    uri: URI,
+    conn: MsgConnection
+  ): Promise<WithErrorMsg<S>> {
     const rParams = uri.getParamsResult({
-      store: 0,
-      key: 0,
+      key: key.REQUIRED,
+      store: key.REQUIRED,
+      path: key.OPTIONAL,
+      index: key.OPTIONAL,
     });
     if (rParams.isErr()) {
-      return this.logger.Error().Err(rParams).Msg("Error in getParamsResult").ResultError();
+      return buildErrorMsg(this.sthis, this.logger, {} as MsgBase, rParams.Err());
     }
-    const { store, key } = rParams.Ok();
-    return Result.Ok({
-      buildReqSignedUrl({
-        // auth: await getUcanAuthFromUri(uri),
-        params: {
-          ...cKey,
-          store: store as FPStoreTypes,
-          key,
-          method,
-        },
-      })
-    );
-  }
-
-  async getResSignedUrl(uri: URI, method: HttpMethods, conn: Connection): Promise<Result<ResSignedUrl>> {
-    const rsu = this.prepareReqSignedUrl(uri, method, conn.key);
-    if (rsu.isErr()) {
-      return Result.Err(rsu.Err());
+    const params = rParams.Ok();
+    if (store !== params.store) {
+      return buildErrorMsg(this.sthis, this.logger, {} as MsgBase, new Error("store mismatch"));
     }
-    return conn.request<ResSignedUrl>(rsu.Ok(), { waitType: "resSignedUrl" });
+    const rsu = {
+      tid: this.sthis.nextId().str,
+      type,
+      conn: conn.conn,
+      params: {
+        method,
+        store,
+        ...params,
+        key: params.key,
+      },
+      version: VERSION,
+    } as ReqSignedUrl;
+    return conn.request<ReqSignedUrl, S>(rsu, { waitFor: waitForFn });
   }
 
   async putObject(uri: URI, uploadUrl: string, body: Uint8Array): Promise<Result<void>> {
@@ -157,28 +172,50 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
   constructor(sthis: SuperThis) {
     super(sthis, "DataGateway");
   }
-  async getConn(uri: URI, conn: Connection): Promise<Result<Uint8Array>> {
-    const rResSignedUrl = await this.getResSignedUrl(uri, "GET", conn);
-    if (rResSignedUrl.isErr()) {
+  async getConn(uri: URI, conn: MsgConnection): Promise<Result<Uint8Array>> {
+    // type: string, method: HttpMethods, store: FPStoreTypes, waitForFn:
+    const rResSignedUrl = await this.getResSignedUrl<ResGetData>(
+      "reqGetData",
+      "GET",
+      "data",
+      MsgIsResGetData,
+      uri,
+      conn
+    );
+    if (MsgIsError(rResSignedUrl)) {
       return this.logger.Error().Err(rResSignedUrl).Msg("Error in buildResSignedUrl").ResultError();
     }
-    const { signedUrl: downloadUrl } = rResSignedUrl.Ok();
+    const { signedUrl: downloadUrl } = rResSignedUrl;
     return this.getObject(uri, downloadUrl);
   }
-  async putConn(uri: URI, body: Uint8Array, conn: Connection): Promise<Result<void>> {
-    const rResSignedUrl = await this.getResSignedUrl(uri, "PUT", conn);
-    if (rResSignedUrl.isErr()) {
+  async putConn(uri: URI, body: Uint8Array, conn: MsgConnection): Promise<Result<void>> {
+    const rResSignedUrl = await this.getResSignedUrl<ResPutData>(
+      "reqPutData",
+      "PUT",
+      "data",
+      MsgIsResPutData,
+      uri,
+      conn
+    );
+    if (MsgIsError(rResSignedUrl)) {
       return this.logger.Error().Err(rResSignedUrl).Msg("Error in buildResSignedUrl").ResultError();
     }
-    const { signedUrl: uploadUrl } = rResSignedUrl.Ok();
+    const { signedUrl: uploadUrl } = rResSignedUrl;
     return this.putObject(uri, uploadUrl, body);
   }
-  async delConn(uri: URI, conn: Connection): Promise<Result<void>> {
-    const rResSignedUrl = await this.getResSignedUrl(uri, "DELETE", conn);
-    if (rResSignedUrl.isErr()) {
+  async delConn(uri: URI, conn: MsgConnection): Promise<Result<void>> {
+    const rResSignedUrl = await this.getResSignedUrl<ResDelData>(
+      "reqDelData",
+      "DELETE",
+      "data",
+      MsgIsResPutData,
+      uri,
+      conn
+    );
+    if (MsgIsError(rResSignedUrl)) {
       return this.logger.Error().Err(rResSignedUrl).Msg("Error in buildResSignedUrl").ResultError();
     }
-    const { signedUrl: deleteUrl } = rResSignedUrl.Ok();
+    const { signedUrl: deleteUrl } = rResSignedUrl;
     return this.delObject(uri, deleteUrl);
   }
 }
@@ -188,68 +225,74 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
     super(sthis, "MetaGateway");
   }
 
-  async getConn(uri: URI, conn: Connection): Promise<Result<Uint8Array>> {
-    const rkey = uri.getParamResult("key");
-    if (rkey.isErr()) {
-      return Result.Err(rkey.Err());
-    }
-    const rsu = buildReqGetMeta(this.sthis, conn.key, {
-      ...conn.key,
-      method: "GET",
-      store: "meta",
-      key: rkey.Ok(),
-    });
-    const rRes = await conn.request<ResGetMeta>(rsu, {
-      waitType: "resGetMeta",
-    });
-    if (rRes.isErr()) {
-      return Result.Err(rRes.Err());
-    }
-    const res = rRes.Ok();
-    if (MsgIsError(res)) {
-      return Result.Err(res);
-    }
-    if (res.signedGetUrl) {
-      return this.getObject(uri, res.signedGetUrl);
-    }
-    return Result.Ok(this.sthis.txt.encode(JSON.stringify(res.metas)));
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getConn(uri: URI, conn: MsgConnection): Promise<Result<Uint8Array>> {
+    // const rkey = uri.getParamResult("key");
+    // if (rkey.isErr()) {
+    //   return Result.Err(rkey.Err());
+    // }
+    // const rsu = buildReqGetMeta(this.sthis, conn.key, {
+    //   ...conn.key,
+    //   method: "GET",
+    //   store: "meta",
+    //   key: rkey.Ok(),
+    // });
+    // const rRes = await conn.request<ResGetMeta>(rsu, {
+    //   waitType: "resGetMeta",
+    // });
+    // if (rRes.isErr()) {
+    //   return Result.Err(rRes.Err());
+    // }
+    // const res = rRes.Ok();
+    // if (MsgIsError(res)) {
+    //   return Result.Err(res);
+    // }
+    // if (res.signedGetUrl) {
+    //   return this.getObject(uri, res.signedGetUrl);
+    // }
+    // return Result.Ok(this.sthis.txt.encode(JSON.stringify(res.metas)));
+    return Result.Ok(new Uint8Array());
   }
-  async putConn(uri: URI, body: Uint8Array, conn: Connection): Promise<Result<void>> {
-    const bodyRes = Result.Ok(body); // await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
-    if (bodyRes.isErr()) {
-      return this.logger.Error().Err(bodyRes).Msg("Error in addCryptoKeyToGatewayMetaPayload").ResultError();
-    }
-    const rsu = this.prepareReqSignedUrl(uri, "PUT", conn.key);
-    if (rsu.isErr()) {
-      return Result.Err(rsu.Err());
-    }
-    const dbMetas = JSON.parse(this.sthis.txt.decode(bodyRes.Ok())) as CRDTEntry[];
-    this.logger.Debug().Any("dbMetas", dbMetas).Msg("putMeta");
-    const req = buildReqPutMeta(this.sthis, conn.key, rsu.Ok().params, dbMetas);
-    const res = await conn.request<ResPutMeta>(req, { waitType: "resPutMeta" });
-    if (res.isErr()) {
-      return Result.Err(res.Err());
-    }
-    // console.log("putMeta", JSON.stringify({dbMetas, res}));
-    this.logger.Debug().Any("qs", { req, res: res.Ok() }).Msg("putMeta");
-    this.putObject(uri, res.Ok().signedPutUrl, bodyRes.Ok());
-    return res;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async putConn(uri: URI, body: Uint8Array, conn: MsgConnection): Promise<Result<void>> {
+    // const bodyRes = Result.Ok(body); // await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
+    // if (bodyRes.isErr()) {
+    //   return this.logger.Error().Err(bodyRes).Msg("Error in addCryptoKeyToGatewayMetaPayload").ResultError();
+    // }
+    // const rsu = this.prepareReqSignedUrl(uri, "PUT", conn.key);
+    // if (rsu.isErr()) {
+    //   return Result.Err(rsu.Err());
+    // }
+    // const dbMetas = JSON.parse(this.sthis.txt.decode(bodyRes.Ok())) as CRDTEntry[];
+    // this.logger.Debug().Any("dbMetas", dbMetas).Msg("putMeta");
+    // const req = buildReqPutMeta(this.sthis, conn.key, rsu.Ok().params, dbMetas);
+    // const res = await conn.request<ResPutMeta>(req, { waitType: "resPutMeta" });
+    // if (res.isErr()) {
+    //   return Result.Err(res.Err());
+    // }
+    // // console.log("putMeta", JSON.stringify({dbMetas, res}));
+    // this.logger.Debug().Any("qs", { req, res: res.Ok() }).Msg("putMeta");
+    // this.putObject(uri, res.Ok().signedPutUrl, bodyRes.Ok());
+    // return res;
+    return Result.Ok(undefined);
   }
-  async delConn(uri: URI, conn: Connection): Promise<Result<void>> {
-    const rsu = this.prepareReqSignedUrl(uri, "DELETE", conn.key);
-    if (rsu.isErr()) {
-      return Result.Err(rsu.Err());
-    }
-    const res = await conn.request<ResDelMeta>(buildReqDelMeta(this.sthis, conn.key, rsu.Ok().params), {
-      waitType: "resDelMeta",
-    });
-    if (res.isErr()) {
-      return Result.Err(res.Err());
-    }
-    const { signedDelUrl } = res.Ok();
-    if (signedDelUrl) {
-      return this.delObject(uri, signedDelUrl);
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async delConn(uri: URI, conn: MsgConnection): Promise<Result<void>> {
+    // const rsu = this.prepareReqSignedUrl(uri, "DELETE", conn.key);
+    // if (rsu.isErr()) {
+    //   return Result.Err(rsu.Err());
+    // }
+    // const res = await conn.request<ResDelMeta>(buildReqDelMeta(this.sthis, conn.key, rsu.Ok().params), {
+    //   waitType: "resDelMeta",
+    // });
+    // if (res.isErr()) {
+    //   return Result.Err(res.Err());
+    // }
+    // const { signedDelUrl } = res.Ok();
+    // if (signedDelUrl) {
+    //   return this.delObject(uri, signedDelUrl);
+    // }
+    // return Result.Ok(undefined);
     return Result.Ok(undefined);
   }
 }
@@ -327,7 +370,7 @@ interface Subscription {
   readonly unsub: () => void;
 }
 const subscriptions = new Map<string, Subscription[]>();
-const doServerSubscribe = new KeyedResolvOnce();
+// const doServerSubscribe = new KeyedResolvOnce();
 const trackPuts = new Set<string>();
 export class FireproofCloudGateway implements bs.Gateway {
   readonly logger: Logger;
@@ -374,21 +417,6 @@ export class FireproofCloudGateway implements bs.Gateway {
     return getStoreTypeGateway(this.sthis, uri).delete(uri, this.getCloudConnection(uri));
   }
 
-  async put(uri: URI, body: Uint8Array): Promise<Result<void>> {
-    const ret = await getStoreTypeGateway(this.sthis, uri).put(uri, body, this.getCloudConnection(uri));
-    if (ret.isOk()) {
-      if (uri.getParam("testMode")) {
-        trackPuts.add(uri.toString());
-      }
-    }
-    return ret;
-  }
-
-  async delete(uri: URI): Promise<bs.VoidResult> {
-    trackPuts.delete(uri.toString());
-    return getStoreTypeGateway(this.sthis, uri).delete(uri, this.getCloudConnection(uri));
-  }
-
   async close(uri: URI): Promise<bs.VoidResult> {
     const uriStr = uri.toString();
     // CAUTION here is my happen a mutation of subscriptions caused by unsub
@@ -409,10 +437,10 @@ export class FireproofCloudGateway implements bs.Gateway {
   }
 
   // fireproof://localhost:1999/?name=test-public-api&protocol=ws&store=meta
-  async getCloudConnection(uri: URI): Promise<Result<Connection>> {
+  async getCloudConnection(uri: URI): Promise<Result<MsgConnection>> {
     const rParams = uri.getParamsResult({
       name: 0,
-      protocol: "wss",
+      protocol: "https",
       store: 0,
       storekey: 0,
     });
@@ -426,115 +454,86 @@ export class FireproofCloudGateway implements bs.Gateway {
     if (rfingerprint.isErr()) {
       return this.logger.Error().Err(rfingerprint).Msg("Error in getNamedKey").ResultError();
     }
-    const connectionKey = {
-      tenantId: uri.build().getParam("tendenId", rfingerprint.Ok().fingerPrint) as string,
-      name: params.name,
-      // protocol: params.protocol as ConnectionKey["protocol"],
-    } satisfies ConnectionKey;
-
-    const wsUrl = uri
-      .build()
-      .protocol(params.protocol === "ws" ? "ws" : "wss")
-      .appendRelative("ws")
-      .cleanParams();
-
-    // forces to open a new websocket connection
-    const connId = uri.getParam("connId");
-    if (connId) {
-      wsUrl.setParam("connId", connId);
-    }
-    return Result.Ok(
-      await keyedConnections.get(wsUrl.toString()).once(async (cKey) => {
-        const ws = await newWebSocket(wsUrl);
-        const waitOpen = new Future<void>();
-        ws.onopen = () => {
-          this.logger.Debug().Url(wsUrl).Msg("ws open");
-          waitOpen.resolve();
-        };
-        ws.onerror = (err) => {
-          this.logger.Error().Err(err).Url(wsUrl).Msg("ws error");
-          keyedConnections.unget(cKey);
-        };
-        ws.onclose = () => {
-          keyedConnections.unget(cKey);
-          this.logger.Debug().Url(wsUrl).Msg("ws close");
-        };
-        await waitOpen.asPromise();
-        return new ConnectionImpl(this.sthis, ws, connectionKey, () => {
-          keyedConnections.unget(cKey);
-        });
-      })
-    );
+    const qOpen = buildReqOpen(this.sthis, {
+      key: {
+        tenant: uri.build().getParam("tenant", rfingerprint.Ok().fingerPrint) as string,
+        ledger: params.name,
+        // protocol: params.protocol as ConnectionKey["protocol"],
+      } satisfies TenantLedger,
+    });
+    return keyedConnections.get(keyTenantLedger(qOpen.conn.key)).once(async () => Msger.open(this.sthis, uri, qOpen));
   }
 
-  private notifySubscribers(data: Uint8Array, callbacks: ((msg: Uint8Array) => void)[] = []): void {
-    for (const cb of callbacks) {
-      try {
-        cb(data);
-      } catch (error) {
-        this.logger.Error().Err(error).Msg("Error in subscriber callback execution");
-      }
-    }
-  }
+  // private notifySubscribers(data: Uint8Array, callbacks: ((msg: Uint8Array) => void)[] = []): void {
+  //   for (const cb of callbacks) {
+  //     try {
+  //       cb(data);
+  //     } catch (error) {
+  //       this.logger.Error().Err(error).Msg("Error in subscriber callback execution");
+  //     }
+  //   }
+  // }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async subscribe(uri: URI, callback: (meta: Uint8Array) => void): Promise<bs.UnsubscribeResult> {
-    const rParams = uri.getParamsResult({
-      store: 0,
-      storekey: 0,
-    });
-    if (rParams.isErr()) {
-      return this.logger.Error().Err(rParams).Msg("Error in subscribe").ResultError();
-    }
-    const { store } = rParams.Ok();
-    if (store !== "meta") {
-      return Result.Err(new Error("store must be meta"));
-    }
-    const rConn = await this.getCloudConnection(uri);
-    if (rConn.isErr()) {
-      return this.logger.Error().Err(rConn).Msg("Error in subscribe:getCloudConnection").ResultError();
-    }
-    const conn = rConn.Ok();
-    const rResSubscribeMeta = await doServerSubscribe.get(pkKey(conn.key)).once(async () => {
-      const subId = this.sthis.nextId().str;
-      const fn = (subId: string) => (msg: MsgBase) => {
-        if (MsgIsUpdateMetaEvent(msg) && subId === msg.subscriberId) {
-          // console.log("onMessage", subId, conn.key, msg.metas);
-          const s = subscriptions.get(subId);
-          if (!s) {
-            return;
-          }
-          console.log("msg", JSON.stringify(msg));
-          this.notifySubscribers(
-            this.sthis.txt.encode(JSON.stringify(msg.metas)),
-            s.map((s) => s.callback)
-          );
-        }
-      };
-      conn.onMessage(fn(subId));
-      return conn.request<ResSubscribeMeta>(buildReqSubscriptMeta(this.sthis, conn.key, subId), {
-        waitType: "resSubscribeMeta",
-      });
-    });
-    if (rResSubscribeMeta.isErr()) {
-      return this.logger.Error().Err(rResSubscribeMeta).Msg("Error in subscribe:request").ResultError();
-    }
-    const subId = rResSubscribeMeta.Ok().subscriberId;
-    let callbacks = subscriptions.get(subId);
-    if (!callbacks) {
-      callbacks = [];
-      subscriptions.set(subId, callbacks);
-    }
-    const sid = this.sthis.nextId().str;
-    const unsub = () => {
-      const idx = callbacks.findIndex((c) => c.sid === sid);
-      if (idx !== -1) {
-        callbacks.splice(idx, 1);
-      }
-      if (callbacks.length === 0) {
-        subscriptions.delete(subId);
-      }
-    };
-    callbacks.push({ uri: uri.toString(), callback, sid, unsub });
-    return Result.Ok(unsub);
+    return Result.Err(new Error("Not implemented"));
+    // const rParams = uri.getParamsResult({
+    //   store: 0,
+    //   storekey: 0,
+    // });
+    // if (rParams.isErr()) {
+    //   return this.logger.Error().Err(rParams).Msg("Error in subscribe").ResultError();
+    // }
+    // const { store } = rParams.Ok();
+    // if (store !== "meta") {
+    //   return Result.Err(new Error("store must be meta"));
+    // }
+    // const rConn = await this.getCloudConnection(uri);
+    // if (rConn.isErr()) {
+    //   return this.logger.Error().Err(rConn).Msg("Error in subscribe:getCloudConnection").ResultError();
+    // }
+    // const conn = rConn.Ok();
+    // const rResSubscribeMeta = await doServerSubscribe.get(pkKey(conn.key)).once(async () => {
+    //   const subId = this.sthis.nextId().str;
+    //   const fn = (subId: string) => (msg: MsgBase) => {
+    //     if (MsgIsUpdateMetaEvent(msg) && subId === msg.subscriberId) {
+    //       // console.log("onMessage", subId, conn.key, msg.metas);
+    //       const s = subscriptions.get(subId);
+    //       if (!s) {
+    //         return;
+    //       }
+    //       console.log("msg", JSON.stringify(msg));
+    //       this.notifySubscribers(
+    //         this.sthis.txt.encode(JSON.stringify(msg.metas)),
+    //         s.map((s) => s.callback)
+    //       );
+    //     }
+    //   };
+    //   conn.onMessage(fn(subId));
+    //   return conn.request<ResSubscribeMeta>(buildReqSubscriptMeta(this.sthis, conn.key, subId), {
+    //     waitType: "resSubscribeMeta",
+    //   });
+    // });
+    // if (rResSubscribeMeta.isErr()) {
+    //   return this.logger.Error().Err(rResSubscribeMeta).Msg("Error in subscribe:request").ResultError();
+    // }
+    // const subId = rResSubscribeMeta.Ok().subscriberId;
+    // let callbacks = subscriptions.get(subId);
+    // if (!callbacks) {
+    //   callbacks = [];
+    //   subscriptions.set(subId, callbacks);
+    // }
+    // const sid = this.sthis.nextId().str;
+    // const unsub = () => {
+    //   const idx = callbacks.findIndex((c) => c.sid === sid);
+    //   if (idx !== -1) {
+    //     callbacks.splice(idx, 1);
+    //   }
+    //   if (callbacks.length === 0) {
+    //     subscriptions.delete(subId);
+    //   }
+    // };
+    // callbacks.push({ uri: uri.toString(), callback, sid, unsub });
+    // return Result.Ok(unsub);
   }
 
   async destroy(_uri: URI): Promise<Result<void>> {
@@ -543,15 +542,15 @@ export class FireproofCloudGateway implements bs.Gateway {
   }
 }
 
-function pkKey(set?: ConnectionKey): string {
-  const ret = JSON.stringify(
-    Object.entries(set || {})
-      .sort(([a], [b]) => a.localeCompare(b))
-      .filter(([k]) => k !== "id")
-      .map(([k, v]) => ({ [k]: v }))
-  );
-  return ret;
-}
+// function pkKey(set?: ConnectionKey): string {
+//   const ret = JSON.stringify(
+//     Object.entries(set || {})
+//       .sort(([a], [b]) => a.localeCompare(b))
+//       .filter(([k]) => k !== "id")
+//       .map(([k, v]) => ({ [k]: v }))
+//   );
+//   return ret;
+// }
 
 export class FireproofCloudTestStore implements bs.TestGateway {
   readonly logger: Logger;

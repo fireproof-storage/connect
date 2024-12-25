@@ -56,11 +56,9 @@ export class WSConnection implements MsgConnection {
     const timer = setTimeout(() => {
       const err = this.logger.Error().Dur("timeout", this.msgP.timeout).Msg("Timeout").AsError();
       this.toMsg(buildErrorMsg(this.sthis, this.logger, {} as MsgBase, err));
-      console.log("WSConnection.start-timer");
       onOpenFuture.resolve(Result.Err(err));
     }, this.msgP.timeout);
     this.wqs.ws.onopen = () => {
-      console.log("WSConnection.onopen");
       onOpenFuture.resolve(Result.Ok(undefined));
       this.opened = true;
     };
@@ -108,7 +106,6 @@ export class WSConnection implements MsgConnection {
       return rOpen;
     }
     const resOpen = await this.request(this.wqs.reqOpen, { waitFor: MsgIsResOpen });
-    console.log("WSConnection.start-4");
     if (!MsgIsResOpen(resOpen)) {
       return Result.Err(this.logger.Error().Any("ErrMsg", resOpen).Msg("Invalid response").AsError());
     }

@@ -1,4 +1,4 @@
-import { exception2Result, Future } from "@adviser/cement";
+import { Future } from "@adviser/cement";
 import { Logger, SuperThis } from "@fireproof/core";
 import { CalculatePreSignedUrl } from "./msg-types-data.js";
 import { PreSignedMsg } from "./pre-signed-url.js";
@@ -47,6 +47,10 @@ export interface UCanAuth {
 export interface TenantLedger {
   readonly tenant: string;
   readonly ledger: string;
+}
+
+export function keyTenantLedger(t: TenantLedger): string {
+  return `${t.tenant}:${t.ledger}`;
 }
 
 export interface Connection {
@@ -167,7 +171,8 @@ export interface MsgerParams {
   readonly mime: string;
   readonly auth?: AuthType;
   readonly hasPersistent?: boolean;
-  readonly protocol: "http" | "ws";
+  readonly protocolCapabilities?: ProtocolCapabilities[];
+  // readonly protocol: "http" | "ws";
   readonly timeout: number; // msec
 }
 
@@ -178,9 +183,9 @@ export function defaultGestalt(msgP: MsgerParams, gestalt: GestaltParam): Gestal
   return {
     storeTypes: ["meta", "data", "wal"],
     httpEndpoints: ["/fp"],
-    wsEndpoints: msgP.protocol === "ws" ? ["/ws"] : [],
+    wsEndpoints: ["/ws"],
     encodings: ["JSON"],
-    protocolCapabilities: msgP.protocol === "ws" ? ["stream"] : ["reqRes"],
+    protocolCapabilities: msgP.protocolCapabilities || ["reqRes", "stream"],
     auth: [],
     requiresAuth: false,
     data: msgP.hasPersistent
@@ -282,10 +287,15 @@ export function MsgIsResGestalt(msg: MsgBase): msg is ResGestalt {
   return msg.type === "resGestalt";
 }
 
-export type ReqOpenConnection = Omit<Connection, "resId"> & { readonly reqId?: string };
+export interface ReqOpenConnection {
+  readonly key: TenantLedger;
+  readonly reqId?: string;
+  readonly resId?: string;
+}
 
-export interface ReqOpen extends MsgBase {
+export interface ReqOpen extends Omit<MsgBase, "conn"> {
   readonly type: "reqOpen";
+  readonly conn: Connection;
 }
 
 export function buildReqOpen(sthis: NextId, conn: ReqOpenConnection): ReqOpen {
@@ -301,7 +311,7 @@ export function buildReqOpen(sthis: NextId, conn: ReqOpenConnection): ReqOpen {
 }
 
 export function MsgIsReqOpen(msg: MsgBase): msg is ReqOpen {
-  return msg.type === "reqOpen";
+  return msg.type === "reqOpen" && !!msg.conn && !!msg.conn.reqId;
 }
 
 export interface ResOpen extends MsgBase {
@@ -442,6 +452,21 @@ export interface ReqSignedUrl extends MsgBase {
   // readonly type: "reqSignedUrl";
   readonly conn: Connection;
   readonly params: ReqSignedUrlParam;
+}
+
+export function buildReqSignedUrl<T extends ReqSignedUrl>(
+  sthis: NextId,
+  type: string,
+  params: ReqSignedUrlParam,
+  conn: Connection
+): T {
+  return {
+    tid: sthis.nextId().str,
+    type,
+    version: VERSION,
+    conn,
+    params,
+  } as T;
 }
 
 export interface ResSignedUrl extends MsgBase {

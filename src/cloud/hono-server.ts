@@ -48,7 +48,7 @@ export class HonoServer {
       this.impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
       const rMsg = await exception2Result(() => c.req.json() as Promise<MsgBase>);
       if (rMsg.isErr()) {
-        c.status(500);
+        c.status(400);
         return c.json(buildErrorMsg(this.sthis, this.logger, { tid: "internal" }, rMsg.Err()));
       }
       return dispatcher.dispatch(this.impl, rMsg.Ok(), (msg) => c.json(msg));
@@ -57,7 +57,7 @@ export class HonoServer {
       this.impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
       const rReqOpen = await exception2Result(() => JSON.parse(URI.from(c.req.url).getParam("reqOpen", "")));
       if (rReqOpen.isErr()) {
-        c.status(500);
+        c.status(400);
         return c.json(buildErrorMsg(this.sthis, this.logger, { tid: "internal" }, rReqOpen.Err()));
       }
       const reqOpen = rReqOpen.Ok();

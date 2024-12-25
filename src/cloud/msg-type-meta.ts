@@ -20,7 +20,7 @@ export function MsgIsReqSubscribeMeta(req: MsgBase): req is ReqSubscribeMeta {
   return req.type === "reqSubscribeMeta";
 }
 
-export function buildReqSubscriptMeta(sthis: NextId, ck: Connection, subscriberId: string): ReqSubscribeMeta {
+export function buildReqSubscribeMeta(sthis: NextId, ck: Connection, subscriberId: string): ReqSubscribeMeta {
   return {
     tid: sthis.nextId().str,
     subscriberId,
@@ -36,7 +36,7 @@ export interface ResSubscribeMeta extends MsgBase {
   readonly conn: Connection;
 }
 
-export function buildResSubscriptMeta(req: ReqSubscribeMeta /*, _conn: Connection*/): ResSubscribeMeta {
+export function buildResSubscribeMeta(req: ReqSubscribeMeta /*, _conn: Connection*/): ResSubscribeMeta {
   return {
     tid: req.tid,
     type: "resSubscribeMeta",

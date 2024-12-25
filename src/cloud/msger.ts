@@ -70,8 +70,8 @@ export function defaultMsgParams(sthis: SuperThis, igs: Partial<MsgerParams>): M
   return {
     ende: jsonEnDe(sthis),
     mime: "application/json",
-    protocol: "http",
     timeout: 3000,
+    protocolCapabilities: ["reqRes", "stream"],
     ...igs,
   } satisfies MsgerParams;
 }
@@ -139,12 +139,12 @@ export class Msger {
     sthis: SuperThis,
     curl: CoerceURI,
     qOpen: ReqOpen,
-    imsgP: MsgerParams
+    imsgP: Partial<MsgerParams> = {}
   ): Promise<Result<MsgConnection>> {
     // initial exchange with JSON encoding
     const jsGI = defaultMsgParams(sthis, { ...imsgP, ende: jsonEnDe(sthis) });
     const url = URI.from(curl);
-    const gs = defaultGestalt(imsgP, { id: "FP-Universal-Client" });
+    const gs = defaultGestalt(defaultMsgParams(sthis, imsgP), { id: "FP-Universal-Client" });
     /*
      * request Gestalt with Http
      */

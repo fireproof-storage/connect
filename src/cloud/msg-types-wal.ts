@@ -1,4 +1,4 @@
-import { VERSION, Logger } from "@adviser/cement";
+import { Logger } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core";
 import {
   MsgBase,
@@ -9,6 +9,7 @@ import {
   ReqSignedUrl,
   ResSignedUrl,
   ReqSignedUrlParam,
+  buildReqSignedUrl,
 } from "./msg-types.js";
 import { CalculatePreSignedUrl } from "./msg-types-data.js";
 
@@ -21,14 +22,7 @@ export function MsgIsReqGetWAL(msg: MsgBase): msg is ReqGetWAL {
 }
 
 export function buildReqGetWAL(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqGetWAL {
-  return {
-    params: sup,
-    conn,
-    tid: sthis.nextId().str,
-    type: "reqGetWAL",
-    // key: req.key,
-    version: VERSION,
-  };
+  return buildReqSignedUrl<ReqGetWAL>(sthis, "reqGetWAL", sup, conn);
 }
 
 export interface ResGetWAL extends ResSignedUrl {
@@ -59,14 +53,7 @@ export function MsgIsReqPutWAL(msg: MsgBase): msg is ReqPutWAL {
 }
 
 export function buildReqPutWAL(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqPutWAL {
-  return {
-    params: sup,
-    conn,
-    tid: sthis.nextId().str,
-    type: "reqPutWAL",
-    // key: req.key,
-    version: VERSION,
-  };
+  return buildReqSignedUrl<ReqPutWAL>(sthis, "reqPutWAL", sup, conn);
 }
 
 export interface ResPutWAL extends Omit<ResSignedUrl, "type"> {
@@ -95,14 +82,7 @@ export function MsgIsReqDelWAL(msg: MsgBase): msg is ReqDelWAL {
 }
 
 export function buildReqDelWAL(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqDelWAL {
-  return {
-    params: sup,
-    conn,
-    tid: sthis.nextId().str,
-    type: "reqDelWAL",
-    // key: req.key,
-    version: VERSION,
-  };
+  return buildReqSignedUrl<ReqDelWAL>(sthis, "reqDelWAL", sup, conn);
 }
 
 export interface ResDelWAL extends Omit<ResSignedUrl, "type"> {

@@ -9,6 +9,7 @@ export interface Env {
   // bucket: R2Bucket;
   // kv_store: KVNamespace;
 
+  /** AWS/S3 access key ID for storage backend */
   ACCESS_KEY_ID: string;
   ACCOUNT_ID: string;
   BUCKET_NAME: string;
@@ -25,7 +26,9 @@ export interface Env {
   FP_STACK: string;
   FP_FORMAT: string;
   FP_PROTOCOL: string;
+  /** Test date in ISO8601 format (YYYYMMDD'T'HHmmss'Z'). Optional. */
   TEST_DATE?: string;
+  /** Maximum idle time in seconds before connection timeout. Optional. */
   MAX_IDLE_TIME?: string;
 
   FP_META_GROUPS: DurableObjectNamespace<FPMetaGroups>;
