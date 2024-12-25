@@ -106,7 +106,8 @@ export class HonoServer {
     return this;
   }
   async close() {
-    return this.impl.close();
+    const ret = await this.impl.close();
+    return ret;
   }
 }
 

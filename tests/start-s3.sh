@@ -1,11 +1,11 @@
 docker rm -f $(docker ps --format '{{.ID}}.{{.Names}}' -a | grep 'minio'| sed 's/\..*$//')
 
-docker run -d -p 9000:9000 --name minio  \
+docker run -d -p 9001:9001 -p 9000:9000 --name minio  \
                      -e "MINIO_ACCESS_KEY=minioadmin"  \
                      -e "MINIO_SECRET_KEY=minioadmin"  \
                      -v /tmp/data:/data  \
                      -v /tmp/config:/root/.minio  \
-                     minio/minio server /data 
+                     minio/minio server /data --json --console-address :9001
 
 export AWS_ACCESS_KEY_ID=minioadmin
 export AWS_SECRET_ACCESS_KEY=minioadmin

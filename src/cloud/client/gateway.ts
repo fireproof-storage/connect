@@ -439,29 +439,42 @@ export class FireproofCloudGateway implements bs.Gateway {
   // fireproof://localhost:1999/?name=test-public-api&protocol=ws&store=meta
   async getCloudConnection(uri: URI): Promise<Result<MsgConnection>> {
     const rParams = uri.getParamsResult({
-      name: 0,
+      name: key.REQUIRED,
       protocol: "https",
-      store: 0,
-      storekey: 0,
+      store: key.REQUIRED,
+      storekey: key.OPTIONAL,
+      tenant: key.OPTIONAL,
     });
     if (rParams.isErr()) {
       return this.logger.Error().Url(uri).Err(rParams).Msg("getCloudConnection:err").ResultError();
     }
     const params = rParams.Ok();
-    const dataKey = params.storekey.replace(/:(meta|wal)@$/, `:data@`);
-    const kb = await rt.kb.getKeyBag(this.sthis);
-    const rfingerprint = await kb.getNamedKey(dataKey);
-    if (rfingerprint.isErr()) {
-      return this.logger.Error().Err(rfingerprint).Msg("Error in getNamedKey").ResultError();
+    let tenant: string;
+    if (params.tenant) {
+      tenant = params.tenant;
+    } else {
+      if (!params.storekey) {
+        return this.logger.Error().Url(uri).Msg("no tendant or storekey given").ResultError();
+      }
+      const dataKey = params.storekey.replace(/:(meta|wal)@$/, `:data@`);
+      const kb = await rt.kb.getKeyBag(this.sthis);
+      const rfingerprint = await kb.getNamedKey(dataKey);
+      if (rfingerprint.isErr()) {
+        return this.logger.Error().Err(rfingerprint).Msg("Error in getNamedKey").ResultError();
+      }
+      tenant = rfingerprint.Ok().fingerPrint;
     }
     const qOpen = buildReqOpen(this.sthis, {
       key: {
-        tenant: uri.build().getParam("tenant", rfingerprint.Ok().fingerPrint) as string,
+        tenant: tenant,
         ledger: params.name,
-        // protocol: params.protocol as ConnectionKey["protocol"],
       } satisfies TenantLedger,
     });
-    return keyedConnections.get(keyTenantLedger(qOpen.conn.key)).once(async () => Msger.open(this.sthis, uri, qOpen));
+    let cUrl = uri.build().protocol(params.protocol).cleanParams().URI();
+    if (cUrl.pathname === "/") {
+      cUrl = cUrl.build().pathname("/fp").URI();
+    }
+    return keyedConnections.get(keyTenantLedger(qOpen.conn.key)).once(async () => Msger.open(this.sthis, cUrl, qOpen));
   }
 
   // private notifySubscribers(data: Uint8Array, callbacks: ((msg: Uint8Array) => void)[] = []): void {

@@ -57,6 +57,9 @@ export class NodeHonoServer implements HonoServerImpl {
     this._injectWebSocket(this._server);
   }
   async close(): Promise<void> {
-    return new Promise((res) => this._server.close(() => res()));
+    this._server.close(() => {
+      /* */
+    });
+    // return new Promise((res) => this._server.close(() => res()));
   }
 }

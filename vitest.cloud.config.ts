@@ -16,7 +16,7 @@ export default defineConfig({
       // "node_modules/@fireproof/core/tests/**/*test.?(c|m)[jt]s?(x)",
       // "node_modules/@fireproof/core/tests/**/*gateway.test.?(c|m)[jt]s?(x)",
       // "src/connector.test.ts",
-      "src/cloud/*test.?(c|m)[jt]s?(x)",
+      "src/cloud/**/*test.?(c|m)[jt]s?(x)",
     ],
     globals: true,
     setupFiles: "./setup.cloud.ts",
