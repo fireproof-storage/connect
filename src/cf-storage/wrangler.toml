@@ -1,0 +1,61 @@
+name = "cf-storage"
+main = "cf-index.ts"
+compatibility_date = "2024-04-19"
+compatibility_flags = ["nodejs_compat"]
+# upload_source_maps = true
+
+#[durable_objects]
+#bindings = [
+#  { name = "CF_STORAGE_TEST", class_name = "CFStorage"},
+#]
+
+[[kv_namespaces]]
+binding = "STORAGE"
+id = "cf-test"
+
+
+[[migrations]]
+tag = "v1" # Should be unique for each entry
+#new_classes = ["FPMetaGroups"]
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[env.test.vars]
+FP_STORAGE_URL = "cf://cf-test"
+FP_KEYBAG_URL = "cf://cf-test-keybag"
+
+[[env.test.kv_namespaces]]
+binding = "STORAGE"
+id = "cf-test"
+
+#[env.test-reqRes.vars]
+#VERSION = "FP-MSG-1.0"
+#STORAGE_URL = "http://localhost:9000/testbucket"
+#ACCESS_KEY_ID = "minioadmin"
+#SECRET_ACCESS_KEY = "minioadmin"
+#FP_DEBUG = "FPMetaGroups"
+##FP_FORMAT = "yaml"
+## TEST_DATE = "20241121T225359Z"
+#FP_PROTOCOL = "http"
+#
+#[env.test-reqRes.durable_objects]
+#bindings = [
+#  { name = "FP_META_GROUPS", class_name = "FPMetaGroups" },
+#]
+#
+#[env.test-stream.vars]
+#VERSION = "FP-MSG-1.0"
+#STORAGE_URL = "http://localhost:9000/testbucket"
+#ACCESS_KEY_ID = "minioadmin"
+#SECRET_ACCESS_KEY = "minioadmin"
+#FP_DEBUG = "FPMetaGroups"
+##FP_FORMAT = "yaml"
+## TEST_DATE = "20241121T225359Z"
+#FP_PROTOCOL = "ws"
+#
+#[env.test-stream.durable_objects]
+#bindings = [
+#  { name = "FP_META_GROUPS", class_name = "FPMetaGroups" },
+#]

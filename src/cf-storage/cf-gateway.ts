@@ -1,5 +1,8 @@
-import { Result, URI, exception2Result, key } from "@adviser/cement";
-import { bs, rt, Logger, NotFoundError, SuperThis, ensureLogger } from "@fireproof/core";
+import { Result, URI, exception2Result, key, EnvActions, Env as CTEnv } from "@adviser/cement";
+import { bs, rt, Logger, NotFoundError, SuperThis, ensureLogger, falsyToUndef } from "@fireproof/core";
+import { DurableObjectStorage } from "@cloudflare/workers-types";
+import { Env } from "./env.js"
+import { base64pad } from "multiformats/bases/base64"
 
 export const CF_VERSION = "v0.1-cf-gw";
 
@@ -24,43 +27,35 @@ export async function attachStorage<T extends DurableObjectStorage>(key: string,
   return dos;
 }
 
+function ensureCFKey<S>(url: URI, fn: (kd: { key: string; dos: DurableObjectStorage }) => Promise<Result<S>>): Promise<Result<S>> {
+  // const r = url.getParamsResult({ duraStorage: key.OPTIONAL }).Ok();
+  const dos = durableObjects.get(url.pathname);
+  if (!dos) {
+    return Promise.resolve(Result.Err(new NotFoundError(`DurableObject not found:${url.pathname}`)));
+  }
+  const rParams = url.getParamsResult({
+    store: key.REQUIRED,
+    key: key.REQUIRED,
+    index: key.OPTIONAL,
+  });
+  if (rParams.isErr()) {
+    return Promise.resolve(Result.Err(rParams.Err()));
+  }
+  const params = rParams.Ok();
+  let idxStr = ""
+  if (params.index) {
+    idxStr = `${params.index}-`
+  }
+  const keyStr = `${idxStr}${params.store}/${params.key}`;
+  return fn({ key: keyStr, dos });
+}
+
 export class CFGateway implements bs.Gateway {
   readonly sthis: SuperThis;
   readonly logger: Logger;
   constructor(sthis: SuperThis) {
     this.sthis = sthis;
     this.logger = ensureLogger(sthis, "CFGateway");
-  }
-
-  getDos(url: URI): Result<DurableObjectStorage> {
-    const r = url.getParamsResult({ duraStorage: key.OPTIONAL }).Ok();
-    const dos = durableObjects.get(r.duraStorage);
-    if (!dos) {
-      return Result.Err(new NotFoundError(`DurableObject not found:${r.duraStorage}`));
-    }
-    return Result.Ok(dos);
-  }
-
-  prepareCFKey(url: URI): Result<{ key: string; dos: DurableObjectStorage }> {
-    const rDos = this.getDos(url);
-    if (rDos.isErr()) {
-      return Result.Err(rDos.Err());
-    }
-    const rParams = url.getParamsResult({
-      store: key.REQUIRED,
-      key: key.REQUIRED,
-      index: key.OPTIONAL,
-    });
-    if (rParams.isErr()) {
-      return Result.Err(rParams.Err());
-    }
-    const params = rParams.Ok();
-    let idxStr = ""
-    if (params.index) {
-      idxStr = `${params.index}-`
-    }
-    const keyStr = `${idxStr}${params.store}/${params.key}`;
-    return Result.Ok({ key: keyStr, dos: rDos.Ok() });
   }
 
   buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {
@@ -86,38 +81,29 @@ export class CFGateway implements bs.Gateway {
   }
 
   async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
-    const rCFKey = await this.prepareCFKey(url);
-    if (rCFKey.isErr()) {
-      return Result.Err(rCFKey.Err());
-    }
-    const cfKey = rCFKey.Ok();
-    return exception2Result(() => cfKey.dos.put<Uint8Array>(cfKey.key, body));
+    return ensureCFKey(url, ({ key, dos }) => {
+      return exception2Result(() => dos.put<string>(key, base64pad.encode(body)))
+    })
   }
 
   async get(url: URI): Promise<bs.GetResult> {
-    const rCFKey = await this.prepareCFKey(url);
-    if (rCFKey.isErr()) {
-      return Result.Err(rCFKey.Err());
-    }
-    const cfKey = rCFKey.Ok();
-    const rRet = await exception2Result(() => cfKey.dos.get<Uint8Array>(cfKey.key));
-    if (rRet.isErr()) {
-      return Result.Err(rRet.Err());
-    }
-    const buffer = rRet.Ok();
-    if (!buffer) {
-      return Result.Err(new NotFoundError(`Not found: ${cfKey.key}`));
-    }
-    return Result.Ok(buffer);
+    return ensureCFKey(url, async ({ key, dos }) => {
+      const rRet = await exception2Result(() => dos.get<string>(key));
+      if (rRet.isErr()) {
+        return Result.Err(rRet.Err());
+      }
+      const buffer = rRet.Ok();
+      if (!buffer) {
+        return Result.Err(new NotFoundError(`Not found: ${key}`));
+      }
+      return Result.Ok(base64pad.decode(buffer));
+    })
   }
 
   async delete(url: URI): Promise<bs.VoidResult> {
-    const rCFKey = await this.prepareCFKey(url);
-    if (rCFKey.isErr()) {
-      return Result.Err(rCFKey.Err());
-    }
-    const cfKey = rCFKey.Ok();
-    return exception2Result(() => cfKey.dos.delete(cfKey.key));
+    return ensureCFKey(url, async ({ key, dos }) => {
+      return exception2Result(() => dos.delete(key));
+    })
   }
 }
 
@@ -145,9 +131,69 @@ export interface versionUnregister {
   readonly version: string;
 }
 
+export class CFEnvAction implements EnvActions {
+  readonly cfEnv: Record<string, string>;
+  constructor(env: Env) {
+    this.cfEnv = env as unknown as Record<string, string>;
+  }
+  active(): boolean {
+    return true;
+  }
+  register(env: CTEnv): CTEnv {
+    return env
+  }
+  get(key: string): string | undefined {
+    return this.cfEnv[key];
+  }
+  set(key: string, value?: string): void {
+    if (value) {
+      this.cfEnv[key] = value;
+    }
+  }
+  delete(key: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete this.cfEnv[key];
+  }
+  keys(): string[] {
+    return Object.keys(this.cfEnv).filter((k) => typeof this.cfEnv[k] === "string");
+  }
+}
+
+
+
 export function registerCFStoreProtocol(protocol = "cf:", overrideBaseURL?: string): versionUnregister {
   // URI.protocolHasHostpart(protocol);
   const unreg: versionUnregister = (() => {
+
+    rt.kb.registerKeyBagProviderFactory({
+      protocol: "cf:",
+      override: true,
+      factory: async (url: URI, _sthis: SuperThis): Promise<rt.kb.KeyBagProvider> => {
+        const duraObjectPath = url.pathname
+        function ensureDos<T>(fn: (dos: DurableObjectStorage) => T) {
+          const dos = durableObjects.get(duraObjectPath)
+          if (!dos) {
+            throw new NotFoundError(`DurableObject not found:${duraObjectPath}`);
+          }
+          return fn(dos)
+        }
+        return {
+          get: async (id: string) => {
+            return ensureDos(async (dos) => {
+              const item = await dos.get(id) as string
+              if (!item) {
+                return falsyToUndef(item)
+              }
+              return JSON.parse(item)
+            })
+          },
+          async set(id: string, item: rt.kb.KeyItem) {
+            return ensureDos((dos) => dos.put(id, JSON.stringify(item)))
+          }
+        }
+      }
+    })
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const _f: any = bs.registerStoreProtocol({
       protocol,
