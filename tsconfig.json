@@ -37,6 +37,7 @@
     // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
     "types": [
       "vitest/globals",
+      "@cloudflare/vitest-pool-workers",
       "@cloudflare/workers-types",
       "@cloudflare/workers-types/2023-07-01"
     ],

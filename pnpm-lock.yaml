@@ -10,16 +10,16 @@ importers:
     dependencies:
       '@adviser/cement':
         specifier: ^0.3.1
-        version: 0.3.1(typescript@5.7.2)
+        version: 0.3.3(typescript@5.7.2)
       '@aws-sdk/client-s3':
         specifier: ^3.717.0
         version: 3.717.0
       '@fireproof/core':
-        specifier: 0.19.119
+        specifier: ^0.19.119
         version: 0.19.119(react@18.3.1)(typescript@5.7.2)
       '@fireproof/vendor':
-        specifier: 1.0.0
-        version: 1.0.0
+        specifier: ^1.0.1
+        version: 1.0.1
       '@ipld/dag-ucan':
         specifier: ^3.4.0
         version: 3.4.0
@@ -189,9 +189,9 @@ importers:
 
 packages:
 
-  '@adviser/cement@0.3.1':
-    resolution: {integrity: sha512-6RvowpFIL8ImHMqnyRitogbBzkcy80McIGnv5aRJ+OhjXRzs5NWInqbscfOCgSO7KuZukBsv+Ua1LFBrZ6/qsw==}
-    engines: {node: '>=16'}
+  '@adviser/cement@0.3.3':
+    resolution: {integrity: sha512-yCkdozDJsqWF++f8CMTapDo5D/DZ5ssVSU/CRjxVe9pOngi8rWK/OWG8CIVVAQq+ODwWmBfy8OajF5l9wNEWUQ==}
+    engines: {node: '>=20'}
 
   '@aws-crypto/crc32@5.2.0':
     resolution: {integrity: sha512-nLbCWqQNgUiwwtFsen1AdzAtvuLRsQS8rYgMuxCrdKf9kOssamGLuPwyTY9wyYblNr9+1XM8v6zoDTPPSIeANg==}
@@ -1198,8 +1198,8 @@ packages:
     peerDependencies:
       react: ^18.3.1
 
-  '@fireproof/vendor@1.0.0':
-    resolution: {integrity: sha512-ucN0ICj7xbpbO3NWjAKKjMHkBn4vSRUdKn14LLaA0MILJowty+H4XBB8dCobwKemhW49ha5p520NOLRzJSKsow==}
+  '@fireproof/vendor@1.0.1':
+    resolution: {integrity: sha512-d0gslNRuwdCeIdZNjsp88n0EOcXnn75t5PRKnFznusT+M2sxUIYrRjTLcFGRRm40wMF0KqxgCvX54uS4x/idfw==}
 
   '@hapi/hoek@9.3.0':
     resolution: {integrity: sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==}
@@ -4124,7 +4124,7 @@ packages:
 
 snapshots:
 
-  '@adviser/cement@0.3.1(typescript@5.7.2)':
+  '@adviser/cement@0.3.3(typescript@5.7.2)':
     dependencies:
       ts-essentials: 10.0.2(typescript@5.7.2)
       yaml: 2.5.1
@@ -5106,8 +5106,8 @@ snapshots:
 
   '@fireproof/core@0.19.119(react@18.3.1)(typescript@5.7.2)':
     dependencies:
-      '@adviser/cement': 0.3.1(typescript@5.7.2)
-      '@fireproof/vendor': 1.0.0
+      '@adviser/cement': 0.3.3(typescript@5.7.2)
+      '@fireproof/vendor': 1.0.1
       '@ipld/unixfs': 3.0.0
       charwise: 3.0.1
       idb: 8.0.1
@@ -5121,7 +5121,7 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/vendor@1.0.0':
+  '@fireproof/vendor@1.0.1':
     dependencies:
       '@ipld/dag-pb': 4.1.2
       '@multiformats/murmur3': 2.1.8

@@ -2,12 +2,14 @@
 // by running `wrangler types`
 
 // import type { DurableObjectNamespace } from "@cloudflare/workers-types";
+import { CFTestStorageProvider } from "./cf-test-dobj.ts";
 // import { FPMetaGroups } from "./fp-meta-groups.js";
 // import { WSEvents } from "hono/ws";
 
 export interface Env {
   // bucket: R2Bucket;
   // kv_store: KVNamespace;
+  NAMESPACE: KVNamespace;
 
   FP_STORAGE_URL: string;
   FP_KEYBAG_URL: string;
@@ -17,8 +19,8 @@ export interface Env {
   FP_FORMAT: string;
   FP_PROTOCOL: string;
 
-  STORAGE: DurableObjectStorage;
-  // FP_META_GROUPS: DurableObjectNamespace<FPMetaGroups>;
+  // STORAGE: DurableObjectStorage;
+  CFTestStorage: DurableObjectStorage<CFTestStorageProvider>;
 }
 
 // declare module "cloudflare:test" {

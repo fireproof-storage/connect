@@ -4,19 +4,19 @@ compatibility_date = "2024-04-19"
 compatibility_flags = ["nodejs_compat"]
 # upload_source_maps = true
 
-#[durable_objects]
-#bindings = [
-#  { name = "CF_STORAGE_TEST", class_name = "CFStorage"},
-#]
+[durable_objects]
+bindings = [
+  { name = "CFTestStorage", class_name = "CFTestStorageProvider"},
+]
 
-[[kv_namespaces]]
-binding = "STORAGE"
-id = "cf-test"
+# [[kv_namespaces]]
+# binding = "STORAGE"
+# id = "cf-test"
 
 
 [[migrations]]
 tag = "v1" # Should be unique for each entry
-#new_classes = ["FPMetaGroups"]
+new_classes = ["CFTestStorageProvider"]
 
 [observability]
 enabled = true
@@ -26,9 +26,9 @@ head_sampling_rate = 1
 FP_STORAGE_URL = "cf://cf-test"
 FP_KEYBAG_URL = "cf://cf-test-keybag"
 
-[[env.test.kv_namespaces]]
-binding = "STORAGE"
-id = "cf-test"
+# [[env.test.kv_namespaces]]
+# binding = "STORAGE"
+# id = "cf-test"
 
 #[env.test-reqRes.vars]
 #VERSION = "FP-MSG-1.0"
@@ -40,10 +40,10 @@ id = "cf-test"
 ## TEST_DATE = "20241121T225359Z"
 #FP_PROTOCOL = "http"
 #
-#[env.test-reqRes.durable_objects]
-#bindings = [
-#  { name = "FP_META_GROUPS", class_name = "FPMetaGroups" },
-#]
+[env.test.durable_objects]
+bindings = [
+ { name = "CFTestStorage", class_name = "CFTestStorageProvider" },
+]
 #
 #[env.test-stream.vars]
 #VERSION = "FP-MSG-1.0"

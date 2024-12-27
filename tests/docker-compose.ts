@@ -8,8 +8,8 @@ async function main() {
   process.exit(res.exitCode);
 }
 
-// eslint-disable-next-line no-console
 main().catch((e) => {
+  // eslint-disable-next-line no-console
   console.error(e);
   process.exit(2);
 });

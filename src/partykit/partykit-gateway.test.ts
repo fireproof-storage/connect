@@ -1,9 +1,8 @@
-import { fireproof, Database, bs } from "@fireproof/core";
+import { fireproof, Database, bs, ensureSuperThis } from "@fireproof/core";
 import { registerPartyKitStoreProtocol } from "./gateway.js";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { URI } from "@adviser/cement";
 import { smokeDB } from "../../tests/helper.js";
-import { mockSuperThis } from "../../node_modules/@fireproof/core/tests/helpers.js";
 
 // has to leave
 interface ExtendedGateway extends bs.Gateway {
@@ -21,7 +20,7 @@ interface ExtendedStore {
 describe("PartyKitGateway", () => {
   let db: Database;
   let unregister: () => void;
-  const sthis = mockSuperThis();
+  const sthis = ensureSuperThis();
 
   beforeAll(() => {
     unregister = registerPartyKitStoreProtocol("partykit:");

@@ -1,8 +1,7 @@
-import { Result, URI, exception2Result, key, EnvActions, Env as CTEnv } from "@adviser/cement";
-import { bs, rt, Logger, NotFoundError, SuperThis, ensureLogger, falsyToUndef } from "@fireproof/core";
-import { DurableObjectStorage } from "@cloudflare/workers-types";
-import { Env } from "./env.js"
-import { base64pad } from "multiformats/bases/base64"
+import { ResolveOnce, Result, URI, exception2Result, key } from "@adviser/cement";
+import { bs, rt, Logger, NotFoundError, SuperThis, ensureLogger, falsyToUndef, Falsy } from "@fireproof/core";
+// import { DurableObjectStorage } from "@cloudflare/workers-types";
+import { base64pad } from "multiformats/bases/base64";
 
 export const CF_VERSION = "v0.1-cf-gw";
 
@@ -21,38 +20,50 @@ export const CF_VERSION = "v0.1-cf-gw";
 //   return {};
 // }
 
-const durableObjects = new Map<string, DurableObjectStorage>();
-export async function attachStorage<T extends DurableObjectStorage>(key: string, dos: T): Promise<T> {
-  durableObjects.set(key, dos);
-  return dos;
+export interface StorageProvider {
+  put(key: string, value: string): Promise<void>;
+  get(key: string): Promise<string | Falsy>;
+  delete(key: string): Promise<void>;
 }
 
-function ensureCFKey<S>(url: URI, fn: (kd: { key: string; dos: DurableObjectStorage }) => Promise<Result<S>>): Promise<Result<S>> {
+const durableObjects = new Map<string, () => Promise<StorageProvider>>();
+export async function attachStorage<T extends StorageProvider>(key: string, dosFn: () => Promise<T>): Promise<void> {
+  durableObjects.set(key, dosFn);
+}
+
+async function ensureCFKey<S>(
+  url: URI,
+  fn: (kd: { key: string; dos: StorageProvider }) => Promise<Result<S>>
+): Promise<Result<S>> {
   // const r = url.getParamsResult({ duraStorage: key.OPTIONAL }).Ok();
-  const dos = durableObjects.get(url.pathname);
-  if (!dos) {
-    return Promise.resolve(Result.Err(new NotFoundError(`DurableObject not found:${url.pathname}`)));
+  const dosFn = durableObjects.get(url.pathname);
+  if (!dosFn) {
+    return Promise.resolve(Result.Err(new NotFoundError(`StorageProvider not found:${url.pathname}`)));
   }
   const rParams = url.getParamsResult({
     store: key.REQUIRED,
     key: key.REQUIRED,
+    name: key.REQUIRED,
     index: key.OPTIONAL,
   });
   if (rParams.isErr()) {
     return Promise.resolve(Result.Err(rParams.Err()));
   }
   const params = rParams.Ok();
-  let idxStr = ""
+  let idxStr = "";
   if (params.index) {
-    idxStr = `${params.index}-`
+    idxStr = `${params.index}-`;
   }
-  const keyStr = `${idxStr}${params.store}/${params.key}`;
+  const keyStr = `${params.name}/${idxStr}${params.store}/${params.key}`;
+  const dos = await dosFn();
+  // console.log("ensureCFKey", keyStr, dos.get, dos.put);
   return fn({ key: keyStr, dos });
 }
 
 export class CFGateway implements bs.Gateway {
   readonly sthis: SuperThis;
   readonly logger: Logger;
+  readonly trackDestroy = new Set<string>();
   constructor(sthis: SuperThis) {
     this.sthis = sthis;
     this.logger = ensureLogger(sthis, "CFGateway");
@@ -64,8 +75,12 @@ export class CFGateway implements bs.Gateway {
     return Promise.resolve(Result.Ok(url.URI()));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async destroy(iurl: URI): Promise<Result<void>> {
+  async destroy(_url: URI): Promise<Result<void>> {
+    const toDel = new Set<string>(this.trackDestroy);
+    this.trackDestroy.clear();
+    for (const urlStr of toDel) {
+      await this.delete(URI.from(urlStr));
+    }
     return Result.Ok(undefined);
   }
 
@@ -82,13 +97,15 @@ export class CFGateway implements bs.Gateway {
 
   async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
     return ensureCFKey(url, ({ key, dos }) => {
-      return exception2Result(() => dos.put<string>(key, base64pad.encode(body)))
-    })
+      this.trackDestroy.add(url.toString());
+      return exception2Result(async () => await dos.put(key, base64pad.encode(body)));
+    });
   }
 
   async get(url: URI): Promise<bs.GetResult> {
     return ensureCFKey(url, async ({ key, dos }) => {
-      const rRet = await exception2Result(() => dos.get<string>(key));
+      // console.log("key", key, dos.put, dos.get);
+      const rRet = await exception2Result(async () => await dos.get(key));
       if (rRet.isErr()) {
         return Result.Err(rRet.Err());
       }
@@ -96,14 +113,15 @@ export class CFGateway implements bs.Gateway {
       if (!buffer) {
         return Result.Err(new NotFoundError(`Not found: ${key}`));
       }
+      // console.log("buffer", buffer);
       return Result.Ok(base64pad.decode(buffer));
-    })
+    });
   }
 
   async delete(url: URI): Promise<bs.VoidResult> {
     return ensureCFKey(url, async ({ key, dos }) => {
-      return exception2Result(() => dos.delete(key));
-    })
+      return exception2Result(async () => await dos.delete(key));
+    });
   }
 }
 
@@ -131,68 +149,45 @@ export interface versionUnregister {
   readonly version: string;
 }
 
-export class CFEnvAction implements EnvActions {
-  readonly cfEnv: Record<string, string>;
-  constructor(env: Env) {
-    this.cfEnv = env as unknown as Record<string, string>;
-  }
-  active(): boolean {
-    return true;
-  }
-  register(env: CTEnv): CTEnv {
-    return env
-  }
-  get(key: string): string | undefined {
-    return this.cfEnv[key];
-  }
-  set(key: string, value?: string): void {
-    if (value) {
-      this.cfEnv[key] = value;
-    }
-  }
-  delete(key: string): void {
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    delete this.cfEnv[key];
-  }
-  keys(): string[] {
-    return Object.keys(this.cfEnv).filter((k) => typeof this.cfEnv[k] === "string");
-  }
+const once = new ResolveOnce();
+export function registerCFStoreProtocol(protocol = "cf:", overrideBaseURL?: string): versionUnregister {
+  return once.once(() => _registerCFStoreProtocol(protocol, overrideBaseURL));
 }
 
-
-
-export function registerCFStoreProtocol(protocol = "cf:", overrideBaseURL?: string): versionUnregister {
+function _registerCFStoreProtocol(protocol = "cf:", overrideBaseURL?: string): versionUnregister {
   // URI.protocolHasHostpart(protocol);
   const unreg: versionUnregister = (() => {
-
     rt.kb.registerKeyBagProviderFactory({
       protocol: "cf:",
       override: true,
       factory: async (url: URI, _sthis: SuperThis): Promise<rt.kb.KeyBagProvider> => {
-        const duraObjectPath = url.pathname
-        function ensureDos<T>(fn: (dos: DurableObjectStorage) => T) {
-          const dos = durableObjects.get(duraObjectPath)
-          if (!dos) {
+        const duraObjectPath = url.pathname;
+        async function ensureDos<T>(fn: (dos: StorageProvider) => Promise<T>) {
+          const dosFn = durableObjects.get(duraObjectPath);
+          if (!dosFn) {
             throw new NotFoundError(`DurableObject not found:${duraObjectPath}`);
           }
-          return fn(dos)
+          return fn(await dosFn());
         }
         return {
+          _prepare: (id: string): Promise<unknown> => {
+            return Promise.resolve({ id });
+          },
           get: async (id: string) => {
             return ensureDos(async (dos) => {
-              const item = await dos.get(id) as string
+              const item = (await dos.get(id)) as string;
               if (!item) {
-                return falsyToUndef(item)
+                return falsyToUndef(item);
               }
-              return JSON.parse(item)
-            })
+              return JSON.parse(item);
+            });
           },
           async set(id: string, item: rt.kb.KeyItem) {
-            return ensureDos((dos) => dos.put(id, JSON.stringify(item)))
-          }
-        }
-      }
-    })
+            return ensureDos((dos) => dos.put(id, JSON.stringify(item)));
+          },
+        } as rt.kb.KeyBagProvider;
+      },
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const _f: any = bs.registerStoreProtocol({

@@ -137,7 +137,7 @@ export class AWSGateway implements bs.Gateway {
       return this.logger.Error().Any({ resp: done }).Msg("failed to upload meta").ResultError();
     }
 
-    const doneJson = await done.json();
+    const doneJson = (await done.json()) as { uploadURL: string };
     if (!doneJson.uploadURL) {
       return this.logger.Error().Url(fetchUrl).Msg("Upload URL not found in the response").ResultError();
     }
