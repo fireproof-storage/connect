@@ -9,12 +9,14 @@ import s3 from "./vitest.s3.config.ts";
 // import connector from "./vitest.connector.config.ts";
 import netlify from "./vitest.netlify.config.ts";
 import ucan from "./vitest.ucan.config.ts";
+import cfStorage from "./vitest.cf-storage.config.ts";
 // import cf_kv from "./vitest.cf-kv.config.ts";
 
 export default defineWorkspace([
   nodeSqlite3Wasm,
   betterSqlite3,
   // connector,
+  cfStorage,
   s3,
   aws,
   netlify,

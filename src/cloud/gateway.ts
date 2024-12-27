@@ -156,7 +156,7 @@ export class FireproofCloudGateway implements bs.Gateway {
         if (response.status === 404) {
           throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
         }
-        const url = (await response.json()).url;
+        const url = ((await response.json()) as { url: string }).url;
         this.logger.Debug().Url(url).Msg("put");
         const uploadResponse = await fetch(url, { method: "PUT", body: body });
         if (uploadResponse.status === 404) {

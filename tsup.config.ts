@@ -29,8 +29,8 @@ function skipper(suffix: string, target: string) {
   };
 }
 
+/*
 const ourMultiformat = {
-  /*
         "atomically": `${__dirname}/bundle-not-impl.js`,
         "memfs": `${__dirname}/bundle-not-impl.js`,
         "stubborn-fs": `${__dirname}/bundle-not-impl.js`,
@@ -43,8 +43,8 @@ const ourMultiformat = {
         "@web3-storage/access/stores/store-conf": `${__dirname}/bundle-not-impl.js`,
         "env-paths": `${__dirname}/bundle-not-impl.js`,
         "stream": `${__dirname}/bundle-not-impl.js`,
-*/
 };
+*/
 
 function packageVersion() {
   let version = "refs/tags/v0.0.0-smoke";
@@ -67,6 +67,7 @@ const LIBRARY_BUNDLE_OPTIONS: Options = {
 
 const LIBRARY_BUNDLES: Options[] = [
   // IIFE build with moduleReplacementPlugin
+  /*
   {
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["iife"],
@@ -87,6 +88,7 @@ const LIBRARY_BUNDLES: Options[] = [
     ],
     dts: false, // No type declarations needed for IIFE build
   },
+*/
   // ESM and CJS builds without moduleReplacementPlugin
   {
     ...LIBRARY_BUNDLE_OPTIONS,
@@ -152,6 +154,7 @@ const LIBRARY_BUNDLES: Options[] = [
     },
   },
   // IIFE build with moduleReplacementPlugin
+  /*
   {
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["iife"],
@@ -172,6 +175,7 @@ const LIBRARY_BUNDLES: Options[] = [
     ],
     dts: false, // No type declarations needed for IIFE build
   },
+*/
   // ESM and CJS builds without moduleReplacementPlugin
   {
     ...LIBRARY_BUNDLE_OPTIONS,
@@ -195,6 +199,7 @@ const LIBRARY_BUNDLES: Options[] = [
     },
   },
   // IIFE build with moduleReplacementPlugin
+  /*
   {
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["iife"],
@@ -215,6 +220,7 @@ const LIBRARY_BUNDLES: Options[] = [
     ],
     dts: false, // No type declarations needed for IIFE build
   },
+*/
   // ESM and CJS builds without moduleReplacementPlugin
   {
     ...LIBRARY_BUNDLE_OPTIONS,
@@ -238,6 +244,7 @@ const LIBRARY_BUNDLES: Options[] = [
     },
   },
   // IIFE build with moduleReplacementPlugin
+  /*
   {
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["iife"],
@@ -258,6 +265,7 @@ const LIBRARY_BUNDLES: Options[] = [
     ],
     dts: false, // No type declarations needed for IIFE build
   },
+*/
   // ESM and CJS builds without moduleReplacementPlugin
   {
     ...LIBRARY_BUNDLE_OPTIONS,
@@ -281,6 +289,7 @@ const LIBRARY_BUNDLES: Options[] = [
     },
   },
   // IIFE build with moduleReplacementPlugin
+  /*
   {
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["iife"],
@@ -307,6 +316,7 @@ const LIBRARY_BUNDLES: Options[] = [
     ],
     dts: false, // No type declarations needed for IIFE build
   },
+*/
   // ESM and CJS builds without moduleReplacementPlugin
   {
     ...LIBRARY_BUNDLE_OPTIONS,
