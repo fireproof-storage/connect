@@ -15,8 +15,8 @@ importers:
         specifier: ^3.717.0
         version: 3.717.0
       '@fireproof/core':
-        specifier: 0.19.118
-        version: 0.19.118(react@18.3.1)(typescript@5.7.2)
+        specifier: 0.19.121
+        version: 0.19.121(react@18.3.1)(typescript@5.7.2)
       '@fireproof/vendor':
         specifier: 1.0.4
         version: 1.0.4
@@ -1034,8 +1034,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@0.19.118':
-    resolution: {integrity: sha512-lyK0Aj7t0acLz9x8i1s12GwBNkOuEeRPg5eS6MhMn5uYTi1p0kWvJHn+pb3hRFG5sP7zmjp5/obeHtTKGDTLGA==}
+  '@fireproof/core@0.19.121':
+    resolution: {integrity: sha512-HTHM9MXPEvby66h2I4zGT7VqFVpJMzcd3xiGeInzAwwO8mFB5ZQ6ic/i/P+5R6iN0ZNucGMKVOUAh2+XysxmHQ==}
     peerDependencies:
       react: ^18.3.1
 
@@ -2446,8 +2446,8 @@ packages:
   idb-keyval@6.2.1:
     resolution: {integrity: sha512-8Sb3veuYCyrZL+VBt9LJfZjLUPWVvqn8tG28VqYNFCo43KHcKuq+b4EiXGeuaLAQWL2YmyDgMp2aSpH9JHsEQg==}
 
-  idb@8.0.0:
-    resolution: {integrity: sha512-l//qvlAKGmQO31Qn7xdzagVPPaHTxXx199MhrAFuVBTPqydcPYBWjkrbv4Y0ktB+GmWOiwHl237UUOrLmQxLvw==}
+  idb@8.0.1:
+    resolution: {integrity: sha512-EkBCzUZSdhJV8PxMSbeEV//xguVKZu9hZZulM+2gHXI0t2hGVU3eYE6/XnH77DS6FM2FY8wl17aDcu9vXpvLWQ==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -2823,8 +2823,8 @@ packages:
     resolution: {integrity: sha512-mQ2o1VayrZ6Jaz8VyP8B7h/hdn2iAnbUOrQh4rTiwbpULhktpD8IpHGBw8Qo2fmv97Z1P3YzLF3X/DkbIHBQmA==}
     engines: {node: '>=8.11.4', npm: 6.10.1}
 
-  memfs@4.15.0:
-    resolution: {integrity: sha512-q9MmZXd2rRWHS6GU3WEm3HyiXZyyoA1DqdOhEq0lxPBmKb5S7IAOwX0RgUCwJfqjelDCySa5h8ujOy24LqsWcw==}
+  memfs@4.15.2:
+    resolution: {integrity: sha512-n8/qP8AT6CtY6kxCPYgYVusT5rS6axaT66dD3tYi2lm+l1iMH7YYpmW8H/qL5bfV4YvInCCgUDAWIRvrNS7kbQ==}
     engines: {node: '>= 4.0.0'}
 
   memoizee@0.4.17:
@@ -3050,8 +3050,8 @@ packages:
     resolution: {integrity: sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==}
     engines: {node: '>=10'}
 
-  p-limit@6.1.0:
-    resolution: {integrity: sha512-H0jc0q1vOzlEk0TqAKXKZxdl7kX3OFUzCnNVUnq5Pc3DGo0kpeaMuPqxQn235HibwBEb0/pm9dgKTjXy66fBkg==}
+  p-limit@6.2.0:
+    resolution: {integrity: sha512-kuUqqHNUqoIWp/c467RI4X6mmyuojY5jGutNU0wVTmEOOfcuwLqyMVoAi9MKi2Ak+5i9+nhmrK4ufZE8069kHA==}
     engines: {node: '>=18'}
 
   p-locate@5.0.0:
@@ -4855,16 +4855,16 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.19.118(react@18.3.1)(typescript@5.7.2)':
+  '@fireproof/core@0.19.121(react@18.3.1)(typescript@5.7.2)':
     dependencies:
-      '@adviser/cement': 0.2.44(typescript@5.7.2)
+      '@adviser/cement': 0.3.4(typescript@5.7.2)
       '@fireproof/vendor': 1.0.4
       '@ipld/unixfs': 3.0.0
       charwise: 3.0.1
-      idb: 8.0.0
-      memfs: 4.15.0
+      idb: 8.0.1
+      memfs: 4.15.2
       multiformats: 13.3.1
-      p-limit: 6.1.0
+      p-limit: 6.2.0
       p-map: 7.0.3
       p-retry: 6.2.1
       prolly-trees: 1.0.4
@@ -6770,7 +6770,7 @@ snapshots:
 
   idb-keyval@6.2.1: {}
 
-  idb@8.0.0: {}
+  idb@8.0.1: {}
 
   ieee754@1.2.1: {}
 
@@ -7225,7 +7225,7 @@ snapshots:
       is-nan-x: 2.1.1
       to-number-x: 3.2.2
 
-  memfs@4.15.0:
+  memfs@4.15.2:
     dependencies:
       '@jsonjoy.com/json-pack': 1.1.0(tslib@2.7.0)
       '@jsonjoy.com/util': 1.5.0(tslib@2.7.0)
@@ -7488,7 +7488,7 @@ snapshots:
     dependencies:
       yocto-queue: 0.1.0
 
-  p-limit@6.1.0:
+  p-limit@6.2.0:
     dependencies:
       yocto-queue: 1.1.1
 
