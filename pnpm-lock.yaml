@@ -18,8 +18,8 @@ importers:
         specifier: 0.19.118
         version: 0.19.118(react@18.3.1)(typescript@5.7.2)
       '@fireproof/vendor':
-        specifier: 1.0.0
-        version: 1.0.0
+        specifier: 1.0.4
+        version: 1.0.4
       '@ipld/dag-ucan':
         specifier: ^3.4.0
         version: 3.4.0
@@ -1179,8 +1179,8 @@ packages:
     peerDependencies:
       react: ^18.3.1
 
-  '@fireproof/vendor@1.0.0':
-    resolution: {integrity: sha512-ucN0ICj7xbpbO3NWjAKKjMHkBn4vSRUdKn14LLaA0MILJowty+H4XBB8dCobwKemhW49ha5p520NOLRzJSKsow==}
+  '@fireproof/vendor@1.0.4':
+    resolution: {integrity: sha512-F8yYaYGRNrtYo4KyMzMuKwI5mGieYMkI23KnYkQ3ixKhIu3J6qRGZsuROFjOv2zWjQvtPronvqyxNc9P5km31g==}
 
   '@hapi/hoek@9.3.0':
     resolution: {integrity: sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==}
@@ -5054,7 +5054,7 @@ snapshots:
   '@fireproof/core@0.19.118(react@18.3.1)(typescript@5.7.2)':
     dependencies:
       '@adviser/cement': 0.2.44(typescript@5.7.2)
-      '@fireproof/vendor': 1.0.0
+      '@fireproof/vendor': 1.0.4
       '@ipld/unixfs': 3.0.0
       charwise: 3.0.1
       idb: 8.0.0
@@ -5068,7 +5068,7 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@fireproof/vendor@1.0.0':
+  '@fireproof/vendor@1.0.4':
     dependencies:
       '@ipld/dag-pb': 4.1.2
       '@multiformats/murmur3': 2.1.8
