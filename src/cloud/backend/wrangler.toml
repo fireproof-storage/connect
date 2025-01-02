@@ -9,6 +9,11 @@ bindings = [
   { name = "FP_META_GROUPS", class_name = "FPMetaGroups"},
 ]
 
+[[d1_databases]]
+binding = "DB"
+database_name = "test-meta-merge"
+database_id = "b8b452ed-b1d9-478f-b56c-c5e4545f157a"
+
 
 [[migrations]]
 tag = "v1" # Should be unique for each entry
