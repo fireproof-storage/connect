@@ -33,10 +33,30 @@ export interface MsgContext {
   calculatePreSignedUrl(p: PreSignedMsg): Promise<string>;
 }
 
+export interface WSPair {
+  readonly client: WebSocket;
+  readonly server: WebSocket;
+}
+
+export class WSConnection {
+  readonly conn: Connection;
+  wspair?: WSPair;
+  constructor(conn: Connection) {
+    this.conn = conn;
+  }
+  attachWSPair(wsp: WSPair) {
+    if (!this.wspair) {
+      this.wspair = wsp;
+    } else {
+      throw new Error("wspair already set");
+    }
+  }
+}
+
 export class MsgDispatcher {
   readonly sthis: SuperThis;
   readonly logger: Logger;
-  conn?: Connection;
+  wsConn?: WSConnection;
   readonly gestalt: Gestalt;
   readonly id: string;
 
@@ -47,15 +67,15 @@ export class MsgDispatcher {
     this.id = sthis.nextId().str;
   }
 
-  addConn(aConn: Connection): Result<Connection> {
-    if (!this.conn) {
-      this.conn = { ...aConn, resId: this.sthis.nextId().str };
-      return Result.Ok(this.conn);
+  addConn(aConn: Connection): Result<WSConnection> {
+    if (!this.wsConn) {
+      this.wsConn = new WSConnection({ ...aConn, resId: this.sthis.nextId().str });
+      return Result.Ok(this.wsConn);
     }
-    if (aConn.reqId === this.conn.reqId) {
-      return Result.Ok(this.conn);
+    if (aConn.reqId === this.wsConn.conn.reqId) {
+      return Result.Ok(this.wsConn);
     }
-    return this.logger.Error().Msg(`unexpected reqId: ${aConn.reqId}!==${this.conn.reqId}`).ResultError();
+    return this.logger.Error().Msg(`unexpected reqId: ${aConn.reqId}!==${this.wsConn.conn.reqId}`).ResultError();
   }
 
   async dispatch(ctx: HonoServerImpl, msg: MsgBase, send: (msg: MsgBase) => void) {
@@ -71,9 +91,8 @@ export class MsgDispatcher {
         if (rConn.isErr()) {
           return send(buildErrorMsg(this.sthis, this.logger, msg, rConn.Err()));
         }
-        return send(buildResOpen(this.sthis, msg, rConn.Ok().resId));
+        return send(buildResOpen(this.sthis, msg, rConn.Ok().conn.resId));
       }
-
       case MsgIsReqGetData(msg): {
         return send(await buildResGetData(this.sthis, this.logger, msg, ctx));
       }

@@ -4,7 +4,7 @@ import { CRDTEntry, ensureSuperThis } from "@fireproof/core";
 import { Connection } from "../msg-types.js";
 import { runtimeFn } from "@adviser/cement";
 import { SQLDatabase } from "./abstract-sql.js";
-import type { Env } from '../backend/env.js'
+import type { Env } from "../backend/env.js";
 
 function sortCRDTEntries(rows: CRDTEntry[]) {
   return rows.sort((a, b) => a.cid.localeCompare(b.cid));

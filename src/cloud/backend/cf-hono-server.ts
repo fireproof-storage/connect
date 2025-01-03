@@ -1,11 +1,11 @@
 import { HttpHeader, Logger, Result, URI } from "@adviser/cement";
 import { Context, Hono } from "hono";
 import { HonoServerImpl, CORS, ConnMiddleware } from "../hono-server.js";
-import { WSEvents } from "hono/ws";
+import { WSContext, WSContextInit, WSEvents } from "hono/ws";
 import { buildErrorMsg, EnDeCoder } from "../msg-types.js";
 import { ensureLogger, SuperThis } from "@fireproof/core";
 import { Env } from "./env.js";
-import { RequestInfo as CFRequestInfo } from "@cloudflare/workers-types";
+// import { RequestInfo as CFRequestInfo } from "@cloudflare/workers-types";
 import { calculatePreSignedUrl, PreSignedConnMsg } from "../pre-signed-url.js";
 
 export class CFHonoServer implements HonoServerImpl {
@@ -16,6 +16,7 @@ export class CFHonoServer implements HonoServerImpl {
   readonly logger: Logger;
   readonly ende: EnDeCoder;
   readonly env: Env;
+  // readonly wsConnections = new Map<string, WSPair>()
   constructor(sthis: SuperThis, ende: EnDeCoder, env: Env, headers?: HttpHeader) {
     this.headers = HttpHeader.from(headers).Merge(CORS);
     this.sthis = sthis;
@@ -47,18 +48,56 @@ export class CFHonoServer implements HonoServerImpl {
       const upgradeHeader = c.req.header("Upgrade");
       if (!upgradeHeader || upgradeHeader !== "websocket") {
         return new Response(
-          this.ende.encode(
-            buildErrorMsg(this.sthis, this.logger, {}, new Error("Durable Object expected Upgrade: websocket"))
-          ),
+          this.ende.encode(buildErrorMsg(this.sthis, this.logger, {}, new Error("expected Upgrade: websocket"))),
           { status: 426 }
         );
       }
-      const env = c.env as Env;
-      const id = env.FP_META_GROUPS.idFromName([conn.key.tenant, conn.key.ledger].join(":"));
-      const dObj = env.FP_META_GROUPS.get(id);
-      c.env.WS_EVENTS = createEvents(c);
-      return dObj.fetch(c.req.raw as unknown as CFRequestInfo) as unknown as Promise<Response>;
+      // const env = c.env as Env;
+      // const id = env.FP_META_GROUPS.idFromName([conn.key.tenant, conn.key.ledger].join(":"));
+      // const dObj = env.FP_META_GROUPS.get(id);
+      // c.env.WS_EVENTS = createEvents(c);
+      // return dObj.fetch(c.req.raw as unknown as CFRequestInfo) as unknown as Promise<Response>;
       // this._upgradeWebSocket!(createEvents)(c, next);
+
+      const { 0: client, 1: server } = new WebSocketPair();
+      conn.attachWSPair({ client, server });
+
+      const wsEvents = await createEvents(c);
+      // console.log("upgradeWebSocket", c.req.url);
+
+      const wsCtx = new WSContext(server as WSContextInit);
+
+      // server.onopen = (ev) => {
+      //   console.log("onopen", ev);
+      //   wsEvents.onOpen?.(ev, wsCtx);
+      // }
+      server.onerror = (err) => {
+        // console.log("onerror", err);
+        wsEvents.onError?.(err, wsCtx);
+      };
+      server.onclose = (ev) => {
+        // console.log("onclose", ev);
+        wsEvents.onClose?.(ev, wsCtx);
+      };
+      server.onmessage = (evt) => {
+        // console.log("onmessage", evt);
+        // wsCtx.send("Hellox from server");
+        wsEvents.onMessage?.(evt, wsCtx);
+      };
+      server.accept();
+
+      wsEvents.onOpen?.({} as Event, wsCtx);
+
+      // server.send("Hello from server");
+
+      // this.wsConnections.set(this.sthis.nextId().str, { client, server });
+      // const client = webSocketPair[0],
+      //   server = webSocketPair[1];
+
+      return new Response(null, {
+        status: 101,
+        webSocket: client,
+      });
     };
   }
 

@@ -408,10 +408,9 @@ const once = new ResolveOnce();
 
 export default {
   fetch: async (req, env, ctx): Promise<Response> => {
+    const logger = ensureLogger(env, "CF-Fireproof");
     await once.once(() => {
-      const sthis = ensureSuperThis({
-        logger: ensureLogger(env, "CF-Fireproof"),
-      });
+      const sthis = ensureSuperThis({ logger });
       const msgP = defaultMsgParams(sthis, {
         hasPersistent: true,
         protocolCapabilities: env.FP_PROTOCOL

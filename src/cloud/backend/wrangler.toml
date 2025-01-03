@@ -38,6 +38,12 @@ bindings = [
   { name = "FP_META_GROUPS", class_name = "FPMetaGroups" },
 ]
 
+[[env.test-reqRes.d1_databases]]
+binding = "DB"
+database_name = "test-meta-merge"
+database_id = "b8b452ed-b1d9-478f-b56c-c5e4545f157a"
+
+
 [env.test-stream.vars]
 VERSION = "FP-MSG-1.0"
 STORAGE_URL = "http://localhost:9000/testbucket"
@@ -52,3 +58,8 @@ FP_PROTOCOL = "ws"
 bindings = [
   { name = "FP_META_GROUPS", class_name = "FPMetaGroups" },
 ]
+
+[[env.test-stream.d1_databases]]
+binding = "DB"
+database_name = "test-meta-merge"
+database_id = "b8b452ed-b1d9-478f-b56c-c5e4545f157a"

@@ -2,13 +2,13 @@ import { exception2Result, HttpHeader, Result, URI } from "@adviser/cement";
 import { ensureLogger, Logger, SuperThis } from "@fireproof/core";
 import { Context, Hono, Next } from "hono";
 import { top_uint8 } from "../coerce-binary.js";
-import { MsgerParams, Gestalt, MsgIsReqOpen, buildErrorMsg, Connection, MsgBase, buildResOpen } from "./msg-types.js";
-import { MsgDispatcher } from "./msg-dispatch.js";
+import { MsgerParams, Gestalt, MsgIsReqOpen, buildErrorMsg, MsgBase, buildResOpen } from "./msg-types.js";
+import { MsgDispatcher, WSConnection } from "./msg-dispatch.js";
 import { WSEvents } from "hono/ws";
 import { PreSignedConnMsg } from "./pre-signed-url.js";
 
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-export type ConnMiddleware = (conn: Connection, c: Context, next: Next) => Promise<Response | void>;
+export type ConnMiddleware = (conn: WSConnection, c: Context, next: Next) => Promise<Response | void>;
 export interface HonoServerImpl {
   start(app: Hono): Promise<void>;
   serve(app: Hono, port?: number): Promise<void>;
@@ -43,7 +43,6 @@ export class HonoServer {
     await this.impl.start(app);
     // app.put('/gestalt', async (c) => c.json(buildResGestalt(await c.req.json(), defaultGestaltItem({ id: "server", hasPersistent: true }).gestalt)))
     // app.put('/error', async (c) => c.json(buildErrorMsg(sthis, sthis.logger, await c.req.json(), new Error("test error"))))
-    const dispatcher = new MsgDispatcher(this.sthis, this.gestalt);
     app.put("/fp", async (c) => {
       this.impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
       const rMsg = await exception2Result(() => c.req.json() as Promise<MsgBase>);
@@ -51,6 +50,7 @@ export class HonoServer {
         c.status(400);
         return c.json(buildErrorMsg(this.sthis, this.logger, { tid: "internal" }, rMsg.Err()));
       }
+      const dispatcher = new MsgDispatcher(this.sthis, this.gestalt);
       return dispatcher.dispatch(this.impl, rMsg.Ok(), (msg) => c.json(msg));
     });
     app.get("/ws", async (c, next) => {
@@ -77,7 +77,7 @@ export class HonoServer {
             if (rConn.isErr()) {
               ws.send(this.msgP.ende.encode(buildErrorMsg(this.sthis, this.logger, reqOpen, rConn.Err())));
             } else {
-              ws.send(this.msgP.ende.encode(buildResOpen(this.sthis, reqOpen, rConn.Ok().resId)));
+              ws.send(this.msgP.ende.encode(buildResOpen(this.sthis, reqOpen, rConn.Ok().conn.resId)));
             }
           },
           onError: (error) => {
@@ -90,17 +90,18 @@ export class HonoServer {
             if (rMsg.isErr()) {
               ws.send(this.msgP.ende.encode(buildErrorMsg(this.sthis, this.logger, reqOpen, rMsg.Err())));
             } else {
-              dp.dispatch(this.impl, rMsg.Ok(), (msg) => {
+              await dp.dispatch(this.impl, rMsg.Ok(), (msg) => {
                 const str = this.msgP.ende.encode(msg);
                 ws.send(str);
               });
             }
           },
           onClose: () => {
+            dp = undefined as unknown as MsgDispatcher;
             // console.log('Connection closed')
           },
         };
-      })(reqOpen.conn, c, next);
+      })(new WSConnection(reqOpen.conn), c, next);
     });
     await this.impl.serve(app, port);
     return this;

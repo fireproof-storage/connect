@@ -152,6 +152,17 @@ export function CFHonoServerFactory() {
   return {
     name: "CFHonoServer",
     factory: async (_sthis: SuperThis, _msgP: MsgerParams, remoteGestalt: Gestalt, port: number) => {
+      if (process.env.FP_WRANGLER_PORT) {
+        const hs = {
+          start: async () => {
+            return hs;
+          },
+          close: async () => {
+            /* */
+          },
+        } as unknown as HonoServer;
+        return hs;
+      }
       const { tomlFile } = await resolveToml();
       $.verbose = !!process.env.FP_DEBUG;
       const runningWrangler = $`

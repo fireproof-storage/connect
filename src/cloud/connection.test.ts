@@ -54,7 +54,7 @@ const sthis = ensureSuperThis();
 const msgP = defaultMsgParams(sthis, { hasPersistent: true });
 for (const honoServer of [NodeHonoServerFactory(), CFHonoServerFactory()]) {
   describe(`${honoServer.name} - Connection`, () => {
-    const port = 1024 + Math.floor(Math.random() * (65536 - 1024));
+    const port = +(process.env.FP_WRANGLER_PORT || 0) || 1024 + Math.floor(Math.random() * (65536 - 1024));
     const qOpen = buildReqOpen(sthis, {
       key: {
         ledger: "test",
@@ -141,7 +141,7 @@ for (const honoServer of [NodeHonoServerFactory(), CFHonoServerFactory()]) {
               assert.fail(JSON.stringify(r));
             }
             expect(r).toEqual({
-              conn: c.conn,
+              conn: { ...c.conn, resId: r.conn?.resId },
               tid: req.tid,
               type: "resOpen",
               version: "FP-MSG-1.0",

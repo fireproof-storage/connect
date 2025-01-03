@@ -37,6 +37,7 @@ export class NodeHonoServer implements HonoServerImpl {
 
   upgradeWebSocket(createEvents: (c: Context) => WSEvents | Promise<WSEvents>): ConnMiddleware {
     return async (_conn, c, next) => {
+      // conn.attachWSPair({ client: c.req, server: c.res });
       return this._upgradeWebSocket(createEvents)(c, next);
     };
   }
