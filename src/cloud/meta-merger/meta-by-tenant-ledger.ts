@@ -2,7 +2,7 @@ import { ResolveOnce } from "@adviser/cement";
 import { CRDTEntry } from "@fireproof/core";
 import { TenantLedgerSql } from "./tenant-ledger.js";
 import { ByConnection } from "./meta-merger.js";
-import type { Database, Statement } from "better-sqlite3";
+import { conditionalDrop, SQLDatabase, SQLStatement } from "./abstract-sql.js";
 
 export interface MetaByTenantLedgerRow {
   readonly tenant: string;
@@ -34,10 +34,13 @@ WHERE NOT EXISTS
  */
 
 export class MetaByTenantLedgerSql {
-  static schema() {
+  static schema(drop = false) {
     return [
-      ...TenantLedgerSql.schema(),
-      `
+      ...TenantLedgerSql.schema(drop),
+      ...conditionalDrop(
+        drop,
+        "MetaByTenantLedger",
+        `
       CREATE TABLE IF NOT EXISTS MetaByTenantLedger(
         tenant TEXT NOT NULL,
         ledger TEXT NOT NULL,
@@ -50,26 +53,27 @@ export class MetaByTenantLedgerSql {
         UNIQUE(metaCID),
         FOREIGN KEY (tenant, ledger) REFERENCES TenantLedger(tenant, ledger)
       )
-    `,
+    `
+      ),
     ];
   }
 
-  readonly db: Database;
+  readonly db: SQLDatabase;
   readonly tenantLedgerSql: TenantLedgerSql;
-  constructor(db: Database, tenantLedgerSql: TenantLedgerSql) {
+  constructor(db: SQLDatabase, tenantLedgerSql: TenantLedgerSql) {
     this.db = db;
     this.tenantLedgerSql = tenantLedgerSql;
   }
 
   readonly #sqlCreateMetaByTenantLedger = new ResolveOnce();
-  sqlCreateMetaByTenantLedger(): Statement[] {
+  sqlCreateMetaByTenantLedger(): SQLStatement[] {
     return this.#sqlCreateMetaByTenantLedger.once(() => {
       return MetaByTenantLedgerSql.schema().map((i) => this.db.prepare(i));
     });
   }
 
   readonly #sqlInsertMetaByTenantLedger = new ResolveOnce();
-  sqlEnsureMetaByTenantLedger(): Statement<[string, string, string, string, string, string, string]> {
+  sqlEnsureMetaByTenantLedger(): SQLStatement {
     return this.#sqlInsertMetaByTenantLedger.once(() => {
       return this.db.prepare(`
         INSERT INTO MetaByTenantLedger(tenant, ledger, reqId, resId, metaCID, meta, updatedAt)
@@ -79,7 +83,7 @@ export class MetaByTenantLedgerSql {
   }
 
   readonly #sqlDeleteByConnection = new ResolveOnce();
-  sqlDeleteByConnection(): Statement<[string, string, string, string, string]> {
+  sqlDeleteByConnection(): SQLStatement {
     return this.#sqlDeleteByConnection.once(() => {
       return this.db.prepare(`
         DELETE FROM MetaByTenantLedger
@@ -131,8 +135,8 @@ export class MetaByTenantLedgerSql {
     return stmt.run(t.tenant, t.ledger, t.reqId, t.resId, t.metaCID, JSON.stringify(t.meta), t.updateAt.toISOString());
   }
 
-  readonly #sqlSelectByConnection = new ResolveOnce<Statement>();
-  sqlSelectByConnection(): Statement<[string, string, string, string], SQLMetaByTenantLedgerRow> {
+  readonly #sqlSelectByConnection = new ResolveOnce<SQLStatement>();
+  sqlSelectByConnection(): SQLStatement {
     return this.#sqlSelectByConnection.once(() => {
       return this.db.prepare(`
         SELECT tenant, ledger, reqId, resId, metaCID, meta, updatedAt
@@ -145,7 +149,7 @@ export class MetaByTenantLedgerSql {
 
   async selectByConnection(conn: ByConnection): Promise<MetaByTenantLedgerRow[]> {
     const stmt = this.sqlSelectByConnection();
-    const rows = await stmt.all(conn.tenant, conn.ledger, conn.reqId, conn.resId);
+    const rows = await stmt.all<SQLMetaByTenantLedgerRow>(conn.tenant, conn.ledger, conn.reqId, conn.resId);
     return rows.map(
       (row) =>
         ({

@@ -1,24 +1,31 @@
-import Database from "better-sqlite3";
+// import type { Database } from "better-sqlite3";
 import { MetaMerger } from "./meta-merger.js";
 import { CRDTEntry, ensureSuperThis } from "@fireproof/core";
 import { Connection } from "../msg-types.js";
+import { runtimeFn } from "@adviser/cement";
+import { SQLDatabase } from "./abstract-sql.js";
+import type { Env } from '../backend/env.js'
 
 function sortCRDTEntries(rows: CRDTEntry[]) {
   return rows.sort((a, b) => a.cid.localeCompare(b.cid));
 }
 
 describe("MetaMerger", () => {
-  let db: Database.Database;
+  let db: SQLDatabase;
   const sthis = ensureSuperThis();
   let mm: MetaMerger;
   beforeAll(async () => {
     //    db = new Database(':memory:');
-    db = new Database("./dist/test.db");
+    if (runtimeFn().isCFWorker) {
+      const { CFWorkerSQLDatabase } = await import("./cf-worker-abstract-sql.js");
+      const { env } = await import("cloudflare:test");
+      db = new CFWorkerSQLDatabase((env as Env).DB);
+    } else {
+      const { BetterSQLDatabase } = await import("./bettersql-abstract-sql.js");
+      db = new BetterSQLDatabase("./dist/test.db");
+    }
     mm = new MetaMerger(sthis, db);
     await mm.createSchema();
-  });
-  afterAll(() => {
-    db.close();
   });
 
   let connection: Connection;

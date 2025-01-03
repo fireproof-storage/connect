@@ -1,8 +1,8 @@
 import { ResolveOnce } from "@adviser/cement";
 import { MetaByTenantLedgerSql } from "./meta-by-tenant-ledger.js";
 import { ByConnection } from "./meta-merger.js";
-import { Statement, type Database } from "better-sqlite3";
 import { CRDTEntry } from "@fireproof/core";
+import { conditionalDrop, SQLDatabase, SQLStatement } from "./abstract-sql.js";
 
 export interface MetaSendRow {
   readonly metaCID: string;
@@ -15,10 +15,13 @@ type SQLMetaSendRowWithMeta = MetaSendRow & { meta: string };
 export type MetaSendRowWithMeta = MetaSendRow & { meta: CRDTEntry };
 
 export class MetaSendSql {
-  static schema() {
+  static schema(drop = false) {
     return [
-      ...MetaByTenantLedgerSql.schema(),
-      `
+      ...MetaByTenantLedgerSql.schema(drop),
+      ...conditionalDrop(
+        drop,
+        "MetaSend",
+        `
       CREATE TABLE IF NOT EXISTS MetaSend (
         metaCID TEXT NOT NULL,
         reqId TEXT NOT NULL,
@@ -27,24 +30,25 @@ export class MetaSendSql {
         PRIMARY KEY(metaCID,reqId,resId),
         FOREIGN KEY(metaCID) REFERENCES MetaByTenantLedger(metaCID)
       );
-    `,
+    `
+      ),
     ];
   }
 
-  readonly db: Database;
-  constructor(db: Database) {
+  readonly db: SQLDatabase;
+  constructor(db: SQLDatabase) {
     this.db = db;
   }
 
-  readonly #sqlCreateMetaSend = new ResolveOnce<Statement>();
-  sqlCreateMetaSend(): Statement[] {
+  readonly #sqlCreateMetaSend = new ResolveOnce<SQLStatement>();
+  sqlCreateMetaSend(drop: boolean): SQLStatement[] {
     return this.#sqlCreateMetaSend.once(() => {
-      return MetaSendSql.schema().map((i) => this.db.prepare(i));
+      return MetaSendSql.schema(drop).map((i) => this.db.prepare(i));
     });
   }
 
-  readonly #sqlInsertMetaSend = new ResolveOnce<[string, string, string, string]>();
-  sqlInsertMetaSend(): Statement<[string, string, string, string]> {
+  readonly #sqlInsertMetaSend = new ResolveOnce<SQLStatement>();
+  sqlInsertMetaSend(): SQLStatement {
     return this.#sqlInsertMetaSend.once(() => {
       return this.db.prepare(`
         INSERT INTO MetaSend(metaCID, reqId, resId, sendAt) VALUES(?, ?, ?, ?)
@@ -52,8 +56,8 @@ export class MetaSendSql {
     });
   }
 
-  readonly #sqlSelectToAddSend = new ResolveOnce<Statement>();
-  sqlSelectToAddSend(): Statement<[string, string, string, string, string, string, string], SQLMetaSendRowWithMeta> {
+  readonly #sqlSelectToAddSend = new ResolveOnce<SQLStatement>();
+  sqlSelectToAddSend(): SQLStatement {
     return this.#sqlSelectToAddSend.once(() => {
       return this.db.prepare(`
         SELECT t.metaCID, ? as reqId, ? as resId, ? as sendAt, t.meta FROM MetaByTenantLedger as t
@@ -69,10 +73,10 @@ export class MetaSendSql {
 
   async selectToAddSend(conn: ByConnection & { now: Date }): Promise<MetaSendRowWithMeta[]> {
     const stmt = this.sqlSelectToAddSend();
-    const rows = await stmt.all(
+    const rows = await stmt.all<SQLMetaSendRowWithMeta>(
       conn.reqId,
       conn.resId,
-      conn.now.toISOString(),
+      conn.now,
       conn.tenant,
       conn.ledger,
       conn.reqId,
@@ -97,8 +101,8 @@ export class MetaSendSql {
     }
   }
 
-  readonly #sqlDeleteByConnection = new ResolveOnce<Statement>();
-  sqlDeleteByMetaCID(): Statement<[string, string, string, string, string], void> {
+  readonly #sqlDeleteByConnection = new ResolveOnce<SQLStatement>();
+  sqlDeleteByMetaCID(): SQLStatement {
     return this.#sqlDeleteByConnection.once(() => {
       return this.db.prepare(`
       DELETE FROM MetaSend

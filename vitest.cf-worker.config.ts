@@ -6,12 +6,12 @@ export default defineWorkersConfig({
   test: {
     poolOptions: {
       workers: {
-        wrangler: { configPath: "./wrangler.toml" },
+        wrangler: { configPath: "./src/cloud/backend/wrangler.toml" },
       },
     },
-    name: "cf-kv",
+    name: "cf-worker",
     exclude: ["node_modules/@fireproof/core/tests/react/**"],
-    include: ["src/cf-inde*.test.ts", "node_modules/@fireproof/core/tests/**/*test.?(c|m)[jt]s?(x)"],
+    include: ["src/cloud/meta-merger/*.test.ts"],
     globals: true,
     setupFiles: "./setup.cf-kv.ts",
   },

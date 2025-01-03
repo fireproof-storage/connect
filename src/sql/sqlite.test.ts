@@ -1,4 +1,5 @@
-import { ensureSuperThis, fireproof, SysFileSystem, rt } from "@fireproof/core";
+import { ensureSuperThis, fireproof, SysFileSystem } from "@fireproof/core";
+import { getFileSystem } from "@fireproof/core/node";
 import { registerSqliteStoreProtocol } from "./gateway-sql.js";
 import { V0_19SQL_VERSION } from "./v0.19/version.js";
 import { URI } from "@adviser/cement";
@@ -27,7 +28,7 @@ describe("sqlite", () => {
 
   beforeAll(async () => {
     await sthis.start();
-    fsx = await rt.getFileSystem(URI.from("file:///"));
+    fsx = await getFileSystem(URI.from("file:///"));
     registerSqliteStoreProtocol();
     const url = URI.from(process.env.FP_STORAGE_URL || "dummy://");
     taste = url.getParam("taste") || "better-sqlite3";

@@ -1,7 +1,6 @@
 import { ResolveOnce } from "@adviser/cement";
+import { conditionalDrop, SQLDatabase, SQLStatement } from "./abstract-sql.js";
 import { TenantSql } from "./tenant.js";
-
-import type { Database, Statement } from "better-sqlite3";
 
 export interface TenantLedgerRow {
   readonly tenant: string;
@@ -10,10 +9,13 @@ export interface TenantLedgerRow {
 }
 
 export class TenantLedgerSql {
-  static schema() {
+  static schema(drop = false) {
     return [
-      ...TenantSql.schema(),
-      `
+      ...TenantSql.schema(drop),
+      ...conditionalDrop(
+        drop,
+        "TenantLedger",
+        `
       CREATE TABLE IF NOT EXISTS TenantLedger(
         tenant TEXT NOT NULL,
         ledger TEXT NOT NULL,
@@ -21,26 +23,27 @@ export class TenantLedgerSql {
         PRIMARY KEY(tenant, ledger),
         FOREIGN KEY(tenant) REFERENCES Tenant(tenant)
       )
-    `,
+    `
+      ),
     ];
   }
 
-  readonly db: Database;
+  readonly db: SQLDatabase;
   readonly tenantSql: TenantSql;
-  constructor(db: Database, tenantSql: TenantSql) {
+  constructor(db: SQLDatabase, tenantSql: TenantSql) {
     this.db = db;
     this.tenantSql = tenantSql;
   }
 
-  readonly #sqlCreateTenantLedger = new ResolveOnce<Statement[]>();
-  sqlCreateTenantLedger(): Statement[] {
+  readonly #sqlCreateTenantLedger = new ResolveOnce<SQLStatement[]>();
+  sqlCreateTenantLedger(): SQLStatement[] {
     return this.#sqlCreateTenantLedger.once(() => {
       return TenantLedgerSql.schema().map((i) => this.db.prepare(i));
     });
   }
 
-  readonly #sqlInsertTenantLedger = new ResolveOnce<Statement<[string, string, string, string, string]>>();
-  sqlEnsureTenantLedger(): Statement<[string, string, string, string, string]> {
+  readonly #sqlInsertTenantLedger = new ResolveOnce<SQLStatement>();
+  sqlEnsureTenantLedger(): SQLStatement {
     return this.#sqlInsertTenantLedger.once(() => {
       return this.db.prepare(`
         INSERT INTO TenantLedger(tenant, ledger, createdAt)
@@ -51,8 +54,8 @@ export class TenantLedgerSql {
   }
 
   async ensure(t: TenantLedgerRow) {
-    await this.tenantSql.ensure(t);
+    this.tenantSql.ensure({ tenant: t.tenant, createdAt: t.createdAt });
     const stmt = this.sqlEnsureTenantLedger();
-    return stmt.run(t.tenant, t.ledger, t.createdAt.toISOString(), t.tenant, t.ledger);
+    return stmt.run(t.tenant, t.ledger, t.createdAt, t.tenant, t.ledger);
   }
 }

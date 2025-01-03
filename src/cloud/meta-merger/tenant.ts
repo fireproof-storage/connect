@@ -1,5 +1,5 @@
 import { ResolveOnce } from "@adviser/cement";
-import type { Database, Statement } from "better-sqlite3";
+import { conditionalDrop, SQLDatabase, SQLStatement } from "./abstract-sql.js";
 
 export interface TenantRow {
   readonly tenant: string;
@@ -7,31 +7,35 @@ export interface TenantRow {
 }
 
 export class TenantSql {
-  static schema(): string[] {
+  static schema(drop = false): string[] {
     return [
-      `
+      ...conditionalDrop(
+        drop,
+        "Tenant",
+        `
       CREATE TABLE IF NOT EXISTS Tenant(
         tenant TEXT NOT NULL PRIMARY KEY,
         createdAt TEXT NOT NULL
       )
-    `,
+    `
+      ),
     ];
   }
 
-  readonly db: Database;
-  constructor(db: Database) {
+  readonly db: SQLDatabase;
+  constructor(db: SQLDatabase) {
     this.db = db;
   }
 
-  readonly #sqlCreateTenant = new ResolveOnce<Statement[]>();
-  sqlCreateTenant(): Statement[] {
+  readonly #sqlCreateTenant = new ResolveOnce<SQLStatement[]>();
+  sqlCreateTenant(): SQLStatement[] {
     return this.#sqlCreateTenant.once(() => {
       return TenantSql.schema().map((i) => this.db.prepare(i));
     });
   }
 
-  readonly #sqlInsertTenant = new ResolveOnce<Statement>();
-  sqlEnsureTenant(): Statement<[string, string, string], void> {
+  readonly #sqlInsertTenant = new ResolveOnce<SQLStatement>();
+  sqlEnsureTenant(): SQLStatement {
     return this.#sqlInsertTenant.once(() => {
       return this.db.prepare(`
         INSERT INTO Tenant(tenant, createdAt)
@@ -42,6 +46,6 @@ export class TenantSql {
 
   async ensure(t: TenantRow) {
     const stmt = this.sqlEnsureTenant();
-    return stmt.run(t.tenant, t.createdAt.toISOString(), t.tenant);
+    return stmt.run(t.tenant, t.createdAt, t.tenant);
   }
 }

@@ -41,7 +41,9 @@
     "types": [
       "vitest/globals",
       "@cloudflare/workers-types",
-      "@cloudflare/workers-types/2023-07-01"
+      "@cloudflare/workers-types/2023-07-01",
+      "@cloudflare/vitest-pool-workers"
+
       // node_modules/@cloudflare/workers-types/2023-07-01/index.d.ts
       // "@cloudflare/vitest-pool-workers"
     ],

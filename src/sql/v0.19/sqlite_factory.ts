@@ -1,4 +1,5 @@
-import { Logger, SuperThis, SysFileSystem, rt } from "@fireproof/core";
+import { Logger, SuperThis, SysFileSystem } from "@fireproof/core";
+import { getFileSystem } from "@fireproof/core/node";
 import { DataSQLStore, DBConnection, MetaSQLStore, SQLOpts, WalSQLStore } from "../types.js";
 import { ResolveOnce, URI } from "@adviser/cement";
 import { SQLConnectionResult } from "../sql-connection-factory.js";
@@ -55,7 +56,7 @@ export abstract class Sqlite3Connection implements DBConnection {
   private readonly _fs = new ResolveOnce<SysFileSystem>();
   async fs(): Promise<SysFileSystem> {
     return this._fs.once(async () => {
-      return rt.getFileSystem(URI.from("file:///"));
+      return getFileSystem(URI.from("file:///"));
     });
   }
 }

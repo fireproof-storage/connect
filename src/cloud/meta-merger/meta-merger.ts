@@ -14,7 +14,7 @@ import { MetaByTenantLedgerSql } from "./meta-by-tenant-ledger.js";
 import { MetaSendSql } from "./meta-send.js";
 import { TenantLedgerSql } from "./tenant-ledger.js";
 import { TenantSql } from "./tenant.js";
-import type { Database } from "better-sqlite3";
+import { SQLDatabase } from "./abstract-sql.js";
 
 export interface MetaMerge {
   readonly connection: Connection;
@@ -39,7 +39,7 @@ function toByConnection(connection: Connection): ByConnection {
 }
 
 export class MetaMerger {
-  readonly db: Database;
+  readonly db: SQLDatabase;
   readonly sthis: SuperThis;
   readonly sql: {
     readonly tenant: TenantSql;
@@ -48,7 +48,7 @@ export class MetaMerger {
     readonly metaSend: MetaSendSql;
   };
 
-  constructor(sthis: SuperThis, db: Database) {
+  constructor(sthis: SuperThis, db: SQLDatabase) {
     this.db = db;
     this.sthis = sthis;
     const tenant = new TenantSql(db);
@@ -61,8 +61,8 @@ export class MetaMerger {
     };
   }
 
-  async createSchema() {
-    for (const i of this.sql.metaSend.sqlCreateMetaSend()) {
+  async createSchema(drop = false) {
+    for (const i of this.sql.metaSend.sqlCreateMetaSend(drop)) {
       await i.run();
     }
   }

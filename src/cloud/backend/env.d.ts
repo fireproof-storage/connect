@@ -33,6 +33,8 @@ export interface Env {
 
   FP_META_GROUPS: DurableObjectNamespace<FPMetaGroups>;
 
+  DB: D1Database;
+
   WS_EVENTS: WSEvents;
 }
 
