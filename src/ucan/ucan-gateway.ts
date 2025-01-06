@@ -293,7 +293,6 @@ export class UCANGateway implements bs.Gateway {
       try {
         callback(data);
       } catch (error) {
-        console.error(error);
         this.logger.Error().Err(error).Msg("Error in subscriber callback execution");
       }
     }
