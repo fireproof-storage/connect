@@ -69,8 +69,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       better-sqlite3:
-        specifier: ^11.7.0
-        version: 11.7.0
+        specifier: ^11.7.2
+        version: 11.7.2
       events:
         specifier: ^3.3.0
         version: 3.3.0
@@ -1839,8 +1839,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  better-sqlite3@11.7.0:
-    resolution: {integrity: sha512-mXpa5jnIKKHeoGzBrUJrc65cXFKcILGZpU3FXR0pradUEm9MA7UZz02qfEejaMcm9iXrSOCenwwYMJ/tZ1y5Ig==}
+  better-sqlite3@11.7.2:
+    resolution: {integrity: sha512-10a57cHVDmfNQS4jrZ9AH2t+2ekzYh5Rhbcnb4ytpmYweoLdogDmyTt5D+hLiY9b44Mx9foowb/4iXBTO2yP3Q==}
 
   big-counter-x@4.1.2:
     resolution: {integrity: sha512-rO414jDJf//NDNvIfbChPT+qAXrs5aXIWwq+327qWVn64eKpE+dMsr72o+18tYsSOnF79C6+LO9c756/h6Ghaw==}
@@ -5998,7 +5998,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  better-sqlite3@11.7.0:
+  better-sqlite3@11.7.2:
     dependencies:
       bindings: 1.5.0
       prebuild-install: 7.1.2
