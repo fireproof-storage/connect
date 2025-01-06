@@ -1,44 +1,94 @@
-import { HttpHeader, Logger, Result, URI } from "@adviser/cement";
+import { HttpHeader, Logger, LoggerImpl, URI } from "@adviser/cement";
 import { Context, Hono } from "hono";
-import { HonoServerImpl, CORS, ConnMiddleware } from "../hono-server.js";
+import { CORS, ConnMiddleware, HonoServerFactory, RunTimeParams, HonoServerBase } from "../hono-server.js";
 import { WSContext, WSContextInit, WSEvents } from "hono/ws";
-import { buildErrorMsg, EnDeCoder } from "../msg-types.js";
-import { ensureLogger, SuperThis } from "@fireproof/core";
-import { Env } from "./env.js";
+import { buildErrorMsg, defaultGestalt, EnDeCoder, Gestalt } from "../msg-types.js";
 // import { RequestInfo as CFRequestInfo } from "@cloudflare/workers-types";
-import { calculatePreSignedUrl, PreSignedConnMsg } from "../pre-signed-url.js";
+import { defaultMsgParams, jsonEnDe } from "../msger.js";
+import { ensureLogger, ensureSuperThis, SuperThis } from "@fireproof/core";
 
-export class CFHonoServer implements HonoServerImpl {
+// function ensureLogger(env: Env, module = "Fireproof"): Logger {
+//   const logger = new LoggerImpl()
+//     .With()
+//     .Module(module)
+//     .SetDebug(env.FP_DEBUG)
+//     .SetExposeStack(!!env.FP_STACK || false);
+//   switch (env.FP_FORMAT) {
+//     case "jsonice":
+//       logger.SetFormatter(new JSONFormatter(logger.TxtEnDe(), 2));
+//       break;
+//     case "yaml":
+//       logger.SetFormatter(new YAMLFormatter(logger.TxtEnDe(), 2));
+//       break;
+//     case "json":
+//     default:
+//       logger.SetFormatter(new JSONFormatter(logger.TxtEnDe()));
+//       break;
+//   }
+//   return logger.Logger();
+// }
+
+export class CFHonoFactory implements HonoServerFactory {
+  readonly _onClose: () => void;
+  constructor(onClose: () => void = () => { /* */ }) {
+    this._onClose = onClose;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  inject(c: Context, fn: (rt: RunTimeParams) => Promise<Response | void>): Promise<Response | void> {
+    // this._env = c.env
+    const sthis = ensureSuperThis({
+      logger: new LoggerImpl(),
+    });
+    sthis.env.sets(c.env);
+    const logger = ensureLogger(sthis, `CFHono[${URI.from(c.req.url).pathname}]`);
+    const ende = jsonEnDe(sthis);
+    // this.sthis.env.
+    const fpProtocol = sthis.env.get("FP_PROTOCOL");
+    const msgP = defaultMsgParams(sthis, {
+      hasPersistent: true,
+      protocolCapabilities: fpProtocol ? (fpProtocol === "ws" ? ["stream"] : ["reqRes"]) : ["reqRes", "stream"],
+    });
+    const gs = defaultGestalt(msgP, {
+      id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
+    });
+
+    const ret = fn({ sthis, logger, ende, impl: new CFHonoServer(sthis, logger, ende, gs) });
+    return ret // .then((v) => sthis.logger.Flush().then(() => v))
+  }
+
+  async start(_app: Hono): Promise<void> {
+    // const { upgradeWebSocket } = await import("hono/cloudflare-workers");
+    // this._upgradeWebSocket = upgradeWebSocket;
+  }
+
+  async serve<T>(_app: Hono, _port?: number): Promise<T> {
+    return {} as T;
+  }
+  async close(): Promise<void> {
+    this._onClose()
+    return;
+  }
+}
+
+export class CFHonoServer extends HonoServerBase {
   // _upgradeWebSocket?: UpgradeWebSocket
 
   readonly headers: HttpHeader;
-  readonly sthis: SuperThis;
-  readonly logger: Logger;
   readonly ende: EnDeCoder;
-  readonly env: Env;
+  // readonly env: Env;
   // readonly wsConnections = new Map<string, WSPair>()
-  constructor(sthis: SuperThis, ende: EnDeCoder, env: Env, headers?: HttpHeader) {
+  constructor(sthis: SuperThis, logger: Logger, ende: EnDeCoder, gs: Gestalt, headers?: HttpHeader) {
+    super(sthis, logger, gs)
     this.headers = HttpHeader.from(headers).Merge(CORS);
-    this.sthis = sthis;
-    this.logger = ensureLogger(sthis, "CFHonoServer");
     this.ende = ende;
-    this.env = env;
+    // this.env = env;
   }
 
   // getDurableObject(conn: Connection) {
   //     const id = env.FP_META_GROUPS.idFromName("fireproof");
   //     const stub = env.FP_META_GROUPS.get(id);
   // }
-  calculatePreSignedUrl(p: PreSignedConnMsg): Promise<Result<URI>> {
-    return calculatePreSignedUrl(p, {
-      storageUrl: URI.from(this.env.STORAGE_URL),
-      aws: {
-        accessKeyId: this.env.ACCESS_KEY_ID,
-        secretAccessKey: this.env.SECRET_ACCESS_KEY,
-        region: this.env.REGION,
-      },
-    });
-  }
+
 
   upgradeWebSocket(createEvents: (c: Context) => WSEvents | Promise<WSEvents>): ConnMiddleware {
     // if (!this._upgradeWebSocket) {
@@ -99,17 +149,5 @@ export class CFHonoServer implements HonoServerImpl {
         webSocket: client,
       });
     };
-  }
-
-  async start(_app: Hono): Promise<void> {
-    // const { upgradeWebSocket } = await import("hono/cloudflare-workers");
-    // this._upgradeWebSocket = upgradeWebSocket;
-  }
-
-  async serve<T>(_app: Hono, _port?: number): Promise<T> {
-    return {} as T;
-  }
-  async close(): Promise<void> {
-    return;
   }
 }

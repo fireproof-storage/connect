@@ -8,7 +8,10 @@ import {
   MsgIsReqOpen,
   buildErrorMsg,
   buildResOpen,
-  Connection,
+  WithErrorMsg,
+  MsgWithConn,
+  MsgIsWithReqResId,
+  ResOpen,
 } from "./msg-types.js";
 import {
   MsgIsReqGetData,
@@ -39,11 +42,8 @@ export interface WSPair {
 }
 
 export class WSConnection {
-  readonly conn: Connection;
   wspair?: WSPair;
-  constructor(conn: Connection) {
-    this.conn = conn;
-  }
+
   attachWSPair(wsp: WSPair) {
     if (!this.wspair) {
       this.wspair = wsp;
@@ -53,12 +53,25 @@ export class WSConnection {
   }
 }
 
+type Promisable<T> = T | Promise<T>;
+
+
+function WithValidConn<T extends MsgBase>(msg: T, rri?: ResOpen): msg is MsgWithConn<T> {
+  return MsgIsWithReqResId(msg) &&
+         !!rri &&
+         rri.conn.resId === msg.conn.resId &&
+         rri.conn.reqId === msg.conn.reqId;
+}
+
 export class MsgDispatcher {
   readonly sthis: SuperThis;
   readonly logger: Logger;
-  wsConn?: WSConnection;
+  // wsConn?: WSConnection;
+  myOpen?: ResOpen;
   readonly gestalt: Gestalt;
   readonly id: string;
+
+  readonly conns = new Map<string, { readonly reqId: string; readonly resId: string; readonly wsc: WSConnection }>();
 
   constructor(sthis: SuperThis, gestalt: Gestalt) {
     this.sthis = sthis;
@@ -67,18 +80,34 @@ export class MsgDispatcher {
     this.id = sthis.nextId().str;
   }
 
-  addConn(aConn: Connection): Result<WSConnection> {
-    if (!this.wsConn) {
-      this.wsConn = new WSConnection({ ...aConn, resId: this.sthis.nextId().str });
-      return Result.Ok(this.wsConn);
+  addConn(msg: MsgBase): Result<ResOpen> {
+    if (!MsgIsReqOpen(msg)) {
+      return this.logger.Error().Msg("msg missing reqId").ResultError();
     }
-    if (aConn.reqId === this.wsConn.conn.reqId) {
-      return Result.Ok(this.wsConn);
+    if (this.myOpen) {
+      return this.logger.Error().Msg("myConn set").ResultError();
     }
-    return this.logger.Error().Msg(`unexpected reqId: ${aConn.reqId}!==${this.wsConn.conn.reqId}`).ResultError();
+    this.myOpen = buildResOpen(this.sthis, msg, this.sthis.nextId(12).str);
+    return Result.Ok(this.myOpen);
   }
 
-  async dispatch(ctx: HonoServerImpl, msg: MsgBase, send: (msg: MsgBase) => void) {
+  async dispatch(ctx: HonoServerImpl, msg: MsgBase, send: (msg: MsgBase) => Promisable<Response>): Promise<Response> {
+    const validateConn = async <T extends MsgBase>(
+      msg: T,
+      fn: (msg: MsgWithConn<T>) => Promisable<WithErrorMsg<MsgBase>>
+    ): Promise<Response> => {
+      if (!MsgIsWithReqResId({ ...msg, conn: this.myOpen?.conn })) {
+        return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("dispatch missing connection")));
+      }
+      if (!MsgIsWithReqResId(msg)) {
+        return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("req missing connection")));
+      }
+      if (WithValidConn(msg, this.myOpen)) {
+        const r = await fn(msg);
+        return Promise.resolve(send(r));
+      }
+      return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("non open connection")));
+    };
     switch (true) {
       case MsgIsReqGestalt(msg):
         return send(buildResGestalt(msg, this.gestalt));
@@ -87,30 +116,30 @@ export class MsgDispatcher {
           return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("missing connection")));
         }
         /* DDoS protection */
-        const rConn = this.addConn(msg.conn);
+        const rConn = this.addConn(msg);
         if (rConn.isErr()) {
           return send(buildErrorMsg(this.sthis, this.logger, msg, rConn.Err()));
         }
         return send(buildResOpen(this.sthis, msg, rConn.Ok().conn.resId));
       }
       case MsgIsReqGetData(msg): {
-        return send(await buildResGetData(this.sthis, this.logger, msg, ctx));
+        return validateConn(msg, (msg) => buildResGetData(this.sthis, this.logger, msg, ctx));
       }
       case MsgIsReqPutData(msg): {
-        return send(await buildResPutData(this.sthis, this.logger, msg, ctx));
+        return validateConn(msg, (msg) => buildResPutData(this.sthis, this.logger, msg, ctx));
       }
       case MsgIsReqDelData(msg): {
-        return send(await buildResDelData(this.sthis, this.logger, msg, ctx));
+        return validateConn(msg, (msg) => buildResDelData(this.sthis, this.logger, msg, ctx));
       }
 
       case MsgIsReqGetWAL(msg): {
-        return send(await buildResGetWAL(this.sthis, this.logger, msg, ctx));
+        return validateConn(msg, (msg) => buildResGetWAL(this.sthis, this.logger, msg, ctx));
       }
       case MsgIsReqPutWAL(msg): {
-        return send(await buildResPutWAL(this.sthis, this.logger, msg, ctx));
+        return validateConn(msg, (msg) => buildResPutWAL(this.sthis, this.logger, msg, ctx));
       }
       case MsgIsReqDelWAL(msg): {
-        return send(await buildResDelWAL(this.sthis, this.logger, msg, ctx));
+        return validateConn(msg, (msg) => buildResDelWAL(this.sthis, this.logger, msg, ctx));
       }
 
       default:

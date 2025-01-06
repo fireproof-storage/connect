@@ -53,10 +53,13 @@ export function keyTenantLedger(t: TenantLedger): string {
   return `${t.tenant}:${t.ledger}`;
 }
 
-export interface Connection {
-  readonly key: TenantLedger;
+export interface ReqResId {
   readonly reqId: string;
   readonly resId: string;
+}
+
+export interface Connection extends ReqResId{
+  readonly key: TenantLedger;
 }
 
 export interface Connected {
@@ -70,6 +73,8 @@ export interface MsgBase {
   readonly auth?: AuthType;
   readonly conn?: Connection;
 }
+
+export type MsgWithConn<T extends MsgBase> = T & { readonly conn: Connection };
 
 export interface ErrorMsg extends MsgBase {
   readonly type: "error";
@@ -167,7 +172,6 @@ export interface Gestalt {
 }
 
 export interface MsgerParams {
-  readonly ende: EnDeCoder;
   readonly mime: string;
   readonly auth?: AuthType;
   readonly hasPersistent?: boolean;
@@ -314,9 +318,15 @@ export function MsgIsReqOpen(msg: MsgBase): msg is ReqOpen {
   return msg.type === "reqOpen" && !!msg.conn && !!msg.conn.reqId;
 }
 
+
 export interface ResOpen extends MsgBase {
   readonly type: "resOpen";
   readonly conn: Connection;
+}
+
+export function MsgIsWithReqResId<T extends MsgBase>(msg: T): msg is MsgWithConn<T> {
+  const mwc = (msg as MsgWithConn<T>).conn;
+  return !!(mwc as ReqResId).reqId && !!(mwc as ReqResId).resId
 }
 
 export function buildResOpen(sthis: NextId, req: ReqOpen, resStreamId?: string): ResOpen {

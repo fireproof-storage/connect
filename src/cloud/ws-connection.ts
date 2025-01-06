@@ -7,48 +7,41 @@ import {
   ReqOpen,
   ResOpen,
   MsgIsResOpen,
-  MsgerParams,
   WaitForTid,
   Connection,
   WithErrorMsg,
   RequestOpts,
+  ReqResId,
 } from "./msg-types.js";
-import { ExchangedGestalt, MsgConnection, OnMsgFn, UnReg } from "./msger.js";
+import { ExchangedGestalt, MsgConnection, MsgerParamsWithEnDe, OnMsgFn, UnReg } from "./msger.js";
 
 export interface WSReqOpen {
   readonly reqOpen: ReqOpen;
   readonly ws: WebSocket; // this WS is opened with a specific URL-Param
 }
 
-interface WSQSOpen extends WSReqOpen {
-  resOpen?: ResOpen;
-}
-
 export class WSConnection implements MsgConnection {
   readonly sthis: SuperThis;
   readonly logger: Logger;
-  readonly msgP: MsgerParams;
+  readonly msgP: MsgerParamsWithEnDe;
   readonly exchangedGestalt: ExchangedGestalt;
+  readonly ws: WebSocket;
   // readonly baseURI: URI;
-  readonly wqs: WSQSOpen;
 
   readonly #onMsg = new Map<string, OnMsgFn>();
   readonly #onClose = new Map<string, UnReg>();
 
   readonly waitForTid = new Map<string, WaitForTid>();
+
   opened = false;
 
-  get conn(): Connection {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return this.wqs.resOpen!.conn!;
-  }
-
-  constructor(sthis: SuperThis, wsq: WSReqOpen, msgP: MsgerParams, exGestalt: ExchangedGestalt) {
+  constructor(sthis: SuperThis, ws: WebSocket, msgP: MsgerParamsWithEnDe, exGestalt: ExchangedGestalt) {
     this.sthis = sthis;
     this.logger = ensureLogger(sthis, "WSConnection");
     this.msgP = msgP;
     this.exchangedGestalt = exGestalt;
-    this.wqs = { ...wsq };
+    this.ws = ws;
+    // this.wqs = { ...wsq };
   }
 
   async start(): Promise<Result<void>> {

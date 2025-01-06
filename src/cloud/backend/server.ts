@@ -1,40 +1,16 @@
 // / <reference types="@cloudflare/workers-types" />
-import { JSONFormatter, Logger, LoggerImpl, ResolveOnce, YAMLFormatter } from "@adviser/cement";
-import { defaultGestalt } from "../msg-types.js";
+import { Logger } from "@adviser/cement";
 // import { Hono } from "hono";
-import { ensureSuperThis } from "@fireproof/core";
 import { DurableObject } from "cloudflare:workers";
 import { HonoServer } from "../hono-server.js";
 import { Hono } from "hono";
-import { defaultMsgParams } from "../msger.js";
 import { Env } from "./env.js";
-import { CFHonoServer } from "./cf-hono-server.js";
+import { CFHonoFactory } from "./cf-hono-server.js";
 import { WSContext, WSEvents } from "hono/ws";
 
 // function json<T>(data: T, status = 200) {
 //   return Response.json(data, { status, headers: CORS });
 // }
-
-function ensureLogger(env: Env, module = "Fireproof"): Logger {
-  const logger = new LoggerImpl()
-    .With()
-    .Module(module)
-    .SetDebug(env.FP_DEBUG)
-    .SetExposeStack(!!env.FP_STACK || false);
-  switch (env.FP_FORMAT) {
-    case "jsonice":
-      logger.SetFormatter(new JSONFormatter(logger.TxtEnDe(), 2));
-      break;
-    case "yaml":
-      logger.SetFormatter(new YAMLFormatter(logger.TxtEnDe(), 2));
-      break;
-    case "json":
-    default:
-      logger.SetFormatter(new JSONFormatter(logger.TxtEnDe()));
-      break;
-  }
-  return logger.Logger();
-}
 
 // interface MsgStats {
 //   readonly msgSeq: number;
@@ -71,20 +47,20 @@ export class FPMetaGroups extends DurableObject<Env> {
   // readonly sessions: Map<WebSocket, FPMetaGroup> = new Map<WebSocket, FPMetaGroup>();
   // readonly lastMetaByTendant = new Map<string, ReqRes<ReqPutMeta, ResPutMeta>[]>();
 
-  readonly logger: Logger;
+  logger!: Logger;
 
   readonly wsEvents: WSEvents = {};
 
-  constructor(ctx: DurableObjectState, env: Env) {
-    super(ctx, env);
-    this.logger = ensureLogger(env, "FPMetaGroups");
-    // this.ctx.getWebSockets().forEach((webSocket) => {
-    //   const fpMetaGroup = webSocket.deserializeAttachment() as FPMetaGroup;
-    //   if (MsgIsResSubscribeMeta(fpMetaGroup.group)) {
-    //     this.sessions.set(webSocket, fpMetaGroup);
-    //   }
-    // });
-  }
+  // constructor(ctx: DurableObjectState, env: Env) {
+  //   super(ctx, env);
+  //   // this.logger = ensureLogger(env, "FPMetaGroups");
+  //   // this.ctx.getWebSockets().forEach((webSocket) => {
+  //   //   const fpMetaGroup = webSocket.deserializeAttachment() as FPMetaGroup;
+  //   //   if (MsgIsResSubscribeMeta(fpMetaGroup.group)) {
+  //   //     this.sessions.set(webSocket, fpMetaGroup);
+  //   //   }
+  //   // });
+  // }
 
   // injectWSEvents(wsEvents: WSEvents): void {
   //   Object.assign(this.wsEvents, wsEvents);
@@ -404,27 +380,11 @@ export class FPMetaGroups extends DurableObject<Env> {
 // }
 
 const app = new Hono();
-const once = new ResolveOnce();
+const honoServer = new HonoServer(new CFHonoFactory());
 
 export default {
   fetch: async (req, env, ctx): Promise<Response> => {
-    const logger = ensureLogger(env, "CF-Fireproof");
-    await once.once(() => {
-      const sthis = ensureSuperThis({ logger });
-      const msgP = defaultMsgParams(sthis, {
-        hasPersistent: true,
-        protocolCapabilities: env.FP_PROTOCOL
-          ? env.FP_PROTOCOL === "ws"
-            ? ["stream"]
-            : ["reqRes"]
-          : ["reqRes", "stream"],
-      });
-      const gs = defaultGestalt(msgP, {
-        id: env.FP_PROTOCOL ? (env.FP_PROTOCOL === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
-      });
-      const honoServer = new HonoServer(sthis, msgP, gs, new CFHonoServer(sthis, msgP.ende, env));
-      return honoServer.start(app);
-    });
+    await honoServer.register(app);
     return app.fetch(req, env, ctx);
   },
 } satisfies ExportedHandler<Env>;

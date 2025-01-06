@@ -3,14 +3,16 @@ import { SuperThis } from "@fireproof/core";
 import { $, fs } from "zx";
 import { HttpConnection } from "./http-connection.js";
 import { MsgerParams, ReqOpen, Gestalt, defaultGestalt } from "./msg-types.js";
-import { defaultMsgParams, applyStart, Msger } from "./msger.js";
+import { defaultMsgParams, applyStart, Msger, MsgerParamsWithEnDe } from "./msger.js";
 import { WSConnection } from "./ws-connection.js";
 import * as toml from "smol-toml";
 import { Env } from "./backend/env.js";
 import { HonoServer } from "./hono-server.js";
-import { NodeHonoServer } from "./node-hono-server.js";
+import { NodeHonoFactory } from "./node-hono-server.js";
+import { CFHonoFactory } from "./backend/cf-hono-server.js";
+import { R } from "vitest/dist/chunks/environment.LoooBwUu.js";
 
-export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParams, qOpen: ReqOpen, my: Gestalt) {
+export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnDe, qOpen: ReqOpen, my: Gestalt) {
   const remote = defaultGestalt(defaultMsgParams(sthis, { hasPersistent: true, protocolCapabilities: ["reqRes"] }), {
     id: "HTTP-server",
   });
@@ -69,7 +71,7 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParams, qOp
   };
 }
 
-export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParams, qOpen: ReqOpen, my: Gestalt) {
+export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnDe, qOpen: ReqOpen, my: Gestalt) {
   const remote = defaultGestalt(defaultMsgParams(sthis, { hasPersistent: true, protocolCapabilities: ["stream"] }), {
     id: "WS-server",
   });
@@ -144,7 +146,9 @@ export function NodeHonoServerFactory() {
   return {
     name: "NodeHonoServer",
     factory: async (sthis: SuperThis, msgP: MsgerParams, remoteGestalt: Gestalt, _port: number) => {
-      return new HonoServer(sthis, msgP, remoteGestalt, new NodeHonoServer((await resolveToml()).env));
+      const { env } = await resolveToml();
+      sthis.env.sets(env as unknown as Record<string, string>);
+      return new HonoServer(new NodeHonoFactory(sthis, { msgP, gs: remoteGestalt }))
     },
   };
 }
@@ -153,15 +157,7 @@ export function CFHonoServerFactory() {
     name: "CFHonoServer",
     factory: async (_sthis: SuperThis, _msgP: MsgerParams, remoteGestalt: Gestalt, port: number) => {
       if (process.env.FP_WRANGLER_PORT) {
-        const hs = {
-          start: async () => {
-            return hs;
-          },
-          close: async () => {
-            /* */
-          },
-        } as unknown as HonoServer;
-        return hs;
+        return new HonoServer(new CFHonoFactory());
       }
       const { tomlFile } = await resolveToml();
       $.verbose = !!process.env.FP_DEBUG;
@@ -187,15 +183,9 @@ export function CFHonoServerFactory() {
         console.error("!!", chunk.toString());
       });
       await waitReady.asPromise();
-      const hs = {
-        start: async () => {
-          return hs;
-        },
-        close: async () => {
+      return new HonoServer(new CFHonoFactory(() => {
           if (pid) process.kill(pid);
-        },
-      } as unknown as HonoServer;
-      return hs;
+      }))
     },
   };
 }

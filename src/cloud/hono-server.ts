@@ -1,21 +1,72 @@
-import { exception2Result, HttpHeader, Result, URI } from "@adviser/cement";
-import { ensureLogger, Logger, SuperThis } from "@fireproof/core";
+import { exception2Result, HttpHeader, param, ResolveOnce, Result, URI } from "@adviser/cement";
+import { Logger, SuperThis } from "@fireproof/core";
 import { Context, Hono, Next } from "hono";
 import { top_uint8 } from "../coerce-binary.js";
-import { MsgerParams, Gestalt, MsgIsReqOpen, buildErrorMsg, MsgBase, buildResOpen } from "./msg-types.js";
+import { Gestalt, MsgIsReqOpen, buildErrorMsg, MsgBase, EnDeCoder } from "./msg-types.js";
 import { MsgDispatcher, WSConnection } from "./msg-dispatch.js";
 import { WSEvents } from "hono/ws";
-import { PreSignedConnMsg } from "./pre-signed-url.js";
+import { calculatePreSignedUrl, PreSignedConnMsg } from "./pre-signed-url.js";
 
+export interface RunTimeParams {
+  readonly sthis: SuperThis;
+  readonly logger: Logger;
+  readonly ende: EnDeCoder;
+  readonly impl: HonoServerImpl;
+}
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 export type ConnMiddleware = (conn: WSConnection, c: Context, next: Next) => Promise<Response | void>;
 export interface HonoServerImpl {
-  start(app: Hono): Promise<void>;
-  serve(app: Hono, port?: number): Promise<void>;
-  close(): Promise<void>;
+  gestalt(): Gestalt;
+  // msgP(): MsgerParams;
   calculatePreSignedUrl(p: PreSignedConnMsg): Promise<Result<URI>>;
   upgradeWebSocket: (createEvents: (c: Context) => WSEvents | Promise<WSEvents>) => ConnMiddleware;
   readonly headers: HttpHeader;
+}
+
+export abstract class HonoServerBase {
+
+  readonly _gs: Gestalt;
+  readonly sthis: SuperThis;
+  readonly logger: Logger;
+  constructor(sthis: SuperThis, logger: Logger, gs: Gestalt) {
+    this.logger = logger;
+    this._gs = gs;
+    this.sthis = sthis;
+  }
+
+  gestalt(): Gestalt {
+    return this._gs;
+  }
+
+  calculatePreSignedUrl(p: PreSignedConnMsg): Promise<Result<URI>> {
+    const rRes = this.sthis.env.gets({
+      STORAGE_URL: param.REQUIRED,
+      ACCESS_KEY_ID: param.REQUIRED,
+      SECRET_ACCESS_KEY: param.REQUIRED,
+      REGION: "us-east-1"
+    });
+    if (rRes.isErr()) {
+      return Promise.resolve(Result.Err(rRes.Err()));
+    }
+    const res = rRes.Ok();
+    return calculatePreSignedUrl(p, {
+      storageUrl: URI.from(res.STORAGE_URL),
+      aws: {
+        accessKeyId: res.ACCESS_KEY_ID,
+        secretAccessKey: res.SECRET_ACCESS_KEY,
+        region: res.REGION,
+      },
+    });
+  }
+}
+
+export interface HonoServerFactory {
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  inject(c: Context, fn: (rt: RunTimeParams) => Promise<Response | void>): Promise<Response | void>;
+
+  start(app: Hono): Promise<void>;
+  serve(app: Hono, port?: number): Promise<void>;
+  close(): Promise<void>;
 }
 
 export const CORS = HttpHeader.from({
@@ -26,88 +77,98 @@ export const CORS = HttpHeader.from({
   "Access-Control-Max-Age": "86400", // Cache pre-flight response for 24 hours
 });
 
+// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+// async function injectRuntime(c: Context, fn: (rt: RunTimeParams) => Promise<Response|void>): Promise<Response | void> {
+//   const sthis = ensureSuperThis();
+//   const logger = ensureLogger(sthis, `HonoServer[${URI.from(c.req.url).pathname}]`);
+//   const ende = jsonEnDe(sthis)
+//   return fn({ sthis, logger, ende });
+// }
+
 export class HonoServer {
-  readonly sthis: SuperThis;
-  readonly msgP: MsgerParams;
-  readonly gestalt: Gestalt;
-  readonly logger: Logger;
-  readonly impl: HonoServerImpl;
-  constructor(sthis: SuperThis, msgP: MsgerParams, gestalt: Gestalt, impl: HonoServerImpl) {
-    this.sthis = sthis;
-    this.logger = ensureLogger(sthis, "HonoServer");
-    this.msgP = msgP;
-    this.gestalt = gestalt;
-    this.impl = impl;
+  // readonly sthis: SuperThis;
+  // readonly msgP: MsgerParams;
+  // readonly gestalt: Gestalt;
+  // readonly logger: Logger;
+  readonly factory: HonoServerFactory;
+  constructor(/* sthis: SuperThis, msgP: MsgerParams, gestalt: Gestalt, */ factory: HonoServerFactory) {
+    // this.sthis = sthis;
+    // this.logger = ensureLogger(sthis, "HonoServer");
+    // this.msgP = msgP;
+    // this.gestalt = gestalt;
+    this.factory = factory;
   }
-  async start(app: Hono, port?: number): Promise<HonoServer> {
-    await this.impl.start(app);
-    // app.put('/gestalt', async (c) => c.json(buildResGestalt(await c.req.json(), defaultGestaltItem({ id: "server", hasPersistent: true }).gestalt)))
-    // app.put('/error', async (c) => c.json(buildErrorMsg(sthis, sthis.logger, await c.req.json(), new Error("test error"))))
-    app.put("/fp", async (c) => {
-      this.impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
-      const rMsg = await exception2Result(() => c.req.json() as Promise<MsgBase>);
-      if (rMsg.isErr()) {
-        c.status(400);
-        return c.json(buildErrorMsg(this.sthis, this.logger, { tid: "internal" }, rMsg.Err()));
-      }
-      const dispatcher = new MsgDispatcher(this.sthis, this.gestalt);
-      return dispatcher.dispatch(this.impl, rMsg.Ok(), (msg) => c.json(msg));
+  readonly _register = new ResolveOnce<HonoServer>();
+  async register(app: Hono, port?: number): Promise<HonoServer> {
+    return this._register.once(async () => {
+      await this.factory.start(app);
+      // app.put('/gestalt', async (c) => c.json(buildResGestalt(await c.req.json(), defaultGestaltItem({ id: "server", hasPersistent: true }).gestalt)))
+      // app.put('/error', async (c) => c.json(buildErrorMsg(sthis, sthis.logger, await c.req.json(), new Error("test error"))))
+      app.put("/fp", (c) => this.factory.inject(c, async ({ sthis, logger, impl }) => {
+          impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
+          const rMsg = await exception2Result(() => c.req.json() as Promise<MsgBase>);
+          if (rMsg.isErr()) {
+            c.status(400);
+            return c.json(buildErrorMsg(sthis, logger, { tid: "internal" }, rMsg.Err()));
+          }
+          const dispatcher = new MsgDispatcher(sthis, impl.gestalt());
+          return dispatcher.dispatch(impl, rMsg.Ok(), (msg) => c.json(msg));
+        })
+      );
+      app.get("/ws", (c, next) => this.factory.inject(c, async ({ sthis, logger, ende, impl }) => {
+          impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
+          const rReqOpen = await exception2Result(() => JSON.parse(URI.from(c.req.url).getParam("reqOpen", "")));
+          if (rReqOpen.isErr()) {
+            c.status(400);
+            return c.json(buildErrorMsg(sthis, logger, { tid: "internal" }, rReqOpen.Err()));
+          }
+          const reqOpen = rReqOpen.Ok();
+          if (!MsgIsReqOpen(reqOpen) || !reqOpen.conn) {
+            c.status(400);
+            return c.json(buildErrorMsg(sthis, logger, reqOpen, logger.Error().Msg("expected reqOpen").AsError()));
+          }
+          return impl.upgradeWebSocket((_c) => {
+            let dp: MsgDispatcher;
+            return {
+              onOpen: (_e, _ws) => {
+                dp = new MsgDispatcher(sthis, impl.gestalt());
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                // const rConn = dp.addConn(reqOpen.conn!);
+                // if (rConn.isErr()) {
+                //   ws.send(ende.encode(buildErrorMsg(sthis, logger, reqOpen, rConn.Err())));
+                // } else {
+                //   ws.send(ende.encode(buildResOpen(sthis, reqOpen, rConn.Ok().conn.resId)));
+                // }
+              },
+              onError: (error) => {
+                logger.Error().Err(error).Msg("WebSocket error");
+              },
+              onMessage: async (event, ws) => {
+                const rMsg = await exception2Result(async () => ende.decode(await top_uint8(event.data)) as MsgBase);
+                if (rMsg.isErr()) {
+                  ws.send(ende.encode(buildErrorMsg(sthis, logger, reqOpen, rMsg.Err())));
+                } else {
+                  await dp.dispatch(impl, rMsg.Ok(), (msg) => {
+                    const str = ende.encode(msg);
+                    ws.send(str);
+                    return new Response(str);
+                  });
+                }
+              },
+              onClose: () => {
+                dp = undefined as unknown as MsgDispatcher;
+                // console.log('Connection closed')
+              },
+            };
+          })(new WSConnection(), c, next);
+        })
+      );
+      await this.factory.serve(app, port);
+      return this;
     });
-    app.get("/ws", async (c, next) => {
-      this.impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
-      const rReqOpen = await exception2Result(() => JSON.parse(URI.from(c.req.url).getParam("reqOpen", "")));
-      if (rReqOpen.isErr()) {
-        c.status(400);
-        return c.json(buildErrorMsg(this.sthis, this.logger, { tid: "internal" }, rReqOpen.Err()));
-      }
-      const reqOpen = rReqOpen.Ok();
-      if (!MsgIsReqOpen(reqOpen) || !reqOpen.conn) {
-        c.status(400);
-        return c.json(
-          buildErrorMsg(this.sthis, this.sthis.logger, reqOpen, this.logger.Error().Msg("expected reqOpen").AsError())
-        );
-      }
-      return this.impl.upgradeWebSocket((_c) => {
-        let dp: MsgDispatcher;
-        return {
-          onOpen: (_e, ws) => {
-            dp = new MsgDispatcher(this.sthis, this.gestalt);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const rConn = dp.addConn(reqOpen.conn!);
-            if (rConn.isErr()) {
-              ws.send(this.msgP.ende.encode(buildErrorMsg(this.sthis, this.logger, reqOpen, rConn.Err())));
-            } else {
-              ws.send(this.msgP.ende.encode(buildResOpen(this.sthis, reqOpen, rConn.Ok().conn.resId)));
-            }
-          },
-          onError: (error) => {
-            this.logger.Error().Err(error).Msg("WebSocket error");
-          },
-          onMessage: async (event, ws) => {
-            const rMsg = await exception2Result(
-              async () => this.msgP.ende.decode(await top_uint8(event.data)) as MsgBase
-            );
-            if (rMsg.isErr()) {
-              ws.send(this.msgP.ende.encode(buildErrorMsg(this.sthis, this.logger, reqOpen, rMsg.Err())));
-            } else {
-              await dp.dispatch(this.impl, rMsg.Ok(), (msg) => {
-                const str = this.msgP.ende.encode(msg);
-                ws.send(str);
-              });
-            }
-          },
-          onClose: () => {
-            dp = undefined as unknown as MsgDispatcher;
-            // console.log('Connection closed')
-          },
-        };
-      })(new WSConnection(reqOpen.conn), c, next);
-    });
-    await this.impl.serve(app, port);
-    return this;
   }
   async close() {
-    const ret = await this.impl.close();
+    const ret = await this.factory.close();
     return ret;
   }
 }

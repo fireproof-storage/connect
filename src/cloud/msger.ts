@@ -1,7 +1,6 @@
 import { BuildURI, CoerceURI, Result, runtimeFn, URI } from "@adviser/cement";
 import {
   buildReqGestalt,
-  Connection,
   defaultGestalt,
   EnDeCoder,
   Gestalt,
@@ -10,6 +9,7 @@ import {
   MsgIsResGestalt,
   ReqGestalt,
   ReqOpen,
+  ReqResId,
   RequestOpts,
   ResGestalt,
   WithErrorMsg,
@@ -51,7 +51,7 @@ export interface MsgConnection {
   // readonly ws: WebSocket;
   // readonly params: ConnectionKey;
   // qsOpen: ReqRes<ReqOpen, ResOpen>;
-  conn: Connection;
+  reqResId?: ReqResId;
   readonly exchangedGestalt: ExchangedGestalt;
   request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<WithErrorMsg<S>>;
   start(): Promise<Result<void>>;
@@ -59,21 +59,23 @@ export interface MsgConnection {
   onMsg(msg: OnMsgFn): UnReg;
 }
 
-function jsonEnDe(sthis: SuperThis) {
+export function jsonEnDe(sthis: SuperThis): EnDeCoder {
   return {
     encode: (node: unknown) => sthis.txt.encode(JSON.stringify(node)),
     decode: (data: Uint8Array) => JSON.parse(sthis.txt.decode(data)),
-  } satisfies EnDeCoder;
+  }
 }
 
-export function defaultMsgParams(sthis: SuperThis, igs: Partial<MsgerParams>): MsgerParams {
+export type MsgerParamsWithEnDe = MsgerParams & { readonly ende: EnDeCoder };
+
+export function defaultMsgParams(sthis: SuperThis, igs: Partial<MsgerParamsWithEnDe>): MsgerParamsWithEnDe {
   return {
-    ende: jsonEnDe(sthis),
     mime: "application/json",
+    ende: jsonEnDe(sthis),
     timeout: 3000,
     protocolCapabilities: ["reqRes", "stream"],
     ...igs,
-  } satisfies MsgerParams;
+  } satisfies MsgerParamsWithEnDe;
 }
 
 export interface OpenParams {
@@ -97,25 +99,25 @@ export async function applyStart(prC: Promise<Result<MsgConnection>>): Promise<R
 export class Msger {
   static async openHttp(
     sthis: SuperThis,
-    reqOpen: ReqOpen | undefined,
+    // reqOpen: ReqOpen | undefined,
     urls: URI[],
-    msgP: MsgerParams,
+    msgP: MsgerParamsWithEnDe,
     exGestalt: ExchangedGestalt
   ): Promise<Result<MsgConnection>> {
-    return Result.Ok(new HttpConnection(sthis, reqOpen, urls, msgP, exGestalt));
+    return Result.Ok(new HttpConnection(sthis, urls, msgP, exGestalt));
   }
   static async openWS(
     sthis: SuperThis,
-    qOpen: ReqOpen,
+    // qOpen: ReqOpen,
     url: URI,
-    msgP: MsgerParams,
+    msgP: MsgerParamsWithEnDe,
     exGestalt: ExchangedGestalt
   ): Promise<Result<MsgConnection>> {
     let ws: WebSocket;
-    const { encode } = jsonEnDe(sthis);
+    // const { encode } = jsonEnDe(sthis);
     url = url
       .build()
-      .setParam("reqOpen", sthis.txt.decode(encode(qOpen)))
+      // .setParam("reqOpen", sthis.txt.decode(encode(qOpen)))
       .URI();
     if (runtimeFn().isNodeIsh) {
       const { WebSocket } = await import("ws");
@@ -126,10 +128,7 @@ export class Msger {
     return Result.Ok(
       new WSConnection(
         sthis,
-        {
-          reqOpen: qOpen,
-          ws,
-        },
+        ws,
         msgP,
         exGestalt
       )
@@ -139,10 +138,10 @@ export class Msger {
     sthis: SuperThis,
     curl: CoerceURI,
     qOpen: ReqOpen,
-    imsgP: Partial<MsgerParams> = {}
+    imsgP: Partial<MsgerParamsWithEnDe> = {}
   ): Promise<Result<MsgConnection>> {
     // initial exchange with JSON encoding
-    const jsGI = defaultMsgParams(sthis, { ...imsgP, ende: jsonEnDe(sthis) });
+    const jsGI = defaultMsgParams(sthis, { ...imsgP, mime: "application/json", ende: jsonEnDe(sthis) });
     const url = URI.from(curl);
     const gs = defaultGestalt(defaultMsgParams(sthis, imsgP), { id: "FP-Universal-Client" });
     /*

@@ -1,10 +1,11 @@
 import { BuildURI } from "@adviser/cement";
+
 // import { registerFireproofCloudStoreProtocol } from "./src/cloud/client/gateway.ts";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 
 // registerFireproofCloudStoreProtocol();
 
-dotenv.config();
+// dotenv.config();
 
 process.env.FP_STORAGE_URL = BuildURI.from("fireproof://localhost:1968")
   //  .setParam("testMode", "true")
