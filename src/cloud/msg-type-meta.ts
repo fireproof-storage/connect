@@ -1,14 +1,24 @@
 import { VERSION } from "@adviser/cement";
 import { CRDTEntry } from "@fireproof/core";
-import { MsgBase, Connection, NextId, ReqRes, ReqSignedUrlParam, SignedUrlParam } from "./msg-types.js";
+import {
+  GwCtx,
+  MsgBase,
+  MsgWithConn,
+  MsgWithOptionalConn,
+  MsgWithTenantLedger,
+  NextId,
+  ReqRes,
+  ReqSignedUrlParam,
+  SignedUrlParam,
+} from "./msg-types.js";
 
 /* Subscribe Meta */
 
-export interface ReqSubscribeMeta extends MsgBase {
-  readonly type: "reqSubscribeMeta";
-  readonly subscriberId: string;
-  readonly conn: Connection;
-}
+// export interface ReqSubscribeMeta extends MsgBase {
+//   readonly type: "reqSubscribeMeta";
+//   readonly subscriberId: string;
+//   readonly conn: ;
+// }
 
 // export type ReqSubscribeMetaWithConnId = AddConnId<ReqSubscribeMeta, "reqSubscribeMetaWithConnId">;
 
@@ -16,48 +26,47 @@ export interface ReqSubscribeMeta extends MsgBase {
 //   return req.type === "reqSubscribeMetaWithConnId";
 // }
 
-export function MsgIsReqSubscribeMeta(req: MsgBase): req is ReqSubscribeMeta {
-  return req.type === "reqSubscribeMeta";
-}
+// export function MsgIsReqSubscribeMeta(req: MsgBase): req is ReqSubscribeMeta {
+//   return req.type === "reqSubscribeMeta";
+// }
 
-export function buildReqSubscribeMeta(sthis: NextId, ck: Connection, subscriberId: string): ReqSubscribeMeta {
-  return {
-    tid: sthis.nextId().str,
-    subscriberId,
-    type: "reqSubscribeMeta",
-    version: VERSION,
-    conn: ck,
-  };
-}
+// export function buildReqSubscribeMeta(sthis: NextId, ck: Connection, subscriberId: string): ReqSubscribeMeta {
+//   return {
+//     tid: sthis.nextId().str,
+//     subscriberId,
+//     type: "reqSubscribeMeta",
+//     version: VERSION,
+//     conn: ck,
+//   };
+// }
 
-export interface ResSubscribeMeta extends MsgBase {
-  readonly type: "resSubscribeMeta";
-  readonly subscriberId: string;
-  readonly conn: Connection;
-}
+// export interface ResSubscribeMeta extends MsgBase {
+//   readonly type: "resSubscribeMeta";
+//   readonly subscriberId: string;
+//   readonly conn: Connection;
+// }
 
-export function buildResSubscribeMeta(req: ReqSubscribeMeta /*, _conn: Connection*/): ResSubscribeMeta {
-  return {
-    tid: req.tid,
-    type: "resSubscribeMeta",
-    subscriberId: req.subscriberId,
-    conn: req.conn,
-    version: VERSION,
-  };
-}
+// export function buildResSubscribeMeta(req: ReqSubscribeMeta /*, _conn: Connection*/): ResSubscribeMeta {
+//   return {
+//     tid: req.tid,
+//     type: "resSubscribeMeta",
+//     subscriberId: req.subscriberId,
+//     conn: req.conn,
+//     version: VERSION,
+//   };
+// }
 
-export function MsgIsResSubscribeMeta<T extends ReqRes<MsgBase, MsgBase>>(
-  qs: T
-): qs is T & ReqRes<MsgBase, ResSubscribeMeta> {
-  return qs.res.type === "resSubscribeMeta";
-}
+// export function MsgIsResSubscribeMeta<T extends ReqRes<MsgBase, MsgBase>>(
+//   qs: T
+// ): qs is T & ReqRes<MsgBase, ResSubscribeMeta> {
+//   return qs.res.type === "resSubscribeMeta";
+// }
 
 /* Put Meta */
-export interface ReqPutMeta extends MsgBase {
+export interface ReqPutMeta extends MsgWithTenantLedger<MsgWithOptionalConn> {
   readonly type: "reqPutMeta";
   readonly params: ReqSignedUrlParam;
   readonly metas: CRDTEntry[];
-  readonly conn: Connection;
 }
 
 // export type ReqPutMetaWithConnId = AddConnId<ReqPutMeta, "reqPutMetaWithConnId">;
@@ -67,27 +76,24 @@ export interface ReqPutMeta extends MsgBase {
 // }
 
 export interface PutMetaParam {
-  readonly metaId: string;
   readonly metas: CRDTEntry[];
   readonly signedPutUrl: string;
 }
 
-export interface ResPutMeta extends MsgBase, PutMetaParam {
+export interface ResPutMeta extends MsgWithTenantLedger<MsgWithConn>, PutMetaParam {
   readonly type: "resPutMeta";
-  readonly metas: CRDTEntry[];
-  readonly conn: Connection;
 }
 
 export function buildReqPutMeta(
   sthis: NextId,
-  conn: Connection,
   signedUrlParams: ReqSignedUrlParam,
-  metas: CRDTEntry[]
+  metas: CRDTEntry[],
+  gwCtx: GwCtx
 ): ReqPutMeta {
   return {
     tid: sthis.nextId().str,
     type: "reqPutMeta",
-    conn,
+    ...gwCtx,
     version: VERSION,
     params: signedUrlParams,
     metas,
@@ -98,12 +104,16 @@ export function MsgIsReqPutMeta(msg: MsgBase): msg is ReqPutMeta {
   return msg.type === "reqPutMeta";
 }
 
-export function buildResPutMeta(req: ReqPutMeta, metaParam: PutMetaParam): ResPutMeta {
+export function buildResPutMeta(
+  req: MsgWithTenantLedger<MsgWithConn<ReqPutMeta>>,
+  metaParam: PutMetaParam
+): ResPutMeta {
   return {
     ...metaParam,
     tid: req.tid,
     type: "resPutMeta",
     conn: req.conn,
+    tenant: req.tenant,
     version: VERSION,
   };
 }
@@ -123,25 +133,25 @@ export interface ConnSubId {
  * and might implement long polling.
  * It will answer with a UpdateMetaEvent.
  */
-export interface ReqUpdateMeta extends MsgBase, ConnSubId {
-  readonly type: "reqUpdateMeta";
-  readonly conn: Connection;
-}
+// export interface ReqUpdateMeta extends MsgBase, ConnSubId {
+// readonly type: "reqUpdateMeta";
+// }
 
-export interface UpdateMetaEvent extends MsgBase, ConnSubId {
+export interface UpdateMetaEvent extends MsgWithTenantLedger<MsgWithConn>, ConnSubId {
   readonly type: "updateMeta";
-  readonly conn: Connection;
-  readonly metaId: string;
   readonly metas: CRDTEntry[];
 }
 
-export function buildUpdateMetaEvent(rq: ReqRes<ReqPutMeta, ResPutMeta>, consub: ConnSubId): UpdateMetaEvent {
+export function buildUpdateMetaEvent(
+  rq: ReqRes<MsgWithTenantLedger<MsgWithConn<ReqPutMeta>>, ResPutMeta>,
+  consub: ConnSubId
+): UpdateMetaEvent {
   return {
     ...consub,
     tid: rq.res.tid,
     type: "updateMeta",
     conn: rq.res.conn,
-    metaId: rq.res.metaId,
+    tenant: rq.res.tenant,
     metas: rq.req.metas,
     version: rq.res.version,
   };
@@ -152,10 +162,9 @@ export function MsgIsUpdateMetaEvent(msg: MsgBase): msg is UpdateMetaEvent {
 }
 
 /* Get Meta */
-export interface ReqGetMeta extends MsgBase {
+export interface ReqGetMeta extends MsgWithTenantLedger<MsgWithOptionalConn> {
   readonly type: "reqGetMeta";
   readonly params: ReqSignedUrlParam;
-  readonly conn: Connection;
 }
 
 // export type ReqGetMetaWithConnId = AddConnId<ReqGetMeta, "reqGetMetaWithConnId">;
@@ -183,10 +192,10 @@ export interface ResGetMeta extends MsgBase, GetMetaParam {
   readonly params: SignedUrlParam;
 }
 
-export function buildReqGetMeta(sthis: NextId, conn: Connection, signedUrlParams: ReqSignedUrlParam): ReqGetMeta {
+export function buildReqGetMeta(sthis: NextId, signedUrlParams: ReqSignedUrlParam, gwCtx: GwCtx): ReqGetMeta {
   return {
     tid: sthis.nextId().str,
-    conn,
+    ...gwCtx,
     type: "reqGetMeta",
     version: VERSION,
     params: signedUrlParams,
@@ -208,10 +217,9 @@ export function MsgIsResGetMeta(qs: ReqRes<MsgBase, MsgBase>): qs is ReqRes<ReqG
 }
 
 /* Del Meta */
-export interface ReqDelMeta extends MsgBase {
+export interface ReqDelMeta extends MsgWithTenantLedger<MsgWithOptionalConn> {
   readonly type: "reqDelMeta";
   readonly params: ReqSignedUrlParam;
-  readonly conn: Connection;
 }
 
 // export type ReqDelMetaWithConnId = AddConnId<ReqDelMeta, "reqDelMetaWithConnId">;
@@ -233,10 +241,10 @@ export interface ResDelMeta extends MsgBase, DelMetaParam {
   readonly type: "resDelMeta";
 }
 
-export function buildReqDelMeta(sthis: NextId, conn: Connection, signedUrlParams: SignedUrlParam): ReqDelMeta {
+export function buildReqDelMeta(sthis: NextId, signedUrlParams: SignedUrlParam, gwCtx: GwCtx): ReqDelMeta {
   return {
     tid: sthis.nextId().str,
-    conn,
+    ...gwCtx,
     type: "reqDelMeta",
     version: VERSION,
     params: signedUrlParams,

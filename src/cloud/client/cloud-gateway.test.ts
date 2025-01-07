@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { HonoServer } from "../hono-server.js";
-import { buildReqOpen, defaultGestalt } from "../msg-types.js";
+import { defaultGestalt } from "../msg-types.js";
 import { NodeHonoServerFactory, CFHonoServerFactory, wsStyle } from "../test-helper.js";
 import { bs, ensureSuperThis, NotFoundError } from "@fireproof/core";
 import { defaultMsgParams } from "../msger.js";
@@ -12,14 +12,8 @@ const msgP = defaultMsgParams(sthis, { hasPersistent: true });
 const my = defaultGestalt(msgP, { id: "FP-Universal-Client" });
 
 describe.each([NodeHonoServerFactory(), CFHonoServerFactory()])("$name - Gateway", ({ factory }) => {
-  const qOpen = buildReqOpen(sthis, {
-    key: {
-      ledger: "test",
-      tenant: "test",
-    },
-  });
   const port = 1024 + Math.floor(Math.random() * (65536 - 1024));
-  const style = wsStyle(sthis, port, msgP, qOpen, my);
+  const style = wsStyle(sthis, port, msgP, my);
 
   let server: HonoServer;
   let gw: bs.Gateway;

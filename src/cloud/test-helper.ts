@@ -1,18 +1,25 @@
-import { Future, URI } from "@adviser/cement";
+import { Future, Result, URI } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core";
 import { $, fs } from "zx";
 import { HttpConnection } from "./http-connection.js";
-import { MsgerParams, ReqOpen, Gestalt, defaultGestalt } from "./msg-types.js";
-import { defaultMsgParams, applyStart, Msger, MsgerParamsWithEnDe } from "./msger.js";
+import {
+  MsgerParams,
+  Gestalt,
+  defaultGestalt,
+  buildReqGestalt,
+  MsgIsResGestalt,
+  MsgIsError,
+  MsgBase,
+} from "./msg-types.js";
+import { defaultMsgParams, applyStart, Msger, MsgerParamsWithEnDe, MsgRawConnection } from "./msger.js";
 import { WSConnection } from "./ws-connection.js";
 import * as toml from "smol-toml";
 import { Env } from "./backend/env.js";
 import { HonoServer } from "./hono-server.js";
 import { NodeHonoFactory } from "./node-hono-server.js";
 import { CFHonoFactory } from "./backend/cf-hono-server.js";
-import { R } from "vitest/dist/chunks/environment.LoooBwUu.js";
 
-export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnDe, qOpen: ReqOpen, my: Gestalt) {
+export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnDe, my: Gestalt) {
   const remote = defaultGestalt(defaultMsgParams(sthis, { hasPersistent: true, protocolCapabilities: ["reqRes"] }), {
     id: "HTTP-server",
   });
@@ -27,7 +34,6 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
         applyStart(
           Msger.openHttp(
             sthis,
-            qOpen,
             [URI.from(`http://localhost:${port}/fp`)],
             {
               ...msgP,
@@ -40,10 +46,9 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
     },
     connRefused: {
       url: () => URI.from(`http://127.0.0.1:${port - 1}/fp`),
-      open: () =>
-        Msger.openHttp(
+      open: async (): Promise<Result<MsgRawConnection<MsgBase>>> => {
+        const ret = await Msger.openHttp(
           sthis,
-          qOpen,
           [URI.from(`http://localhost:${port - 1}/fp`)],
           {
             ...msgP,
@@ -51,14 +56,23 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
             timeout: 1000,
           },
           exGt
-        ),
+        );
+        if (ret.isErr()) {
+          return ret;
+        }
+        // should fail
+        const res = await ret.Ok().request(buildReqGestalt(sthis, my), { waitFor: MsgIsResGestalt });
+        if (MsgIsError(res)) {
+          return Result.Err(res.message);
+        }
+        return ret;
+      },
     },
     timeout: {
       url: () => URI.from(`http://4.7.1.1:${port}/fp`),
-      open: () =>
-        Msger.openHttp(
+      open: async (): Promise<Result<MsgRawConnection<MsgBase>>> => {
+        const ret = await Msger.openHttp(
           sthis,
-          qOpen,
           [URI.from(`http://4.7.1.1:${port}/fp`)],
           {
             ...msgP,
@@ -66,12 +80,19 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
             timeout: 500,
           },
           exGt
-        ),
+        );
+        // should fail
+        const res = await ret.Ok().request(buildReqGestalt(sthis, my), { waitFor: MsgIsResGestalt });
+        if (MsgIsError(res)) {
+          return Result.Err(res.message);
+        }
+        return ret;
+      },
     },
   };
 }
 
-export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnDe, qOpen: ReqOpen, my: Gestalt) {
+export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnDe, my: Gestalt) {
   const remote = defaultGestalt(defaultMsgParams(sthis, { hasPersistent: true, protocolCapabilities: ["stream"] }), {
     id: "WS-server",
   });
@@ -86,7 +107,6 @@ export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnD
         applyStart(
           Msger.openWS(
             sthis,
-            qOpen,
             URI.from(`http://localhost:${port}/ws`),
             {
               ...msgP,
@@ -102,7 +122,6 @@ export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnD
       open: () =>
         Msger.openWS(
           sthis,
-          qOpen,
           URI.from(`http://localhost:${port - 1}/ws`),
           {
             ...msgP,
@@ -117,7 +136,6 @@ export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnD
       open: () =>
         Msger.openWS(
           sthis,
-          qOpen,
           URI.from(`http://4.7.1.1:${port - 1}/ws`),
           {
             ...msgP,
@@ -148,7 +166,7 @@ export function NodeHonoServerFactory() {
     factory: async (sthis: SuperThis, msgP: MsgerParams, remoteGestalt: Gestalt, _port: number) => {
       const { env } = await resolveToml();
       sthis.env.sets(env as unknown as Record<string, string>);
-      return new HonoServer(new NodeHonoFactory(sthis, { msgP, gs: remoteGestalt }))
+      return new HonoServer(new NodeHonoFactory(sthis, { msgP, gs: remoteGestalt }));
     },
   };
 }
@@ -183,9 +201,11 @@ export function CFHonoServerFactory() {
         console.error("!!", chunk.toString());
       });
       await waitReady.asPromise();
-      return new HonoServer(new CFHonoFactory(() => {
+      return new HonoServer(
+        new CFHonoFactory(() => {
           if (pid) process.kill(pid);
-      }))
+        })
+      );
     },
   };
 }

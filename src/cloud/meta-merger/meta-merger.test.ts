@@ -1,7 +1,6 @@
 // import type { Database } from "better-sqlite3";
-import { MetaMerger } from "./meta-merger.js";
+import { Connection, MetaMerger } from "./meta-merger.js";
 import { CRDTEntry, ensureSuperThis } from "@fireproof/core";
-import { Connection } from "../msg-types.js";
 import { runtimeFn } from "@adviser/cement";
 import { SQLDatabase } from "./abstract-sql.js";
 import type { Env } from "../backend/env.js";
@@ -9,6 +8,23 @@ import type { Env } from "../backend/env.js";
 function sortCRDTEntries(rows: CRDTEntry[]) {
   return rows.sort((a, b) => a.cid.localeCompare(b.cid));
 }
+
+interface MetaConnection {
+  readonly metas: CRDTEntry[];
+  readonly connection: Connection;
+}
+
+function toCRDTEntries(rows: MetaConnection[]) {
+  return rows.reduce((r, i) => [...r, ...i.metas], [] as CRDTEntry[]);
+}
+
+// function filterConnection(ref: MetaConnection[], connection: Connection) {
+//   return toCRDTEntries(ref.filter((r) =>
+//       (r.connection.tenant.tenant === connection.tenant.tenant &&
+//       r.connection.tenant.ledger === connection.tenant.ledger &&
+//       r.connection.conn.reqId === connection.conn.reqId &&
+//       r.connection.conn.resId === connection.conn.resId)))
+// }
 
 describe("MetaMerger", () => {
   let db: SQLDatabase;
@@ -31,12 +47,14 @@ describe("MetaMerger", () => {
   let connection: Connection;
   beforeEach(() => {
     connection = {
-      key: {
+      tenant: {
         tenant: `tenant${sthis.timeOrderedNextId().str}`,
         ledger: "ledger",
       },
-      reqId: "reqId",
-      resId: "resId",
+      conn: {
+        reqId: "reqId",
+        resId: "resId",
+      },
     } satisfies Connection;
   });
 
@@ -82,7 +100,10 @@ describe("MetaMerger", () => {
         })
         .map((m) => ({ ...m, cid: sthis.timeOrderedNextId().str }));
       await mm.addMeta({
-        connection: { ...connection, reqId: sthis.timeOrderedNextId().str } satisfies Connection,
+        connection: {
+          ...connection,
+          conn: { ...connection.conn, reqId: sthis.timeOrderedNextId().str },
+        } satisfies Connection,
         metas,
         now: new Date(),
       });
@@ -94,8 +115,8 @@ describe("MetaMerger", () => {
   it("metaToSend to sink", async () => {
     const connections = Array(2)
       .fill(connection)
-      .map((c) => ({ ...c, reqId: sthis.timeOrderedNextId().str }));
-    const ref: CRDTEntry[] = [];
+      .map((c) => ({ ...c, conn: { ...c.conn, reqId: sthis.timeOrderedNextId().str } }));
+    const ref: MetaConnection[] = [];
     for (const connection of connections) {
       const metas = Array(2)
         .fill({
@@ -104,7 +125,7 @@ describe("MetaMerger", () => {
           data: "MomRkYXRho",
         })
         .map((m) => ({ ...m, cid: sthis.timeOrderedNextId().str }));
-      ref.push(...metas);
+      ref.push({ metas, connection });
       await mm.addMeta({
         connection,
         metas,
@@ -114,14 +135,18 @@ describe("MetaMerger", () => {
     // wrote 10 connections with 3 metas each
     for (const connection of connections) {
       const rows = await mm.metaToSend(connection);
-      expect(sortCRDTEntries(rows)).toEqual(sortCRDTEntries(ref));
+      expect(sortCRDTEntries(rows)).toEqual(sortCRDTEntries(toCRDTEntries(ref)));
+      const rowsEmpty = await mm.metaToSend(connection);
+      expect(sortCRDTEntries(rowsEmpty)).toEqual([]);
     }
     const newConnections = Array(2)
       .fill(connection)
-      .map((c) => ({ ...c, reqId: sthis.timeOrderedNextId().str }));
+      .map((c) => ({ ...c, conn: { ...c.conn, reqId: sthis.timeOrderedNextId().str } }));
     for (const connection of newConnections) {
       const rows = await mm.metaToSend(connection);
-      expect(sortCRDTEntries(rows)).toEqual(sortCRDTEntries(ref));
+      expect(sortCRDTEntries(rows)).toEqual(sortCRDTEntries(toCRDTEntries(ref)));
+      const rowsEmpty = await mm.metaToSend(connection);
+      expect(sortCRDTEntries(rowsEmpty)).toEqual([]);
     }
   });
 });

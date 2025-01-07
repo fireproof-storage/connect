@@ -1,17 +1,17 @@
-import { Logger, Result } from "@adviser/cement";
+import { Logger } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
 import {
   Gestalt,
   MsgBase,
   MsgIsReqGestalt,
   buildResGestalt,
-  MsgIsReqOpen,
   buildErrorMsg,
   buildResOpen,
-  WithErrorMsg,
+  MsgWithError,
+  MsgIsWithConn,
   MsgWithConn,
-  MsgIsWithReqResId,
-  ResOpen,
+  QSId,
+  MsgIsReqOpen,
 } from "./msg-types.js";
 import {
   MsgIsReqGetData,
@@ -55,19 +55,48 @@ export class WSConnection {
 
 type Promisable<T> = T | Promise<T>;
 
+// function WithValidConn<T extends MsgBase>(msg: T, rri?: ResOpen): msg is MsgWithConn<T> {
+//   return MsgIsWithConn(msg) && !!rri && rri.conn.resId === msg.conn.resId && rri.conn.reqId === msg.conn.reqId;
+// }
 
-function WithValidConn<T extends MsgBase>(msg: T, rri?: ResOpen): msg is MsgWithConn<T> {
-  return MsgIsWithReqResId(msg) &&
-         !!rri &&
-         rri.conn.resId === msg.conn.resId &&
-         rri.conn.reqId === msg.conn.reqId;
+interface ConnItem {
+  conn: QSId;
+  touched: Date;
 }
+
+class ConnectionManager {
+  readonly conns = new Map<string, ConnItem>();
+  readonly maxItems: number;
+
+  constructor(maxItems?: number) {
+    this.maxItems = maxItems || 100;
+  }
+
+  addConn(conn: QSId): QSId {
+    if (this.conns.size >= this.maxItems) {
+      const oldest = Array.from(this.conns.values());
+      const oneHourAgo = new Date(new Date().getTime() - 60 * 60 * 1000).getTime();
+      oldest
+        .filter((item) => item.touched.getTime() < oneHourAgo)
+        .forEach((item) => this.conns.delete(item.conn.resId));
+    }
+    this.conns.set(`${conn.reqId}:${conn.resId}`, { conn, touched: new Date() });
+    return conn;
+  }
+
+  isConnected(msg: MsgBase): msg is MsgWithConn<MsgBase> {
+    if (!MsgIsWithConn(msg)) {
+      return false;
+    }
+    return this.conns.has(`${msg.conn.reqId}:${msg.conn.resId}`);
+  }
+}
+const connManager = new ConnectionManager();
 
 export class MsgDispatcher {
   readonly sthis: SuperThis;
   readonly logger: Logger;
   // wsConn?: WSConnection;
-  myOpen?: ResOpen;
   readonly gestalt: Gestalt;
   readonly id: string;
 
@@ -80,33 +109,25 @@ export class MsgDispatcher {
     this.id = sthis.nextId().str;
   }
 
-  addConn(msg: MsgBase): Result<ResOpen> {
-    if (!MsgIsReqOpen(msg)) {
-      return this.logger.Error().Msg("msg missing reqId").ResultError();
-    }
-    if (this.myOpen) {
-      return this.logger.Error().Msg("myConn set").ResultError();
-    }
-    this.myOpen = buildResOpen(this.sthis, msg, this.sthis.nextId(12).str);
-    return Result.Ok(this.myOpen);
-  }
+  // addConn(msg: MsgBase): Result<QSId> {
+  //   if (!MsgIsReqOpenWithConn(msg)) {
+  //     return this.logger.Error().Msg("msg missing reqId").ResultError();
+  //   }
+  //   return Result.Ok(connManager.addConn(msg.conn));
+  // }
 
   async dispatch(ctx: HonoServerImpl, msg: MsgBase, send: (msg: MsgBase) => Promisable<Response>): Promise<Response> {
     const validateConn = async <T extends MsgBase>(
       msg: T,
-      fn: (msg: MsgWithConn<T>) => Promisable<WithErrorMsg<MsgBase>>
+      fn: (msg: MsgWithConn<T>) => Promisable<MsgWithError<MsgBase>>
     ): Promise<Response> => {
-      if (!MsgIsWithReqResId({ ...msg, conn: this.myOpen?.conn })) {
-        return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("dispatch missing connection")));
+      if (!connManager.isConnected(msg)) {
+        return send(buildErrorMsg(this.sthis, this.logger, { ...msg }, new Error("dispatch missing connection")));
+        // return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("non open connection")));
       }
-      if (!MsgIsWithReqResId(msg)) {
-        return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("req missing connection")));
-      }
-      if (WithValidConn(msg, this.myOpen)) {
-        const r = await fn(msg);
-        return Promise.resolve(send(r));
-      }
-      return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("non open connection")));
+      // if (WithValidConn(msg, this.myOpen)) {
+      const r = await fn(msg);
+      return Promise.resolve(send(r));
     };
     switch (true) {
       case MsgIsReqGestalt(msg):
@@ -115,12 +136,13 @@ export class MsgDispatcher {
         if (!msg.conn) {
           return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("missing connection")));
         }
-        /* DDoS protection */
-        const rConn = this.addConn(msg);
-        if (rConn.isErr()) {
-          return send(buildErrorMsg(this.sthis, this.logger, msg, rConn.Err()));
+        if (connManager.isConnected(msg)) {
+          return send(buildResOpen(this.sthis, msg, msg.conn.resId));
         }
-        return send(buildResOpen(this.sthis, msg, rConn.Ok().conn.resId));
+        const resId = this.sthis.nextId(12).str;
+        const resOpen = buildResOpen(this.sthis, msg, resId);
+        connManager.addConn(resOpen.conn);
+        return send(resOpen);
       }
       case MsgIsReqGetData(msg): {
         return validateConn(msg, (msg) => buildResGetData(this.sthis, this.logger, msg, ctx));

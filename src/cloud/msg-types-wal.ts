@@ -2,14 +2,17 @@ import { Logger } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core";
 import {
   MsgBase,
-  Connection,
-  WithErrorMsg,
+  MsgWithError,
   buildRes,
   NextId,
   ReqSignedUrl,
   ResSignedUrl,
   ReqSignedUrlParam,
   buildReqSignedUrl,
+  GwCtx,
+  MsgIsTenantLedger,
+  MsgWithTenantLedger,
+  MsgWithConn,
 } from "./msg-types.js";
 import { CalculatePreSignedUrl } from "./msg-types-data.js";
 
@@ -21,8 +24,8 @@ export function MsgIsReqGetWAL(msg: MsgBase): msg is ReqGetWAL {
   return msg.type === "reqGetWAL";
 }
 
-export function buildReqGetWAL(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqGetWAL {
-  return buildReqSignedUrl<ReqGetWAL>(sthis, "reqGetWAL", sup, conn);
+export function buildReqGetWAL(sthis: NextId, sup: ReqSignedUrlParam, ctx: GwCtx): ReqGetWAL {
+  return buildReqSignedUrl<ReqGetWAL>(sthis, "reqGetWAL", sup, ctx);
 }
 
 export interface ResGetWAL extends ResSignedUrl {
@@ -37,10 +40,18 @@ export function MsgIsResGetWAL(msg: MsgBase): msg is ResGetWAL {
 export function buildResGetWAL(
   sthis: SuperThis,
   logger: Logger,
-  req: ReqGetWAL,
+  req: MsgWithTenantLedger<MsgWithConn<ReqGetWAL>>,
   ctx: CalculatePreSignedUrl
-): Promise<WithErrorMsg<ResGetWAL>> {
-  return buildRes<ReqGetWAL, ResGetWAL>("GET", "wal", "resGetWAL", sthis, logger, req, ctx);
+): Promise<MsgWithError<ResGetWAL>> {
+  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqGetWAL>>, ResGetWAL>(
+    "GET",
+    "wal",
+    "resGetWAL",
+    sthis,
+    logger,
+    req,
+    ctx
+  );
 }
 
 export interface ReqPutWAL extends Omit<ReqSignedUrl, "type"> {
@@ -52,8 +63,8 @@ export function MsgIsReqPutWAL(msg: MsgBase): msg is ReqPutWAL {
   return msg.type === "reqPutWAL";
 }
 
-export function buildReqPutWAL(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqPutWAL {
-  return buildReqSignedUrl<ReqPutWAL>(sthis, "reqPutWAL", sup, conn);
+export function buildReqPutWAL(sthis: NextId, sup: ReqSignedUrlParam, ctx: GwCtx): ReqPutWAL {
+  return buildReqSignedUrl<ReqPutWAL>(sthis, "reqPutWAL", sup, ctx);
 }
 
 export interface ResPutWAL extends Omit<ResSignedUrl, "type"> {
@@ -67,10 +78,18 @@ export function MsgIsResPutWAL(msg: MsgBase): msg is ResPutWAL {
 export function buildResPutWAL(
   sthis: SuperThis,
   logger: Logger,
-  req: ReqPutWAL,
+  req: MsgWithTenantLedger<MsgWithConn<ReqPutWAL>>,
   ctx: CalculatePreSignedUrl
-): Promise<WithErrorMsg<ResPutWAL>> {
-  return buildRes<ReqPutWAL, ResPutWAL>("PUT", "wal", "resPutWAL", sthis, logger, req, ctx);
+): Promise<MsgWithError<ResPutWAL>> {
+  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqPutWAL>>, ResPutWAL>(
+    "PUT",
+    "wal",
+    "resPutWAL",
+    sthis,
+    logger,
+    req,
+    ctx
+  );
 }
 
 export interface ReqDelWAL extends Omit<ReqSignedUrl, "type"> {
@@ -81,8 +100,8 @@ export function MsgIsReqDelWAL(msg: MsgBase): msg is ReqDelWAL {
   return msg.type === "reqDelWAL";
 }
 
-export function buildReqDelWAL(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqDelWAL {
-  return buildReqSignedUrl<ReqDelWAL>(sthis, "reqDelWAL", sup, conn);
+export function buildReqDelWAL(sthis: NextId, sup: ReqSignedUrlParam, ctx: GwCtx): ReqDelWAL {
+  return buildReqSignedUrl<ReqDelWAL>(sthis, "reqDelWAL", sup, ctx);
 }
 
 export interface ResDelWAL extends Omit<ResSignedUrl, "type"> {
@@ -90,14 +109,22 @@ export interface ResDelWAL extends Omit<ResSignedUrl, "type"> {
 }
 
 export function MsgIsResDelWAL(msg: MsgBase): msg is ResDelWAL {
-  return msg.type === "resDelWAL";
+  return msg.type === "resDelWAL" && MsgIsTenantLedger(msg);
 }
 
 export function buildResDelWAL(
   sthis: SuperThis,
   logger: Logger,
-  req: ReqDelWAL,
+  req: MsgWithTenantLedger<MsgWithConn<ReqDelWAL>>,
   ctx: CalculatePreSignedUrl
-): Promise<WithErrorMsg<ResDelWAL>> {
-  return buildRes<ReqDelWAL, ResDelWAL>("DELETE", "wal", "resDelWAL", sthis, logger, req, ctx);
+): Promise<MsgWithError<ResDelWAL>> {
+  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqDelWAL>>, ResDelWAL>(
+    "DELETE",
+    "wal",
+    "resDelWAL",
+    sthis,
+    logger,
+    req,
+    ctx
+  );
 }

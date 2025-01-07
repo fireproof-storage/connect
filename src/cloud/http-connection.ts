@@ -1,37 +1,30 @@
 import { HttpHeader, Logger, Result, URI, exception2Result } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
+import { MsgBase, buildErrorMsg, MsgWithError, RequestOpts } from "./msg-types.js";
 import {
-  MsgBase,
-  buildErrorMsg,
-  WithErrorMsg,
-  RequestOpts,
-  ReqResId,
-} from "./msg-types.js";
-import { ExchangedGestalt, MsgConnection, MsgerParamsWithEnDe, OnMsgFn, selectRandom, timeout, UnReg } from "./msger.js";
+  ExchangedGestalt,
+  MsgerParamsWithEnDe,
+  MsgRawConnection,
+  OnMsgFn,
+  selectRandom,
+  timeout,
+  UnReg,
+} from "./msger.js";
+import { MsgRawConnectionBase } from "./msg-raw-connection-base.js";
 
-export class HttpConnection implements MsgConnection {
-  readonly sthis: SuperThis;
+export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnection {
   readonly logger: Logger;
   readonly msgP: MsgerParamsWithEnDe;
-  readonly exchangedGestalt: ExchangedGestalt;
 
   readonly baseURIs: URI[];
 
-  reqResId?: ReqResId
-
   readonly #onMsg = new Map<string, OnMsgFn>();
 
-  constructor(
-    sthis: SuperThis,
-    uris: URI[],
-    msgP: MsgerParamsWithEnDe,
-    exGestalt: ExchangedGestalt
-  ) {
-    this.sthis = sthis;
+  constructor(sthis: SuperThis, uris: URI[], msgP: MsgerParamsWithEnDe, exGestalt: ExchangedGestalt) {
+    super(sthis, exGestalt);
     this.logger = ensureLogger(sthis, "HttpConnection");
     // this.msgParam = msgP;
     this.baseURIs = uris;
-    this.exchangedGestalt = exGestalt;
     this.msgP = msgP;
   }
 
@@ -51,7 +44,7 @@ export class HttpConnection implements MsgConnection {
     return Result.Ok(undefined);
   }
 
-  toMsg<S extends MsgBase>(msg: WithErrorMsg<S>): WithErrorMsg<S> {
+  toMsg<S extends MsgBase>(msg: MsgWithError<S>): MsgWithError<S> {
     this.#onMsg.forEach((fn) => fn(msg));
     return msg;
   }
@@ -62,7 +55,7 @@ export class HttpConnection implements MsgConnection {
     return () => this.#onMsg.delete(key);
   }
 
-  async request<Q extends MsgBase, S extends MsgBase>(req: Q, _opts: RequestOpts): Promise<WithErrorMsg<S>> {
+  async request<Q extends MsgBase, S extends MsgBase>(req: Q, _opts: RequestOpts): Promise<MsgWithError<S>> {
     const headers = HttpHeader.from();
     headers.Set("Content-Type", this.msgP.mime);
     headers.Set("Accept", this.msgP.mime);

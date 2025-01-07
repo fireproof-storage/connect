@@ -30,7 +30,11 @@ import { ensureLogger, ensureSuperThis, SuperThis } from "@fireproof/core";
 
 export class CFHonoFactory implements HonoServerFactory {
   readonly _onClose: () => void;
-  constructor(onClose: () => void = () => { /* */ }) {
+  constructor(
+    onClose: () => void = () => {
+      /* */
+    }
+  ) {
     this._onClose = onClose;
   }
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
@@ -53,7 +57,7 @@ export class CFHonoFactory implements HonoServerFactory {
     });
 
     const ret = fn({ sthis, logger, ende, impl: new CFHonoServer(sthis, logger, ende, gs) });
-    return ret // .then((v) => sthis.logger.Flush().then(() => v))
+    return ret; // .then((v) => sthis.logger.Flush().then(() => v))
   }
 
   async start(_app: Hono): Promise<void> {
@@ -65,7 +69,7 @@ export class CFHonoFactory implements HonoServerFactory {
     return {} as T;
   }
   async close(): Promise<void> {
-    this._onClose()
+    this._onClose();
     return;
   }
 }
@@ -78,7 +82,7 @@ export class CFHonoServer extends HonoServerBase {
   // readonly env: Env;
   // readonly wsConnections = new Map<string, WSPair>()
   constructor(sthis: SuperThis, logger: Logger, ende: EnDeCoder, gs: Gestalt, headers?: HttpHeader) {
-    super(sthis, logger, gs)
+    super(sthis, logger, gs);
     this.headers = HttpHeader.from(headers).Merge(CORS);
     this.ende = ende;
     // this.env = env;
@@ -88,7 +92,6 @@ export class CFHonoServer extends HonoServerBase {
   //     const id = env.FP_META_GROUPS.idFromName("fireproof");
   //     const stub = env.FP_META_GROUPS.get(id);
   // }
-
 
   upgradeWebSocket(createEvents: (c: Context) => WSEvents | Promise<WSEvents>): ConnMiddleware {
     // if (!this._upgradeWebSocket) {

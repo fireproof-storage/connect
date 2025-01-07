@@ -1,18 +1,17 @@
 import { Result, URI } from "@adviser/cement";
 import { AwsClient } from "aws4fetch";
-import { Connection, SignedUrlParam } from "./msg-types.js";
+import { MsgWithConn, MsgWithTenantLedger, SignedUrlParam } from "./msg-types.js";
 
-export interface PreSignedMsg {
+export interface PreSignedMsg extends MsgWithTenantLedger<MsgWithConn> {
   readonly params: SignedUrlParam;
   readonly tid: string;
-  readonly conn?: Connection;
 }
 
-export interface PreSignedConnMsg {
-  readonly params: SignedUrlParam;
-  readonly tid: string;
-  readonly conn: Connection;
-}
+// export interface PreSignedConnMsg {
+//   readonly params: SignedUrlParam;
+//   readonly tid: string;
+//   readonly conn: QSId;
+// }
 
 export interface PreSignedEnv {
   readonly storageUrl: URI;
@@ -26,11 +25,11 @@ export interface PreSignedEnv {
   };
 }
 
-export async function calculatePreSignedUrl(ipsm: PreSignedMsg, env: PreSignedEnv): Promise<Result<URI>> {
-  if (!ipsm.conn) {
-    return Result.Err(new Error("Connection is not supported"));
-  }
-  const psm = ipsm as PreSignedConnMsg;
+export async function calculatePreSignedUrl(psm: PreSignedMsg, env: PreSignedEnv): Promise<Result<URI>> {
+  // if (!ipsm.conn) {
+  //   return Result.Err(new Error("Connection is not supported"));
+  // }
+  // const psm = ipsm as PreSignedConnMsg;
 
   // verify if you are not overriding
   let store: string = psm.params.store;
@@ -54,8 +53,8 @@ export async function calculatePreSignedUrl(ipsm: PreSignedMsg, env: PreSignedEn
     // .protocol(vals.protocuol === "ws" ? "http:" : "https:")
     .setParam("X-Amz-Expires", expiresInSeconds.toString())
     .setParam("tid", psm.tid)
-    .appendRelative(psm.conn.key.tenant)
-    .appendRelative(psm.conn.key.ledger)
+    .appendRelative(psm.tenant.tenant)
+    .appendRelative(psm.tenant.ledger)
     .appendRelative(store)
     .appendRelative(`${psm.params.key}${suffix}`)
     .URI();

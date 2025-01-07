@@ -9,12 +9,17 @@ class MetaMerger {
 */
 
 import { CRDTEntry, SuperThis } from "@fireproof/core";
-import { Connection } from "../msg-types.js";
 import { MetaByTenantLedgerSql } from "./meta-by-tenant-ledger.js";
 import { MetaSendSql } from "./meta-send.js";
 import { TenantLedgerSql } from "./tenant-ledger.js";
 import { TenantSql } from "./tenant.js";
 import { SQLDatabase } from "./abstract-sql.js";
+import { QSId, TenantLedger } from "../msg-types.js";
+
+export interface Connection {
+  readonly tenant: TenantLedger;
+  readonly conn: QSId;
+}
 
 export interface MetaMerge {
   readonly connection: Connection;
@@ -31,10 +36,8 @@ export interface ByConnection {
 
 function toByConnection(connection: Connection): ByConnection {
   return {
-    tenant: connection.key.tenant,
-    ledger: connection.key.ledger,
-    reqId: connection.reqId,
-    resId: connection.resId,
+    ...connection.conn,
+    ...connection.tenant,
   };
 }
 
@@ -80,8 +83,7 @@ export class MetaMerger {
     await this.sql.metaSend.deleteByConnection(connCIDs);
     await this.sql.metaByTenantLedger.deleteByConnection(connCIDs);
     await this.sql.tenantLedger.ensure({
-      tenant: mm.connection.key.tenant,
-      ledger: mm.connection.key.ledger,
+      ...mm.connection.tenant,
       createdAt: now,
     });
     for (const meta of mm.metas) {

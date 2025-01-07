@@ -1,30 +1,17 @@
 import { exception2Result, Future, Logger, Result } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
-import {
-  MsgBase,
-  MsgIsError,
-  buildErrorMsg,
-  ReqOpen,
-  ResOpen,
-  MsgIsResOpen,
-  WaitForTid,
-  Connection,
-  WithErrorMsg,
-  RequestOpts,
-  ReqResId,
-} from "./msg-types.js";
-import { ExchangedGestalt, MsgConnection, MsgerParamsWithEnDe, OnMsgFn, UnReg } from "./msger.js";
+import { MsgBase, MsgIsError, buildErrorMsg, ReqOpen, WaitForTid, MsgWithError, RequestOpts } from "./msg-types.js";
+import { ExchangedGestalt, MsgerParamsWithEnDe, MsgRawConnection, OnMsgFn, UnReg } from "./msger.js";
+import { MsgRawConnectionBase } from "./msg-raw-connection-base.js";
 
 export interface WSReqOpen {
   readonly reqOpen: ReqOpen;
   readonly ws: WebSocket; // this WS is opened with a specific URL-Param
 }
 
-export class WSConnection implements MsgConnection {
-  readonly sthis: SuperThis;
+export class WSConnection extends MsgRawConnectionBase implements MsgRawConnection {
   readonly logger: Logger;
   readonly msgP: MsgerParamsWithEnDe;
-  readonly exchangedGestalt: ExchangedGestalt;
   readonly ws: WebSocket;
   // readonly baseURI: URI;
 
@@ -35,11 +22,13 @@ export class WSConnection implements MsgConnection {
 
   opened = false;
 
+  readonly id: string;
+
   constructor(sthis: SuperThis, ws: WebSocket, msgP: MsgerParamsWithEnDe, exGestalt: ExchangedGestalt) {
-    this.sthis = sthis;
+    super(sthis, exGestalt);
+    this.id = sthis.nextId().str;
     this.logger = ensureLogger(sthis, "WSConnection");
     this.msgP = msgP;
-    this.exchangedGestalt = exGestalt;
     this.ws = ws;
     // this.wqs = { ...wsq };
   }
@@ -51,26 +40,17 @@ export class WSConnection implements MsgConnection {
       this.toMsg(buildErrorMsg(this.sthis, this.logger, {} as MsgBase, err));
       onOpenFuture.resolve(Result.Err(err));
     }, this.msgP.timeout);
-    this.wqs.ws.onopen = () => {
+    this.ws.onopen = () => {
       onOpenFuture.resolve(Result.Ok(undefined));
       this.opened = true;
     };
-    this.wqs.ws.onerror = (ierr) => {
+    this.ws.onerror = (ierr) => {
       const err = this.logger.Error().Err(ierr).Msg("WS Error").AsError();
       onOpenFuture.resolve(Result.Err(err));
-      let conn: Connection;
-      try {
-        conn = this.conn;
-      } catch (_err) {
-        conn = {
-          key: { tenant: "not-connect", ledger: "not-connect" },
-          reqId: "not-connect",
-          resId: "not-connect",
-        };
-      }
-      this.toMsg(buildErrorMsg(this.sthis, this.logger, { conn } as MsgBase, err));
+      const res = this.buildErrorMsg(this.logger.Error(), {}, err);
+      this.toMsg(res);
     };
-    this.wqs.ws.onmessage = (evt) => {
+    this.ws.onmessage = (evt) => {
       if (!this.opened) {
         this.toMsg(
           buildErrorMsg(
@@ -83,7 +63,7 @@ export class WSConnection implements MsgConnection {
       }
       this.#wsOnMessage(evt);
     };
-    this.wqs.ws.onclose = () => {
+    this.ws.onclose = () => {
       this.opened = false;
       this.close().catch((ierr) => {
         const err = this.logger.Error().Err(ierr).Msg("close error").AsError();
@@ -98,11 +78,11 @@ export class WSConnection implements MsgConnection {
     if (rOpen.isErr()) {
       return rOpen;
     }
-    const resOpen = await this.request(this.wqs.reqOpen, { waitFor: MsgIsResOpen });
-    if (!MsgIsResOpen(resOpen)) {
-      return Result.Err(this.logger.Error().Any("ErrMsg", resOpen).Msg("Invalid response").AsError());
-    }
-    this.wqs.resOpen = resOpen;
+    // const resOpen = await this.request(this.wqs.reqOpen, { waitFor: MsgIsResOpen });
+    // if (!MsgIsResOpen(resOpen)) {
+    //   return Result.Err(this.logger.Error().Any("ErrMsg", resOpen).Msg("Invalid response").AsError());
+    // }
+    // this.wqs.resOpen = resOpen;
     return Result.Ok(undefined);
   }
 
@@ -135,17 +115,17 @@ export class WSConnection implements MsgConnection {
     this.#onClose.forEach((fn) => fn());
     this.#onClose.clear();
     this.#onMsg.clear();
-    this.wqs.ws.close();
+    this.ws.close();
     return Result.Ok(undefined);
   }
 
-  toMsg<S extends MsgBase>(msg: WithErrorMsg<S>): WithErrorMsg<S> {
+  toMsg<S extends MsgBase>(msg: MsgWithError<S>): MsgWithError<S> {
     this.#onMsg.forEach((fn) => fn(msg));
     return msg;
   }
 
   async sendMsg(msg: MsgBase): Promise<void> {
-    this.wqs.ws.send(this.msgP.ende.encode(msg));
+    this.ws.send(this.msgP.ende.encode(msg));
   }
 
   onMsg(fn: OnMsgFn): UnReg {
@@ -160,7 +140,7 @@ export class WSConnection implements MsgConnection {
     return () => this.#onClose.delete(key);
   }
 
-  async request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<WithErrorMsg<S>> {
+  async request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>> {
     if (!this.opened) {
       return buildErrorMsg(this.sthis, this.logger, req, this.logger.Error().Msg("Connection not open").AsError());
     }

@@ -2,10 +2,10 @@ import { exception2Result, HttpHeader, param, ResolveOnce, Result, URI } from "@
 import { Logger, SuperThis } from "@fireproof/core";
 import { Context, Hono, Next } from "hono";
 import { top_uint8 } from "../coerce-binary.js";
-import { Gestalt, MsgIsReqOpen, buildErrorMsg, MsgBase, EnDeCoder } from "./msg-types.js";
+import { Gestalt, buildErrorMsg, MsgBase, EnDeCoder, ErrorMsg } from "./msg-types.js";
 import { MsgDispatcher, WSConnection } from "./msg-dispatch.js";
 import { WSEvents } from "hono/ws";
-import { calculatePreSignedUrl, PreSignedConnMsg } from "./pre-signed-url.js";
+import { calculatePreSignedUrl, PreSignedMsg } from "./pre-signed-url.js";
 
 export interface RunTimeParams {
   readonly sthis: SuperThis;
@@ -18,13 +18,12 @@ export type ConnMiddleware = (conn: WSConnection, c: Context, next: Next) => Pro
 export interface HonoServerImpl {
   gestalt(): Gestalt;
   // msgP(): MsgerParams;
-  calculatePreSignedUrl(p: PreSignedConnMsg): Promise<Result<URI>>;
+  calculatePreSignedUrl(p: PreSignedMsg): Promise<Result<URI>>;
   upgradeWebSocket: (createEvents: (c: Context) => WSEvents | Promise<WSEvents>) => ConnMiddleware;
   readonly headers: HttpHeader;
 }
 
 export abstract class HonoServerBase {
-
   readonly _gs: Gestalt;
   readonly sthis: SuperThis;
   readonly logger: Logger;
@@ -38,12 +37,12 @@ export abstract class HonoServerBase {
     return this._gs;
   }
 
-  calculatePreSignedUrl(p: PreSignedConnMsg): Promise<Result<URI>> {
+  calculatePreSignedUrl(p: PreSignedMsg): Promise<Result<URI>> {
     const rRes = this.sthis.env.gets({
       STORAGE_URL: param.REQUIRED,
       ACCESS_KEY_ID: param.REQUIRED,
       SECRET_ACCESS_KEY: param.REQUIRED,
-      REGION: "us-east-1"
+      REGION: "us-east-1",
     });
     if (rRes.isErr()) {
       return Promise.resolve(Result.Err(rRes.Err()));
@@ -77,14 +76,6 @@ export const CORS = HttpHeader.from({
   "Access-Control-Max-Age": "86400", // Cache pre-flight response for 24 hours
 });
 
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-// async function injectRuntime(c: Context, fn: (rt: RunTimeParams) => Promise<Response|void>): Promise<Response | void> {
-//   const sthis = ensureSuperThis();
-//   const logger = ensureLogger(sthis, `HonoServer[${URI.from(c.req.url).pathname}]`);
-//   const ende = jsonEnDe(sthis)
-//   return fn({ sthis, logger, ende });
-// }
-
 export class HonoServer {
   // readonly sthis: SuperThis;
   // readonly msgP: MsgerParams;
@@ -104,7 +95,8 @@ export class HonoServer {
       await this.factory.start(app);
       // app.put('/gestalt', async (c) => c.json(buildResGestalt(await c.req.json(), defaultGestaltItem({ id: "server", hasPersistent: true }).gestalt)))
       // app.put('/error', async (c) => c.json(buildErrorMsg(sthis, sthis.logger, await c.req.json(), new Error("test error"))))
-      app.put("/fp", (c) => this.factory.inject(c, async ({ sthis, logger, impl }) => {
+      app.put("/fp", (c) =>
+        this.factory.inject(c, async ({ sthis, logger, impl }) => {
           impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
           const rMsg = await exception2Result(() => c.req.json() as Promise<MsgBase>);
           if (rMsg.isErr()) {
@@ -115,30 +107,13 @@ export class HonoServer {
           return dispatcher.dispatch(impl, rMsg.Ok(), (msg) => c.json(msg));
         })
       );
-      app.get("/ws", (c, next) => this.factory.inject(c, async ({ sthis, logger, ende, impl }) => {
-          impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
-          const rReqOpen = await exception2Result(() => JSON.parse(URI.from(c.req.url).getParam("reqOpen", "")));
-          if (rReqOpen.isErr()) {
-            c.status(400);
-            return c.json(buildErrorMsg(sthis, logger, { tid: "internal" }, rReqOpen.Err()));
-          }
-          const reqOpen = rReqOpen.Ok();
-          if (!MsgIsReqOpen(reqOpen) || !reqOpen.conn) {
-            c.status(400);
-            return c.json(buildErrorMsg(sthis, logger, reqOpen, logger.Error().Msg("expected reqOpen").AsError()));
-          }
+      app.get("/ws", (c, next) =>
+        this.factory.inject(c, async ({ sthis, logger, ende, impl }) => {
           return impl.upgradeWebSocket((_c) => {
             let dp: MsgDispatcher;
             return {
               onOpen: (_e, _ws) => {
                 dp = new MsgDispatcher(sthis, impl.gestalt());
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                // const rConn = dp.addConn(reqOpen.conn!);
-                // if (rConn.isErr()) {
-                //   ws.send(ende.encode(buildErrorMsg(sthis, logger, reqOpen, rConn.Err())));
-                // } else {
-                //   ws.send(ende.encode(buildResOpen(sthis, reqOpen, rConn.Ok().conn.resId)));
-                // }
               },
               onError: (error) => {
                 logger.Error().Err(error).Msg("WebSocket error");
@@ -146,7 +121,18 @@ export class HonoServer {
               onMessage: async (event, ws) => {
                 const rMsg = await exception2Result(async () => ende.decode(await top_uint8(event.data)) as MsgBase);
                 if (rMsg.isErr()) {
-                  ws.send(ende.encode(buildErrorMsg(sthis, logger, reqOpen, rMsg.Err())));
+                  ws.send(
+                    ende.encode(
+                      buildErrorMsg(
+                        sthis,
+                        logger,
+                        {
+                          message: event.data,
+                        } as ErrorMsg,
+                        rMsg.Err()
+                      )
+                    )
+                  );
                 } else {
                   await dp.dispatch(impl, rMsg.Ok(), (msg) => {
                     const str = ende.encode(msg);

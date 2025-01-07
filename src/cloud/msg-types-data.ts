@@ -3,13 +3,15 @@ import { SuperThis } from "@fireproof/core";
 import {
   ReqSignedUrl,
   NextId,
-  Connection,
   MsgBase,
   ResSignedUrl,
-  WithErrorMsg,
+  MsgWithError,
   buildRes,
   ReqSignedUrlParam,
   buildReqSignedUrl,
+  GwCtx,
+  MsgIsTenantLedger,
+  MsgWithConn,
 } from "./msg-types.js";
 import { PreSignedMsg } from "./pre-signed-url.js";
 
@@ -17,8 +19,8 @@ export interface ReqGetData extends ReqSignedUrl {
   readonly type: "reqGetData";
 }
 
-export function buildReqGetData(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqGetData {
-  return buildReqSignedUrl<ReqGetData>(sthis, "reqGetData", sup, conn);
+export function buildReqGetData(sthis: NextId, sup: ReqSignedUrlParam, ctx: GwCtx): ReqGetData {
+  return buildReqSignedUrl<ReqGetData>(sthis, "reqGetData", sup, ctx);
 }
 
 export function MsgIsReqGetData(msg: MsgBase): msg is ReqGetData {
@@ -31,7 +33,7 @@ export interface ResGetData extends ResSignedUrl {
 }
 
 export function MsgIsResGetData(msg: MsgBase): msg is ResGetData {
-  return msg.type === "resGetData";
+  return msg.type === "resGetData" && MsgIsTenantLedger(msg);
 }
 
 export interface CalculatePreSignedUrl {
@@ -41,10 +43,10 @@ export interface CalculatePreSignedUrl {
 export function buildResGetData(
   sthis: SuperThis,
   logger: Logger,
-  req: ReqGetData,
+  req: MsgWithConn<ReqGetData>,
   ctx: CalculatePreSignedUrl
-): Promise<WithErrorMsg<ResGetData>> {
-  return buildRes<ReqGetData, ResGetData>("GET", "data", "resGetData", sthis, logger, req, ctx);
+): Promise<MsgWithError<ResGetData>> {
+  return buildRes<MsgWithConn<ReqGetData>, ResGetData>("GET", "data", "resGetData", sthis, logger, req, ctx);
 }
 
 export interface ReqPutData extends ReqSignedUrl {
@@ -56,8 +58,8 @@ export function MsgIsReqPutData(msg: MsgBase): msg is ReqPutData {
   return msg.type === "reqPutData";
 }
 
-export function buildReqPutData(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqPutData {
-  return buildReqSignedUrl<ReqPutData>(sthis, "reqPutData", sup, conn);
+export function buildReqPutData(sthis: NextId, sup: ReqSignedUrlParam, ctx: GwCtx): ReqPutData {
+  return buildReqSignedUrl<ReqPutData>(sthis, "reqPutData", sup, ctx);
 }
 
 export interface ResPutData extends ResSignedUrl {
@@ -71,10 +73,10 @@ export function MsgIsResPutData(msg: MsgBase): msg is ResPutData {
 export function buildResPutData(
   sthis: SuperThis,
   logger: Logger,
-  req: ReqPutData,
+  req: MsgWithConn<ReqPutData>,
   ctx: CalculatePreSignedUrl
-): Promise<WithErrorMsg<ResPutData>> {
-  return buildRes<ReqPutData, ResPutData>("PUT", "data", "resPutData", sthis, logger, req, ctx);
+): Promise<MsgWithError<ResPutData>> {
+  return buildRes<MsgWithConn<ReqPutData>, ResPutData>("PUT", "data", "resPutData", sthis, logger, req, ctx);
 }
 
 export interface ReqDelData extends ReqSignedUrl {
@@ -85,8 +87,8 @@ export function MsgIsReqDelData(msg: MsgBase): msg is ReqDelData {
   return msg.type === "reqDelData";
 }
 
-export function buildReqDelData(sthis: NextId, sup: ReqSignedUrlParam, conn: Connection): ReqDelData {
-  return buildReqSignedUrl<ReqDelData>(sthis, "reqDelData", sup, conn);
+export function buildReqDelData(sthis: NextId, sup: ReqSignedUrlParam, ctx: GwCtx): ReqDelData {
+  return buildReqSignedUrl<ReqDelData>(sthis, "reqDelData", sup, ctx);
 }
 
 export interface ResDelData extends ResSignedUrl {
@@ -100,8 +102,8 @@ export function MsgIsResDelData(msg: MsgBase): msg is ResDelData {
 export function buildResDelData(
   sthis: SuperThis,
   logger: Logger,
-  req: ReqDelData,
+  req: MsgWithConn<ReqDelData>,
   ctx: CalculatePreSignedUrl
-): Promise<WithErrorMsg<ResDelData>> {
-  return buildRes<ReqDelData, ResDelData>("DELETE", "data", "resDelData", sthis, logger, req, ctx);
+): Promise<MsgWithError<ResDelData>> {
+  return buildRes<MsgWithConn<ReqDelData>, ResDelData>("DELETE", "data", "resDelData", sthis, logger, req, ctx);
 }

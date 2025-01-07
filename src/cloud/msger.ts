@@ -8,11 +8,16 @@ import {
   MsgerParams,
   MsgIsResGestalt,
   ReqGestalt,
-  ReqOpen,
-  ReqResId,
   RequestOpts,
   ResGestalt,
-  WithErrorMsg,
+  MsgWithError,
+  MsgWithConn,
+  buildReqOpen,
+  MsgIsConnected,
+  MsgIsError,
+  MsgIsResOpen,
+  MsgWithOptionalConn,
+  QSId,
 } from "./msg-types.js";
 import { SuperThis } from "@fireproof/core";
 import { HttpConnection } from "./http-connection.js";
@@ -39,7 +44,7 @@ export function timeout<T>(ms: number, promise: Promise<T>): Promise<T> {
   });
 }
 
-export type OnMsgFn = (msg: WithErrorMsg<MsgBase>) => void;
+export type OnMsgFn<T extends MsgBase = MsgBase> = (msg: MsgWithError<T>) => void;
 export type UnReg = () => void;
 
 export interface ExchangedGestalt {
@@ -47,23 +52,25 @@ export interface ExchangedGestalt {
   readonly remote: Gestalt;
 }
 
-export interface MsgConnection {
+export type OnErrorFn = (msg: Partial<MsgBase>, err: Error) => Partial<MsgBase>;
+
+export interface MsgRawConnection<T extends MsgBase = MsgBase> {
   // readonly ws: WebSocket;
   // readonly params: ConnectionKey;
   // qsOpen: ReqRes<ReqOpen, ResOpen>;
-  reqResId?: ReqResId;
+  readonly sthis: SuperThis;
   readonly exchangedGestalt: ExchangedGestalt;
-  request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<WithErrorMsg<S>>;
+  request<Q extends T, S extends T>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>>;
   start(): Promise<Result<void>>;
   close(): Promise<Result<void>>;
-  onMsg(msg: OnMsgFn): UnReg;
+  onMsg(msg: OnMsgFn<T>): UnReg;
 }
 
 export function jsonEnDe(sthis: SuperThis): EnDeCoder {
   return {
     encode: (node: unknown) => sthis.txt.encode(JSON.stringify(node)),
     decode: (data: Uint8Array) => JSON.parse(sthis.txt.decode(data)),
-  }
+  };
 }
 
 export type MsgerParamsWithEnDe = MsgerParams & { readonly ende: EnDeCoder };
@@ -82,7 +89,7 @@ export interface OpenParams {
   readonly timeout: number;
 }
 
-export async function applyStart(prC: Promise<Result<MsgConnection>>): Promise<Result<MsgConnection>> {
+export async function applyStart(prC: Promise<Result<MsgRawConnection>>): Promise<Result<MsgRawConnection>> {
   const rC = await prC;
   if (rC.isErr()) {
     return rC;
@@ -95,6 +102,53 @@ export async function applyStart(prC: Promise<Result<MsgConnection>>): Promise<R
   return rC;
 }
 
+export class MsgConnected implements MsgRawConnection<MsgWithConn> {
+  static async connect(
+    mrc: Result<MsgRawConnection> | MsgRawConnection,
+    conn: Partial<QSId> = {}
+  ): Promise<Result<MsgConnected>> {
+    if (Result.Is(mrc)) {
+      if (mrc.isErr()) {
+        return Result.Err(mrc.Err());
+      }
+      mrc = mrc.Ok();
+    }
+    const res = await mrc.request(buildReqOpen(mrc.sthis, conn), { waitFor: MsgIsResOpen });
+    if (MsgIsError(res) || !MsgIsResOpen(res)) {
+      return mrc.sthis.logger.Error().Err(res).Msg("unexpected response").ResultError();
+    }
+    return Result.Ok(new MsgConnected(mrc, res.conn));
+  }
+
+  readonly sthis: SuperThis;
+  readonly conn: QSId;
+  readonly raw: MsgRawConnection;
+  readonly exchangedGestalt: ExchangedGestalt;
+  private constructor(raw: MsgRawConnection, conn: QSId) {
+    this.sthis = raw.sthis;
+    this.raw = raw;
+    this.exchangedGestalt = raw.exchangedGestalt;
+    this.conn = conn;
+  }
+
+  request<Q extends MsgWithOptionalConn, S extends MsgWithConn>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>> {
+    return this.raw.request({ ...req, conn: req.conn || this.conn }, opts);
+  }
+  start(): Promise<Result<void>> {
+    return this.raw.start();
+  }
+  close(): Promise<Result<void>> {
+    return this.raw.close();
+  }
+  onMsg(msgFn: OnMsgFn<MsgWithConn>): UnReg {
+    return this.raw.onMsg((msg) => {
+      if (MsgIsConnected(msg, this.conn)) {
+        msgFn(msg);
+      }
+    });
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Msger {
   static async openHttp(
@@ -103,7 +157,7 @@ export class Msger {
     urls: URI[],
     msgP: MsgerParamsWithEnDe,
     exGestalt: ExchangedGestalt
-  ): Promise<Result<MsgConnection>> {
+  ): Promise<Result<MsgRawConnection>> {
     return Result.Ok(new HttpConnection(sthis, urls, msgP, exGestalt));
   }
   static async openWS(
@@ -112,42 +166,32 @@ export class Msger {
     url: URI,
     msgP: MsgerParamsWithEnDe,
     exGestalt: ExchangedGestalt
-  ): Promise<Result<MsgConnection>> {
+  ): Promise<Result<MsgRawConnection>> {
     let ws: WebSocket;
     // const { encode } = jsonEnDe(sthis);
-    url = url
-      .build()
-      // .setParam("reqOpen", sthis.txt.decode(encode(qOpen)))
-      .URI();
+    url = url.build().URI();
+    // .setParam("reqOpen", sthis.txt.decode(encode(qOpen)))
     if (runtimeFn().isNodeIsh) {
       const { WebSocket } = await import("ws");
       ws = new WebSocket(url.toString()) as unknown as WebSocket;
     } else {
       ws = new WebSocket(url.toString());
     }
-    return Result.Ok(
-      new WSConnection(
-        sthis,
-        ws,
-        msgP,
-        exGestalt
-      )
-    );
+    return Result.Ok(new WSConnection(sthis, ws, msgP, exGestalt));
   }
   static async open(
     sthis: SuperThis,
     curl: CoerceURI,
-    qOpen: ReqOpen,
     imsgP: Partial<MsgerParamsWithEnDe> = {}
-  ): Promise<Result<MsgConnection>> {
+  ): Promise<Result<MsgRawConnection>> {
     // initial exchange with JSON encoding
-    const jsGI = defaultMsgParams(sthis, { ...imsgP, mime: "application/json", ende: jsonEnDe(sthis) });
+    const jsMsgP = defaultMsgParams(sthis, { ...imsgP, mime: "application/json", ende: jsonEnDe(sthis) });
     const url = URI.from(curl);
     const gs = defaultGestalt(defaultMsgParams(sthis, imsgP), { id: "FP-Universal-Client" });
     /*
      * request Gestalt with Http
      */
-    const rHC = await Msger.openHttp(sthis, undefined, [url], jsGI, { my: gs, remote: gs });
+    const rHC = await Msger.openHttp(sthis, [url], jsMsgP, { my: gs, remote: gs });
     if (rHC.isErr()) {
       return rHC;
     }
@@ -165,7 +209,6 @@ export class Msger {
       return applyStart(
         Msger.openHttp(
           sthis,
-          qOpen,
           exGt.remote.httpEndpoints.map((i) => BuildURI.from(url).resolve(i).URI()),
           msgP,
           exGt
@@ -173,20 +216,20 @@ export class Msger {
       );
     }
     return applyStart(
-      Msger.openWS(sthis, qOpen, BuildURI.from(url).resolve(selectRandom(exGt.remote.wsEndpoints)).URI(), msgP, exGt)
+      Msger.openWS(sthis, BuildURI.from(url).resolve(selectRandom(exGt.remote.wsEndpoints)).URI(), msgP, exGt)
     );
+  }
+
+  static connect(
+    sthis: SuperThis,
+    curl: CoerceURI,
+    imsgP: Partial<MsgerParamsWithEnDe> = {},
+    conn: Partial<QSId> = {}
+  ): Promise<Result<MsgConnected>> {
+    return Msger.open(sthis, curl, imsgP).then((srv) => MsgConnected.connect(srv, conn));
   }
 
   private constructor() {
     /* */
   }
-
-  // readonly logger: Logger;
-  // readonly url: URI;
-  // readonly qs: ReqRes<ReqOpen, ResOpen>;
-  // constructor(logger: Logger, url: URI, qs: ReqRes<ReqOpen, ResOpen>) {
-  //     this.logger = logger;
-  //     this.url = url;
-  //     this.qs = qs;
-  // }
 }

@@ -4,26 +4,24 @@ import { bs, ensureLogger, Logger, NotFoundError, rt, SuperThis } from "@firepro
 import {
   buildErrorMsg,
   buildReqOpen,
-  Connection,
   FPStoreTypes,
   HttpMethods,
-  keyTenantLedger,
   MsgBase,
   MsgIsError,
   ReqSignedUrl,
-  TenantLedger,
-  WithErrorMsg,
+  MsgWithError,
+  ResSignedUrl,
 } from "../msg-types.js";
 import { to_uint8 } from "../../coerce-binary.js";
-import { MsgConnection, Msger } from "../msger.js";
+import { MsgConnected, Msger } from "../msger.js";
 import { MsgIsResGetData, MsgIsResPutData, ResDelData, ResGetData, ResPutData } from "../msg-types-data.js";
 
 const VERSION = "v0.1-fp-cloud";
 
 export interface StoreTypeGateway {
-  get(uri: URI, conn: Promise<Result<MsgConnection>>): Promise<Result<Uint8Array>>;
-  put(uri: URI, body: Uint8Array, conn: Promise<Result<MsgConnection>>): Promise<Result<void>>;
-  delete(uri: URI, conn: Promise<Result<MsgConnection>>): Promise<Result<void>>;
+  get(uri: URI, conn: Promise<Result<MsgConnected>>): Promise<Result<Uint8Array>>;
+  put(uri: URI, body: Uint8Array, conn: Promise<Result<MsgConnected>>): Promise<Result<void>>;
+  delete(uri: URI, conn: Promise<Result<MsgConnected>>): Promise<Result<void>>;
 }
 
 abstract class BaseGateway {
@@ -34,8 +32,8 @@ abstract class BaseGateway {
     this.logger = ensureLogger(sthis, module);
   }
 
-  abstract getConn(uri: URI, conn: MsgConnection): Promise<Result<Uint8Array>>;
-  async get(uri: URI, prConn: Promise<Result<MsgConnection>>): Promise<Result<Uint8Array>> {
+  abstract getConn(uri: URI, conn: MsgConnected): Promise<Result<Uint8Array>>;
+  async get(uri: URI, prConn: Promise<Result<MsgConnected>>): Promise<Result<Uint8Array>> {
     const rConn = await prConn;
     if (rConn.isErr()) {
       return this.logger.Error().Err(rConn).Msg("Error in getConn").ResultError();
@@ -45,8 +43,8 @@ abstract class BaseGateway {
     return this.getConn(uri, conn);
   }
 
-  abstract putConn(uri: URI, body: Uint8Array, conn: MsgConnection): Promise<Result<void>>;
-  async put(uri: URI, body: Uint8Array, prConn: Promise<Result<MsgConnection>>): Promise<Result<void>> {
+  abstract putConn(uri: URI, body: Uint8Array, conn: MsgConnected): Promise<Result<void>>;
+  async put(uri: URI, body: Uint8Array, prConn: Promise<Result<MsgConnected>>): Promise<Result<void>> {
     const rConn = await prConn;
     if (rConn.isErr()) {
       return this.logger.Error().Err(rConn).Msg("Error in putConn").ResultError();
@@ -56,8 +54,8 @@ abstract class BaseGateway {
     return this.putConn(uri, body, conn);
   }
 
-  abstract delConn(uri: URI, conn: MsgConnection): Promise<Result<void>>;
-  async delete(uri: URI, prConn: Promise<Result<MsgConnection>>): Promise<Result<void>> {
+  abstract delConn(uri: URI, conn: MsgConnected): Promise<Result<void>>;
+  async delete(uri: URI, prConn: Promise<Result<MsgConnected>>): Promise<Result<void>> {
     const rConn = await prConn;
     if (rConn.isErr()) {
       return this.logger.Error().Err(rConn).Msg("Error in putConn").ResultError();
@@ -79,18 +77,20 @@ abstract class BaseGateway {
   //   return Result.Ok(buildReqSignedUrl(this.sthis, type, sig, conn))
   // }
 
-  async getResSignedUrl<S extends ReqSignedUrl>(
+  async getResSignedUrl<S extends ResSignedUrl>(
     type: string,
     method: HttpMethods,
     store: FPStoreTypes,
     waitForFn: (msg: MsgBase) => boolean,
     uri: URI,
-    conn: MsgConnection
-  ): Promise<WithErrorMsg<S>> {
+    conn: MsgConnected
+  ): Promise<MsgWithError<S>> {
     const rParams = uri.getParamsResult({
       key: key.REQUIRED,
       store: key.REQUIRED,
       path: key.OPTIONAL,
+      tenant: key.REQUIRED,
+      name: key.REQUIRED,
       index: key.OPTIONAL,
     });
     if (rParams.isErr()) {
@@ -103,7 +103,12 @@ abstract class BaseGateway {
     const rsu = {
       tid: this.sthis.nextId().str,
       type,
-      conn: conn.conn,
+      // conn: conn.conn,
+      tenant: {
+        tenant: params.tenant,
+        ledger: params.name,
+      },
+      // tenant: conn.tenant,
       params: {
         method,
         store,
@@ -172,7 +177,7 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
   constructor(sthis: SuperThis) {
     super(sthis, "DataGateway");
   }
-  async getConn(uri: URI, conn: MsgConnection): Promise<Result<Uint8Array>> {
+  async getConn(uri: URI, conn: MsgConnected): Promise<Result<Uint8Array>> {
     // type: string, method: HttpMethods, store: FPStoreTypes, waitForFn:
     const rResSignedUrl = await this.getResSignedUrl<ResGetData>(
       "reqGetData",
@@ -188,7 +193,7 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
     const { signedUrl: downloadUrl } = rResSignedUrl;
     return this.getObject(uri, downloadUrl);
   }
-  async putConn(uri: URI, body: Uint8Array, conn: MsgConnection): Promise<Result<void>> {
+  async putConn(uri: URI, body: Uint8Array, conn: MsgConnected): Promise<Result<void>> {
     const rResSignedUrl = await this.getResSignedUrl<ResPutData>(
       "reqPutData",
       "PUT",
@@ -203,7 +208,7 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
     const { signedUrl: uploadUrl } = rResSignedUrl;
     return this.putObject(uri, uploadUrl, body);
   }
-  async delConn(uri: URI, conn: MsgConnection): Promise<Result<void>> {
+  async delConn(uri: URI, conn: MsgConnected): Promise<Result<void>> {
     const rResSignedUrl = await this.getResSignedUrl<ResDelData>(
       "reqDelData",
       "DELETE",
@@ -226,7 +231,7 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getConn(uri: URI, conn: MsgConnection): Promise<Result<Uint8Array>> {
+  async getConn(uri: URI, conn: MsgConnected): Promise<Result<Uint8Array>> {
     // const rkey = uri.getParamResult("key");
     // if (rkey.isErr()) {
     //   return Result.Err(rkey.Err());
@@ -254,7 +259,7 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
     return Result.Ok(new Uint8Array());
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async putConn(uri: URI, body: Uint8Array, conn: MsgConnection): Promise<Result<void>> {
+  async putConn(uri: URI, body: Uint8Array, conn: MsgConnected): Promise<Result<void>> {
     // const bodyRes = Result.Ok(body); // await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
     // if (bodyRes.isErr()) {
     //   return this.logger.Error().Err(bodyRes).Msg("Error in addCryptoKeyToGatewayMetaPayload").ResultError();
@@ -277,7 +282,7 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
     return Result.Ok(undefined);
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async delConn(uri: URI, conn: MsgConnection): Promise<Result<void>> {
+  async delConn(uri: URI, conn: MsgConnected): Promise<Result<void>> {
     // const rsu = this.prepareReqSignedUrl(uri, "DELETE", conn.key);
     // if (rsu.isErr()) {
     //   return Result.Err(rsu.Err());
@@ -362,7 +367,7 @@ function getStoreTypeGateway(sthis: SuperThis, uri: URI): StoreTypeGateway {
   }
 }
 
-const keyedConnections = new KeyedResolvOnce<Connection>();
+// const keyedConnections = new KeyedResolvOnce<Connection>();
 interface Subscription {
   readonly sid: string;
   readonly uri: string; // optimization
@@ -437,44 +442,41 @@ export class FireproofCloudGateway implements bs.Gateway {
   }
 
   // fireproof://localhost:1999/?name=test-public-api&protocol=ws&store=meta
-  async getCloudConnection(uri: URI): Promise<Result<MsgConnection>> {
+  async getCloudConnection(uri: URI): Promise<Result<MsgConnected>> {
     const rParams = uri.getParamsResult({
       name: key.REQUIRED,
       protocol: "https",
       store: key.REQUIRED,
       storekey: key.OPTIONAL,
-      tenant: key.OPTIONAL,
+      tenant: key.REQUIRED,
     });
     if (rParams.isErr()) {
       return this.logger.Error().Url(uri).Err(rParams).Msg("getCloudConnection:err").ResultError();
     }
     const params = rParams.Ok();
-    let tenant: string;
-    if (params.tenant) {
-      tenant = params.tenant;
-    } else {
-      if (!params.storekey) {
-        return this.logger.Error().Url(uri).Msg("no tendant or storekey given").ResultError();
-      }
-      const dataKey = params.storekey.replace(/:(meta|wal)@$/, `:data@`);
-      const kb = await rt.kb.getKeyBag(this.sthis);
-      const rfingerprint = await kb.getNamedKey(dataKey);
-      if (rfingerprint.isErr()) {
-        return this.logger.Error().Err(rfingerprint).Msg("Error in getNamedKey").ResultError();
-      }
-      tenant = rfingerprint.Ok().fingerPrint;
-    }
-    const qOpen = buildReqOpen(this.sthis, {
-      key: {
-        tenant: tenant,
-        ledger: params.name,
-      } satisfies TenantLedger,
-    });
+    // let tenant: string;
+    // if (params.tenant) {
+    //   tenant = params.tenant;
+    // } else {
+    //   if (!params.storekey) {
+    //     return this.logger.Error().Url(uri).Msg("no tendant or storekey given").ResultError();
+    //   }
+    //   const dataKey = params.storekey.replace(/:(meta|wal)@$/, `:data@`);
+    //   const kb = await rt.kb.getKeyBag(this.sthis);
+    //   const rfingerprint = await kb.getNamedKey(dataKey);
+    //   if (rfingerprint.isErr()) {
+    //     return this.logger.Error().Err(rfingerprint).Msg("Error in getNamedKey").ResultError();
+    //   }
+    //   tenant = rfingerprint.Ok().fingerPrint;
+    // }
+    const qOpen = buildReqOpen(this.sthis, {});
+
     let cUrl = uri.build().protocol(params.protocol).cleanParams().URI();
     if (cUrl.pathname === "/") {
       cUrl = cUrl.build().pathname("/fp").URI();
     }
-    return keyedConnections.get(keyTenantLedger(qOpen.conn.key)).once(async () => Msger.open(this.sthis, cUrl, qOpen));
+    return Msger.connect(this.sthis, cUrl, qOpen);
+    //  keyedConnections.get(keyTenantLedger(qOpen.conn.key)).once(async () => Msger.open(this.sthis, cUrl, qOpen));
   }
 
   // private notifySubscribers(data: Uint8Array, callbacks: ((msg: Uint8Array) => void)[] = []): void {

@@ -5,7 +5,7 @@ import { PreSignedMsg } from "./pre-signed-url.js";
 
 export const VERSION = "FP-MSG-1.0";
 
-export type WithErrorMsg<T extends MsgBase> = T | ErrorMsg;
+export type MsgWithError<T extends MsgBase> = T | ErrorMsg;
 
 export interface RequestOpts {
   readonly waitFor: (msg: MsgBase) => boolean;
@@ -53,31 +53,35 @@ export function keyTenantLedger(t: TenantLedger): string {
   return `${t.tenant}:${t.ledger}`;
 }
 
-export interface ReqResId {
+export interface QSId {
   readonly reqId: string;
   readonly resId: string;
 }
 
-export interface Connection extends ReqResId{
-  readonly key: TenantLedger;
-}
+// export interface Connection extends ReqResId{
+//   readonly key: TenantLedger;
+// }
 
-export interface Connected {
-  readonly conn: Connection;
-}
+// export interface Connected {
+//   readonly conn: Connection;
+// }
 
 export interface MsgBase {
   readonly tid: string;
   readonly type: string;
   readonly version: string;
   readonly auth?: AuthType;
-  readonly conn?: Connection;
 }
 
-export type MsgWithConn<T extends MsgBase> = T & { readonly conn: Connection };
+export type MsgWithConn<T extends MsgBase = MsgBase> = T & { readonly conn: QSId };
+
+export type MsgWithOptionalConn<T extends MsgBase = MsgBase> = T & { readonly conn?: QSId };
+
+export type MsgWithTenantLedger<T extends MsgBase> = T & { readonly tenant: TenantLedger };
 
 export interface ErrorMsg extends MsgBase {
   readonly type: "error";
+  readonly src: unknown;
   readonly message: string;
   readonly body?: string;
   readonly stack?: string[];
@@ -292,14 +296,19 @@ export function MsgIsResGestalt(msg: MsgBase): msg is ResGestalt {
 }
 
 export interface ReqOpenConnection {
-  readonly key: TenantLedger;
+  // readonly key: TenantLedger;
   readonly reqId?: string;
+  readonly resId?: string; // for double open
+}
+
+export interface ReqOpenConn {
+  readonly reqId: string;
   readonly resId?: string;
 }
 
-export interface ReqOpen extends Omit<MsgBase, "conn"> {
+export interface ReqOpen extends MsgBase {
   readonly type: "reqOpen";
-  readonly conn: Connection;
+  readonly conn: ReqOpenConn;
 }
 
 export function buildReqOpen(sthis: NextId, conn: ReqOpenConnection): ReqOpen {
@@ -308,25 +317,34 @@ export function buildReqOpen(sthis: NextId, conn: ReqOpenConnection): ReqOpen {
     type: "reqOpen",
     version: VERSION,
     conn: {
-      ...(conn as Connection),
+      ...conn,
       reqId: conn.reqId || sthis.nextId().str,
     },
   };
 }
 
-export function MsgIsReqOpen(msg: MsgBase): msg is ReqOpen {
+export function MsgIsReqOpenWithConn(imsg: MsgBase): imsg is MsgWithConn<ReqOpen> {
+  const msg = imsg as MsgWithConn<ReqOpen>;
   return msg.type === "reqOpen" && !!msg.conn && !!msg.conn.reqId;
 }
 
+export function MsgIsReqOpen(imsg: MsgBase): imsg is MsgWithConn<ReqOpen> {
+  const msg = imsg as MsgWithConn<ReqOpen>;
+  return msg.type === "reqOpen" && !!msg.conn && !!msg.conn.reqId;
+}
 
 export interface ResOpen extends MsgBase {
   readonly type: "resOpen";
-  readonly conn: Connection;
+  readonly conn: QSId;
 }
 
-export function MsgIsWithReqResId<T extends MsgBase>(msg: T): msg is MsgWithConn<T> {
+export function MsgIsWithConn<T extends MsgBase>(msg: T): msg is MsgWithConn<T> {
   const mwc = (msg as MsgWithConn<T>).conn;
-  return !!(mwc as ReqResId).reqId && !!(mwc as ReqResId).resId
+  return mwc && !!(mwc as QSId).reqId && !!(mwc as QSId).resId;
+}
+
+export function MsgIsConnected<T extends MsgBase>(msg: T, qsid: QSId): msg is MsgWithConn<T> {
+  return MsgIsWithConn(msg) && msg.conn.reqId === qsid.reqId && msg.conn.resId === qsid.resId;
 }
 
 export function buildResOpen(sthis: NextId, req: ReqOpen, resStreamId?: string): ResOpen {
@@ -337,8 +355,8 @@ export function buildResOpen(sthis: NextId, req: ReqOpen, resStreamId?: string):
     ...req,
     type: "resOpen",
     conn: {
-      ...(req.conn as Connection),
-      resId: resStreamId || sthis.nextId().str,
+      ...req.conn,
+      resId: req.conn.resId || resStreamId || sthis.nextId().str,
     },
   };
 }
@@ -352,7 +370,7 @@ export interface ReqClose extends Omit<ResOpen, "type"> {
 }
 
 export function MsgIsReqClose(msg: MsgBase): msg is ReqClose {
-  return msg.type === "reqClose";
+  return msg.type === "reqClose" && MsgIsWithConn(msg);
 }
 
 export interface ResClose extends Omit<ResOpen, "type"> {
@@ -360,7 +378,7 @@ export interface ResClose extends Omit<ResOpen, "type"> {
 }
 
 export function MsgIsResClose(msg: MsgBase): msg is ResClose {
-  return msg.type === "resClose";
+  return msg.type === "resClose" && MsgIsWithConn(msg);
 }
 
 export interface SignedUrlParam {
@@ -383,10 +401,10 @@ export interface UpdateReqRes<Q extends MsgBase, S extends MsgBase> {
 
 export type ReqRes<Q extends MsgBase, S extends MsgBase> = Readonly<UpdateReqRes<Q, S>>;
 
-export interface ReqOptRes<Q extends MsgBase, S extends MsgBase> {
-  readonly req: Q;
-  readonly res?: S;
-}
+// export interface ReqOptRes<Q extends MsgBase, S extends MsgBase> {
+//   readonly req: Q;
+//   readonly res?: S;
+// }
 
 // /* Signed URL */
 // export function buildReqSignedUrl(req: ReqSignedUrlParam): ReqSignedUrlParam {
@@ -438,7 +456,7 @@ export function getStoreFromType(req: MsgBase): StoreAndType {
 export function buildErrorMsg(
   sthis: SuperThis,
   logger: Logger,
-  base: Partial<MsgBase>,
+  base: Partial<MsgBase & { ref?: unknown }>,
   error: Error,
   body?: string,
   stack?: string[]
@@ -447,6 +465,7 @@ export function buildErrorMsg(
     stack = error.stack?.split("\n");
   }
   const msg = {
+    src: base,
     type: "error",
     tid: base.tid || "internal",
     message: error.message,
@@ -454,39 +473,49 @@ export function buildErrorMsg(
     body,
     stack,
   } satisfies ErrorMsg;
-  logger.Error().Any("ErrorMsg", msg).Msg("error");
+  logger.Any("ErrorMsg", msg);
   return msg;
 }
 
-export interface ReqSignedUrl extends MsgBase {
+// export type MsgWithTenantLedger<T extends MsgBase> = T & { readonly tenant: TenantLedger };
+
+export function MsgIsTenantLedger<T extends MsgBase>(msg: T): msg is MsgWithTenantLedger<T> {
+  const t = (msg as MsgWithTenantLedger<T>).tenant;
+  return !!t && !!t.tenant && !!t.ledger;
+}
+
+export interface ReqSignedUrl extends MsgWithTenantLedger<MsgWithOptionalConn> {
   // readonly type: "reqSignedUrl";
-  readonly conn: Connection;
   readonly params: ReqSignedUrlParam;
+}
+
+export interface GwCtx {
+  readonly conn?: QSId;
+  readonly tenant: TenantLedger;
 }
 
 export function buildReqSignedUrl<T extends ReqSignedUrl>(
   sthis: NextId,
   type: string,
   params: ReqSignedUrlParam,
-  conn: Connection
+  gwCtx: GwCtx
 ): T {
   return {
     tid: sthis.nextId().str,
     type,
     version: VERSION,
-    conn,
+    ...gwCtx,
     params,
   } as T;
 }
 
-export interface ResSignedUrl extends MsgBase {
+export interface ResSignedUrl extends MsgWithTenantLedger<MsgWithConn> {
   // readonly type: "resSignedUrl";
-  readonly conn: Connection;
   readonly params: SignedUrlParam;
   readonly signedUrl: string;
 }
 
-export async function buildRes<Q extends ReqSignedUrl, S extends ResSignedUrl>(
+export async function buildRes<Q extends MsgWithTenantLedger<MsgWithConn<ReqSignedUrl>>, S extends ResSignedUrl>(
   method: SignedUrlParam["method"],
   store: FPStoreTypes,
   type: string,
@@ -494,14 +523,17 @@ export async function buildRes<Q extends ReqSignedUrl, S extends ResSignedUrl>(
   logger: Logger,
   req: Q,
   ctx: CalculatePreSignedUrl
-): Promise<WithErrorMsg<S>> {
+): Promise<MsgWithError<S>> {
   const psm = {
+    type: "reqSignedUrl",
+    version: req.version,
     params: {
       ...req.params,
       method,
       store,
     },
     conn: req.conn,
+    tenant: req.tenant,
     tid: req.tid,
   } satisfies PreSignedMsg;
   const rSignedUrl = await ctx.calculatePreSignedUrl(psm);
@@ -513,5 +545,5 @@ export async function buildRes<Q extends ReqSignedUrl, S extends ResSignedUrl>(
     params: psm.params,
     type,
     signedUrl: rSignedUrl.Ok().toString(),
-  } as unknown as WithErrorMsg<S>;
+  } as unknown as MsgWithError<S>;
 }

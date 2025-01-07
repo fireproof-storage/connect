@@ -40,32 +40,42 @@ export class NodeHonoFactory implements HonoServerFactory {
     const ende = jsonEnDe(sthis);
 
     const fpProtocol = sthis.env.get("FP_PROTOCOL");
-    const msgP = this.params.msgP || defaultMsgParams(sthis, {
-      hasPersistent: true,
-      protocolCapabilities: fpProtocol ? (fpProtocol === "ws" ? ["stream"] : ["reqRes"]) : ["reqRes", "stream"],
-    });
-    const gs = this.params.gs || defaultGestalt(msgP, {
-      id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
-    });
+    const msgP =
+      this.params.msgP ||
+      defaultMsgParams(sthis, {
+        hasPersistent: true,
+        protocolCapabilities: fpProtocol ? (fpProtocol === "ws" ? ["stream"] : ["reqRes"]) : ["reqRes", "stream"],
+      });
+    const gs =
+      this.params.gs ||
+      defaultGestalt(msgP, {
+        id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
+      });
 
     // this.sthis.env.
     return fn({ sthis, logger, ende, impl: new NodeHonoServer(sthis, this, gs) });
   }
 
   async start(app: Hono): Promise<void> {
-    const { createNodeWebSocket } = await import("@hono/node-ws");
-    const { serve } = await import("@hono/node-server");
-    this._serve = serve as serveFn;
-    const { upgradeWebSocket, injectWebSocket } = createNodeWebSocket({ app });
-    this._upgradeWebSocket = upgradeWebSocket;
-    this._injectWebSocket = injectWebSocket as (t: unknown) => void;
+    try {
+      const { createNodeWebSocket } = await import("@hono/node-ws");
+      const { serve } = await import("@hono/node-server");
+      this._serve = serve as serveFn;
+      const { upgradeWebSocket, injectWebSocket } = createNodeWebSocket({ app });
+      this._upgradeWebSocket = upgradeWebSocket;
+      this._injectWebSocket = injectWebSocket as (t: unknown) => void;
+    } catch (e) {
+      throw this.sthis.logger.Error().Err(e).Msg("Failed to start NodeHonoFactory").AsError();
+    }
   }
 
   async serve(app: Hono, port: number): Promise<void> {
     await new Promise<void>((resolve) => {
-      this._server = this._serve({ fetch: app.fetch, port }, () => resolve());
+      this._server = this._serve({ fetch: app.fetch, port }, () => {
+        this._injectWebSocket(this._server);
+        resolve();
+      });
     });
-    this._injectWebSocket(this._server);
   }
   async close(): Promise<void> {
     this._server.close(() => {
