@@ -60,7 +60,7 @@ describe("Connection", () => {
     sthis.env.sets((await resolveToml()).env as unknown as Record<string, string>);
   });
 
-  describe.each([[NodeHonoServerFactory(), CFHonoServerFactory()]])("$name - Connection", (honoServer) => {
+  describe.each([NodeHonoServerFactory(), CFHonoServerFactory()])("$name - Connection", (honoServer) => {
     const port = +(process.env.FP_WRANGLER_PORT || 0) || 1024 + Math.floor(Math.random() * (65536 - 1024));
     const qOpen = buildReqOpen(sthis, { reqId: "req-open-test" });
     const my = defaultGestalt(msgP, { id: "FP-Universal-Client" });
