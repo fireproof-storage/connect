@@ -8,6 +8,9 @@ import { defaultMsgParams, jsonEnDe } from "../msger.js";
 import { ensureLogger, ensureSuperThis, SuperThis } from "@fireproof/core";
 import { SQLDatabase } from "../meta-merger/abstract-sql.js";
 import { CFWorkerSQLDatabase } from "../meta-merger/cf-worker-abstract-sql.js";
+import { CFDObjSQLDatabase } from "./cf-dobj-abstract-sql.js";
+import { Env } from "./env.js";
+import { FPDurableObject } from "./server.js";
 
 // function ensureLogger(env: Env, module = "Fireproof"): Logger {
 //   const logger = new LoggerImpl()
@@ -31,6 +34,15 @@ import { CFWorkerSQLDatabase } from "../meta-merger/cf-worker-abstract-sql.js";
 // }
 
 const startedChs = new ResolveOnce<CFHonoServer>();
+
+export function getDurableObject(env: Env) {
+  // console.log("getDurableObject", env);
+  const cfBackendKey = env.CF_BACKEND_KEY ?? "FP_DO";
+  const rany = env as unknown as Record<string, DurableObjectNamespace<FPDurableObject>>;
+  const dObjNs = rany[cfBackendKey];
+  const id = dObjNs.idFromName(env.FP_DO_ID ?? cfBackendKey);
+  return dObjNs.get(id);
+}
 
 export class CFHonoFactory implements HonoServerFactory {
   readonly _onClose: () => void;
@@ -61,7 +73,21 @@ export class CFHonoFactory implements HonoServerFactory {
     });
     const ret = startedChs
       .once(async () => {
-        const db = new CFWorkerSQLDatabase(c.env.DB);
+        const cfBackendMode =
+          c.env.CF_BACKEND_MODE && c.env.CF_BACKEND_MODE === "DURABLE_OBJECT" ? "DURABLE_OBJECT" : "D1";
+        let db: SQLDatabase;
+        switch (cfBackendMode) {
+          case "DURABLE_OBJECT":
+            db = new CFDObjSQLDatabase(getDurableObject(c.env));
+            break;
+          case "D1":
+          default:
+            {
+              const cfBackendKey = c.env.CF_BACKEND_KEY ?? "FP_D1";
+              db = new CFWorkerSQLDatabase(c.env[cfBackendKey] as D1Database);
+            }
+            break;
+        }
         const chs = new CFHonoServer(sthis, logger, ende, gs, db);
         await chs.start();
         return chs;

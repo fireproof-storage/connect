@@ -4,26 +4,63 @@ compatibility_date = "2024-04-19"
 compatibility_flags = ["nodejs_compat"]
 # upload_source_maps = true
 
+# [durable_objects]
+# bindings = [
+#   { name = "FP_DO", class_name = "FPDurableObject"},
+# ]
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "test-meta-merge"
+# database_id = "b8b452ed-b1d9-478f-b56c-c5e4545f157a"
+
 [durable_objects]
 bindings = [
-  { name = "FP_META_GROUPS", class_name = "FPMetaGroups"},
+  # { name = "FP_DO", class_name = "FPDurableObject", script_name = "cf-dobj-abstract-sql" }
+  { name = "FP_DO", class_name = "FPDurableObject" }
 ]
-
-[[d1_databases]]
-binding = "DB"
-database_name = "test-meta-merge"
-database_id = "b8b452ed-b1d9-478f-b56c-c5e4545f157a"
-
 
 [[migrations]]
 tag = "v1" # Should be unique for each entry
-new_classes = ["FPMetaGroups"]
+new_sqlite_classes = ["FPDurableObject"]
 
 [observability]
 enabled = true
 head_sampling_rate = 1
 
-[env.test-reqRes.vars]
+
+[env.test.vars]
+VERSION = "FP-MSG-1.0"
+STORAGE_URL = "http://localhost:9000/testbucket"
+ACCESS_KEY_ID = "minioadmin"
+SECRET_ACCESS_KEY = "minioadmin"
+FP_DEBUG = "FPMetaGroups"
+#FP_FORMAT = "yaml"
+# TEST_DATE = "20241121T225359Z"
+FP_PROTOCOL = "http"
+CF_BACKEND_MODE = "DURABLE_OBJECT"
+
+# [env.test.services]
+# bindings = [
+#   { binding = "FP_DO", service = "FP_DO" }
+# ]
+
+[[env.test.d1_databases]]
+binding = "FP_D1"
+database_name = "test-meta-merge"
+database_id = "b8b452ed-b1d9-478f-b56c-c5e4545f157a"
+
+[[env.test.migrations]]
+tag = "v1" # Should be unique for each entry
+new_sqlite_classes = ["FPDurableObject"]
+
+[env.test.durable_objects]
+bindings = [
+  { name = "FP_DO", class_name = "FPDurableObject" },
+]
+
+
+[env.test-reqRes-D1.vars]
 VERSION = "FP-MSG-1.0"
 STORAGE_URL = "http://localhost:9000/testbucket"
 ACCESS_KEY_ID = "minioadmin"
@@ -33,18 +70,28 @@ FP_DEBUG = "FPMetaGroups"
 # TEST_DATE = "20241121T225359Z"
 FP_PROTOCOL = "http"
 
-[env.test-reqRes.durable_objects]
-bindings = [
-  { name = "FP_META_GROUPS", class_name = "FPMetaGroups" },
-]
-
-[[env.test-reqRes.d1_databases]]
-binding = "DB"
+[[env.test-reqRes-D1.d1_databases]]
+binding = "FP_D1"
 database_name = "test-meta-merge"
 database_id = "b8b452ed-b1d9-478f-b56c-c5e4545f157a"
 
+[env.test-reqRes-DO.vars]
+VERSION = "FP-MSG-1.0"
+STORAGE_URL = "http://localhost:9000/testbucket"
+ACCESS_KEY_ID = "minioadmin"
+SECRET_ACCESS_KEY = "minioadmin"
+FP_DEBUG = "FPMetaGroups"
+#FP_FORMAT = "yaml"
+# TEST_DATE = "20241121T225359Z"
+FP_PROTOCOL = "http"
+CF_BACKEND_MODE = "DURABLE_OBJECT"
 
-[env.test-stream.vars]
+[env.test-reqRes-DO.durable_objects]
+bindings = [
+  { name = "FP_DO", class_name = "FPDurableObject" },
+]
+
+[env.test-stream-D1.vars]
 VERSION = "FP-MSG-1.0"
 STORAGE_URL = "http://localhost:9000/testbucket"
 ACCESS_KEY_ID = "minioadmin"
@@ -54,12 +101,27 @@ FP_DEBUG = "FPMetaGroups"
 # TEST_DATE = "20241121T225359Z"
 FP_PROTOCOL = "ws"
 
-[env.test-stream.durable_objects]
-bindings = [
-  { name = "FP_META_GROUPS", class_name = "FPMetaGroups" },
-]
 
-[[env.test-stream.d1_databases]]
-binding = "DB"
+[[env.test-stream-D1.d1_databases]]
+binding = "FP_D1"
 database_name = "test-meta-merge"
 database_id = "b8b452ed-b1d9-478f-b56c-c5e4545f157a"
+
+
+[env.test-stream-DO.vars]
+VERSION = "FP-MSG-1.0"
+STORAGE_URL = "http://localhost:9000/testbucket"
+ACCESS_KEY_ID = "minioadmin"
+SECRET_ACCESS_KEY = "minioadmin"
+FP_DEBUG = "FPMetaGroups"
+#FP_FORMAT = "yaml"
+# TEST_DATE = "20241121T225359Z"
+FP_PROTOCOL = "ws"
+CF_BACKEND_MODE = "DURABLE_OBJECT"
+
+[env.test-stream-D0.durable_objects]
+bindings = [
+  { name = "FP_DO", class_name = "FPDurableObject" },
+]
+
+

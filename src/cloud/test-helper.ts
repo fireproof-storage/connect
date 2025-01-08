@@ -149,15 +149,15 @@ export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnD
   };
 }
 
-export async function resolveToml() {
+export async function resolveToml(backend: "D1" | "DO") {
   const tomlFile = "src/cloud/backend/wrangler.toml";
   const tomeStr = await fs.readFile(tomlFile, "utf-8");
   const wranglerFile = toml.parse(tomeStr) as unknown as {
-    env: { "test-reqRes": { vars: Env } };
+    env: Record<string, { vars: Env }>;
   };
   return {
     tomlFile,
-    env: wranglerFile.env["test-reqRes"].vars,
+    env: wranglerFile.env[`test-reqRes-${backend}`].vars,
   };
 }
 
@@ -165,7 +165,7 @@ export function NodeHonoServerFactory() {
   return {
     name: "NodeHonoServer",
     factory: async (sthis: SuperThis, msgP: MsgerParams, remoteGestalt: Gestalt, _port: number) => {
-      const { env } = await resolveToml();
+      const { env } = await resolveToml("D1");
       sthis.env.sets(env as unknown as Record<string, string>);
       const nhf = new NodeHonoFactory(sthis, {
         msgP,
@@ -176,17 +176,17 @@ export function NodeHonoServerFactory() {
     },
   };
 }
-export function CFHonoServerFactory() {
+export function CFHonoServerFactory(backend: "D1" | "DO") {
   return {
-    name: "CFHonoServer",
+    name: `CFHonoServer(${backend})`,
     factory: async (_sthis: SuperThis, _msgP: MsgerParams, remoteGestalt: Gestalt, port: number) => {
       if (process.env.FP_WRANGLER_PORT) {
         return new HonoServer(new CFHonoFactory());
       }
-      const { tomlFile } = await resolveToml();
+      const { tomlFile } = await resolveToml(backend);
       $.verbose = !!process.env.FP_DEBUG;
       const runningWrangler = $`
-                wrangler dev -c ${tomlFile} --port ${port} --env test-${remoteGestalt.protocolCapabilities[0]} --no-show-interactive-dev-session &
+                wrangler dev -c ${tomlFile} --port ${port} --env test-${remoteGestalt.protocolCapabilities[0]}-${backend} --no-show-interactive-dev-session &
                 waitPid=$!
                 echo "PID:$waitPid"
                 wait $waitPid`;

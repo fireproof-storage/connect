@@ -9,10 +9,14 @@ export class BetterSQLStatement implements SQLStatement {
   }
 
   async run<T>(...iparams: SQLParams): Promise<T> {
-    return this.stmt.run(...sqliteCoerceParams(iparams)) as T;
+    const res = (await this.stmt.run(...sqliteCoerceParams(iparams))) as T;
+    console.log("run", res);
+    return res;
   }
   async all<T>(...params: SQLParams): Promise<T[]> {
-    return this.stmt.all(...sqliteCoerceParams(params)) as T[];
+    const res = (await this.stmt.all(...sqliteCoerceParams(params))) as T[];
+    console.log("all", res);
+    return res;
   }
 }
 

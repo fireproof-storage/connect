@@ -2,8 +2,8 @@
 // by running `wrangler types`
 
 import type { DurableObjectNamespace } from "@cloudflare/workers-types";
-import { FPMetaGroups } from "./fp-meta-groups.js";
-import { WSEvents } from "hono/ws";
+// import { WSEvents } from "hono/ws";
+import { FPDurableObject } from "./server.ts";
 
 export interface Env {
   // bucket: R2Bucket;
@@ -31,11 +31,18 @@ export interface Env {
   /** Maximum idle time in seconds before connection timeout. Optional. */
   MAX_IDLE_TIME?: string;
 
-  FP_META_GROUPS: DurableObjectNamespace<FPMetaGroups>;
+  // default D1
+  CF_BACKEND_MODE: "D1" | "DURABLE_OBJECT";
+  // default D1 "FP_D1"
+  // default DURABLE_OBJECT "FP_DO"
+  CF_BACKEND_KEY?: string;
 
-  DB: D1Database;
+  FP_DO: DurableObjectNamespace<FPDurableObject>;
+  // default CF_BACKEND_KEY
+  FP_DO_ID: string;
+  FP_D1: D1Database;
 
-  WS_EVENTS: WSEvents;
+  // WS_EVENTS: WSEvents;
 }
 
 // declare module "cloudflare:test" {

@@ -4,6 +4,7 @@ import { CRDTEntry, ensureSuperThis } from "@fireproof/core";
 import { runtimeFn } from "@adviser/cement";
 import { SQLDatabase } from "./abstract-sql.js";
 import type { Env } from "../backend/env.js";
+import { getDurableObject } from "../backend/cf-hono-server.js";
 
 function sortCRDTEntries(rows: CRDTEntry[]) {
   return rows.sort((a, b) => a.cid.localeCompare(b.cid));
@@ -26,21 +27,47 @@ function toCRDTEntries(rows: MetaConnection[]) {
 //       r.connection.conn.resId === connection.conn.resId)))
 // }
 
-describe("MetaMerger", () => {
-  let db: SQLDatabase;
+function getSQLFlavours(): { name: string; factory: () => Promise<SQLDatabase> }[] {
+  if (runtimeFn().isCFWorker) {
+    return [
+      {
+        name: "cf-worker-d1",
+        factory: async () => {
+          const { CFWorkerSQLDatabase } = await import("./cf-worker-abstract-sql.js");
+          const { env } = await import("cloudflare:test");
+          return new CFWorkerSQLDatabase((env as Env).FP_D1);
+        },
+      },
+      {
+        name: "cf-worker-do",
+        factory: async () => {
+          const { CFDObjSQLDatabase } = await import("../backend/cf-dobj-abstract-sql.js");
+          const { env } = await import("cloudflare:test");
+          return new CFDObjSQLDatabase(getDurableObject(env as Env));
+        },
+      },
+    ];
+  } else {
+    return [
+      {
+        name: "bettersql",
+        factory: async () => {
+          const { BetterSQLDatabase } = await import("./bettersql-abstract-sql.js");
+          return new BetterSQLDatabase("./dist/test.db");
+        },
+      },
+    ];
+  }
+}
+
+describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
+  // let db: SQLDatabase;
   const sthis = ensureSuperThis();
   const logger = sthis.logger;
   let mm: MetaMerger;
   beforeAll(async () => {
     //    db = new Database(':memory:');
-    if (runtimeFn().isCFWorker) {
-      const { CFWorkerSQLDatabase } = await import("./cf-worker-abstract-sql.js");
-      const { env } = await import("cloudflare:test");
-      db = new CFWorkerSQLDatabase((env as Env).DB);
-    } else {
-      const { BetterSQLDatabase } = await import("./bettersql-abstract-sql.js");
-      db = new BetterSQLDatabase("./dist/test.db");
-    }
+    const db = await flavour.factory();
     mm = new MetaMerger(db);
     await mm.createSchema();
   });
@@ -60,10 +87,9 @@ describe("MetaMerger", () => {
   });
 
   afterEach(async () => {
-    mm.delMeta({
+    await mm.delMeta({
       logger,
       connection,
-      metas: [],
     });
   });
 

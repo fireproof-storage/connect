@@ -77,7 +77,9 @@ export class MetaByTenantLedgerSql {
     return this.#sqlInsertMetaByTenantLedger.once(() => {
       return this.db.prepare(`
         INSERT INTO MetaByTenantLedger(tenant, ledger, reqId, resId, metaCID, meta, updatedAt)
-          VALUES(?, ?, ?, ?, ?, ?, ?)
+          SELECT ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (
+            SELECT 1 FROM MetaByTenantLedger WHERE metaCID = ?
+          )
       `);
     });
   }
@@ -132,7 +134,16 @@ export class MetaByTenantLedgerSql {
 
   async ensure(t: MetaByTenantLedgerRow) {
     const stmt = this.sqlEnsureMetaByTenantLedger();
-    return stmt.run(t.tenant, t.ledger, t.reqId, t.resId, t.metaCID, JSON.stringify(t.meta), t.updateAt.toISOString());
+    return stmt.run(
+      t.tenant,
+      t.ledger,
+      t.reqId,
+      t.resId,
+      t.metaCID,
+      JSON.stringify(t.meta),
+      t.updateAt.toISOString(),
+      t.metaCID
+    );
   }
 
   readonly #sqlSelectByConnection = new ResolveOnce<SQLStatement>();

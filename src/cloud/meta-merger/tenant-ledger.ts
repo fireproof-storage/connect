@@ -56,7 +56,6 @@ export class TenantLedgerSql {
   async ensure(t: TenantLedgerRow) {
     await this.tenantSql.ensure({ tenant: t.tenant, createdAt: t.createdAt });
     const stmt = this.sqlEnsureTenantLedger();
-    console.log("ensure(->TenantLedgerRow)", t.tenant, t.ledger, t.createdAt);
     const ret = stmt.run(t.tenant, t.ledger, t.createdAt, t.tenant, t.ledger);
     return ret;
   }

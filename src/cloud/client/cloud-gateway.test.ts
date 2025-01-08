@@ -11,7 +11,7 @@ const sthis = ensureSuperThis();
 const msgP = defaultMsgParams(sthis, { hasPersistent: true });
 const my = defaultGestalt(msgP, { id: "FP-Universal-Client" });
 
-describe.each([NodeHonoServerFactory(), CFHonoServerFactory()])("$name - Gateway", ({ factory }) => {
+describe.each([NodeHonoServerFactory(), CFHonoServerFactory("D1")])("$name - Gateway", ({ factory }) => {
   const port = 1024 + Math.floor(Math.random() * (65536 - 1024));
   const style = wsStyle(sthis, port, msgP, my);
 

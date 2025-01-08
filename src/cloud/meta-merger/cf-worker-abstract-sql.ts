@@ -10,7 +10,7 @@ export class CFWorkerSQLStatement implements SQLStatement {
 
   async run<T>(...iparams: SQLParams): Promise<T> {
     const bound = this.stmt.bind(...sqliteCoerceParams(iparams));
-    console.log("cf-run", sqliteCoerceParams(iparams), bound);
+    // console.log("cf-run", sqliteCoerceParams(iparams), bound);
     return bound.run() as T;
   }
   async all<T>(...params: SQLParams): Promise<T[]> {
