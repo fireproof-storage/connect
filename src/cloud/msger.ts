@@ -7,7 +7,6 @@ import {
   MsgBase,
   MsgerParams,
   MsgIsResGestalt,
-  ReqGestalt,
   RequestOpts,
   ResGestalt,
   MsgWithError,
@@ -18,6 +17,8 @@ import {
   MsgIsResOpen,
   MsgWithOptionalConn,
   QSId,
+  MsgIsTid,
+  ReqGestalt,
 } from "./msg-types.js";
 import { SuperThis } from "@fireproof/core";
 import { HttpConnection } from "./http-connection.js";
@@ -54,13 +55,25 @@ export interface ExchangedGestalt {
 
 export type OnErrorFn = (msg: Partial<MsgBase>, err: Error) => Partial<MsgBase>;
 
+export interface ActiveStream<S extends MsgBase, Q extends MsgBase> {
+  readonly id: string;
+  readonly bind: {
+    readonly msg: Q;
+    readonly opts: RequestOpts;
+  };
+  timeout?: unknown;
+  controller?: ReadableStreamDefaultController<MsgWithError<S>>;
+}
+
 export interface MsgRawConnection<T extends MsgBase = MsgBase> {
   // readonly ws: WebSocket;
   // readonly params: ConnectionKey;
   // qsOpen: ReqRes<ReqOpen, ResOpen>;
   readonly sthis: SuperThis;
   readonly exchangedGestalt: ExchangedGestalt;
-  request<Q extends T, S extends T>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>>;
+  readonly activeBinds: Map<string, ActiveStream<T, MsgBase>>;
+  bind<S extends T, Q extends T>(req: Q, opts: RequestOpts): ReadableStream<MsgWithError<S>>;
+  request<S extends T, Q extends T>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>>;
   start(): Promise<Result<void>>;
   close(): Promise<Result<void>>;
   onMsg(msg: OnMsgFn<T>): UnReg;
@@ -124,14 +137,40 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
   readonly conn: QSId;
   readonly raw: MsgRawConnection;
   readonly exchangedGestalt: ExchangedGestalt;
+  readonly activeBinds: Map<string, ActiveStream<MsgWithConn, MsgBase>>;
   private constructor(raw: MsgRawConnection, conn: QSId) {
     this.sthis = raw.sthis;
     this.raw = raw;
     this.exchangedGestalt = raw.exchangedGestalt;
     this.conn = conn;
+    this.activeBinds = raw.activeBinds;
   }
 
-  request<Q extends MsgWithOptionalConn, S extends MsgWithConn>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>> {
+  bind<S extends MsgWithConn, Q extends MsgWithOptionalConn>(
+    req: Q,
+    opts: RequestOpts
+  ): ReadableStream<MsgWithError<S>> {
+    const stream = this.raw.bind({ ...req, conn: req.conn || this.conn }, opts);
+    const ts = new TransformStream<MsgWithError<S>, MsgWithError<S>>({
+      transform: (chunk, controller) => {
+        if (!MsgIsTid(chunk, req.tid)) {
+          return;
+        }
+        if (MsgIsConnected(chunk, this.conn)) {
+          if ((opts.waitFor && opts.waitFor(chunk)) || MsgIsError(chunk)) {
+            controller.enqueue(chunk);
+          }
+        }
+      },
+    });
+    // eslint-disable-next-line no-console
+    // why the hell pipeTo sends an error that is undefined?
+    stream.pipeThrough(ts);
+    // stream.pipeTo(ts.writable).catch((err) => err && err.message && console.error("bind error", err));
+    return ts.readable;
+  }
+
+  request<S extends MsgWithConn, Q extends MsgWithOptionalConn>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>> {
     return this.raw.request({ ...req, conn: req.conn || this.conn }, opts);
   }
   start(): Promise<Result<void>> {
@@ -196,7 +235,7 @@ export class Msger {
       return rHC;
     }
     const hc = rHC.Ok();
-    const resGestalt = await hc.request<ReqGestalt, ResGestalt>(buildReqGestalt(sthis, gs), {
+    const resGestalt = await hc.request<ResGestalt, ReqGestalt>(buildReqGestalt(sthis, gs), {
       waitFor: MsgIsResGestalt,
     });
     if (!MsgIsResGestalt(resGestalt)) {

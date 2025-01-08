@@ -2,10 +2,35 @@ import { exception2Result, HttpHeader, param, ResolveOnce, Result, URI } from "@
 import { Logger, SuperThis } from "@fireproof/core";
 import { Context, Hono, Next } from "hono";
 import { top_uint8 } from "../coerce-binary.js";
-import { Gestalt, buildErrorMsg, MsgBase, EnDeCoder, ErrorMsg } from "./msg-types.js";
+import {
+  Gestalt,
+  buildErrorMsg,
+  MsgBase,
+  EnDeCoder,
+  ErrorMsg,
+  MsgWithError,
+  buildRes,
+  MsgWithConn,
+  GwCtx,
+  MsgIsError,
+} from "./msg-types.js";
 import { MsgDispatcher, WSConnection } from "./msg-dispatch.js";
 import { WSEvents } from "hono/ws";
 import { calculatePreSignedUrl, PreSignedMsg } from "./pre-signed-url.js";
+import { buildMsgDispatcher } from "./msg-dispatcher-impl.js";
+import {
+  BindGetMeta,
+  buildEventGetMeta,
+  buildResDelMeta,
+  buildResPutMeta,
+  EventGetMeta,
+  ReqDelMeta,
+  ReqPutMeta,
+  ResDelMeta,
+  ResPutMeta,
+} from "./msg-type-meta.js";
+import { MetaMerger } from "./meta-merger/meta-merger.js";
+import { SQLDatabase } from "./meta-merger/abstract-sql.js";
 
 export interface RunTimeParams {
   readonly sthis: SuperThis;
@@ -16,25 +41,93 @@ export interface RunTimeParams {
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 export type ConnMiddleware = (conn: WSConnection, c: Context, next: Next) => Promise<Response | void>;
 export interface HonoServerImpl {
+  start(): Promise<HonoServerImpl>;
   gestalt(): Gestalt;
-  // msgP(): MsgerParams;
   calculatePreSignedUrl(p: PreSignedMsg): Promise<Result<URI>>;
   upgradeWebSocket: (createEvents: (c: Context) => WSEvents | Promise<WSEvents>) => ConnMiddleware;
+  handleBindGetMeta(sthis: SuperThis, logger: Logger, msg: BindGetMeta): Promise<MsgWithError<EventGetMeta>>;
+  handleReqPutMeta(sthis: SuperThis, logger: Logger, msg: ReqPutMeta): Promise<MsgWithError<ResPutMeta>>;
+  handleReqDelMeta(sthis: SuperThis, logger: Logger, msg: ReqDelMeta): Promise<MsgWithError<ResDelMeta>>;
   readonly headers: HttpHeader;
 }
 
-export abstract class HonoServerBase {
+export abstract class HonoServerBase implements HonoServerImpl {
   readonly _gs: Gestalt;
   readonly sthis: SuperThis;
   readonly logger: Logger;
-  constructor(sthis: SuperThis, logger: Logger, gs: Gestalt) {
+  readonly metaMerger: MetaMerger;
+  readonly headers: HttpHeader;
+  constructor(sthis: SuperThis, logger: Logger, gs: Gestalt, sqlDb: SQLDatabase, headers?: HttpHeader) {
     this.logger = logger;
     this._gs = gs;
     this.sthis = sthis;
+    this.metaMerger = new MetaMerger(sqlDb);
+    this.headers = headers ? headers.Clone().Merge(CORS) : CORS.Clone();
+  }
+
+  abstract upgradeWebSocket(createEvents: (c: Context) => WSEvents | Promise<WSEvents>): ConnMiddleware;
+
+  start(drop = false): Promise<HonoServerImpl> {
+    return this.metaMerger.createSchema(drop).then(() => this);
   }
 
   gestalt(): Gestalt {
     return this._gs;
+  }
+
+  async handleReqPutMeta(
+    sthis: SuperThis,
+    logger: Logger,
+    msg: MsgWithConn<ReqPutMeta>
+  ): Promise<MsgWithError<ResPutMeta>> {
+    const rUrl = await buildRes("PUT", "meta", "resPutMeta", sthis, logger, msg, this);
+    if (MsgIsError(rUrl)) {
+      return rUrl;
+    }
+    await this.metaMerger.addMeta({
+      logger,
+      connection: msg,
+      metas: msg.metas,
+    });
+    return buildResPutMeta(sthis, logger, msg, { ...rUrl, metas: await this.metaMerger.metaToSend(msg) });
+  }
+
+  async handleReqDelMeta(
+    sthis: SuperThis,
+    logger: Logger,
+    msg: MsgWithConn<ReqDelMeta>
+  ): Promise<MsgWithError<ResDelMeta>> {
+    const rUrl = await buildRes("DELETE", "meta", "resDelMeta", sthis, logger, msg, this);
+    if (MsgIsError(rUrl)) {
+      return rUrl;
+    }
+    await this.metaMerger.delMeta({
+      logger,
+      connection: msg,
+    });
+    return buildResDelMeta(sthis, logger, msg, rUrl.signedUrl);
+  }
+
+  async handleBindGetMeta(
+    sthis: SuperThis,
+    logger: Logger,
+    msg: MsgWithConn<BindGetMeta>,
+    gwCtx: GwCtx = msg
+  ): Promise<MsgWithError<EventGetMeta>> {
+    const rUrl = await buildRes("GET", "meta", "eventGetMeta", sthis, logger, msg, this);
+    if (MsgIsError(rUrl)) {
+      return rUrl;
+    }
+    return buildEventGetMeta(
+      sthis,
+      logger,
+      msg,
+      {
+        ...rUrl,
+        metas: await this.metaMerger.metaToSend(msg),
+      },
+      gwCtx
+    );
   }
 
   calculatePreSignedUrl(p: PreSignedMsg): Promise<Result<URI>> {
@@ -103,7 +196,7 @@ export class HonoServer {
             c.status(400);
             return c.json(buildErrorMsg(sthis, logger, { tid: "internal" }, rMsg.Err()));
           }
-          const dispatcher = new MsgDispatcher(sthis, impl.gestalt());
+          const dispatcher = buildMsgDispatcher(sthis, impl.gestalt());
           return dispatcher.dispatch(impl, rMsg.Ok(), (msg) => c.json(msg));
         })
       );
@@ -113,7 +206,7 @@ export class HonoServer {
             let dp: MsgDispatcher;
             return {
               onOpen: (_e, _ws) => {
-                dp = new MsgDispatcher(sthis, impl.gestalt());
+                dp = buildMsgDispatcher(sthis, impl.gestalt());
               },
               onError: (error) => {
                 logger.Error().Err(error).Msg("WebSocket error");

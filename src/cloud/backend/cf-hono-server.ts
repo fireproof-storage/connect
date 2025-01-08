@@ -1,11 +1,13 @@
-import { HttpHeader, Logger, LoggerImpl, URI } from "@adviser/cement";
+import { HttpHeader, Logger, LoggerImpl, ResolveOnce, URI } from "@adviser/cement";
 import { Context, Hono } from "hono";
-import { CORS, ConnMiddleware, HonoServerFactory, RunTimeParams, HonoServerBase } from "../hono-server.js";
+import { ConnMiddleware, HonoServerFactory, RunTimeParams, HonoServerBase } from "../hono-server.js";
 import { WSContext, WSContextInit, WSEvents } from "hono/ws";
 import { buildErrorMsg, defaultGestalt, EnDeCoder, Gestalt } from "../msg-types.js";
 // import { RequestInfo as CFRequestInfo } from "@cloudflare/workers-types";
 import { defaultMsgParams, jsonEnDe } from "../msger.js";
 import { ensureLogger, ensureSuperThis, SuperThis } from "@fireproof/core";
+import { SQLDatabase } from "../meta-merger/abstract-sql.js";
+import { CFWorkerSQLDatabase } from "../meta-merger/cf-worker-abstract-sql.js";
 
 // function ensureLogger(env: Env, module = "Fireproof"): Logger {
 //   const logger = new LoggerImpl()
@@ -27,6 +29,8 @@ import { ensureLogger, ensureSuperThis, SuperThis } from "@fireproof/core";
 //   }
 //   return logger.Logger();
 // }
+
+const startedChs = new ResolveOnce<CFHonoServer>();
 
 export class CFHonoFactory implements HonoServerFactory {
   readonly _onClose: () => void;
@@ -55,8 +59,14 @@ export class CFHonoFactory implements HonoServerFactory {
     const gs = defaultGestalt(msgP, {
       id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
     });
-
-    const ret = fn({ sthis, logger, ende, impl: new CFHonoServer(sthis, logger, ende, gs) });
+    const ret = startedChs
+      .once(async () => {
+        const db = new CFWorkerSQLDatabase(c.env.DB);
+        const chs = new CFHonoServer(sthis, logger, ende, gs, db);
+        await chs.start();
+        return chs;
+      })
+      .then((chs) => fn({ sthis, logger, ende, impl: chs }));
     return ret; // .then((v) => sthis.logger.Flush().then(() => v))
   }
 
@@ -77,13 +87,18 @@ export class CFHonoFactory implements HonoServerFactory {
 export class CFHonoServer extends HonoServerBase {
   // _upgradeWebSocket?: UpgradeWebSocket
 
-  readonly headers: HttpHeader;
   readonly ende: EnDeCoder;
   // readonly env: Env;
   // readonly wsConnections = new Map<string, WSPair>()
-  constructor(sthis: SuperThis, logger: Logger, ende: EnDeCoder, gs: Gestalt, headers?: HttpHeader) {
-    super(sthis, logger, gs);
-    this.headers = HttpHeader.from(headers).Merge(CORS);
+  constructor(
+    sthis: SuperThis,
+    logger: Logger,
+    ende: EnDeCoder,
+    gs: Gestalt,
+    sqlDb: SQLDatabase,
+    headers?: HttpHeader
+  ) {
+    super(sthis, logger, gs, sqlDb, headers);
     this.ende = ende;
     // this.env = env;
   }

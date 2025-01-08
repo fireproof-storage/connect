@@ -1,10 +1,11 @@
 import { UpgradeWebSocket, WSEvents } from "hono/ws";
-import { ConnMiddleware, CORS, HonoServerBase, HonoServerFactory, RunTimeParams } from "./hono-server.js";
+import { ConnMiddleware, HonoServerBase, HonoServerFactory, HonoServerImpl, RunTimeParams } from "./hono-server.js";
 import { HttpHeader, URI } from "@adviser/cement";
 import { Context, Hono } from "hono";
 import { ensureLogger, SuperThis } from "@fireproof/core";
 import { defaultMsgParams, jsonEnDe } from "./msger.js";
 import { defaultGestalt, Gestalt, MsgerParams } from "./msg-types.js";
+import { SQLDatabase } from "./meta-merger/abstract-sql.js";
 
 interface ServerType {
   close(fn: () => void): void;
@@ -15,6 +16,7 @@ type serveFn = (options: unknown, listeningListener?: ((info: unknown) => void) 
 export interface NodeHonoFactoryParams {
   readonly msgP?: MsgerParams;
   readonly gs?: Gestalt;
+  readonly sql: SQLDatabase;
 }
 
 export class NodeHonoFactory implements HonoServerFactory {
@@ -26,7 +28,7 @@ export class NodeHonoFactory implements HonoServerFactory {
 
   readonly sthis: SuperThis;
   readonly params: NodeHonoFactoryParams;
-  constructor(sthis: SuperThis, params: NodeHonoFactoryParams = {}) {
+  constructor(sthis: SuperThis, params: NodeHonoFactoryParams) {
     this.sthis = sthis;
     this.params = params;
   }
@@ -51,9 +53,8 @@ export class NodeHonoFactory implements HonoServerFactory {
       defaultGestalt(msgP, {
         id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
       });
-
-    // this.sthis.env.
-    return fn({ sthis, logger, ende, impl: new NodeHonoServer(sthis, this, gs) });
+    const nhs = new NodeHonoServer(sthis, this, gs, this.params.sql);
+    return nhs.start().then((nhs) => fn({ sthis, logger, ende, impl: nhs }));
   }
 
   async start(app: Hono): Promise<void> {
@@ -85,16 +86,14 @@ export class NodeHonoFactory implements HonoServerFactory {
   }
 }
 
-export class NodeHonoServer extends HonoServerBase {
-  readonly headers: HttpHeader;
+export class NodeHonoServer extends HonoServerBase implements HonoServerImpl {
   readonly _upgradeWebSocket: UpgradeWebSocket;
-  constructor(sthis: SuperThis, factory: NodeHonoFactory, gs: Gestalt, headers?: HttpHeader) {
-    super(sthis, sthis.logger, gs);
-    this.headers = headers ? headers.Clone().Merge(CORS) : CORS.Clone();
+  constructor(sthis: SuperThis, factory: NodeHonoFactory, gs: Gestalt, sqldb: SQLDatabase, headers?: HttpHeader) {
+    super(sthis, sthis.logger, gs, sqldb, headers);
     this._upgradeWebSocket = factory._upgradeWebSocket;
   }
 
-  upgradeWebSocket(createEvents: (c: Context) => WSEvents | Promise<WSEvents>): ConnMiddleware {
+  override upgradeWebSocket(createEvents: (c: Context) => WSEvents | Promise<WSEvents>): ConnMiddleware {
     return async (_conn, c, next) => {
       // conn.attachWSPair({ client: c.req, server: c.res });
       return this._upgradeWebSocket(createEvents)(c, next);

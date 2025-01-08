@@ -1,36 +1,10 @@
 import { Logger } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
-import {
-  Gestalt,
-  MsgBase,
-  MsgIsReqGestalt,
-  buildResGestalt,
-  buildErrorMsg,
-  buildResOpen,
-  MsgWithError,
-  MsgIsWithConn,
-  MsgWithConn,
-  QSId,
-  MsgIsReqOpen,
-} from "./msg-types.js";
-import {
-  MsgIsReqGetData,
-  buildResGetData,
-  MsgIsReqPutData,
-  MsgIsReqDelData,
-  buildResDelData,
-  buildResPutData,
-} from "./msg-types-data.js";
-import {
-  MsgIsReqDelWAL,
-  MsgIsReqGetWAL,
-  MsgIsReqPutWAL,
-  buildResDelWAL,
-  buildResGetWAL,
-  buildResPutWAL,
-} from "./msg-types-wal.js";
+import { Gestalt, MsgBase, buildErrorMsg, MsgWithError, MsgIsWithConn, MsgWithConn, QSId } from "./msg-types.js";
+
 import { PreSignedMsg } from "./pre-signed-url.js";
 import { HonoServerImpl } from "./hono-server.js";
+import { UnReg } from "./msger.js";
 
 export interface MsgContext {
   calculatePreSignedUrl(p: PreSignedMsg): Promise<string>;
@@ -93,6 +67,15 @@ class ConnectionManager {
 }
 const connManager = new ConnectionManager();
 
+export interface MsgDispatcherCtx {
+  readonly impl: HonoServerImpl;
+}
+export interface MsgDispatchItem<S extends MsgBase, Q extends MsgBase> {
+  readonly match: (msg: MsgBase) => boolean;
+  readonly isNotConn?: boolean;
+  fn(sthis: SuperThis, logger: Logger, ctx: MsgDispatcherCtx, msg: Q): Promisable<MsgWithError<S>>;
+}
+
 export class MsgDispatcher {
   readonly sthis: SuperThis;
   readonly logger: Logger;
@@ -100,9 +83,13 @@ export class MsgDispatcher {
   readonly gestalt: Gestalt;
   readonly id: string;
 
-  readonly conns = new Map<string, { readonly reqId: string; readonly resId: string; readonly wsc: WSConnection }>();
+  readonly connManager = connManager;
 
-  constructor(sthis: SuperThis, gestalt: Gestalt) {
+  static new(sthis: SuperThis, gestalt: Gestalt): MsgDispatcher {
+    return new MsgDispatcher(sthis, gestalt);
+  }
+
+  private constructor(sthis: SuperThis, gestalt: Gestalt) {
     this.sthis = sthis;
     this.logger = ensureLogger(sthis, "Dispatcher");
     this.gestalt = gestalt;
@@ -115,6 +102,17 @@ export class MsgDispatcher {
   //   }
   //   return Result.Ok(connManager.addConn(msg.conn));
   // }
+
+  readonly items = new Map<string, MsgDispatchItem<MsgBase, MsgBase>>();
+  registerMsg(...iItems: MsgDispatchItem<MsgBase, MsgBase>[]): UnReg {
+    const items = iItems.flat();
+    const ids: string[] = items.map((item) => {
+      const id = this.sthis.nextId(12).str;
+      this.items.set(id, item);
+      return id;
+    });
+    return () => ids.forEach((id) => this.items.delete(id));
+  }
 
   async dispatch(ctx: HonoServerImpl, msg: MsgBase, send: (msg: MsgBase) => Promisable<Response>): Promise<Response> {
     const validateConn = async <T extends MsgBase>(
@@ -129,43 +127,13 @@ export class MsgDispatcher {
       const r = await fn(msg);
       return Promise.resolve(send(r));
     };
-    switch (true) {
-      case MsgIsReqGestalt(msg):
-        return send(buildResGestalt(msg, this.gestalt));
-      case MsgIsReqOpen(msg): {
-        if (!msg.conn) {
-          return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("missing connection")));
-        }
-        if (connManager.isConnected(msg)) {
-          return send(buildResOpen(this.sthis, msg, msg.conn.resId));
-        }
-        const resId = this.sthis.nextId(12).str;
-        const resOpen = buildResOpen(this.sthis, msg, resId);
-        connManager.addConn(resOpen.conn);
-        return send(resOpen);
-      }
-      case MsgIsReqGetData(msg): {
-        return validateConn(msg, (msg) => buildResGetData(this.sthis, this.logger, msg, ctx));
-      }
-      case MsgIsReqPutData(msg): {
-        return validateConn(msg, (msg) => buildResPutData(this.sthis, this.logger, msg, ctx));
-      }
-      case MsgIsReqDelData(msg): {
-        return validateConn(msg, (msg) => buildResDelData(this.sthis, this.logger, msg, ctx));
-      }
-
-      case MsgIsReqGetWAL(msg): {
-        return validateConn(msg, (msg) => buildResGetWAL(this.sthis, this.logger, msg, ctx));
-      }
-      case MsgIsReqPutWAL(msg): {
-        return validateConn(msg, (msg) => buildResPutWAL(this.sthis, this.logger, msg, ctx));
-      }
-      case MsgIsReqDelWAL(msg): {
-        return validateConn(msg, (msg) => buildResDelWAL(this.sthis, this.logger, msg, ctx));
-      }
-
-      default:
-        return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("unexpected message")));
+    const found = Array.from(this.items.values()).find((item) => item.match(msg));
+    if (!found) {
+      return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("unexpected message")));
     }
+    if (!found.isNotConn) {
+      return validateConn(msg, (msg) => found.fn(this.sthis, this.logger, { impl: ctx }, msg));
+    }
+    return send(await found.fn(this.sthis, this.logger, { impl: ctx }, msg));
   }
 }

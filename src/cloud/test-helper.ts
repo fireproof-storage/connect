@@ -18,6 +18,7 @@ import { Env } from "./backend/env.js";
 import { HonoServer } from "./hono-server.js";
 import { NodeHonoFactory } from "./node-hono-server.js";
 import { CFHonoFactory } from "./backend/cf-hono-server.js";
+import { BetterSQLDatabase } from "./meta-merger/bettersql-abstract-sql.js";
 
 export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnDe, my: Gestalt) {
   const remote = defaultGestalt(defaultMsgParams(sthis, { hasPersistent: true, protocolCapabilities: ["reqRes"] }), {
@@ -166,7 +167,12 @@ export function NodeHonoServerFactory() {
     factory: async (sthis: SuperThis, msgP: MsgerParams, remoteGestalt: Gestalt, _port: number) => {
       const { env } = await resolveToml();
       sthis.env.sets(env as unknown as Record<string, string>);
-      return new HonoServer(new NodeHonoFactory(sthis, { msgP, gs: remoteGestalt }));
+      const nhf = new NodeHonoFactory(sthis, {
+        msgP,
+        gs: remoteGestalt,
+        sql: new BetterSQLDatabase("./dist/node-meta.sqlite"),
+      });
+      return new HonoServer(nhf);
     },
   };
 }

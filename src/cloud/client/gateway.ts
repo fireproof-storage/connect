@@ -117,7 +117,7 @@ abstract class BaseGateway {
       },
       version: VERSION,
     } as ReqSignedUrl;
-    return conn.request<ReqSignedUrl, S>(rsu, { waitFor: waitForFn });
+    return conn.request<S, ReqSignedUrl>(rsu, { waitFor: waitForFn });
   }
 
   async putObject(uri: URI, uploadUrl: string, body: Uint8Array): Promise<Result<void>> {

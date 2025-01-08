@@ -9,6 +9,7 @@ export type MsgWithError<T extends MsgBase> = T | ErrorMsg;
 
 export interface RequestOpts {
   readonly waitFor: (msg: MsgBase) => boolean;
+  readonly pollInterval?: number; // 1000ms
   readonly timeout?: number; // ms
 }
 
@@ -71,6 +72,10 @@ export interface MsgBase {
   readonly type: string;
   readonly version: string;
   readonly auth?: AuthType;
+}
+
+export function MsgIsTid(msg: MsgBase, tid: string): boolean {
+  return msg.tid === tid;
 }
 
 export type MsgWithConn<T extends MsgBase = MsgBase> = T & { readonly conn: QSId };
@@ -421,27 +426,27 @@ export type ReqRes<Q extends MsgBase, S extends MsgBase> = Readonly<UpdateReqRes
 //   return msg.type === "reqSignedUrl";
 // }
 
-interface StoreAndType {
-  readonly store: FPStoreTypes;
-  readonly resType: string;
-}
-const reqToRes: Record<string, StoreAndType> = {
-  reqGetData: { store: "data", resType: "resGetData" },
-  reqPutData: { store: "data", resType: "resPutData" },
-  reqDelData: { store: "data", resType: "resDelData" },
-  reqGetWAL: { store: "wal", resType: "resGetWAL" },
-  reqPutWAL: { store: "wal", resType: "resPutWAL" },
-  reqDelWAL: { store: "wal", resType: "resDelWAL" },
-};
+// interface StoreAndType {
+//   readonly store: FPStoreTypes;
+//   readonly resType: string;
+// }
+// const reqToRes: Record<string, StoreAndType> = {
+//   reqGetData: { store: "data", resType: "resGetData" },
+//   reqPutData: { store: "data", resType: "resPutData" },
+//   reqDelData: { store: "data", resType: "resDelData" },
+//   reqGetWAL: { store: "wal", resType: "resGetWAL" },
+//   reqPutWAL: { store: "wal", resType: "resPutWAL" },
+//   reqDelWAL: { store: "wal", resType: "resDelWAL" },
+// };
 
-export function getStoreFromType(req: MsgBase): StoreAndType {
-  return (
-    reqToRes[req.type] ||
-    (() => {
-      throw new Error(`unknown req.type=${req.type}`);
-    })()
-  );
-}
+// export function getStoreFromType(req: MsgBase): StoreAndType {
+//   return (
+//     reqToRes[req.type] ||
+//     (() => {
+//       throw new Error(`unknown req.type=${req.type}`);
+//     })()
+//   );
+// }
 
 // export function buildResSignedUrl(req: ReqSignedUrl, signedUrl: string): ResSignedUrl {
 //   return {
@@ -490,7 +495,14 @@ export interface ReqSignedUrl extends MsgWithTenantLedger<MsgWithOptionalConn> {
 }
 
 export interface GwCtx {
+  readonly tid?: string;
   readonly conn?: QSId;
+  readonly tenant: TenantLedger;
+}
+
+export interface GwCtxConn {
+  readonly tid?: string;
+  readonly conn: QSId;
   readonly tenant: TenantLedger;
 }
 
@@ -513,6 +525,12 @@ export interface ResSignedUrl extends MsgWithTenantLedger<MsgWithConn> {
   // readonly type: "resSignedUrl";
   readonly params: SignedUrlParam;
   readonly signedUrl: string;
+}
+
+export interface ResOptionalSignedUrl extends MsgWithTenantLedger<MsgWithConn> {
+  // readonly type: "resSignedUrl";
+  readonly params: SignedUrlParam;
+  readonly signedUrl?: string;
 }
 
 export async function buildRes<Q extends MsgWithTenantLedger<MsgWithConn<ReqSignedUrl>>, S extends ResSignedUrl>(

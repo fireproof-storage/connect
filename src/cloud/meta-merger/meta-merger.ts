@@ -1,14 +1,4 @@
-/*
-class MetaMerger {
-    mergeMeta(meta) {
-    }
-
-    getMeta() {
-    }
-}
-*/
-
-import { CRDTEntry, SuperThis } from "@fireproof/core";
+import { CRDTEntry, Logger } from "@fireproof/core";
 import { MetaByTenantLedgerSql } from "./meta-by-tenant-ledger.js";
 import { MetaSendSql } from "./meta-send.js";
 import { TenantLedgerSql } from "./tenant-ledger.js";
@@ -22,6 +12,7 @@ export interface Connection {
 }
 
 export interface MetaMerge {
+  readonly logger: Logger;
   readonly connection: Connection;
   readonly metas: CRDTEntry[];
   readonly now?: Date;
@@ -43,7 +34,7 @@ function toByConnection(connection: Connection): ByConnection {
 
 export class MetaMerger {
   readonly db: SQLDatabase;
-  readonly sthis: SuperThis;
+  // readonly sthis: SuperThis;
   readonly sql: {
     readonly tenant: TenantSql;
     readonly tenantLedger: TenantLedgerSql;
@@ -51,9 +42,9 @@ export class MetaMerger {
     readonly metaSend: MetaSendSql;
   };
 
-  constructor(sthis: SuperThis, db: SQLDatabase) {
+  constructor(db: SQLDatabase) {
     this.db = db;
-    this.sthis = sthis;
+    // this.sthis = sthis;
     const tenant = new TenantSql(db);
     const tenantLedger = new TenantLedgerSql(db, tenant);
     this.sql = {
@@ -70,18 +61,27 @@ export class MetaMerger {
     }
   }
 
+  async delMeta(
+    mm: Omit<MetaMerge, "metas"> & { readonly metas?: CRDTEntry[] }
+  ): Promise<{ now: Date; byConnection: ByConnection }> {
+    const now = mm.now || new Date();
+    const byConnection = toByConnection(mm.connection);
+    const metaCIDs = (mm.metas ?? []).map((meta) => meta.cid);
+    const connCIDs = {
+      ...byConnection,
+      // needs something with is not empty to delete
+      metaCIDs: metaCIDs.length ? metaCIDs : [new Date().toISOString()],
+    };
+    await this.sql.metaSend.deleteByConnection(connCIDs);
+    await this.sql.metaByTenantLedger.deleteByConnection(connCIDs);
+    return { now, byConnection };
+  }
+
   async addMeta(mm: MetaMerge) {
     if (!mm.metas.length) {
       return;
     }
-    const now = mm.now || new Date();
-    const byConnection = toByConnection(mm.connection);
-    const connCIDs = {
-      ...byConnection,
-      metaCIDs: mm.metas.map((meta) => meta.cid),
-    };
-    await this.sql.metaSend.deleteByConnection(connCIDs);
-    await this.sql.metaByTenantLedger.deleteByConnection(connCIDs);
+    const { now, byConnection } = await this.delMeta(mm);
     await this.sql.tenantLedger.ensure({
       ...mm.connection.tenant,
       createdAt: now,
@@ -95,7 +95,7 @@ export class MetaMerger {
           updateAt: now,
         });
       } catch (e) {
-        this.sthis.logger.Warn().Err(e).Str("metaCID", meta.cid).Msg("addMeta");
+        mm.logger.Warn().Err(e).Str("metaCID", meta.cid).Msg("addMeta");
       }
     }
   }

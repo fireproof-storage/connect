@@ -1,7 +1,16 @@
 import { exception2Result, Future, Logger, Result } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
-import { MsgBase, MsgIsError, buildErrorMsg, ReqOpen, WaitForTid, MsgWithError, RequestOpts } from "./msg-types.js";
-import { ExchangedGestalt, MsgerParamsWithEnDe, MsgRawConnection, OnMsgFn, UnReg } from "./msger.js";
+import {
+  MsgBase,
+  MsgIsError,
+  buildErrorMsg,
+  ReqOpen,
+  WaitForTid,
+  MsgWithError,
+  RequestOpts,
+  MsgIsTid,
+} from "./msg-types.js";
+import { ActiveStream, ExchangedGestalt, MsgerParamsWithEnDe, MsgRawConnection, OnMsgFn, UnReg } from "./msger.js";
 import { MsgRawConnectionBase } from "./msg-raw-connection-base.js";
 
 export interface WSReqOpen {
@@ -124,13 +133,14 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
     return msg;
   }
 
-  async sendMsg(msg: MsgBase): Promise<void> {
+  sendMsg(msg: MsgBase): Promise<void> {
     this.ws.send(this.msgP.ende.encode(msg));
+    return Promise.resolve();
   }
 
-  onMsg(fn: OnMsgFn): UnReg {
+  onMsg<S extends MsgBase>(fn: OnMsgFn<S>): UnReg {
     const key = this.sthis.nextId().str;
-    this.#onMsg.set(key, fn);
+    this.#onMsg.set(key, fn as OnMsgFn);
     return () => this.#onMsg.delete(key);
   }
 
@@ -138,6 +148,50 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
     const key = this.sthis.nextId().str;
     this.#onClose.set(key, fn);
     return () => this.#onClose.delete(key);
+  }
+
+  readonly activeBinds = new Map<string, ActiveStream<MsgBase, MsgBase>>();
+  bind<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): ReadableStream<MsgWithError<S>> {
+    const state: ActiveStream<S, Q> = {
+      id: this.sthis.nextId().str,
+      bind: {
+        msg: req,
+        opts,
+      },
+      // timeout: undefined,
+      // controller: undefined,
+    } satisfies ActiveStream<S, Q>;
+    this.activeBinds.set(state.id, state);
+    return new ReadableStream<MsgWithError<S>>({
+      cancel: () => {
+        // clearTimeout(state.timeout as number);
+        this.activeBinds.delete(state.id);
+      },
+      start: (controller) => {
+        this.onMsg<S>((msg) => {
+          if (MsgIsError(msg)) {
+            controller.enqueue(msg);
+            return;
+          }
+          if (!MsgIsTid(msg, req.tid)) {
+            return;
+          }
+          if (opts.waitFor && opts.waitFor(msg)) {
+            controller.enqueue(msg);
+          }
+        });
+        this.sendMsg(req);
+        const future = new Future<S>();
+        this.waitForTid.set(req.tid, { tid: req.tid, future, waitFor: opts.waitFor, timeout: opts.timeout });
+        future.asPromise().then((msg) => {
+          if (MsgIsError(msg)) {
+            // double err emitting
+            controller.enqueue(msg);
+            controller.close();
+          }
+        });
+      },
+    });
   }
 
   async request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>> {

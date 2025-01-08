@@ -29,6 +29,7 @@ function toCRDTEntries(rows: MetaConnection[]) {
 describe("MetaMerger", () => {
   let db: SQLDatabase;
   const sthis = ensureSuperThis();
+  const logger = sthis.logger;
   let mm: MetaMerger;
   beforeAll(async () => {
     //    db = new Database(':memory:');
@@ -40,7 +41,7 @@ describe("MetaMerger", () => {
       const { BetterSQLDatabase } = await import("./bettersql-abstract-sql.js");
       db = new BetterSQLDatabase("./dist/test.db");
     }
-    mm = new MetaMerger(sthis, db);
+    mm = new MetaMerger(db);
     await mm.createSchema();
   });
 
@@ -53,13 +54,22 @@ describe("MetaMerger", () => {
       },
       conn: {
         reqId: "reqId",
-        resId: "resId",
+        resId: `resId-${sthis.timeOrderedNextId().str}`,
       },
     } satisfies Connection;
   });
 
+  afterEach(async () => {
+    mm.delMeta({
+      logger,
+      connection,
+      metas: [],
+    });
+  });
+
   it("insert nothing", async () => {
     await mm.addMeta({
+      logger,
       connection,
       metas: [],
       now: new Date(),
@@ -77,6 +87,7 @@ describe("MetaMerger", () => {
         data: "MomRkYXRho",
       });
       await mm.addMeta({
+        logger,
         connection,
         metas,
         now: new Date(),
@@ -91,6 +102,7 @@ describe("MetaMerger", () => {
   });
 
   it("insert multiple", async () => {
+    const conns = [];
     for (let i = 0; i < 10; i++) {
       const metas = Array(i)
         .fill({
@@ -99,10 +111,16 @@ describe("MetaMerger", () => {
           data: "MomRkYXRho",
         })
         .map((m) => ({ ...m, cid: sthis.timeOrderedNextId().str }));
+      const conn = {
+        ...connection.conn,
+        reqId: sthis.timeOrderedNextId().str,
+      };
+      conns.push(conn);
       await mm.addMeta({
+        logger,
         connection: {
           ...connection,
-          conn: { ...connection.conn, reqId: sthis.timeOrderedNextId().str },
+          conn,
         } satisfies Connection,
         metas,
         now: new Date(),
@@ -110,6 +128,15 @@ describe("MetaMerger", () => {
       const rows = await mm.metaToSend(connection);
       expect(sortCRDTEntries(rows)).toEqual(sortCRDTEntries(metas));
     }
+    await Promise.all(
+      conns.map(async (conn) =>
+        mm.delMeta({
+          logger,
+          connection: { ...connection, conn },
+          metas: [],
+        })
+      )
+    );
   });
 
   it("metaToSend to sink", async () => {
@@ -127,6 +154,7 @@ describe("MetaMerger", () => {
         .map((m) => ({ ...m, cid: sthis.timeOrderedNextId().str }));
       ref.push({ metas, connection });
       await mm.addMeta({
+        logger,
         connection,
         metas,
         now: new Date(),
@@ -148,5 +176,44 @@ describe("MetaMerger", () => {
       const rowsEmpty = await mm.metaToSend(connection);
       expect(sortCRDTEntries(rowsEmpty)).toEqual([]);
     }
+    await Promise.all(
+      connections.map(async (connection) =>
+        mm.delMeta({
+          logger,
+          connection,
+          metas: [],
+        })
+      )
+    );
+  });
+
+  it("delMeta", async () => {
+    await mm.addMeta({
+      logger,
+      connection,
+      metas: [
+        {
+          cid: `del-${sthis.timeOrderedNextId().str}`,
+          parents: [],
+          data: "MomRkYXRho",
+        },
+        {
+          cid: `del-${sthis.timeOrderedNextId().str}`,
+          parents: [],
+          data: "MomRkYXRho",
+        },
+      ],
+      now: new Date(),
+    });
+    const rows = await mm.metaToSend(connection);
+    expect(rows.length).toBe(2);
+    await mm.delMeta({
+      logger,
+      connection,
+      metas: rows,
+      now: new Date(),
+    });
+    const rowsDel = await mm.metaToSend(connection);
+    expect(rowsDel.length).toBe(0);
   });
 });

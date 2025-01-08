@@ -4,7 +4,6 @@ import { MsgWithConn, MsgWithTenantLedger, SignedUrlParam } from "./msg-types.js
 
 export interface PreSignedMsg extends MsgWithTenantLedger<MsgWithConn> {
   readonly params: SignedUrlParam;
-  readonly tid: string;
 }
 
 // export interface PreSignedConnMsg {

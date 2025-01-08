@@ -1,7 +1,8 @@
 import { HttpHeader, Logger, Result, URI, exception2Result } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
-import { MsgBase, buildErrorMsg, MsgWithError, RequestOpts } from "./msg-types.js";
+import { MsgBase, buildErrorMsg, MsgWithError, RequestOpts, MsgIsError } from "./msg-types.js";
 import {
+  ActiveStream,
   ExchangedGestalt,
   MsgerParamsWithEnDe,
   MsgRawConnection,
@@ -40,6 +41,7 @@ export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnec
   }
 
   async close(): Promise<Result<void>> {
+    await Promise.all(Array.from(this.activeBinds.values()).map((state) => state.controller?.close()));
     this.#onMsg.clear();
     return Result.Ok(undefined);
   }
@@ -53,6 +55,51 @@ export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnec
     const key = this.sthis.nextId().str;
     this.#onMsg.set(key, fn);
     return () => this.#onMsg.delete(key);
+  }
+
+  #poll(state: ActiveStream<MsgBase, MsgBase>): void {
+    this.request(state.bind.msg, state.bind.opts)
+      .then((msg) => {
+        try {
+          state.controller?.enqueue(msg);
+          if (MsgIsError(msg)) {
+            state.controller?.close();
+          } else {
+            state.timeout = setTimeout(() => this.#poll(state), state.bind.opts.pollInterval ?? 1000);
+          }
+        } catch (err) {
+          console.log("poll error", err);
+          state.controller?.error(err);
+          state.controller?.close();
+        }
+      })
+      .catch((err) => {
+        console.log("poll catch error", err);
+        state.controller?.error(err);
+        // state.controller?.close();
+      });
+  }
+
+  readonly activeBinds = new Map<string, ActiveStream<MsgBase, MsgBase>>();
+  bind<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): ReadableStream<MsgWithError<S>> {
+    const state: ActiveStream<S, Q> = {
+      id: this.sthis.nextId().str,
+      bind: {
+        msg: req,
+        opts,
+      },
+    } satisfies ActiveStream<S, Q>;
+    this.activeBinds.set(state.id, state);
+    return new ReadableStream<MsgWithError<S>>({
+      cancel: () => {
+        clearTimeout(state.timeout as number);
+        this.activeBinds.delete(state.id);
+      },
+      start: (controller) => {
+        state.controller = controller;
+        this.#poll(state);
+      },
+    });
   }
 
   async request<Q extends MsgBase, S extends MsgBase>(req: Q, _opts: RequestOpts): Promise<MsgWithError<S>> {
