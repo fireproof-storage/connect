@@ -1,5 +1,5 @@
 // import { DurableObject } from "cloudflare:workers";
-import { SQLDatabase, SQLParams, SQLStatement } from "../meta-merger/abstract-sql.js";
+import { SQLDatabase, sqliteCoerceParams, SQLParams, SQLStatement } from "../meta-merger/abstract-sql.js";
 // import { Env } from "./env.js";
 import { ExecSQLResult, FPDurableObject } from "./server.js";
 
@@ -11,11 +11,11 @@ export class CFDObjSQLStatement implements SQLStatement {
     this.sql = sql;
   }
   async run<T>(...params: SQLParams): Promise<T> {
-    const res = (await this.db.dobj.execSql(this.sql, params)) as ExecSQLResult;
+    const res = (await this.db.dobj.execSql(this.sql, sqliteCoerceParams(params))) as ExecSQLResult;
     return res.rawResults[0] as T;
   }
   async all<T>(...params: SQLParams): Promise<T[]> {
-    const res = (await this.db.dobj.execSql(this.sql, params)) as ExecSQLResult;
+    const res = (await this.db.dobj.execSql(this.sql, sqliteCoerceParams(params))) as ExecSQLResult;
     return res.rawResults as T[];
   }
 }

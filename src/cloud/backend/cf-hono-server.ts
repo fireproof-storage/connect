@@ -1,4 +1,4 @@
-import { HttpHeader, Logger, LoggerImpl, ResolveOnce, URI } from "@adviser/cement";
+import { HttpHeader, KeyedResolvOnce, Logger, LoggerImpl, URI } from "@adviser/cement";
 import { Context, Hono } from "hono";
 import { ConnMiddleware, HonoServerFactory, RunTimeParams, HonoServerBase } from "../hono-server.js";
 import { WSContext, WSContextInit, WSEvents } from "hono/ws";
@@ -11,6 +11,7 @@ import { CFWorkerSQLDatabase } from "../meta-merger/cf-worker-abstract-sql.js";
 import { CFDObjSQLDatabase } from "./cf-dobj-abstract-sql.js";
 import { Env } from "./env.js";
 import { FPDurableObject } from "./server.js";
+import { WSRoom } from "../ws-room.js";
 
 // function ensureLogger(env: Env, module = "Fireproof"): Logger {
 //   const logger = new LoggerImpl()
@@ -33,7 +34,7 @@ import { FPDurableObject } from "./server.js";
 //   return logger.Logger();
 // }
 
-const startedChs = new ResolveOnce<CFHonoServer>();
+const startedChs = new KeyedResolvOnce<CFHonoServer>();
 
 export function getDurableObject(env: Env) {
   // console.log("getDurableObject", env);
@@ -42,6 +43,13 @@ export function getDurableObject(env: Env) {
   const dObjNs = rany[cfBackendKey];
   const id = dObjNs.idFromName(env.FP_DO_ID ?? cfBackendKey);
   return dObjNs.get(id);
+}
+
+class CFWSRoom implements WSRoom {
+  acceptConnection(ws: WebSocket): void {
+    ws.accept();
+    // this._wsConnections.set(ws.id, ws);
+  }
 }
 
 export class CFHonoFactory implements HonoServerFactory {
@@ -71,29 +79,35 @@ export class CFHonoFactory implements HonoServerFactory {
     const gs = defaultGestalt(msgP, {
       id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
     });
-    const ret = startedChs
-      .once(async () => {
-        const cfBackendMode =
-          c.env.CF_BACKEND_MODE && c.env.CF_BACKEND_MODE === "DURABLE_OBJECT" ? "DURABLE_OBJECT" : "D1";
-        let db: SQLDatabase;
-        switch (cfBackendMode) {
-          case "DURABLE_OBJECT":
-            db = new CFDObjSQLDatabase(getDurableObject(c.env));
-            break;
-          case "D1":
-          default:
-            {
-              const cfBackendKey = c.env.CF_BACKEND_KEY ?? "FP_D1";
-              db = new CFWorkerSQLDatabase(c.env[cfBackendKey] as D1Database);
-            }
-            break;
-        }
-        const chs = new CFHonoServer(sthis, logger, ende, gs, db);
-        await chs.start();
-        return chs;
-      })
-      .then((chs) => fn({ sthis, logger, ende, impl: chs }));
-    return ret; // .then((v) => sthis.logger.Flush().then(() => v))
+
+    const wsRoom = new CFWSRoom();
+    const cfBackendMode = c.env.CF_BACKEND_MODE && c.env.CF_BACKEND_MODE === "DURABLE_OBJECT" ? "DURABLE_OBJECT" : "D1";
+    let db: SQLDatabase;
+    switch (cfBackendMode) {
+      case "DURABLE_OBJECT": {
+        db = new CFDObjSQLDatabase(getDurableObject(c.env));
+        const chs = new CFHonoServer(sthis, logger, ende, gs, db, wsRoom);
+        // TODO WE NEED TO START THE DURABLE OBJECT
+        // but then on every request we import the schema
+        return chs.start().then((chs) => fn({ sthis, logger, ende, impl: chs }));
+      }
+      // break;
+      case "D1":
+      default: {
+        const cfBackendKey = c.env.CF_BACKEND_KEY ?? "FP_D1";
+        return startedChs
+          .get(cfBackendKey)
+          .once(async () => {
+            db = new CFWorkerSQLDatabase(c.env[cfBackendKey] as D1Database);
+            const chs = new CFHonoServer(sthis, logger, ende, gs, db, wsRoom);
+            await chs.start();
+            return chs;
+          })
+          .then((chs) => fn({ sthis, logger, ende, impl: chs }));
+      }
+      // break;
+    }
+    // return ret; // .then((v) => sthis.logger.Flush().then(() => v))
   }
 
   async start(_app: Hono): Promise<void> {
@@ -122,9 +136,10 @@ export class CFHonoServer extends HonoServerBase {
     ende: EnDeCoder,
     gs: Gestalt,
     sqlDb: SQLDatabase,
+    wsRoom: WSRoom,
     headers?: HttpHeader
   ) {
-    super(sthis, logger, gs, sqlDb, headers);
+    super(sthis, logger, gs, sqlDb, wsRoom, headers);
     this.ende = ende;
     // this.env = env;
   }
@@ -178,7 +193,7 @@ export class CFHonoServer extends HonoServerBase {
         // wsCtx.send("Hellox from server");
         wsEvents.onMessage?.(evt, wsCtx);
       };
-      server.accept();
+      this.wsRoom.acceptConnection(server);
 
       wsEvents.onOpen?.({} as Event, wsCtx);
 

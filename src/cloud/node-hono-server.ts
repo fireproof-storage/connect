@@ -6,6 +6,7 @@ import { ensureLogger, SuperThis } from "@fireproof/core";
 import { defaultMsgParams, jsonEnDe } from "./msger.js";
 import { defaultGestalt, Gestalt, MsgerParams } from "./msg-types.js";
 import { SQLDatabase } from "./meta-merger/abstract-sql.js";
+import { WSRoom } from "./ws-room.js";
 
 interface ServerType {
   close(fn: () => void): void;
@@ -17,6 +18,19 @@ export interface NodeHonoFactoryParams {
   readonly msgP?: MsgerParams;
   readonly gs?: Gestalt;
   readonly sql: SQLDatabase;
+}
+
+const wsConnections = new Map<string, WebSocket>();
+class NodeWSRoom implements WSRoom {
+  readonly sthis: SuperThis;
+  constructor(sthis: SuperThis) {
+    this.sthis = sthis;
+  }
+  acceptConnection(ws: WebSocket): void {
+    const id = this.sthis.nextId(12).str;
+    wsConnections.set(id, ws);
+    ws.accept();
+  }
 }
 
 export class NodeHonoFactory implements HonoServerFactory {
@@ -43,17 +57,18 @@ export class NodeHonoFactory implements HonoServerFactory {
 
     const fpProtocol = sthis.env.get("FP_PROTOCOL");
     const msgP =
-      this.params.msgP ||
+      this.params.msgP ??
       defaultMsgParams(sthis, {
         hasPersistent: true,
         protocolCapabilities: fpProtocol ? (fpProtocol === "ws" ? ["stream"] : ["reqRes"]) : ["reqRes", "stream"],
       });
     const gs =
-      this.params.gs ||
+      this.params.gs ??
       defaultGestalt(msgP, {
         id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
       });
-    const nhs = new NodeHonoServer(sthis, this, gs, this.params.sql);
+    const wsRoom = new NodeWSRoom(sthis);
+    const nhs = new NodeHonoServer(sthis, this, gs, this.params.sql, wsRoom);
     return nhs.start().then((nhs) => fn({ sthis, logger, ende, impl: nhs }));
   }
 
@@ -88,8 +103,15 @@ export class NodeHonoFactory implements HonoServerFactory {
 
 export class NodeHonoServer extends HonoServerBase implements HonoServerImpl {
   readonly _upgradeWebSocket: UpgradeWebSocket;
-  constructor(sthis: SuperThis, factory: NodeHonoFactory, gs: Gestalt, sqldb: SQLDatabase, headers?: HttpHeader) {
-    super(sthis, sthis.logger, gs, sqldb, headers);
+  constructor(
+    sthis: SuperThis,
+    factory: NodeHonoFactory,
+    gs: Gestalt,
+    sqldb: SQLDatabase,
+    wsRoom: WSRoom,
+    headers?: HttpHeader
+  ) {
+    super(sthis, sthis.logger, gs, sqldb, wsRoom, headers);
     this._upgradeWebSocket = factory._upgradeWebSocket;
   }
 

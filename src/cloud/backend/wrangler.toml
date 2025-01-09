@@ -119,7 +119,7 @@ FP_DEBUG = "FPMetaGroups"
 FP_PROTOCOL = "ws"
 CF_BACKEND_MODE = "DURABLE_OBJECT"
 
-[env.test-stream-D0.durable_objects]
+[env.test-stream-DO.durable_objects]
 bindings = [
   { name = "FP_DO", class_name = "FPDurableObject" },
 ]

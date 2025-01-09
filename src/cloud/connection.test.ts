@@ -73,7 +73,7 @@ describe("Connection", () => {
     sthis.env.sets((await resolveToml("D1")).env as unknown as Record<string, string>);
   });
 
-  describe.each([NodeHonoServerFactory(), CFHonoServerFactory("DO") /*, CFHonoServerFactory("DO")*/])(
+  describe.each([NodeHonoServerFactory(), CFHonoServerFactory("DO"), CFHonoServerFactory("D1")])(
     "$name - Connection",
     (honoServer) => {
       const port = +(process.env.FP_WRANGLER_PORT || 0) || 1024 + Math.floor(Math.random() * (65536 - 1024));

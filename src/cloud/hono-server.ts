@@ -31,6 +31,7 @@ import {
 } from "./msg-type-meta.js";
 import { MetaMerger } from "./meta-merger/meta-merger.js";
 import { SQLDatabase } from "./meta-merger/abstract-sql.js";
+import { WSRoom } from "./ws-room.js";
 
 export interface RunTimeParams {
   readonly sthis: SuperThis;
@@ -57,10 +58,12 @@ export abstract class HonoServerBase implements HonoServerImpl {
   readonly logger: Logger;
   readonly metaMerger: MetaMerger;
   readonly headers: HttpHeader;
-  constructor(sthis: SuperThis, logger: Logger, gs: Gestalt, sqlDb: SQLDatabase, headers?: HttpHeader) {
+  readonly wsRoom: WSRoom;
+  constructor(sthis: SuperThis, logger: Logger, gs: Gestalt, sqlDb: SQLDatabase, wsRoom: WSRoom, headers?: HttpHeader) {
     this.logger = logger;
     this._gs = gs;
     this.sthis = sthis;
+    this.wsRoom = wsRoom;
     this.metaMerger = new MetaMerger(sqlDb);
     this.headers = headers ? headers.Clone().Merge(CORS) : CORS.Clone();
   }
