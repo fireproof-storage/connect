@@ -109,8 +109,8 @@ importers:
         specifier: ^9.17.0
         version: 9.17.0
       '@smithy/types':
-        specifier: ^3.7.2
-        version: 3.7.2
+        specifier: ^4.1.0
+        version: 4.1.0
       '@types/better-sqlite3':
         specifier: ^7.6.12
         version: 7.6.12
@@ -1434,6 +1434,10 @@ packages:
   '@smithy/types@3.7.2':
     resolution: {integrity: sha512-bNwBYYmN8Eh9RyjS1p2gW6MIhSO2rl7X9QeLM8iTdcGRP+eDiIWDt66c9IysCc22gefKszZv+ubV9qZc7hdESg==}
     engines: {node: '>=16.0.0'}
+
+  '@smithy/types@4.1.0':
+    resolution: {integrity: sha512-enhjdwp4D7CXmwLtD6zbcDMbo6/T6WtuuKCY49Xxc6OMOmUWlBEBDREsxxgV2LIdeQPW756+f97GzcgAwp3iLw==}
+    engines: {node: '>=18.0.0'}
 
   '@smithy/url-parser@3.0.11':
     resolution: {integrity: sha512-TmlqXkSk8ZPhfc+SQutjmFr5FjC0av3GZP4B/10caK1SbRwe/v+Wzu/R6xEKxoNqL+8nY18s1byiy6HqPG37Aw==}
@@ -5332,6 +5336,10 @@ snapshots:
       tslib: 2.7.0
 
   '@smithy/types@3.7.2':
+    dependencies:
+      tslib: 2.7.0
+
+  '@smithy/types@4.1.0':
     dependencies:
       tslib: 2.7.0
 
