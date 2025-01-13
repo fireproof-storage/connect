@@ -74,7 +74,7 @@
     "vite": "^6.0.7",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.8",
-    "wait-on": "^8.0.1",
+    "wait-on": "^8.0.2",
     "wrangler": "^3.99.0",
     "zx": "^8.3.0"
   },
@@ -117,7 +117,7 @@
     "partysocket": "^1.0.3",
     "path": "^0.12.7",
     "util": "^0.12.5",
-    "wait-on": "^8.0.1",
+    "wait-on": "^8.0.2",
     "ws": "^8.18.0"
   },
   "exports": {
