@@ -33,8 +33,8 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
       '@ucanto/core':
-        specifier: ^10.0.1
-        version: 10.0.1
+        specifier: ^10.1.1
+        version: 10.1.1
       '@ucanto/interface':
         specifier: ^10.0.1
         version: 10.0.1
@@ -1072,6 +1072,10 @@ packages:
     resolution: {integrity: sha512-4vgV5Ml4HCJ2iTx7vYhu0ui+Xxo1HQTtVeYgD+JKd5Wij8TlOFZnxOSickqpLcuf1fdGEStgqVItx15UWfzDYA==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
+  '@ipld/car@5.4.0':
+    resolution: {integrity: sha512-FiGxOhTUh3fn/kkA+YvNYQjA/T8T5DcKG0NZwAi3aXrizN1qm99HzdYTccEwcX/rUCtI8wTUCKDNPBLUb7pBIQ==}
+    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
+
   '@ipld/dag-cbor@9.2.2':
     resolution: {integrity: sha512-uIEOuruCqKTP50OBWwgz4Js2+LhiBQaxc57cnP71f45b1mHEAo1OCR1Zn/TbvSW/mV1x+JqhacIktkKyaYqhCw==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
@@ -1600,11 +1604,14 @@ packages:
   '@ucanto/client@9.0.1':
     resolution: {integrity: sha512-cV8w3AnaZaYCdUmyFFICj8YhFckDoy2DvWgAzGDMkPz0WbUW4lw9Tjm4hEE8x5kiP47wYej/pHKWCcoELiU0qw==}
 
-  '@ucanto/core@10.0.1':
-    resolution: {integrity: sha512-1BfUaJu0/c9Rl/WdZSDbScJJLsPsPe1g4ynl5kubUj3xDD/lyp/Q12PQVQ2X7hDiWwkpwmxCkRMkOxwc70iNKQ==}
+  '@ucanto/core@10.1.1':
+    resolution: {integrity: sha512-Dypn1hlWvP4kFLuM98U02c8anFuT8hrR3uVi7YZ3wTyBeKOhl/0ggGBR06eyXLw6EL15Yp7dR3Mlce9jTEPwlA==}
 
   '@ucanto/interface@10.0.1':
     resolution: {integrity: sha512-+Vr/N4mLsdynV9/bqtdFiq7WsUf3265/Qx2aHJmPtXo9/QvWKthJtpe0g8U4NWkWpVfqIFvyAO2db6D9zWQfQw==}
+
+  '@ucanto/interface@10.0.2':
+    resolution: {integrity: sha512-0n1H6ChvC1moQl2lnGMdSN/ThfCiJ99VdyTtfiu/380vcf3U3Sb8soIrAWE9mM9KysNZUWfJBB0ahj5vganeoA==}
 
   '@ucanto/principal@9.0.1':
     resolution: {integrity: sha512-8eAvaZHW1vyET4X90rkJv6pmW1IOdEYlZYwO3wDgTkC5m9VytBEywCvpzP57cavdYIbbPse5QS9nMEGvk87zhw==}
@@ -4898,6 +4905,13 @@ snapshots:
       multiformats: 13.3.1
       varint: 6.0.0
 
+  '@ipld/car@5.4.0':
+    dependencies:
+      '@ipld/dag-cbor': 9.2.2
+      cborg: 4.2.7
+      multiformats: 13.3.1
+      varint: 6.0.0
+
   '@ipld/dag-cbor@9.2.2':
     dependencies:
       cborg: 4.2.7
@@ -5570,18 +5584,23 @@ snapshots:
 
   '@ucanto/client@9.0.1':
     dependencies:
-      '@ucanto/core': 10.0.1
+      '@ucanto/core': 10.1.1
       '@ucanto/interface': 10.0.1
 
-  '@ucanto/core@10.0.1':
+  '@ucanto/core@10.1.1':
     dependencies:
-      '@ipld/car': 5.3.2
+      '@ipld/car': 5.4.0
       '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-ucan': 3.4.0
-      '@ucanto/interface': 10.0.1
+      '@ucanto/interface': 10.0.2
       multiformats: 11.0.2
 
   '@ucanto/interface@10.0.1':
+    dependencies:
+      '@ipld/dag-ucan': 3.4.0
+      multiformats: 11.0.2
+
+  '@ucanto/interface@10.0.2':
     dependencies:
       '@ipld/dag-ucan': 3.4.0
       multiformats: 11.0.2
@@ -5598,21 +5617,21 @@ snapshots:
 
   '@ucanto/server@10.0.0':
     dependencies:
-      '@ucanto/core': 10.0.1
-      '@ucanto/interface': 10.0.1
+      '@ucanto/core': 10.1.1
+      '@ucanto/interface': 10.0.2
       '@ucanto/principal': 9.0.1
       '@ucanto/validator': 9.0.2
 
   '@ucanto/transport@9.1.1':
     dependencies:
-      '@ucanto/core': 10.0.1
+      '@ucanto/core': 10.1.1
       '@ucanto/interface': 10.0.1
 
   '@ucanto/validator@9.0.2':
     dependencies:
       '@ipld/car': 5.3.2
       '@ipld/dag-cbor': 9.2.2
-      '@ucanto/core': 10.0.1
+      '@ucanto/core': 10.1.1
       '@ucanto/interface': 10.0.1
       multiformats: 11.0.2
 
@@ -5663,7 +5682,7 @@ snapshots:
       '@scure/bip39': 1.4.0
       '@storacha/one-webcrypto': 1.0.1
       '@ucanto/client': 9.0.1
-      '@ucanto/core': 10.0.1
+      '@ucanto/core': 10.1.1
       '@ucanto/interface': 10.0.1
       '@ucanto/principal': 9.0.1
       '@ucanto/transport': 9.1.1
@@ -5681,8 +5700,8 @@ snapshots:
     dependencies:
       '@ipld/dag-cbor': 9.2.2
       '@storacha/one-webcrypto': 1.0.1
-      '@ucanto/core': 10.0.1
-      '@ucanto/interface': 10.0.1
+      '@ucanto/core': 10.1.1
+      '@ucanto/interface': 10.0.2
       '@web3-storage/capabilities': 18.0.1
       carstream: 2.2.0
       multiformats: 13.3.1
@@ -5690,7 +5709,7 @@ snapshots:
 
   '@web3-storage/capabilities@18.0.1':
     dependencies:
-      '@ucanto/core': 10.0.1
+      '@ucanto/core': 10.1.1
       '@ucanto/interface': 10.0.1
       '@ucanto/principal': 9.0.1
       '@ucanto/transport': 9.1.1
@@ -5725,14 +5744,14 @@ snapshots:
     dependencies:
       '@ipld/dag-ucan': 3.4.0
       '@ucanto/client': 9.0.1
-      '@ucanto/core': 10.0.1
-      '@ucanto/interface': 10.0.1
+      '@ucanto/core': 10.1.1
+      '@ucanto/interface': 10.0.2
       '@ucanto/transport': 9.1.1
       '@web3-storage/capabilities': 18.0.1
 
   '@web3-storage/pail@0.5.0':
     dependencies:
-      '@ipld/car': 5.3.3
+      '@ipld/car': 5.4.0
       '@ipld/dag-cbor': 9.2.2
       archy: 1.0.0
       cborg: 4.2.7
@@ -5747,13 +5766,13 @@ snapshots:
 
   '@web3-storage/upload-client@17.1.3(encoding@0.1.13)':
     dependencies:
-      '@ipld/car': 5.3.3
+      '@ipld/car': 5.4.0
       '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-ucan': 3.4.0
       '@ipld/unixfs': 2.2.0
       '@ucanto/client': 9.0.1
-      '@ucanto/core': 10.0.1
-      '@ucanto/interface': 10.0.1
+      '@ucanto/core': 10.1.1
+      '@ucanto/interface': 10.0.2
       '@ucanto/transport': 9.1.1
       '@web3-storage/blob-index': 1.0.5
       '@web3-storage/capabilities': 18.0.1
@@ -5770,7 +5789,7 @@ snapshots:
     dependencies:
       '@ipld/dag-ucan': 3.4.0
       '@ucanto/client': 9.0.1
-      '@ucanto/core': 10.0.1
+      '@ucanto/core': 10.1.1
       '@ucanto/interface': 10.0.1
       '@ucanto/principal': 9.0.1
       '@ucanto/transport': 9.1.1
