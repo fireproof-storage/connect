@@ -107,7 +107,7 @@
     "@web3-storage/pail": "^0.6.0",
     "@web3-storage/w3up-client": "^17.1.2",
     "assert": "^2.1.0",
-    "better-sqlite3": "^11.7.2",
+    "better-sqlite3": "^11.8.1",
     "events": "^3.3.0",
     "idb-keyval": "^6.2.1",
     "is-deep-strict-equal-x": "^1.1.2",
