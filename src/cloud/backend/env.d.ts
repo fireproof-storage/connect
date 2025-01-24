@@ -3,7 +3,7 @@
 
 import type { DurableObjectNamespace } from "@cloudflare/workers-types";
 // import { WSEvents } from "hono/ws";
-import { FPDurableObject } from "./server.ts";
+import { FPRoomDurableObject, FPBackendDurableObject } from "./server.ts";
 
 export interface Env {
   // bucket: R2Bucket;
@@ -33,14 +33,20 @@ export interface Env {
 
   // default D1
   CF_BACKEND_MODE: "D1" | "DURABLE_OBJECT";
-  // default D1 "FP_D1"
-  // default DURABLE_OBJECT "FP_DO"
+  // default D1 "FP_BACKEND_D1"
+  // default DURABLE_OBJECT "FP_BACKEND_DO"
   CF_BACKEND_KEY?: string;
 
-  FP_DO: DurableObjectNamespace<FPDurableObject>;
+  FP_BACKEND_D1: D1Database;
+
+  FP_BACKEND_DO: DurableObjectNamespace<FPBackendDurableObject>;
   // default CF_BACKEND_KEY
-  FP_DO_ID: string;
-  FP_D1: D1Database;
+  FP_BACKEND_DO_ID: string;
+
+  // default "FP_WS_ROOM"
+  CF_WS_ROOM_KEY: string;
+
+  FP_WS_ROOM: DurableObjectNamespace<FPRoomDurableObject>;
 
   // WS_EVENTS: WSEvents;
 }

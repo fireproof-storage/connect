@@ -29,6 +29,7 @@ export function to_blob(input: ArrayBuffer | ArrayBufferView | Uint8Array | Blob
   }
   return new Blob([to_uint8(input)]);
 }
+
 export function to_arraybuf(input: ArrayBuffer | ArrayBufferView | Uint8Array): ArrayBuffer {
   if (input instanceof ArrayBuffer) {
     return input;

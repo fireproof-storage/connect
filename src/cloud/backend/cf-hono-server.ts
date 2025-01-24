@@ -10,45 +10,41 @@ import { SQLDatabase } from "../meta-merger/abstract-sql.js";
 import { CFWorkerSQLDatabase } from "../meta-merger/cf-worker-abstract-sql.js";
 import { CFDObjSQLDatabase } from "./cf-dobj-abstract-sql.js";
 import { Env } from "./env.js";
-import { FPDurableObject } from "./server.js";
 import { WSRoom } from "../ws-room.js";
-
-// function ensureLogger(env: Env, module = "Fireproof"): Logger {
-//   const logger = new LoggerImpl()
-//     .With()
-//     .Module(module)
-//     .SetDebug(env.FP_DEBUG)
-//     .SetExposeStack(!!env.FP_STACK || false);
-//   switch (env.FP_FORMAT) {
-//     case "jsonice":
-//       logger.SetFormatter(new JSONFormatter(logger.TxtEnDe(), 2));
-//       break;
-//     case "yaml":
-//       logger.SetFormatter(new YAMLFormatter(logger.TxtEnDe(), 2));
-//       break;
-//     case "json":
-//     default:
-//       logger.SetFormatter(new JSONFormatter(logger.TxtEnDe()));
-//       break;
-//   }
-//   return logger.Logger();
-// }
+import { FPBackendDurableObject, FPRoomDurableObject } from "./server.js";
 
 const startedChs = new KeyedResolvOnce<CFHonoServer>();
 
-export function getDurableObject(env: Env) {
+export function getBackendDurableObject(env: Env) {
   // console.log("getDurableObject", env);
-  const cfBackendKey = env.CF_BACKEND_KEY ?? "FP_DO";
-  const rany = env as unknown as Record<string, DurableObjectNamespace<FPDurableObject>>;
+  const cfBackendKey = env.CF_BACKEND_KEY ?? "FP_BACKEND_DO";
+  const rany = env as unknown as Record<string, DurableObjectNamespace<FPBackendDurableObject>>;
   const dObjNs = rany[cfBackendKey];
-  const id = dObjNs.idFromName(env.FP_DO_ID ?? cfBackendKey);
+  const id = dObjNs.idFromName(env.FP_BACKEND_DO_ID ?? cfBackendKey);
+  return dObjNs.get(id);
+}
+
+export function getRoomDurableObject(env: Env) {
+  // console.log("getDurableObject", env);
+  const cfBackendKey = env.CF_BACKEND_KEY ?? "FP_WS_ROOM";
+  const rany = env as unknown as Record<string, DurableObjectNamespace<FPRoomDurableObject>>;
+  const dObjNs = rany[cfBackendKey];
+  const id = dObjNs.idFromName(cfBackendKey);
   return dObjNs.get(id);
 }
 
 class CFWSRoom implements WSRoom {
-  acceptConnection(ws: WebSocket): void {
-    ws.accept();
-    // this._wsConnections.set(ws.id, ws);
+  readonly dobj: DurableObjectStub<FPRoomDurableObject>;
+  constructor(dobj: DurableObjectStub<FPRoomDurableObject>) {
+    this.dobj = dobj;
+  }
+  async acceptConnection(ws: WebSocket, wse: WSEvents): Promise<void> {
+    const ret = await this.dobj.acceptWebSocket(ws, wse);
+    const wsCtx = new WSContext(ws as WSContextInit);
+    wse.onOpen?.({} as Event, wsCtx);
+    // return Promise.resolve();
+    // ws.accept();
+    return ret;
   }
 }
 
@@ -80,12 +76,12 @@ export class CFHonoFactory implements HonoServerFactory {
       id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
     });
 
-    const wsRoom = new CFWSRoom();
+    const wsRoom = new CFWSRoom(c.env);
     const cfBackendMode = c.env.CF_BACKEND_MODE && c.env.CF_BACKEND_MODE === "DURABLE_OBJECT" ? "DURABLE_OBJECT" : "D1";
     let db: SQLDatabase;
     switch (cfBackendMode) {
       case "DURABLE_OBJECT": {
-        db = new CFDObjSQLDatabase(getDurableObject(c.env));
+        db = new CFDObjSQLDatabase(getBackendDurableObject(c.env));
         const chs = new CFHonoServer(sthis, logger, ende, gs, db, wsRoom);
         // TODO WE NEED TO START THE DURABLE OBJECT
         // but then on every request we import the schema
@@ -94,7 +90,7 @@ export class CFHonoFactory implements HonoServerFactory {
       // break;
       case "D1":
       default: {
-        const cfBackendKey = c.env.CF_BACKEND_KEY ?? "FP_D1";
+        const cfBackendKey = c.env.CF_BACKEND_KEY ?? "FP_BACKEND_D1";
         return startedChs
           .get(cfBackendKey)
           .once(async () => {
@@ -174,28 +170,14 @@ export class CFHonoServer extends HonoServerBase {
       const wsEvents = await createEvents(c);
       // console.log("upgradeWebSocket", c.req.url);
 
-      const wsCtx = new WSContext(server as WSContextInit);
+      // const wsCtx = new WSContext(server as WSContextInit);
 
       // server.onopen = (ev) => {
       //   console.log("onopen", ev);
       //   wsEvents.onOpen?.(ev, wsCtx);
       // }
-      server.onerror = (err) => {
-        // console.log("onerror", err);
-        wsEvents.onError?.(err, wsCtx);
-      };
-      server.onclose = (ev) => {
-        // console.log("onclose", ev);
-        wsEvents.onClose?.(ev, wsCtx);
-      };
-      server.onmessage = (evt) => {
-        // console.log("onmessage", evt);
-        // wsCtx.send("Hellox from server");
-        wsEvents.onMessage?.(evt, wsCtx);
-      };
-      this.wsRoom.acceptConnection(server);
 
-      wsEvents.onOpen?.({} as Event, wsCtx);
+      await this.wsRoom.acceptConnection(server, wsEvents);
 
       // server.send("Hello from server");
 

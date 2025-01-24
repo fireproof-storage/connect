@@ -4,7 +4,7 @@ import { CRDTEntry, ensureSuperThis } from "@fireproof/core";
 import { runtimeFn } from "@adviser/cement";
 import { SQLDatabase } from "./abstract-sql.js";
 import type { Env } from "../backend/env.js";
-import { getDurableObject } from "../backend/cf-hono-server.js";
+import { getBackendDurableObject } from "../backend/cf-hono-server.js";
 
 function sortCRDTEntries(rows: CRDTEntry[]) {
   return rows.sort((a, b) => a.cid.localeCompare(b.cid));
@@ -35,7 +35,7 @@ function getSQLFlavours(): { name: string; factory: () => Promise<SQLDatabase> }
         factory: async () => {
           const { CFWorkerSQLDatabase } = await import("./cf-worker-abstract-sql.js");
           const { env } = await import("cloudflare:test");
-          return new CFWorkerSQLDatabase((env as Env).FP_D1);
+          return new CFWorkerSQLDatabase((env as Env).FP_BACKEND_D1);
         },
       },
       {
@@ -43,7 +43,7 @@ function getSQLFlavours(): { name: string; factory: () => Promise<SQLDatabase> }
         factory: async () => {
           const { CFDObjSQLDatabase } = await import("../backend/cf-dobj-abstract-sql.js");
           const { env } = await import("cloudflare:test");
-          return new CFDObjSQLDatabase(getDurableObject(env as Env));
+          return new CFDObjSQLDatabase(getBackendDurableObject(env as Env));
         },
       },
     ];

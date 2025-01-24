@@ -1,4 +1,4 @@
-import { UpgradeWebSocket, WSEvents } from "hono/ws";
+import { UpgradeWebSocket, WSContext, WSContextInit, WSEvents } from "hono/ws";
 import { ConnMiddleware, HonoServerBase, HonoServerFactory, HonoServerImpl, RunTimeParams } from "./hono-server.js";
 import { HttpHeader, URI } from "@adviser/cement";
 import { Context, Hono } from "hono";
@@ -26,10 +26,28 @@ class NodeWSRoom implements WSRoom {
   constructor(sthis: SuperThis) {
     this.sthis = sthis;
   }
-  acceptConnection(ws: WebSocket): void {
+  acceptConnection(ws: WebSocket, wse: WSEvents): Promise<void> {
     const id = this.sthis.nextId(12).str;
     wsConnections.set(id, ws);
+
+    const wsCtx = new WSContext(ws as WSContextInit);
+
+    ws.onerror = (err) => {
+      // console.log("onerror", err);
+      wse.onError?.(err, wsCtx);
+    };
+    ws.onclose = (ev) => {
+      // console.log("onclose", ev);
+      wse.onClose?.(ev, wsCtx);
+    };
+    ws.onmessage = (evt) => {
+      // console.log("onmessage", evt);
+      // wsCtx.send("Hellox from server");
+      wse.onMessage?.(evt, wsCtx);
+    };
+
     ws.accept();
+    return Promise.resolve();
   }
 }
 
