@@ -75,7 +75,7 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.8",
     "wait-on": "^8.0.2",
-    "wrangler": "^3.99.0",
+    "wrangler": "^3.106.0",
     "zx": "^8.3.0"
   },
   "repository": {
