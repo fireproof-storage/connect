@@ -51,7 +51,7 @@
   ],
   "license": "Apache-2.0 OR MIT",
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
+    "@eslint/js": "^9.19.0",
     "@smithy/types": "^4.1.0",
     "@types/better-sqlite3": "^7.6.12",
     "@types/eslint__js": "^8.42.3",
