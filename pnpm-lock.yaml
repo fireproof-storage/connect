@@ -21,8 +21,8 @@ importers:
         specifier: 1.0.4
         version: 1.0.4
       '@ipld/dag-ucan':
-        specifier: ^3.4.0
-        version: 3.4.0
+        specifier: ^3.4.5
+        version: 3.4.5
       '@jspm/core':
         specifier: ^2.1.0
         version: 2.1.0
@@ -1084,10 +1084,6 @@ packages:
     resolution: {integrity: sha512-uIEOuruCqKTP50OBWwgz4Js2+LhiBQaxc57cnP71f45b1mHEAo1OCR1Zn/TbvSW/mV1x+JqhacIktkKyaYqhCw==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
-  '@ipld/dag-json@10.2.2':
-    resolution: {integrity: sha512-NnU8HdHKwAoGyrW3S09NMa8aZw0tImLRyR64hoafpLpDpAbA9g1+fb24JsdlugbL4sXUQVwDVA+qK4Ud8V83lA==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-
   '@ipld/dag-json@10.2.3':
     resolution: {integrity: sha512-itacv1j1hvYgLox2B42Msn70QLzcr0MEo5yGIENuw2SM/lQzq9bmBiMky+kDsIrsqqblKTXcHBZnnmK7D4a6ZQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
@@ -1095,9 +1091,6 @@ packages:
   '@ipld/dag-pb@4.1.2':
     resolution: {integrity: sha512-BSztO4l3C+ya9HjCaQot26Y4AVsqIKtnn6+23ubc1usucnf6yoTBme18oCCdM6gKBMxuPqju5ye3lh9WEJsdeQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-
-  '@ipld/dag-ucan@3.4.0':
-    resolution: {integrity: sha512-sW4R43w3DbEdoGWWJZCwsblwXa600HCanG9p2w1MJPVBNTNjhvqc3XI0uEqKhT2oqKWrND7uInVtcPmZme7hhA==}
 
   '@ipld/dag-ucan@3.4.5':
     resolution: {integrity: sha512-wiWhH0Ju7WgnumsarHCYtlo+1NRy+WIsXyAB7g2sDqVsKCyEJiLLmjeZzKqNv+qMxLnUS8bQ287cPiQ//s/oJQ==}
@@ -1930,6 +1923,10 @@ packages:
 
   cborg@4.2.7:
     resolution: {integrity: sha512-zHTUAm+HAoRLtGEQ1b28HXBm8d/5YP+7eiSKzEu/mpFkptGYaMQCHv15OiQBuyNlIgbCBXvBbZQPl3xvcZTJXg==}
+    hasBin: true
+
+  cborg@4.2.8:
+    resolution: {integrity: sha512-z9M+TZCWQbf89Gl8ulpYThM9fqmkjBDdMiq+wS72OAK2zqDaXNquoAWFDrAKHQAukVtPspmadB9chuFC0ut7ew==}
     hasBin: true
 
   chai@5.1.2:
@@ -4946,28 +4943,17 @@ snapshots:
 
   '@ipld/dag-cbor@9.2.2':
     dependencies:
-      cborg: 4.2.7
-      multiformats: 13.3.1
-
-  '@ipld/dag-json@10.2.2':
-    dependencies:
-      cborg: 4.2.7
+      cborg: 4.2.8
       multiformats: 13.3.1
 
   '@ipld/dag-json@10.2.3':
     dependencies:
-      cborg: 4.2.7
+      cborg: 4.2.8
       multiformats: 13.3.1
 
   '@ipld/dag-pb@4.1.2':
     dependencies:
       multiformats: 13.3.1
-
-  '@ipld/dag-ucan@3.4.0':
-    dependencies:
-      '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-json': 10.2.2
-      multiformats: 11.0.2
 
   '@ipld/dag-ucan@3.4.5':
     dependencies:
@@ -5638,7 +5624,7 @@ snapshots:
     dependencies:
       '@ipld/car': 5.3.2
       '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-ucan': 3.4.0
+      '@ipld/dag-ucan': 3.4.5
       '@ucanto/interface': 10.0.1
       multiformats: 11.0.2
 
@@ -5652,7 +5638,7 @@ snapshots:
 
   '@ucanto/interface@10.0.1':
     dependencies:
-      '@ipld/dag-ucan': 3.4.0
+      '@ipld/dag-ucan': 3.4.5
       multiformats: 11.0.2
 
   '@ucanto/interface@10.1.1':
@@ -5662,7 +5648,7 @@ snapshots:
 
   '@ucanto/principal@9.0.1':
     dependencies:
-      '@ipld/dag-ucan': 3.4.0
+      '@ipld/dag-ucan': 3.4.5
       '@noble/curves': 1.6.0
       '@noble/ed25519': 1.7.3
       '@noble/hashes': 1.5.0
@@ -5733,7 +5719,7 @@ snapshots:
   '@web3-storage/access@20.1.1':
     dependencies:
       '@ipld/car': 5.3.3
-      '@ipld/dag-ucan': 3.4.0
+      '@ipld/dag-ucan': 3.4.5
       '@scure/bip39': 1.4.0
       '@storacha/one-webcrypto': 1.0.1
       '@ucanto/client': 9.0.1
@@ -5775,7 +5761,7 @@ snapshots:
   '@web3-storage/clock@0.4.1':
     dependencies:
       '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-ucan': 3.4.0
+      '@ipld/dag-ucan': 3.4.5
       '@ucanto/client': 9.0.1
       '@ucanto/interface': 10.0.1
       '@ucanto/principal': 9.0.1
@@ -5797,7 +5783,7 @@ snapshots:
 
   '@web3-storage/filecoin-client@3.3.5':
     dependencies:
-      '@ipld/dag-ucan': 3.4.0
+      '@ipld/dag-ucan': 3.4.5
       '@ucanto/client': 9.0.1
       '@ucanto/core': 10.2.1
       '@ucanto/interface': 10.1.1
@@ -5823,7 +5809,7 @@ snapshots:
     dependencies:
       '@ipld/car': 5.4.0
       '@ipld/dag-cbor': 9.2.2
-      '@ipld/dag-ucan': 3.4.0
+      '@ipld/dag-ucan': 3.4.5
       '@ipld/unixfs': 2.2.0
       '@ucanto/client': 9.0.1
       '@ucanto/core': 10.2.1
@@ -5842,7 +5828,7 @@ snapshots:
 
   '@web3-storage/w3up-client@17.1.2(encoding@0.1.13)':
     dependencies:
-      '@ipld/dag-ucan': 3.4.0
+      '@ipld/dag-ucan': 3.4.5
       '@ucanto/client': 9.0.1
       '@ucanto/core': 10.0.1
       '@ucanto/interface': 10.0.1
@@ -6134,6 +6120,8 @@ snapshots:
       uint8arraylist: 2.4.8
 
   cborg@4.2.7: {}
+
+  cborg@4.2.8: {}
 
   chai@5.1.2:
     dependencies:
