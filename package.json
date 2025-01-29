@@ -96,7 +96,7 @@
     "@netlify/blobs": "^8.1.0",
     "@ucanto/client": "^9.0.1",
     "@ucanto/core": "^10.2.1",
-    "@ucanto/interface": "^10.0.1",
+    "@ucanto/interface": "^10.1.1",
     "@ucanto/principal": "^9.0.1",
     "@ucanto/transport": "^9.1.1",
     "@ucanto/validator": "^9.0.3",
