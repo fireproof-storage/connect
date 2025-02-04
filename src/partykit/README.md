@@ -6,7 +6,7 @@
 
 ## Get started
 
-We assume you already have an app that uses Fireproof in the browser, and you want to setup collaboration among multiple users via the cloud or peer-to-peer. To write your first Fireproof app, see the [Fireproof quickstart](https://use-fireproof.com/docs/react-tutorial), othwerwise read on. It's also easy to add Fireproof to PartyKit apps, check out this demo repo for [live magnetic poetry with database persistence.](https://github.com/fireproof-storage/sketch-magnetic-poetry)
+We assume you already have an app that uses Fireproof in the browser, and you want to setup collaboration among multiple users via the cloud or peer-to-peer. To write your first Fireproof app, see the [Fireproof quickstart](https://use-fireproof.com/docs/react-tutorial), otherwise read on. It's also easy to add Fireproof to PartyKit apps, check out this demo repo for [live magnetic poetry with database persistence.](https://github.com/fireproof-storage/sketch-magnetic-poetry)
 
 PartyKit uses websockets and CloudFlare workers to manage a real-time group. Adding Fireproof requires one-line of config, and it syncs in its own party so you can use it with your existing [PartyKit](https://docs.partykit.io) apps without impacting existing code.
 
