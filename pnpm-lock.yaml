@@ -15,8 +15,8 @@ importers:
         specifier: ^3.735.0
         version: 3.735.0
       '@fireproof/core':
-        specifier: 0.19.121
-        version: 0.19.121(react@18.3.1)(typescript@5.7.3)
+        specifier: 0.19.122
+        version: 0.19.122(react@18.3.1)(typescript@5.7.3)
       '@fireproof/vendor':
         specifier: 1.0.4
         version: 1.0.4
@@ -1018,8 +1018,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@0.19.121':
-    resolution: {integrity: sha512-HTHM9MXPEvby66h2I4zGT7VqFVpJMzcd3xiGeInzAwwO8mFB5ZQ6ic/i/P+5R6iN0ZNucGMKVOUAh2+XysxmHQ==}
+  '@fireproof/core@0.19.122':
+    resolution: {integrity: sha512-u+UsIhcldAtBcX9br0w4nBbT40j1uOMFCv57yob0vAABrF5Czta6fbbM+HIcvPBj+TNJItpiL6YDXeQpDf8zGg==}
     peerDependencies:
       react: ^18.3.1
 
@@ -1072,6 +1072,10 @@ packages:
     resolution: {integrity: sha512-BSztO4l3C+ya9HjCaQot26Y4AVsqIKtnn6+23ubc1usucnf6yoTBme18oCCdM6gKBMxuPqju5ye3lh9WEJsdeQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
+  '@ipld/dag-pb@4.1.3':
+    resolution: {integrity: sha512-ueULCaaSCcD+dQga6nKiRr+RSeVgdiYiEPKVUu5iQMNYDN+9osd0KpR3UDd9uQQ+6RWuv9L34SchfEwj7YIbOA==}
+    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
+
   '@ipld/dag-ucan@3.4.5':
     resolution: {integrity: sha512-wiWhH0Ju7WgnumsarHCYtlo+1NRy+WIsXyAB7g2sDqVsKCyEJiLLmjeZzKqNv+qMxLnUS8bQ287cPiQ//s/oJQ==}
 
@@ -1112,8 +1116,8 @@ packages:
     peerDependencies:
       tslib: '2'
 
-  '@jsonjoy.com/json-pack@1.1.0':
-    resolution: {integrity: sha512-zlQONA+msXPPwHWZMKFVS78ewFczIll5lXiVPwFPCZUsrOKdxc2AvxU1HoNBmMRhqDZUR9HkC3UOm+6pME6Xsg==}
+  '@jsonjoy.com/json-pack@1.1.1':
+    resolution: {integrity: sha512-osjeBqMJ2lb/j/M8NCPjs1ylqWIcTRTycIhVB5pt6LgzgeRSb0YRZ7j9RfA8wIUrsr/medIuhVyonXRZWLyfdw==}
     engines: {node: '>=10.0'}
     peerDependencies:
       tslib: '2'
@@ -2450,8 +2454,8 @@ packages:
   idb-keyval@6.2.1:
     resolution: {integrity: sha512-8Sb3veuYCyrZL+VBt9LJfZjLUPWVvqn8tG28VqYNFCo43KHcKuq+b4EiXGeuaLAQWL2YmyDgMp2aSpH9JHsEQg==}
 
-  idb@8.0.1:
-    resolution: {integrity: sha512-EkBCzUZSdhJV8PxMSbeEV//xguVKZu9hZZulM+2gHXI0t2hGVU3eYE6/XnH77DS6FM2FY8wl17aDcu9vXpvLWQ==}
+  idb@8.0.2:
+    resolution: {integrity: sha512-CX70rYhx7GDDQzwwQMDwF6kDRQi5vVs6khHUumDrMecBylKkwvZ8HWvKV08AGb7VbpoGCWUQ4aHzNDgoUiOIUg==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -2790,8 +2794,8 @@ packages:
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
 
-  long@5.2.3:
-    resolution: {integrity: sha512-lcHwpNoggQTObv5apGNCTdJrO69eHOZMi4BNC+rTLER8iHAqGrUVeLh/irVIM7zTw2bOXA8T6uNPeujwOLg/2Q==}
+  long@5.2.5:
+    resolution: {integrity: sha512-e0r9YBBgNCq1D1o5Dp8FMH0N5hsFtXDBiVa0qoJPHpakvZkmDKPRoGffZJII/XsHvj9An9blm+cRJ01yQqU+Dw==}
 
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
@@ -2820,8 +2824,8 @@ packages:
     resolution: {integrity: sha512-mQ2o1VayrZ6Jaz8VyP8B7h/hdn2iAnbUOrQh4rTiwbpULhktpD8IpHGBw8Qo2fmv97Z1P3YzLF3X/DkbIHBQmA==}
     engines: {node: '>=8.11.4', npm: 6.10.1}
 
-  memfs@4.15.2:
-    resolution: {integrity: sha512-n8/qP8AT6CtY6kxCPYgYVusT5rS6axaT66dD3tYi2lm+l1iMH7YYpmW8H/qL5bfV4YvInCCgUDAWIRvrNS7kbQ==}
+  memfs@4.17.0:
+    resolution: {integrity: sha512-4eirfZ7thblFmqFjywlTmuWVSvccHAJbn1r8qQLzmTO11qcqpohOjmY2mFce6x7x7WtskzRqApPD0hv+Oa74jg==}
     engines: {node: '>= 4.0.0'}
 
   memoizee@0.4.17:
@@ -4768,14 +4772,14 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.19.121(react@18.3.1)(typescript@5.7.3)':
+  '@fireproof/core@0.19.122(react@18.3.1)(typescript@5.7.3)':
     dependencies:
       '@adviser/cement': 0.3.5(typescript@5.7.3)
       '@fireproof/vendor': 1.0.4
       '@ipld/unixfs': 3.0.0
       charwise: 3.0.1
-      idb: 8.0.1
-      memfs: 4.15.2
+      idb: 8.0.2
+      memfs: 4.17.0
       multiformats: 13.3.1
       p-limit: 6.2.0
       p-map: 7.0.3
@@ -4850,6 +4854,10 @@ snapshots:
     dependencies:
       multiformats: 13.3.1
 
+  '@ipld/dag-pb@4.1.3':
+    dependencies:
+      multiformats: 13.3.1
+
   '@ipld/dag-ucan@3.4.5':
     dependencies:
       '@ipld/dag-cbor': 9.2.2
@@ -4858,7 +4866,7 @@ snapshots:
 
   '@ipld/unixfs@2.2.0':
     dependencies:
-      '@ipld/dag-pb': 4.1.2
+      '@ipld/dag-pb': 4.1.3
       '@multiformats/murmur3': 2.1.8
       '@perma/map': 1.0.3
       actor: 2.3.1
@@ -4868,7 +4876,7 @@ snapshots:
 
   '@ipld/unixfs@3.0.0':
     dependencies:
-      '@ipld/dag-pb': 4.1.2
+      '@ipld/dag-pb': 4.1.3
       '@multiformats/murmur3': 2.1.8
       '@perma/map': 1.0.3
       actor: 2.3.1
@@ -4911,7 +4919,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@jsonjoy.com/json-pack@1.1.0(tslib@2.8.1)':
+  '@jsonjoy.com/json-pack@1.1.1(tslib@2.8.1)':
     dependencies:
       '@jsonjoy.com/base64': 1.1.2(tslib@2.8.1)
       '@jsonjoy.com/util': 1.5.0(tslib@2.8.1)
@@ -6673,7 +6681,7 @@ snapshots:
 
   idb-keyval@6.2.1: {}
 
-  idb@8.0.1: {}
+  idb@8.0.2: {}
 
   ieee754@1.2.1: {}
 
@@ -7091,7 +7099,7 @@ snapshots:
 
   lodash@4.17.21: {}
 
-  long@5.2.3: {}
+  long@5.2.5: {}
 
   loose-envify@1.4.0:
     dependencies:
@@ -7122,9 +7130,9 @@ snapshots:
       is-nan-x: 2.1.1
       to-number-x: 3.2.2
 
-  memfs@4.15.2:
+  memfs@4.17.0:
     dependencies:
-      '@jsonjoy.com/json-pack': 1.1.0(tslib@2.8.1)
+      '@jsonjoy.com/json-pack': 1.1.1(tslib@2.8.1)
       '@jsonjoy.com/util': 1.5.0(tslib@2.8.1)
       tree-dump: 1.0.2(tslib@2.8.1)
       tslib: 2.8.1
@@ -7558,7 +7566,7 @@ snapshots:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/node': 22.12.0
-      long: 5.2.3
+      long: 5.2.5
 
   protons-runtime@5.5.0:
     dependencies:
