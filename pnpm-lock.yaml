@@ -15,8 +15,8 @@ importers:
         specifier: ^3.744.0
         version: 3.744.0
       '@fireproof/core':
-        specifier: 0.19.122
-        version: 0.19.122(react@18.3.1)(typescript@5.7.3)
+        specifier: 0.19.123
+        version: 0.19.123(react@18.3.1)(typescript@5.7.3)
       '@fireproof/vendor':
         specifier: 1.0.4
         version: 1.0.4
@@ -1172,8 +1172,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@0.19.122':
-    resolution: {integrity: sha512-u+UsIhcldAtBcX9br0w4nBbT40j1uOMFCv57yob0vAABrF5Czta6fbbM+HIcvPBj+TNJItpiL6YDXeQpDf8zGg==}
+  '@fireproof/core@0.19.123':
+    resolution: {integrity: sha512-/VkyurTvOIubsCyYitpRHRrcl9nmwJ2TOmjDld48JtJ1WYLqb+TW9zrwYY1weCPKy3GmC/JBqFUvYlXiXh53mQ==}
     peerDependencies:
       react: ^18.3.1
 
@@ -3052,8 +3052,8 @@ packages:
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
 
-  long@5.2.5:
-    resolution: {integrity: sha512-e0r9YBBgNCq1D1o5Dp8FMH0N5hsFtXDBiVa0qoJPHpakvZkmDKPRoGffZJII/XsHvj9An9blm+cRJ01yQqU+Dw==}
+  long@5.3.0:
+    resolution: {integrity: sha512-5vvY5yF1zF/kXk+L94FRiTDa1Znom46UjPCH6/XbSvS8zBKMFBHTJk8KDMqJ+2J6QezQFi7k1k8v21ClJYHPaw==}
 
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
@@ -5114,7 +5114,7 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.19.122(react@18.3.1)(typescript@5.7.3)':
+  '@fireproof/core@0.19.123(react@18.3.1)(typescript@5.7.3)':
     dependencies:
       '@adviser/cement': 0.3.13(typescript@5.7.3)
       '@fireproof/vendor': 1.0.4
@@ -7528,7 +7528,7 @@ snapshots:
 
   lodash@4.17.21: {}
 
-  long@5.2.5: {}
+  long@5.3.0: {}
 
   loose-envify@1.4.0:
     dependencies:
@@ -7993,7 +7993,7 @@ snapshots:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/node': 22.13.1
-      long: 5.2.5
+      long: 5.3.0
 
   protons-runtime@5.5.0:
     dependencies:
