@@ -40,7 +40,7 @@ export const rawConnect: ConnectFunction = (
   remoteDbName = "",
   url = "fireproof://cloud.fireproof.direct"
 ) => {
-  const { sthis, blockstore, name: dbName } = db;
+  const { sthis, name: dbName } = db;
   if (!dbName) {
     throw new Error("dbName is required");
   }
@@ -58,7 +58,7 @@ export const rawConnect: ConnectFunction = (
   return connectionCache.get(fpUrl).once(() => {
     makeKeyBagUrlExtractable(sthis);
     const connection = connectionFactory(sthis, fpUrl);
-    connection.connect_X(blockstore);
+    connection.connect(db.ledger.crdt.blockstore);
     return connection;
   });
 };
@@ -117,7 +117,7 @@ export function connect(
 
       // window.open(connectURI.toString(), "_blank");
     }
-    connection.dashboardUrl = URI.from(connectURI);
+    connection.context.set("dashboardUrl", connectURI.toString());
     return connection;
   });
 }

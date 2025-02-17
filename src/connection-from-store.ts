@@ -30,25 +30,33 @@ export class ConnectionFromStore extends bs.ConnectionBase {
   }
   async onConnect(): Promise<void> {
     this.logger.Debug().Msg("onConnect-start");
-    const stores = {
-      base: this.url,
-      // data: this.urlData,
-      // meta: this.urlMeta,
-    };
+    // const stores = {
+    //   base: this.url,
+    //   // data: this.urlData,
+    //   // meta: this.urlMeta,
+    // };
     const rName = this.url.getParamResult("name");
     if (rName.isErr()) {
       throw this.logger.Error().Err(rName).Msg("missing Parameter").AsError();
     }
-    const storeRuntime = bs.toStoreRuntime({ stores }, this.sthis);
-    const loader = {
-      name: rName.Ok(),
-      ebOpts: {
-        logger: this.logger,
-        store: { stores },
-        storeRuntime,
-      },
-      sthis: this.sthis,
-    } as bs.Loadable;
+    const storeRuntime = bs.toStoreRuntime(this.sthis);
+    const loader: bs.StoreFactoryItem = {
+      url: this.url,
+      loader: {
+        ebOpts: {
+          logger: this.logger,
+          storeUrls: {
+            data: this.url,
+            meta: this.url,
+            file: this.url,
+            wal: this.url,
+          },
+          // store: { stores },
+          storeRuntime,
+        } as bs.Loadable["ebOpts"],
+        sthis: this.sthis,
+      } as bs.Loadable,
+    };
 
     this.stores = {
       data: await storeRuntime.makeDataStore(loader),

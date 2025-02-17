@@ -1,5 +1,5 @@
-import { exception2Result, KeyedResolvOnce, Result, URI } from "@adviser/cement";
-import { Logger, SuperThis, NotFoundError, ensureLogger, rt, isNotFoundError } from "@fireproof/core";
+import { exception2Result, KeyedResolvOnce, Logger, Result, URI } from "@adviser/cement";
+import { SuperThis, NotFoundError, ensureLogger, rt, isNotFoundError } from "@fireproof/core";
 import { getStore, bs } from "@fireproof/core";
 import { DID } from "@ucanto/core";
 import { ConnectionView, Delegation, Principal } from "@ucanto/interface";
@@ -12,6 +12,7 @@ import * as Client from "./client.js";
 import { Server, Service } from "./types.js";
 import stateStore from "./store/state/index.js";
 import { agentProofs, extractDelegation } from "./common.js";
+import { AddKeyToDbMetaGateway } from "../meta-key-hack.js";
 
 export class UCANGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -152,9 +153,11 @@ export class UCANGateway implements bs.Gateway {
       }
 
       case "meta": {
-        const bodyWithCrypto = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
-        if (bodyWithCrypto.isErr()) throw bodyWithCrypto.Err();
-        const metadata = bodyWithCrypto.Ok();
+        // attachKeyToMeta
+        // const bodyWithCrypto = await attachKeyToMeta(this.sthis, body);
+        // if (bodyWithCrypto.isErr()) throw bodyWithCrypto.Err();
+        // const metadata = bodyWithCrypto // .Ok();
+        const metadata = body;
 
         // const cid = CID.parse(key).toV1();
         const event = await Client.createClockEvent({ metadata });
@@ -265,14 +268,17 @@ export class UCANGateway implements bs.Gateway {
 
         if (!res) throw new NotFoundError();
         const metadata = await Client.metadataFromClockEvent(res);
-        const resKeyInfo = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, metadata);
 
-        this.logger.Debug().Any("meta", metadata).Msg("Meta (event) decoded");
+        // deserializeMetaWithKeySideEffect(this.sthis, metadata, loader: bs.Loadable): Promise<Result<Uint8Array>> {
 
-        if (resKeyInfo.isErr()) {
-          this.logger.Error().Err(resKeyInfo).Any("body", metadata).Msg("Error in setCryptoKeyFromGatewayMetaPayload");
-          throw resKeyInfo.Err();
-        }
+        // const resKeyInfo = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, metadata);
+
+        // this.logger.Debug().Any("meta", metadata).Msg("Meta (event) decoded");
+
+        // if (resKeyInfo.isErr()) {
+        //   this.logger.Error().Err(resKeyInfo).Any("body", metadata).Msg("Error in setCryptoKeyFromGatewayMetaPayload");
+        //   throw resKeyInfo.Err();
+        // }
 
         return metadata;
       }
@@ -332,6 +338,15 @@ export class UCANGateway implements bs.Gateway {
     });
   }
 
+  async getPlain(uri: URI, key: string): Promise<Result<Uint8Array>> {
+    const url = uri.build().setParam("key", key).URI();
+    const dbFile = this.sthis.pathOps.join(rt.getPath(url, this.sthis), rt.getFileName(url, this.sthis));
+    this.logger.Debug().Url(url).Str("dbFile", dbFile).Msg("get");
+    const buffer = await this.get(url);
+    this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer).Msg("got");
+    return buffer;
+  }
+
   ////////////////////////////////////////
   // AGENT
   ////////////////////////////////////////
@@ -350,38 +365,15 @@ export class UCANGateway implements bs.Gateway {
   }
 }
 
-export class UCANTestStore implements bs.TestGateway {
-  readonly logger: Logger;
-  readonly sthis: SuperThis;
-  readonly gateway: bs.Gateway;
-  constructor(gw: bs.Gateway, sthis: SuperThis) {
-    this.sthis = sthis;
-    this.logger = ensureLogger(sthis, "PartyKitTestStore");
-    this.gateway = gw;
-  }
-  async get(uri: URI, key: string): Promise<Uint8Array> {
-    const url = uri.build().setParam("key", key).URI();
-    const dbFile = this.sthis.pathOps.join(rt.getPath(url, this.sthis), rt.getFileName(url, this.sthis));
-    this.logger.Debug().Url(url).Str("dbFile", dbFile).Msg("get");
-    const buffer = await this.gateway.get(url);
-    this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer).Msg("got");
-    return buffer.Ok();
-  }
-}
-
 const onceRegisterPartyKitStoreProtocol = new KeyedResolvOnce<() => void>();
 export function registerUCANStoreProtocol(protocol = "ucan:", overrideBaseURL?: string) {
   return onceRegisterPartyKitStoreProtocol.get(protocol).once(() => {
     URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
       protocol,
-      overrideBaseURL,
-      gateway: async (sthis) => {
-        return new UCANGateway(sthis);
-      },
-      test: async (sthis: SuperThis) => {
-        const gateway = new UCANGateway(sthis);
-        return new UCANTestStore(gateway, sthis);
+      defaultURI: () => URI.from(overrideBaseURL || `${protocol}://localhost`),
+      serdegateway: async (sthis) => {
+        return new AddKeyToDbMetaGateway(new UCANGateway(sthis));
       },
     });
   });

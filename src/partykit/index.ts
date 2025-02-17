@@ -32,7 +32,7 @@ export const connect: ConnectFunction = (
   remoteDbName = "",
   url = "http://localhost:1999?protocol=ws"
 ) => {
-  const { sthis, blockstore, name: dbName } = db;
+  const { sthis, name: dbName } = db;
   if (!dbName) {
     throw new Error("dbName is required");
   }
@@ -45,7 +45,7 @@ export const connect: ConnectFunction = (
   return connectionCache.get(fpUrl).once(() => {
     makeKeyBagUrlExtractable(sthis);
     const connection = connectionFactory(sthis, fpUrl);
-    connection.connect_X(blockstore);
+    connection.connect(db.ledger.crdt.blockstore);
     return connection;
   });
 };

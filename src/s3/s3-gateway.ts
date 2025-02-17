@@ -1,4 +1,4 @@
-import { KeyedResolvOnce, Result, URI } from "@adviser/cement";
+import { KeyedResolvOnce, Logger, Result, URI } from "@adviser/cement";
 import {
   CreateBucketCommand,
   DeleteObjectCommand,
@@ -11,7 +11,7 @@ import {
   S3ClientConfig,
 } from "@aws-sdk/client-s3";
 import { AwsCredentialIdentity } from "@smithy/types";
-import { bs, rt, ensureLogger, getStore, Logger, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
+import { bs, rt, ensureLogger, getStore, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
 
 export const S3_VERSION = "v0.1-s3";
 
@@ -213,49 +213,29 @@ export class S3Gateway implements bs.Gateway {
     );
     return Result.Ok(undefined);
   }
-}
 
-export class S3TestStore implements bs.TestGateway {
-  readonly logger: Logger;
-  readonly sthis: SuperThis;
-  readonly gateway: bs.Gateway;
-  constructor(sthis: SuperThis, gw: bs.Gateway) {
-    this.sthis = ensureSuperLog(sthis, "S3TestStore");
-    this.logger = this.sthis.logger;
-    this.gateway = gw;
-  }
-  async get(iurl: URI, key: string): Promise<Uint8Array> {
+  async getPlain(iurl: URI, key: string): Promise<Result<Uint8Array>> {
     const url = iurl.build().setParam("key", key).URI();
     const dbFile = this.sthis.pathOps.join(rt.getPath(url, this.sthis), rt.getFileName(url, this.sthis));
     this.logger.Debug().Url(url).Str("dbFile", dbFile).Msg("get");
-    const buffer = await this.gateway.get(url);
+    const buffer = await this.get(url);
     this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer).Msg("got");
-    return buffer.Ok();
+    return buffer;
   }
 }
 
-export interface versionUnregister {
-  (): void;
-  readonly version: string;
-}
+// export interface versionUnregister {
+//   (): void;
+//   readonly version: string;
+// }
 
-export function registerS3StoreProtocol(protocol = "s3:", overrideBaseURL?: string): versionUnregister {
+export function registerS3StoreProtocol(protocol = "s3:", overrideBaseURL?: string) {
   // URI.protocolHasHostpart(protocol);
-  const unreg: versionUnregister = (() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const _f: any = bs.registerStoreProtocol({
-      protocol,
-      overrideBaseURL,
-      gateway: async (sthis) => {
-        return new S3Gateway(sthis);
-      },
-      test: async (sthis: SuperThis) => {
-        const gateway = new S3Gateway(sthis);
-        return new S3TestStore(sthis, gateway);
-      },
-    });
-    _f.version = S3_VERSION;
-    return _f;
-  })();
-  return unreg;
+  return bs.registerStoreProtocol({
+    protocol,
+    defaultURI: () => URI.from(overrideBaseURL || `${protocol}://localhost?version=${S3_VERSION}`),
+    gateway: async (sthis) => {
+      return new S3Gateway(sthis);
+    },
+  });
 }

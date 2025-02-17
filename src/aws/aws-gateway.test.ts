@@ -1,4 +1,4 @@
-import { fireproof, Database } from "@fireproof/core";
+import { fireproof, Database, ConfigOpts } from "@fireproof/core";
 import { registerAWSStoreProtocol } from "./gateway.js";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { smokeDB } from "../../tests/helper.js";
@@ -27,36 +27,34 @@ describe("AWSGateway", () => {
 
   it("should initialize and perform basic operations", async () => {
     // Initialize the database with AWS configuration
-    const config = {
-      store: {
-        stores: {
-          base: process.env.FP_STORAGE_URL || "aws://aws",
-        },
+    const config: ConfigOpts = {
+      storeUrls: {
+        base: process.env.FP_STORAGE_URL || "aws://aws",
       },
     };
     // console.log("Fireproof config:", JSON.stringify(config, null, 2));
     db = fireproof("aws-test-db" + Math.random().toString(36).substring(7), config);
 
-    const loader = db.blockstore.loader;
+    const loader = db.ledger.crdt.blockstore.loader;
     // Assert that loader has ebOpts.store.stores
     expect(loader).toBeDefined();
     if (!loader) {
       throw new Error("Loader is not defined");
     }
     expect(loader.ebOpts).toBeDefined();
-    expect(loader.ebOpts.store).toBeDefined();
-    expect(loader.ebOpts.store.stores).toBeDefined();
-    if (!loader.ebOpts.store.stores) {
-      throw new Error("Loader stores is not defined");
-    }
-    if (!loader.ebOpts.store.stores.base) {
-      throw new Error("Loader stores.base is not defined");
-    }
+    expect(loader.ebOpts.storeUrls).toBeDefined();
+    // expect(loader.ebOpts.store.stores).toBeDefined();
+    // if (!loader.ebOpts.store.stores) {
+    //   throw new Error("Loader stores is not defined");
+    // }
+    // if (!loader.ebOpts.store.stores.base) {
+    //   throw new Error("Loader stores.base is not defined");
+    // }
 
     // console.log("Loader stores:", loader.ebOpts.store.stores);
 
     // Test base URL configuration
-    const baseUrl = URI.from(loader.ebOpts.store.stores.base.toString());
+    const baseUrl = URI.from(loader.ebOpts.storeUrls.data.toString());
     expect(baseUrl.protocol).toBe("aws:");
     expect(baseUrl.hostname).toBe("aws");
 

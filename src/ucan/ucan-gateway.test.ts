@@ -1,5 +1,5 @@
 import { URI } from "@adviser/cement";
-import { fireproof, Database } from "@fireproof/core";
+import { fireproof, Database, ConfigOpts } from "@fireproof/core";
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
 
 import { registerUCANStoreProtocol } from "./ucan-gateway.js";
@@ -25,11 +25,9 @@ describe("UCANGateway", () => {
   beforeEach(async () => {
     uri = URI.from(process.env.FP_STORAGE_URL);
 
-    const config = {
-      store: {
-        stores: {
-          base: process.env.FP_STORAGE_URL || "",
-        },
+    const config: ConfigOpts = {
+      storeUrls: {
+        base: process.env.FP_STORAGE_URL || "",
       },
     };
 
@@ -47,7 +45,7 @@ describe("UCANGateway", () => {
   });
 
   it("should have loader and options", () => {
-    const loader = db.blockstore?.loader;
+    const loader = db.ledger.crdt.blockstore?.loader;
     expect(loader).toBeDefined();
 
     if (!loader) {
@@ -55,19 +53,10 @@ describe("UCANGateway", () => {
     }
 
     expect(loader.ebOpts).toBeDefined();
-    expect(loader.ebOpts.store).toBeDefined();
-    expect(loader.ebOpts.store.stores).toBeDefined();
-
-    if (!loader.ebOpts.store.stores) {
-      throw new Error("Loader stores is not defined");
-    }
-
-    if (!loader.ebOpts.store.stores.base) {
-      throw new Error("Loader stores.base is not defined");
-    }
+    expect(loader.ebOpts.storeUrls).toBeDefined();
 
     // Test base URL configuration
-    const baseUrl = URI.from(loader.ebOpts.store.stores.base.toString());
+    const baseUrl = URI.from(loader.ebOpts.storeUrls.data.toString());
     expect(baseUrl.protocol).toBe("ucan:");
     expect(baseUrl.hostname).toBe("localhost");
     expect(baseUrl.port).toBe("8787");

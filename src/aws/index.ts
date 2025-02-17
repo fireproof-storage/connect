@@ -30,7 +30,7 @@ export const connect: ConnectFunction = (
   webSocketUrl = "wss://fufauby0ii.execute-api.us-east-2.amazonaws.com/Prod",
   dataUrl = "https://fp1-uploads-201698179963.s3.us-east-2.amazonaws.com"
 ) => {
-  const { sthis, blockstore, name: dbName } = db;
+  const { sthis, name: dbName } = db;
   if (!dbName) {
     throw new Error("dbName is required");
   }
@@ -46,7 +46,7 @@ export const connect: ConnectFunction = (
   return connectionCache.get(urlObj.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
     const connection = connectionFactory(sthis, urlObj);
-    connection.connect_X(blockstore);
+    connection.connect(db.ledger.crdt.blockstore);
     return connection;
   });
 };
