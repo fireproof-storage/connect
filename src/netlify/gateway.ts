@@ -1,5 +1,6 @@
-import { KeyedResolvOnce, Result, URI, BuildURI, exception2Result } from "@adviser/cement";
-import { bs, getStore, Logger, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
+import { KeyedResolvOnce, Result, URI, BuildURI, exception2Result, Logger } from "@adviser/cement";
+import { bs, getStore, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
+import { AddKeyToDbMetaGateway } from "../meta-key-hack.js";
 
 export class NetlifyGateway implements bs.Gateway {
   readonly sthis: SuperThis;
@@ -93,13 +94,13 @@ export class NetlifyGateway implements bs.Gateway {
         fetchUrl.setParam("car", key);
         break;
     }
-    if (store === "meta") {
-      const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
-      if (bodyRes.isErr()) {
-        return Result.Err(bodyRes.Err());
-      }
-      body = bodyRes.Ok();
-    }
+    // if (store === "meta") {
+    //   const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
+    //   if (bodyRes.isErr()) {
+    //     return Result.Err(bodyRes.Err());
+    //   }
+    //   body = bodyRes.Ok();
+    // }
 
     const done = await fetch(fetchUrl.asURL(), { method: "PUT", body });
     if (!done.ok) {
@@ -150,12 +151,12 @@ export class NetlifyGateway implements bs.Gateway {
     }
 
     const data = new Uint8Array(await response.arrayBuffer());
-    if (store === "meta") {
-      const res = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
-      if (res.isErr()) {
-        return this.logger.Error().Url(url).Err(res).Msg("Failed to set crypto key").ResultError();
-      }
-    }
+    // if (store === "meta") {
+    //   const res = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
+    //   if (res.isErr()) {
+    //     return this.logger.Error().Url(url).Err(res).Msg("Failed to set crypto key").ResultError();
+    //   }
+    // }
     return Result.Ok(data);
   }
 
@@ -221,23 +222,11 @@ export class NetlifyGateway implements bs.Gateway {
       clearTimeout(timeoutId);
     });
   }
-}
 
-export class NetlifyTestStore implements bs.TestGateway {
-  readonly logger: Logger;
-  readonly sthis: SuperThis;
-  readonly gateway: bs.Gateway;
-
-  constructor(sthis: SuperThis, gw: bs.Gateway) {
-    this.sthis = ensureSuperLog(sthis, "NetlifyTestStore");
-    this.logger = this.sthis.logger;
-    this.gateway = gw;
-  }
-
-  async get(iurl: URI, key: string): Promise<Uint8Array> {
+  async getPlain(iurl: URI, key: string): Promise<Result<Uint8Array>> {
     const url = iurl.build().setParam("key", key).URI();
-    const buffer = await this.gateway.get(url);
-    return buffer.Ok();
+    const buffer = await this.get(url);
+    return buffer;
   }
 }
 
@@ -247,13 +236,9 @@ export function registerNetlifyStoreProtocol(protocol = "netlify:", overrideBase
     URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
       protocol,
-      overrideBaseURL,
-      gateway: async (sthis): Promise<bs.Gateway> => {
-        return new NetlifyGateway(sthis);
-      },
-      test: async (sthis: SuperThis) => {
-        const gateway = new NetlifyGateway(sthis);
-        return new NetlifyTestStore(sthis, gateway);
+      defaultURI: () => URI.from(overrideBaseURL || `${protocol}://localhost`),
+      serdegateway: async (sthis) => {
+        return new AddKeyToDbMetaGateway(new NetlifyGateway(sthis), "v1");
       },
     });
   });

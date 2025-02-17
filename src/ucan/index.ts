@@ -52,7 +52,7 @@ export async function connect(
   connection: bs.Connection;
   server: Server;
 }> {
-  const { sthis, blockstore, name: dbName } = db;
+  const { sthis, name: dbName } = db;
   const { email } = params;
 
   // URL param validation
@@ -92,7 +92,7 @@ export async function connect(
   const connection = await connectionCache.get(fpUrl.toString()).once(async () => {
     makeKeyBagUrlExtractable(sthis);
     const conn = connectionFactory(sthis, fpUrl);
-    await conn.connect_X(blockstore);
+    await conn.connect(db.ledger.crdt.blockstore);
     return conn;
   });
 

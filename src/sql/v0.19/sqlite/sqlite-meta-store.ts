@@ -63,7 +63,7 @@ export class V0_19_SqliteMetaStore implements MetaSQLStore {
     this.sthis = ensureSuperLog(sthis, "V0_19_SqliteMetaStore", { url: dbConn.opts.url });
     this.logger = this.sthis.logger;
   }
-  async startx(url: URI): Promise<URI> {
+  async start(url: URI): Promise<URI> {
     this.logger.Debug().Url(url).Msg("starting");
     await this.dbConn.connect();
     this.logger.Debug().Url(url).Msg("connected");

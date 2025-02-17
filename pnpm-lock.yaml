@@ -9,17 +9,17 @@ importers:
   .:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.3.13
-        version: 0.3.13(typescript@5.7.3)
+        specifier: ^0.3.19
+        version: 0.3.19(typescript@5.7.3)
       '@aws-sdk/client-s3':
         specifier: ^3.744.0
         version: 3.744.0
       '@fireproof/core':
-        specifier: 0.19.122
-        version: 0.19.122(react@18.3.1)(typescript@5.7.3)
+        specifier: ^0.20.0-dev-preview-29
+        version: 0.20.0-dev-preview-29(@adviser/cement@0.3.19(typescript@5.7.3))(react@18.3.1)
       '@fireproof/vendor':
-        specifier: 1.0.4
-        version: 1.0.4
+        specifier: ^1.1.0-dev
+        version: 1.1.0-dev
       '@ipld/dag-ucan':
         specifier: ^3.4.5
         version: 3.4.5
@@ -108,6 +108,9 @@ importers:
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.20.0
+      '@ipld/dag-cbor':
+        specifier: ^9.2.2
+        version: 9.2.2
       '@smithy/types':
         specifier: ^4.1.0
         version: 4.1.0
@@ -180,8 +183,8 @@ importers:
 
 packages:
 
-  '@adviser/cement@0.3.13':
-    resolution: {integrity: sha512-yPdtuC8zl1ODVI0QQJiLiIy2gfq026IK3c9NvpZgBzXFJh2Gj+clz0WLmQboR5p0uG0lrYRAKt57L+YlXB09HQ==}
+  '@adviser/cement@0.3.19':
+    resolution: {integrity: sha512-vEAMdyzgeBbZNxIvxQgH0yMNaEneQljcgLxFrI/xmk+5ti7qDTlaDYdEdLBMmv/O3vwcIM2lqUfJnCkQtO/t3A==}
     engines: {node: '>=20'}
 
   '@aws-crypto/crc32@5.2.0':
@@ -1172,13 +1175,14 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@0.19.122':
-    resolution: {integrity: sha512-u+UsIhcldAtBcX9br0w4nBbT40j1uOMFCv57yob0vAABrF5Czta6fbbM+HIcvPBj+TNJItpiL6YDXeQpDf8zGg==}
+  '@fireproof/core@0.20.0-dev-preview-29':
+    resolution: {integrity: sha512-fjhopvC/DZ5SC1McD+QFSnxf29L+12HDmgksubbAjfaa2UmKPhlq3sG4Gvua7UvuLH34R6Yfwjxo5+kLS1QOYw==}
     peerDependencies:
-      react: ^18.3.1
+      '@adviser/cement': ~0.3.0
+      react: '>=18.0.0'
 
-  '@fireproof/vendor@1.0.4':
-    resolution: {integrity: sha512-F8yYaYGRNrtYo4KyMzMuKwI5mGieYMkI23KnYkQ3ixKhIu3J6qRGZsuROFjOv2zWjQvtPronvqyxNc9P5km31g==}
+  '@fireproof/vendor@1.1.0-dev':
+    resolution: {integrity: sha512-Ouc/ZlJNmlJ+rQ00Ayebbqp+YrHbwtO3lD/UI8QFg1xOS99k78QGXkf4bps+1+ie7ADKrkYB7t75MEpJtZIRpQ==}
 
   '@hapi/hoek@9.3.0':
     resolution: {integrity: sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==}
@@ -1263,24 +1267,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
-
-  '@jsonjoy.com/base64@1.1.2':
-    resolution: {integrity: sha512-q6XAnWQDIMA3+FTiOYajoYqySkO+JSat0ytXGSuRdq9uXE7o92gzuQwQM14xaCRlBLGq3v5miDGC4vkVTn54xA==}
-    engines: {node: '>=10.0'}
-    peerDependencies:
-      tslib: '2'
-
-  '@jsonjoy.com/json-pack@1.1.1':
-    resolution: {integrity: sha512-osjeBqMJ2lb/j/M8NCPjs1ylqWIcTRTycIhVB5pt6LgzgeRSb0YRZ7j9RfA8wIUrsr/medIuhVyonXRZWLyfdw==}
-    engines: {node: '>=10.0'}
-    peerDependencies:
-      tslib: '2'
-
-  '@jsonjoy.com/util@1.5.0':
-    resolution: {integrity: sha512-ojoNsrIuPI9g6o8UxhraZQSyF2ByJanAY4cTFbc8Mf2AXEF4aQRGY1dJxyJpuyav8r9FGflEt/Ff3u5Nt6YMPA==}
-    engines: {node: '>=10.0'}
-    peerDependencies:
-      tslib: '2'
 
   '@jspm/core@2.1.0':
     resolution: {integrity: sha512-3sRl+pkyFY/kLmHl0cgHiFp2xEqErA8N3ECjMs7serSUBmoJ70lBa0PG5t0IM6WJgdZNyyI0R8YFfi5wM8+mzg==}
@@ -2701,10 +2687,6 @@ packages:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
     engines: {node: '>=16.17.0'}
 
-  hyperdyperid@1.2.0:
-    resolution: {integrity: sha512-Y93lCzHYgGWdrJ66yIktxiaGULYc6oGiABxhcO5AufBeOyoIdZF7bIfLaOrbM0iGIOXQQgxxRrFEnb+Y6w1n4A==}
-    engines: {node: '>=10.18'}
-
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
@@ -2752,6 +2734,9 @@ packages:
 
   interface-store@6.0.2:
     resolution: {integrity: sha512-KSFCXtBlNoG0hzwNa0RmhHtrdhzexp+S+UY2s0rWTBJyfdEIgn6i6Zl9otVqrcFYbYrneBT7hbmHQ8gE0C3umA==}
+
+  ipfs-unixfs-exporter@13.6.1:
+    resolution: {integrity: sha512-pYPI4oBTWao2//sFzAL0pURyojn79q/u5BuK6L5/nVbVUQVw6DcVP5uB1ySdWlTM2H+0Zlhp9+OL9aJBRIICpg==}
 
   ipfs-unixfs@11.2.0:
     resolution: {integrity: sha512-J8FN1qM5nfrDo8sQKQwfj0+brTg1uBfZK2vY9hxci33lcl3BFrsELS9+1+4q/8tO1ASKfxZO8W3Pi2O4sVX2Lg==}
@@ -3081,10 +3066,6 @@ packages:
   math-sign-x@4.2.2:
     resolution: {integrity: sha512-mQ2o1VayrZ6Jaz8VyP8B7h/hdn2iAnbUOrQh4rTiwbpULhktpD8IpHGBw8Qo2fmv97Z1P3YzLF3X/DkbIHBQmA==}
     engines: {node: '>=8.11.4', npm: 6.10.1}
-
-  memfs@4.17.0:
-    resolution: {integrity: sha512-4eirfZ7thblFmqFjywlTmuWVSvccHAJbn1r8qQLzmTO11qcqpohOjmY2mFce6x7x7WtskzRqApPD0hv+Oa74jg==}
-    engines: {node: '>= 4.0.0'}
 
   memoizee@0.4.17:
     resolution: {integrity: sha512-DGqD7Hjpi/1or4F/aYAspXKNm5Yili0QDAFAY4QYvpqpgiY6+1jOfqpmByzjxbWd/T9mChbCArXAbDAsTm5oXA==}
@@ -3746,12 +3727,6 @@ packages:
   thenify@3.3.1:
     resolution: {integrity: sha512-RVZSIV5IG10Hk3enotrhvz0T9em6cyHBLkH/YAZuKqd8hRkKhSfCGIcP2KUY0EPxndzANBmNllzWPwak+bheSw==}
 
-  thingies@1.21.0:
-    resolution: {integrity: sha512-hsqsJsFMsV+aD4s3CWKk85ep/3I9XzYV/IXaSouJMYIoDlgyi11cBhsqYe9/geRfB0YIikBQg6raRaM+nIMP9g==}
-    engines: {node: '>=10.18'}
-    peerDependencies:
-      tslib: ^2
-
   timers-ext@0.1.8:
     resolution: {integrity: sha512-wFH7+SEAcKfJpfLPkrgMPvvwnEtj8W4IurvEyrKsDleXnKLCDw71w8jltvfLa8Rm4qQxxT4jmDBYbJG/z7qoww==}
     engines: {node: '>=0.12'}
@@ -3827,12 +3802,6 @@ packages:
 
   tr46@1.0.1:
     resolution: {integrity: sha512-dTpowEjclQ7Kgx5SdBkqRzVhERQXov8/l9Ft9dVM9fmg0W0KQSVaXX9T4i6twCPNtYiZM53lpSSUAwJbFPOHxA==}
-
-  tree-dump@1.0.2:
-    resolution: {integrity: sha512-dpev9ABuLWdEubk+cIaI9cHwRNNDjkBBLXTwI4UCUFdQ5xXKqNXoK4FEciw/vxf+NQ7Cb7sGUyeUtORvHIdRXQ==}
-    engines: {node: '>=10.0'}
-    peerDependencies:
-      tslib: '2'
 
   tree-kill@1.2.2:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
@@ -4194,7 +4163,7 @@ packages:
 
 snapshots:
 
-  '@adviser/cement@0.3.13(typescript@5.7.3)':
+  '@adviser/cement@0.3.19(typescript@5.7.3)':
     dependencies:
       ts-essentials: 10.0.4(typescript@5.7.3)
       yaml: 2.7.0
@@ -5114,40 +5083,29 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.19.122(react@18.3.1)(typescript@5.7.3)':
+  '@fireproof/core@0.20.0-dev-preview-29(@adviser/cement@0.3.19(typescript@5.7.3))(react@18.3.1)':
     dependencies:
-      '@adviser/cement': 0.3.13(typescript@5.7.3)
-      '@fireproof/vendor': 1.0.4
+      '@adviser/cement': 0.3.19(typescript@5.7.3)
+      '@fireproof/vendor': 1.1.0-dev
+      '@ipld/car': 5.4.0
+      '@ipld/dag-cbor': 9.2.2
+      '@ipld/dag-json': 10.2.3
       '@ipld/unixfs': 3.0.0
+      cborg: 4.2.8
       charwise: 3.0.1
       idb: 8.0.2
-      memfs: 4.17.0
+      ipfs-unixfs-exporter: 13.6.1
       multiformats: 13.3.1
       p-limit: 6.2.0
       p-map: 7.0.3
       p-retry: 6.2.1
       prolly-trees: 1.0.4
       react: 18.3.1
-    transitivePeerDependencies:
-      - typescript
 
-  '@fireproof/vendor@1.0.4':
+  '@fireproof/vendor@1.1.0-dev':
     dependencies:
-      '@ipld/dag-pb': 4.1.2
-      '@multiformats/murmur3': 2.1.8
-      hamt-sharding: 3.0.6
-      interface-blockstore: 5.3.1
-      ipfs-unixfs: 11.2.0
-      it-filter: 3.1.1
-      it-last: 3.0.6
-      it-map: 3.1.1
-      it-parallel: 3.0.8
-      it-pipe: 3.0.1
-      it-pushable: 3.2.3
+      '@ipld/dag-cbor': 9.2.2
       multiformats: 13.3.1
-      p-queue: 8.0.1
-      progress-events: 1.0.1
-      varint: 6.0.0
 
   '@hapi/hoek@9.3.0': {}
 
@@ -5256,22 +5214,6 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
-
-  '@jsonjoy.com/base64@1.1.2(tslib@2.8.1)':
-    dependencies:
-      tslib: 2.8.1
-
-  '@jsonjoy.com/json-pack@1.1.1(tslib@2.8.1)':
-    dependencies:
-      '@jsonjoy.com/base64': 1.1.2(tslib@2.8.1)
-      '@jsonjoy.com/util': 1.5.0(tslib@2.8.1)
-      hyperdyperid: 1.2.0
-      thingies: 1.21.0(tslib@2.8.1)
-      tslib: 2.8.1
-
-  '@jsonjoy.com/util@1.5.0(tslib@2.8.1)':
-    dependencies:
-      tslib: 2.8.1
 
   '@jspm/core@2.1.0': {}
 
@@ -6087,7 +6029,7 @@ snapshots:
       '@ipld/car': 5.4.0
       '@ipld/dag-cbor': 9.2.2
       archy: 1.0.0
-      cborg: 4.2.7
+      cborg: 4.2.8
       cli-color: 2.0.4
       multiformats: 12.1.3
       sade: 1.8.1
@@ -7102,8 +7044,6 @@ snapshots:
 
   human-signals@5.0.0: {}
 
-  hyperdyperid@1.2.0: {}
-
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
@@ -7153,6 +7093,25 @@ snapshots:
       multiformats: 13.3.1
 
   interface-store@6.0.2: {}
+
+  ipfs-unixfs-exporter@13.6.1:
+    dependencies:
+      '@ipld/dag-cbor': 9.2.2
+      '@ipld/dag-json': 10.2.3
+      '@ipld/dag-pb': 4.1.2
+      '@multiformats/murmur3': 2.1.8
+      hamt-sharding: 3.0.6
+      interface-blockstore: 5.3.1
+      ipfs-unixfs: 11.2.0
+      it-filter: 3.1.1
+      it-last: 3.0.6
+      it-map: 3.1.1
+      it-parallel: 3.0.8
+      it-pipe: 3.0.1
+      it-pushable: 3.2.3
+      multiformats: 13.3.1
+      p-queue: 8.0.1
+      progress-events: 1.0.1
 
   ipfs-unixfs@11.2.0:
     dependencies:
@@ -7558,13 +7517,6 @@ snapshots:
     dependencies:
       is-nan-x: 2.1.1
       to-number-x: 3.2.2
-
-  memfs@4.17.0:
-    dependencies:
-      '@jsonjoy.com/json-pack': 1.1.1(tslib@2.8.1)
-      '@jsonjoy.com/util': 1.5.0(tslib@2.8.1)
-      tree-dump: 1.0.2(tslib@2.8.1)
-      tslib: 2.8.1
 
   memoizee@0.4.17:
     dependencies:
@@ -8325,10 +8277,6 @@ snapshots:
     dependencies:
       any-promise: 1.3.0
 
-  thingies@1.21.0(tslib@2.8.1):
-    dependencies:
-      tslib: 2.8.1
-
   timers-ext@0.1.8:
     dependencies:
       es5-ext: 0.10.64
@@ -8415,10 +8363,6 @@ snapshots:
   tr46@1.0.1:
     dependencies:
       punycode: 2.3.1
-
-  tree-dump@1.0.2(tslib@2.8.1):
-    dependencies:
-      tslib: 2.8.1
 
   tree-kill@1.2.2: {}
 

@@ -13,7 +13,7 @@
     "publish:partykit": "tsx ./publish-package.ts ./dist/partykit/package.json",
     "publish:ucan": "tsx ./publish-package.ts ./dist/ucan/package.json",
     "prebuild": "rm -rf dist",
-    "prepare": "pnpm run build",
+    "xprepare": "pnpm run build",
     "build": "pnpm run '/^build:/' && pnpm run '/^pub:/'",
     "build:tsc": "tsc",
     "build:tsup": "tsup",
@@ -52,6 +52,7 @@
   "license": "Apache-2.0 OR MIT",
   "devDependencies": {
     "@eslint/js": "^9.20.0",
+    "@ipld/dag-cbor": "^9.2.2",
     "@smithy/types": "^4.1.0",
     "@types/better-sqlite3": "^7.6.12",
     "@types/eslint__js": "^8.42.3",
@@ -87,10 +88,10 @@
   },
   "homepage": "https://github.com/fireproof-storage/connect#readme",
   "dependencies": {
-    "@adviser/cement": "^0.3.13",
+    "@adviser/cement": "^0.3.19",
     "@aws-sdk/client-s3": "^3.744.0",
-    "@fireproof/core": "0.19.122",
-    "@fireproof/vendor": "1.0.4",
+    "@fireproof/core": "^0.20.0-dev-preview-29",
+    "@fireproof/vendor": "^1.1.0-dev",
     "@ipld/dag-ucan": "^3.4.5",
     "@jspm/core": "^2.1.0",
     "@netlify/blobs": "^8.1.0",
@@ -128,5 +129,14 @@
       "script": "./dist/ucan/web/index.global.js",
       "types": "./dist/ucan/index.d.ts"
     }
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "es5-ext",
+      "esbuild",
+      "protobufjs",
+      "workerd"
+    ]
   }
 }

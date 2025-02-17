@@ -1,6 +1,7 @@
 import { PartySocket, PartySocketOptions } from "partysocket";
-import { Result, URI, BuildURI, KeyedResolvOnce, runtimeFn, exception2Result } from "@adviser/cement";
-import { bs, ensureLogger, getStore, Logger, rt, SuperThis } from "@fireproof/core";
+import { Result, URI, BuildURI, KeyedResolvOnce, runtimeFn, exception2Result, Logger } from "@adviser/cement";
+import { bs, ensureLogger, getStore, rt, SuperThis } from "@fireproof/core";
+import { AddKeyToDbMetaGateway } from "../meta-key-hack.js";
 
 export class FireproofCloudGateway implements bs.Gateway {
   readonly logger: Logger;
@@ -124,14 +125,14 @@ export class FireproofCloudGateway implements bs.Gateway {
   async put(uri: URI, body: Uint8Array): Promise<Result<void>> {
     await this.ready();
     const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
-    if (store === "meta") {
-      const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
-      if (bodyRes.isErr()) {
-        this.logger.Error().Err(bodyRes.Err()).Msg("Error in addCryptoKeyToGatewayMetaPayload");
-        throw bodyRes.Err();
-      }
-      body = bodyRes.Ok();
-    }
+    // if (store === "meta") {
+    //   const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
+    //   if (bodyRes.isErr()) {
+    //     this.logger.Error().Err(bodyRes.Err()).Msg("Error in addCryptoKeyToGatewayMetaPayload");
+    //     throw bodyRes.Err();
+    //   }
+    //   body = bodyRes.Ok();
+    // }
     const rkey = uri.getParamResult("key");
     if (rkey.isErr()) return Result.Err(rkey.Err());
     const key = rkey.Ok();
@@ -216,18 +217,18 @@ export class FireproofCloudGateway implements bs.Gateway {
         throw new Error(`Failure in downloading ${store}!`);
       }
       const body = new Uint8Array(await response.arrayBuffer());
-      if (store === "meta") {
-        const resKeyInfo = await bs.setCryptoKeyFromGatewayMetaPayload(uri, this.sthis, body);
-        if (resKeyInfo.isErr()) {
-          this.logger
-            .Error()
-            .Url(uri)
-            .Err(resKeyInfo)
-            .Any("body", body)
-            .Msg("Error in setCryptoKeyFromGatewayMetaPayload");
-          throw resKeyInfo.Err();
-        }
-      }
+      // if (store === "meta") {
+      //   const resKeyInfo = await bs.setCryptoKeyFromGatewayMetaPayload(uri, this.sthis, body);
+      //   if (resKeyInfo.isErr()) {
+      //     this.logger
+      //       .Error()
+      //       .Url(uri)
+      //       .Err(resKeyInfo)
+      //       .Any("body", body)
+      //       .Msg("Error in setCryptoKeyFromGatewayMetaPayload");
+      //     throw resKeyInfo.Err();
+      //   }
+      // }
       return body;
     });
   }
@@ -248,6 +249,15 @@ export class FireproofCloudGateway implements bs.Gateway {
       }
       return Result.Ok(undefined);
     });
+  }
+
+  async getPlain(uri: URI, key: string): Promise<Result<Uint8Array>> {
+    const url = uri.build().setParam("key", key).URI();
+    const dbFile = this.sthis.pathOps.join(rt.getPath(url, this.sthis), rt.getFileName(url, this.sthis));
+    this.logger.Debug().Url(url).Str("dbFile", dbFile).Msg("get");
+    const buffer = await this.get(url);
+    this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer).Msg("got");
+    return buffer;
   }
 }
 
@@ -301,38 +311,17 @@ function pkMetaURL(uri: URI, key: string): URI {
   return pkURL(uri, key, "meta");
 }
 
-export class FireproofCloudTestStore implements bs.TestGateway {
-  readonly logger: Logger;
-  readonly sthis: SuperThis;
-  readonly gateway: bs.Gateway;
-  constructor(gw: bs.Gateway, sthis: SuperThis) {
-    this.sthis = sthis;
-    this.logger = ensureLogger(sthis, "FireproofCloudTestStore");
-    this.gateway = gw;
-  }
-  async get(uri: URI, key: string): Promise<Uint8Array> {
-    const url = uri.build().setParam("key", key).URI();
-    const dbFile = this.sthis.pathOps.join(rt.getPath(url, this.sthis), rt.getFileName(url, this.sthis));
-    this.logger.Debug().Url(url).Str("dbFile", dbFile).Msg("get");
-    const buffer = await this.gateway.get(url);
-    this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer).Msg("got");
-    return buffer.Ok();
-  }
-}
-
 const onceRegisterFireproofCloudStoreProtocol = new KeyedResolvOnce<() => void>();
 export function registerFireproofCloudStoreProtocol(protocol = "fireproof:", overrideBaseURL?: string) {
   return onceRegisterFireproofCloudStoreProtocol.get(protocol).once(() => {
     URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
       protocol,
-      overrideBaseURL,
-      gateway: async (sthis) => {
-        return new FireproofCloudGateway(sthis);
+      defaultURI() {
+        return URI.from(overrideBaseURL || "fireproof://localhost:1999");
       },
-      test: async (sthis: SuperThis) => {
-        const gateway = new FireproofCloudGateway(sthis);
-        return new FireproofCloudTestStore(gateway, sthis);
+      serdegateway: async (sthis) => {
+        return new AddKeyToDbMetaGateway(new FireproofCloudGateway(sthis));
       },
     });
   });

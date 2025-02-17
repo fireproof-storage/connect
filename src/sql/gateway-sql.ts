@@ -26,7 +26,7 @@ export class SQLWalGateway implements bs.Gateway {
       this.logger.Debug().Url(baseUrl).Msg("start");
       const conn = await SQLConnectionFactoryx(this.sthis, baseUrl);
       const ws = await WalStoreFactory(this.sthis, conn.dbConn);
-      const upUrl = await ws.startx(conn.url);
+      const upUrl = await ws.start(conn.url);
       this.walSQLStore = ws;
       this.logger.Debug().Url(upUrl).Msg("started");
       return upUrl;
@@ -69,6 +69,18 @@ export class SQLWalGateway implements bs.Gateway {
       await this.walSQLStore.delete(url, { name, branch });
     });
   }
+
+  async getPlain(url: URI, key: string): Promise<Result<Uint8Array>> {
+    const conn = await SQLConnectionFactoryx(this.sthis, url);
+    const name = getName(this.sthis, url);
+    const sqlStore = await WalStoreFactory(this.sthis, conn.dbConn);
+    const surl = await sqlStore.start(url);
+    const records = await sqlStore.select(surl, {
+      name,
+      branch: key,
+    });
+    return Result.Ok(records[0].state);
+  }
 }
 
 export class SQLMetaGateway implements bs.Gateway {
@@ -90,7 +102,7 @@ export class SQLMetaGateway implements bs.Gateway {
       this.logger.Debug().Url(baseUrl).Msg("start");
       const conn = await SQLConnectionFactoryx(this.sthis, baseUrl);
       const ws = await MetaStoreFactory(this.sthis, conn.dbConn);
-      const upUrl = await ws.startx(conn.url);
+      const upUrl = await ws.start(conn.url);
       this.metaSQLStore = ws;
       this.logger.Debug().Url(upUrl).Msg("started");
       return upUrl;
@@ -139,6 +151,18 @@ export class SQLMetaGateway implements bs.Gateway {
       });
     });
   }
+
+  async getPlain(url: URI, key: string): Promise<Result<Uint8Array>> {
+    const conn = await SQLConnectionFactoryx(this.sthis, url);
+    const name = getName(this.sthis, url);
+    const sqlStore = await MetaStoreFactory(this.sthis, conn.dbConn);
+    const surl = await sqlStore.start(url);
+    const records = await sqlStore.select(surl, {
+      name,
+      branch: key,
+    });
+    return Result.Ok(records[0].meta);
+  }
 }
 
 export class SQLDataGateway implements bs.Gateway {
@@ -161,7 +185,7 @@ export class SQLDataGateway implements bs.Gateway {
       this.logger.Debug().Url(baseUrl).Msg("post-sql-connection");
       const ws = await DataStoreFactory(this.sthis, conn.dbConn);
       this.logger.Debug().Url(conn.url).Msg("post-data-store-factory");
-      const upUrl = await ws.startx(conn.url);
+      const upUrl = await ws.start(conn.url);
       this.dataSQLStore = ws;
       this.logger.Debug().Url(upUrl).Msg("started");
       return upUrl;
@@ -203,46 +227,12 @@ export class SQLDataGateway implements bs.Gateway {
       return Result.Ok(undefined);
     });
   }
-}
-
-export class SQLTestStore implements bs.TestGateway {
-  readonly logger: Logger;
-  readonly sthis: SuperThis;
-  constructor(sthis: SuperThis) {
-    this.sthis = ensureSuperLog(sthis, "SQLTestStore");
-    this.logger = this.sthis.logger;
-  }
-  async get(url: URI, key: string): Promise<Uint8Array> {
+  async getPlain(url: URI, key: string): Promise<Result<Uint8Array>> {
     const conn = await SQLConnectionFactoryx(this.sthis, url);
-    const name = getName(this.sthis, url);
-    switch (url.getParam("store")) {
-      case "wal": {
-        const sqlStore = await WalStoreFactory(this.sthis, conn.dbConn);
-        const surl = await sqlStore.startx(url);
-        const records = await sqlStore.select(surl, {
-          name,
-          branch: key,
-        });
-        return records[0].state;
-      }
-      case "meta": {
-        const sqlStore = await MetaStoreFactory(this.sthis, conn.dbConn);
-        const surl = await sqlStore.startx(url);
-        const records = await sqlStore.select(surl, {
-          name,
-          branch: key,
-        });
-        return records[0].meta;
-      }
-      case "data": {
-        const sqlStore = await DataStoreFactory(this.sthis, conn.dbConn);
-        const surl = await sqlStore.startx(url);
-        const records = await sqlStore.select(surl, key);
-        return records[0].data;
-      }
-      default:
-        throw this.logger.Error().Str("key", key).Msg(`Method not implemented`);
-    }
+    const sqlStore = await DataStoreFactory(this.sthis, conn.dbConn);
+    const surl = await sqlStore.start(url);
+    const records = await sqlStore.select(surl, key);
+    return Result.Ok(records[0].data);
   }
 }
 
@@ -275,6 +265,9 @@ class SQLStoreGateway implements bs.Gateway {
   async delete(url: URI): Promise<Result<void, Error>> {
     return (await this.getGateway(url)).delete(url);
   }
+  async getPlain(url: URI, key: string): Promise<Result<Uint8Array, Error>> {
+    return (await this.getGateway(url)).getPlain(url, key);
+  }
 
   readonly walGateway = new ResolveOnce<SQLWalGateway>();
   readonly dataGateway = new ResolveOnce<SQLDataGateway>();
@@ -306,12 +299,13 @@ export function registerSqliteStoreProtocol() {
   return _register.once(() => {
     return bs.registerStoreProtocol({
       protocol: "sqlite:",
+      defaultURI: () => URI.from("sqlite://localhost"),
       gateway: async (sthis) => {
         return new SQLStoreGateway(sthis);
       },
-      test: async (sthis) => {
-        return new SQLTestStore(sthis);
-      },
+      // test: async (sthis) => {
+      //   return new SQLTestStore(sthis);
+      // },
     });
   });
 }

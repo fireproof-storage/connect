@@ -1,5 +1,4 @@
-import { ensureSuperThis, fireproof, SysFileSystem } from "@fireproof/core";
-import { getFileSystem } from "@fireproof/core/node";
+import { ensureSuperThis, fireproof, SysFileSystem, rt } from "@fireproof/core";
 import { registerSqliteStoreProtocol } from "./gateway-sql.js";
 import { V0_19SQL_VERSION } from "./v0.19/version.js";
 import { URI } from "@adviser/cement";
@@ -16,7 +15,7 @@ describe("sqlite", () => {
     return Object.entries({
       store,
       name: my_app(),
-      storekey: `@${my_app()}:${store}@`,
+      storekey: `@${my_app()}-${store}@`,
       taste,
       version: V0_19SQL_VERSION,
     });
@@ -28,7 +27,7 @@ describe("sqlite", () => {
 
   beforeAll(async () => {
     await sthis.start();
-    fsx = await getFileSystem(URI.from("file:///"));
+    fsx = await rt.gw.file.sysFileSystemFactory(URI.from("file:///"));
     registerSqliteStoreProtocol();
     const url = URI.from(process.env.FP_STORAGE_URL || "dummy://");
     taste = url.getParam("taste") || "better-sqlite3";
@@ -43,25 +42,23 @@ describe("sqlite", () => {
     });
 
     const db = fireproof(my_app(), {
-      store: {
-        stores: {
-          base: `${base}?taste=${taste}`,
-        },
+      storeUrls: {
+        base: `${base}?taste=${taste}`,
       },
     });
     // console.log(`>>>>>>>>>>>>>>>file-path`)
     await db.put({ name: "my-app" });
     expect((await fsx.stat(dbFile)).isFile()).toBeTruthy();
     expect(db.name).toBe(my_app());
-    const carStore = await db.blockstore.loader?.carStore();
+    const carStore = await db.ledger.crdt.blockstore.loader?.carStore();
     for (const [k, v] of params("data", taste)) {
       expect(carStore?.url().getParam(k)).toBe(v);
     }
-    const fileStore = await db.blockstore.loader?.fileStore();
+    const fileStore = await db.ledger.crdt.blockstore.loader?.fileStore();
     for (const [k, v] of params("data", taste)) {
       expect(fileStore?.url().getParam(k)).toBe(v);
     }
-    const metaStore = await db.blockstore.loader?.metaStore();
+    const metaStore = await db.ledger.crdt.blockstore.loader?.metaStore();
     for (const [k, v] of params("meta", taste)) {
       expect(metaStore?.url().getParam(k)).toBe(v);
     }
@@ -70,31 +67,37 @@ describe("sqlite", () => {
 
   it("full config path", async () => {
     const db = fireproof(my_app(), {
-      store: {
-        stores: {
-          base: `${base}?taste=${taste}`,
-
+      storeUrls: {
+        base: `${base}?taste=${taste}`,
+        // meta: `${base}/meta?taste=${taste}`,
+        data: {
           meta: `${base}/meta?taste=${taste}`,
           data: `${base}/data?taste=${taste}`,
-          index: `${base}/index?taste=${taste}`,
           wal: `${base}/wal?taste=${taste}`,
         },
+        idx: {
+          meta: `${base}/idx-meta?taste=${taste}`,
+          data: `${base}/idx-data?taste=${taste}`,
+          wal: `${base}/idx-wal?taste=${taste}`,
+        },
+        // wal: `${base}/wal?taste=${taste}`,
       },
     });
     // console.log(`>>>>>>>>>>>>>>>file-path`)
-    await db.put({ name: my_app() });
     expect(db.name).toBe(my_app());
 
-    const carStore = await db.blockstore.loader?.carStore();
+    await db.put({ name: my_app() });
+
+    const carStore = await db.ledger.crdt.blockstore.loader?.carStore();
     for (const [k, v] of params("data", taste)) {
       expect(carStore?.url().getParam(k)).toBe(v);
     }
 
-    const fileStore = await db.blockstore.loader?.fileStore();
+    const fileStore = await db.ledger.crdt.blockstore.loader?.fileStore();
     for (const [k, v] of params("data", taste)) {
       expect(fileStore?.url().getParam(k)).toBe(v);
     }
-    const metaStore = await db.blockstore.loader?.metaStore();
+    const metaStore = await db.ledger.crdt.blockstore.loader?.metaStore();
     for (const [k, v] of params("meta", taste)) {
       expect(metaStore?.url().getParam(k)).toBe(v);
     }

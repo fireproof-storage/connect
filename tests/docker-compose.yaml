@@ -33,11 +33,13 @@ services:
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
       AWS_EC2_METADATA_DISABLED: true
-    command: --endpoint-url http://minio:9000/ s3 mb s3://testbucket
+    entrypoint: ""
+    command: sh -c 'while true; do if `curl -q http://minio:9000/minio/health/live` ; then aws --endpoint-url http://minio:9000/ s3 mb s3://testbucket ;  exit 0; fi ; sleep 5; done'
     depends_on:
       minio:
         condition: service_started
 
+  #docker run  --entrypoint "" -ti amazon/aws-cli  sh -c 'aws help; exit 7'
   #docker run -d -p 9000:9000 --name minio  \
   #                     -e "MINIO_ACCESS_KEY=minioadmin"  \
   #                     -e "MINIO_SECRET_KEY=minioadmin"  \
@@ -65,7 +67,7 @@ services:
 
   wait-for-ready:
     image: curlimages/curl
-    command: "sleep 86400"
+    command: "sh -c 'while true; do curl -f http://netlify:8888 > netlify && curl -f http://minio:9000/minio/health/live > minio && curl -X POST http://ucan:8787 > ucan && curl -f http://partykit:1999 > partykit && echo ready > ready ; ls; sleep 5; done'"
     depends_on:
       netlify:
         condition: service_started
@@ -79,7 +81,7 @@ services:
       test:
         - CMD-SHELL
         - "-c"
-        - "curl http://netlify:8888 ; curl http://minio:9000 ; curl http://ucan:8787 ; curl http://partykit:1999"
+        - "test -e ready"
       interval: 5s
       retries: 30
       timeout: 2s

@@ -28,7 +28,7 @@ export const connect: ConnectFunction = (
   remoteDbName = "",
   url = "netlify://localhost:8888?protocol=ws"
 ) => {
-  const { sthis, blockstore, name: dbName } = db;
+  const { sthis, name: dbName } = db;
   if (!dbName) {
     throw new Error("dbName is required");
   }
@@ -40,7 +40,7 @@ export const connect: ConnectFunction = (
   return connectionCache.get(urlObj.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
     const connection = connectionFactory(sthis, urlObj);
-    connection.connect_X(blockstore);
+    connection.connect(db.ledger.crdt.blockstore);
     return connection;
   });
 };
