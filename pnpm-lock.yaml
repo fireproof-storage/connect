@@ -48,8 +48,8 @@ importers:
         specifier: ^9.0.3
         version: 9.0.3
       '@web3-storage/access':
-        specifier: ^20.1.1
-        version: 20.1.1
+        specifier: ^20.1.2
+        version: 20.1.2
       '@web3-storage/capabilities':
         specifier: ^18.0.1
         version: 18.0.1
@@ -1206,10 +1206,6 @@ packages:
     resolution: {integrity: sha512-c7hNEllBlenFTHBky65mhq8WD2kbN9Q6gk0bTk8lSBvc554jpXSkST1iePudpt7+A/AQvuHs9EMqjHDXMY1lrA==}
     engines: {node: '>=18.18'}
 
-  '@ipld/car@5.3.3':
-    resolution: {integrity: sha512-4vgV5Ml4HCJ2iTx7vYhu0ui+Xxo1HQTtVeYgD+JKd5Wij8TlOFZnxOSickqpLcuf1fdGEStgqVItx15UWfzDYA==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-
   '@ipld/car@5.4.0':
     resolution: {integrity: sha512-FiGxOhTUh3fn/kkA+YvNYQjA/T8T5DcKG0NZwAi3aXrizN1qm99HzdYTccEwcX/rUCtI8wTUCKDNPBLUb7pBIQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
@@ -1299,10 +1295,6 @@ packages:
 
   '@noble/ed25519@1.7.3':
     resolution: {integrity: sha512-iR8GBkDt0Q3GyaVcIu7mSsVIqnFbkbRzGLWlvhwunacoLwt4J3swfKhfaM6rN6WY+TBGoYT1GtT1mIh2/jGbRQ==}
-
-  '@noble/hashes@1.5.0':
-    resolution: {integrity: sha512-1j6kQFb7QRru7eKN3ZDvRcP13rugwdxZqCjbiAVZfIJwgj2A65UmT4TgARXGlXgnRkORLTDTrO19ZErt7+QXgA==}
-    engines: {node: ^14.21.3 || >=16}
 
   '@noble/hashes@1.7.1':
     resolution: {integrity: sha512-B8XBPsn4vT/KJAGqDzbwztd+6Yte3P4V7iafm24bxgDe/mlRuK6xmWPuCNrKt2vDafZ8MfJLlchDG/vYafQEjQ==}
@@ -1547,11 +1539,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scure/base@1.1.9':
-    resolution: {integrity: sha512-8YKhl8GHiNI/pU2VMaofa2Tor7PJRAjwQLBBuilkJ9L5+13yVbC7JO/wS7piioAvPSwR3JKM1IJ/u4xQzbcXKg==}
+  '@scure/base@1.2.4':
+    resolution: {integrity: sha512-5Yy9czTO47mqz+/J8GM6GIId4umdCk1wc1q8rKERQulIoc8VP9pzDcghv10Tl2E7R96ZUx/PhND3ESYUQX8NuQ==}
 
-  '@scure/bip39@1.4.0':
-    resolution: {integrity: sha512-BEEm6p8IueV/ZTfQLp/0vhw4NPnT9oWf5+28nvmeUICjP99f4vr2d+qc7AVGDDtwRep6ifR43Yed9ERVmiITzw==}
+  '@scure/bip39@1.5.4':
+    resolution: {integrity: sha512-TFM4ni0vKvCfBpohoh+/lY05i9gRbSwXWngAsF4CABQxoaOHijxuaZ2R6cStDQ5CHtHO9aGJTr4ksVJASRRyMA==}
 
   '@sideway/address@4.1.5':
     resolution: {integrity: sha512-IqO/DUQHUkPeixNQ8n0JA6102hT9CmaljNTPmQ1u8MEhBo/R4Q8eKLN/vGZxuebwOroDB4cbpjheD4+/sKFK4Q==}
@@ -1913,8 +1905,8 @@ packages:
   '@vitest/utils@3.0.5':
     resolution: {integrity: sha512-N9AX0NUoUtVwKwy21JtwzaqR5L5R5A99GAbrHfCCXK1lp593i/3AZAXhSP43wRQuxYsflrdzEfXZFo1reR1Nkg==}
 
-  '@web3-storage/access@20.1.1':
-    resolution: {integrity: sha512-W2C9sn8NTWw7zIUVzEk5MtwWQLFsOREF6Ju6VK+MYcuAkQ6yVll6Q7YtB5zLPwu29xJ7KIR6e5KzbDNSXHSfrA==}
+  '@web3-storage/access@20.1.2':
+    resolution: {integrity: sha512-txhk5+zGqHd+7lGrgjf36AZugHKa05VKfEDmoTrYxIM0RGCCS5nEx1elzNxY4dxyUHJ1HGMNaN10QCOoY1X5yQ==}
 
   '@web3-storage/blob-index@1.0.5':
     resolution: {integrity: sha512-mhzupWeRfxLljoULcagU++mOmQOriCBMKniUhsmrCXrtRV8voF7op/ymqix1f9uX1M5iB93YXcfxAVBwGWWKoA==}
@@ -2502,8 +2494,8 @@ packages:
   fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
 
-  fast-uri@3.0.2:
-    resolution: {integrity: sha512-GR6f0hD7XXyNJa25Tb9BuIdN0tdr+0BMi6/CJPH3wJO1JjNG3n/VsSw38AwRdKZABm8lGbPfakLRkYzx2V9row==}
+  fast-uri@3.0.6:
+    resolution: {integrity: sha512-Atfo14OibSv5wAp4VWNsFYE1AchQRTv9cBGWET4pZWHzYshFSS9NQI6I57rdKn9croWVMbYFbLhJ+yJvmZIIHw==}
 
   fast-xml-parser@4.4.1:
     resolution: {integrity: sha512-xkjOecfnKGkSsOwtZ5Pz7Us/T6mrbPQrq0nh+aCO5V9nk5NLWmasAHumTKjiPJPWANe+kAZ84Jc8ooJkzZ88Sw==}
@@ -3173,6 +3165,9 @@ packages:
 
   multiformats@13.3.1:
     resolution: {integrity: sha512-QxowxTNwJ3r5RMctoGA5p13w5RbRT2QDkoM+yFlqfLiioBp78nhDjnRLvmSBI9+KAqN4VdgOVWM9c0CHd86m3g==}
+
+  multiformats@13.3.2:
+    resolution: {integrity: sha512-qbB0CQDt3QKfiAzZ5ZYjLFOs+zW43vA4uyM8g27PeEuXZybUOFyjrVdP93HPBHMoglibwfkdVwbzfUq8qGcH6g==}
 
   murmurhash3js-revisited@3.0.0:
     resolution: {integrity: sha512-/sF3ee6zvScXMb1XFJ8gDsSnY+X8PbOyjIuBhtgis10W2Jx4ZjIhikUCIF9c4gpJxVnQIsPAFrSwTCuAjicP6g==}
@@ -3918,8 +3913,8 @@ packages:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
 
-  type-fest@4.26.1:
-    resolution: {integrity: sha512-yOGpmOAL7CkKe/91I5O3gPICmJNLJ1G4zFYVAsRHg7M64biSnPtRj0WNQt++bRkjYOqjWXrhnUw1utzmVErAdg==}
+  type-fest@4.35.0:
+    resolution: {integrity: sha512-2/AwEFQDFEy30iOLjrvHDIH7e4HEWH+f1Yl1bI5XMqzuoCUqwYCdxachgsgv0og/JdVZUhbfjcJAoHj5L1753A==}
     engines: {node: '>=16'}
 
   type@2.7.3:
@@ -3945,9 +3940,6 @@ packages:
 
   uint8arraylist@2.4.8:
     resolution: {integrity: sha512-vc1PlGOzglLF0eae1M8mLRTBivsvrGsdmJ5RbK3e+QRvRLOZfZhQROTwH/OfyF3+ZVUg9/8hE8bmKP2CvP9quQ==}
-
-  uint8arrays@4.0.10:
-    resolution: {integrity: sha512-AnJNUGGDJAgFw/eWu/Xb9zrVKEGlwJJCaeInlf3BkecE/zcTobk5YXYIPNQJO1q5Hh1QZrQQHf0JvcHqz2hqoA==}
 
   uint8arrays@5.1.0:
     resolution: {integrity: sha512-vA6nFepEmlSKkMBnLBaUMVvAC4G3CTmO58C12y4sq6WPDOR7mOFYOi7GlrQ4djeSbP6JG9Pv9tJDM97PedRSww==}
@@ -4091,8 +4083,8 @@ packages:
   whatwg-url@7.1.0:
     resolution: {integrity: sha512-WUu7Rg1DroM7oQvGWfOiAK21n74Gg+T4elXEQYkOhtyLeWiJFoOGLXPKI/9gzIie9CtwVLm8wtw6YJdKyxSjeg==}
 
-  when-exit@2.1.3:
-    resolution: {integrity: sha512-uVieSTccFIr/SFQdFWN/fFaQYmV37OKtuaGphMAzi4DmmUlrvRBJW5WSLkHyjNQY/ePJMz3LoiX9R3yy1Su6Hw==}
+  when-exit@2.1.4:
+    resolution: {integrity: sha512-4rnvd3A1t16PWzrBUcSDZqcAmsUIy4minDXT/CZ8F2mVDgd65i4Aalimgz1aQkRGU0iH5eT5+6Rx2TK8o443Pg==}
 
   which-boxed-primitive@1.0.2:
     resolution: {integrity: sha512-bwZdv0AKLpplFY2KZRX6TvyuN7ojjr7lwkg6ml0roIy9YeuSr7JS372qlNW18UQYzgYK9ziGcerWqZOmEn9VNg==}
@@ -5168,37 +5160,30 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.1': {}
 
-  '@ipld/car@5.3.3':
-    dependencies:
-      '@ipld/dag-cbor': 9.2.2
-      cborg: 4.2.7
-      multiformats: 13.3.1
-      varint: 6.0.0
-
   '@ipld/car@5.4.0':
     dependencies:
       '@ipld/dag-cbor': 9.2.2
       cborg: 4.2.8
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       varint: 6.0.0
 
   '@ipld/dag-cbor@9.2.2':
     dependencies:
       cborg: 4.2.8
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@ipld/dag-json@10.2.3':
     dependencies:
       cborg: 4.2.8
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@ipld/dag-pb@4.1.2':
     dependencies:
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@ipld/dag-pb@4.1.3':
     dependencies:
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@ipld/dag-ucan@3.4.5':
     dependencies:
@@ -5222,7 +5207,7 @@ snapshots:
       '@multiformats/murmur3': 2.1.8
       '@perma/map': 1.0.3
       actor: 2.3.1
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       protobufjs: 7.4.0
       rabin-rs: 2.1.0
 
@@ -5277,7 +5262,7 @@ snapshots:
 
   '@multiformats/murmur3@2.1.8':
     dependencies:
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       murmurhash3js-revisited: 3.0.0
 
   '@netlify/blobs@8.1.0': {}
@@ -5287,8 +5272,6 @@ snapshots:
       '@noble/hashes': 1.7.1
 
   '@noble/ed25519@1.7.3': {}
-
-  '@noble/hashes@1.5.0': {}
 
   '@noble/hashes@1.7.1': {}
 
@@ -5449,12 +5432,12 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.34.6':
     optional: true
 
-  '@scure/base@1.1.9': {}
+  '@scure/base@1.2.4': {}
 
-  '@scure/bip39@1.4.0':
+  '@scure/bip39@1.5.4':
     dependencies:
-      '@noble/hashes': 1.5.0
-      '@scure/base': 1.1.9
+      '@noble/hashes': 1.7.1
+      '@scure/base': 1.2.4
 
   '@sideway/address@4.1.5':
     dependencies:
@@ -6008,11 +5991,11 @@ snapshots:
       loupe: 3.1.3
       tinyrainbow: 2.0.0
 
-  '@web3-storage/access@20.1.1':
+  '@web3-storage/access@20.1.2':
     dependencies:
-      '@ipld/car': 5.3.3
+      '@ipld/car': 5.4.0
       '@ipld/dag-ucan': 3.4.5
-      '@scure/bip39': 1.4.0
+      '@scure/bip39': 1.5.4
       '@storacha/one-webcrypto': 1.0.1
       '@ucanto/client': 9.0.1
       '@ucanto/core': 10.2.1
@@ -6024,10 +6007,10 @@ snapshots:
       '@web3-storage/did-mailto': 2.1.0
       bigint-mod-arith: 3.3.1
       conf: 11.0.2
-      multiformats: 12.1.3
+      multiformats: 13.3.2
       p-defer: 4.0.1
-      type-fest: 4.26.1
-      uint8arrays: 4.0.10
+      type-fest: 4.35.0
+      uint8arrays: 5.1.0
 
   '@web3-storage/blob-index@1.0.5':
     dependencies:
@@ -6037,7 +6020,7 @@ snapshots:
       '@ucanto/interface': 10.1.1
       '@web3-storage/capabilities': 18.0.1
       carstream: 2.2.0
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       uint8arrays: 5.1.0
 
   '@web3-storage/capabilities@18.0.1':
@@ -6068,7 +6051,7 @@ snapshots:
   '@web3-storage/data-segment@5.2.0':
     dependencies:
       '@ipld/dag-cbor': 9.2.2
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       sync-multihash-sha2: 1.0.0
 
   '@web3-storage/did-mailto@2.1.0': {}
@@ -6126,7 +6109,7 @@ snapshots:
       '@ucanto/interface': 10.1.1
       '@ucanto/principal': 9.0.2
       '@ucanto/transport': 9.1.1
-      '@web3-storage/access': 20.1.1
+      '@web3-storage/access': 20.1.2
       '@web3-storage/blob-index': 1.0.5
       '@web3-storage/capabilities': 18.0.1
       '@web3-storage/did-mailto': 2.1.0
@@ -6163,7 +6146,7 @@ snapshots:
   ajv@8.17.1:
     dependencies:
       fast-deep-equal: 3.1.3
-      fast-uri: 3.0.2
+      fast-uri: 3.0.6
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
@@ -6292,7 +6275,7 @@ snapshots:
   atomically@2.0.3:
     dependencies:
       stubborn-fs: 1.2.5
-      when-exit: 2.1.3
+      when-exit: 2.1.4
 
   attempt-x@2.1.2:
     dependencies:
@@ -6408,7 +6391,7 @@ snapshots:
   carstream@2.2.0:
     dependencies:
       '@ipld/dag-cbor': 9.2.2
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       uint8arraylist: 2.4.8
 
   cborg@4.2.7: {}
@@ -6896,7 +6879,7 @@ snapshots:
 
   fast-levenshtein@2.0.6: {}
 
-  fast-uri@3.0.2: {}
+  fast-uri@3.0.6: {}
 
   fast-xml-parser@4.4.1:
     dependencies:
@@ -7150,7 +7133,7 @@ snapshots:
   interface-blockstore@5.3.1:
     dependencies:
       interface-store: 6.0.2
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   interface-store@6.0.2: {}
 
@@ -7668,6 +7651,8 @@ snapshots:
   multiformats@12.1.3: {}
 
   multiformats@13.3.1: {}
+
+  multiformats@13.3.2: {}
 
   murmurhash3js-revisited@3.0.0: {}
 
@@ -8501,7 +8486,7 @@ snapshots:
 
   type-fest@2.19.0: {}
 
-  type-fest@4.26.1: {}
+  type-fest@4.35.0: {}
 
   type@2.7.3: {}
 
@@ -8528,13 +8513,9 @@ snapshots:
     dependencies:
       uint8arrays: 5.1.0
 
-  uint8arrays@4.0.10:
-    dependencies:
-      multiformats: 12.1.3
-
   uint8arrays@5.1.0:
     dependencies:
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   undici-types@6.20.0: {}
 
@@ -8696,7 +8677,7 @@ snapshots:
       tr46: 1.0.1
       webidl-conversions: 4.0.2
 
-  when-exit@2.1.3: {}
+  when-exit@2.1.4: {}
 
   which-boxed-primitive@1.0.2:
     dependencies:
