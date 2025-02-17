@@ -88,7 +88,7 @@
   "homepage": "https://github.com/fireproof-storage/connect#readme",
   "dependencies": {
     "@adviser/cement": "^0.3.13",
-    "@aws-sdk/client-s3": "^3.744.0",
+    "@aws-sdk/client-s3": "^3.749.0",
     "@fireproof/core": "0.19.122",
     "@fireproof/vendor": "1.0.4",
     "@ipld/dag-ucan": "^3.4.5",
