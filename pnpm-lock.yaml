@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.3.19
-        version: 0.3.19(typescript@5.7.3)
+        specifier: ^0.3.20
+        version: 0.3.20(typescript@5.7.3)
       '@aws-sdk/client-s3':
         specifier: ^3.744.0
         version: 3.744.0
       '@fireproof/core':
-        specifier: ^0.20.0-dev-preview-29
-        version: 0.20.0-dev-preview-29(@adviser/cement@0.3.19(typescript@5.7.3))(react@18.3.1)
+        specifier: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz
+        version: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(@adviser/cement@0.3.20(typescript@5.7.3))(react@18.3.1)
       '@fireproof/vendor':
         specifier: ^1.1.0-dev
         version: 1.1.0-dev
@@ -108,6 +108,9 @@ importers:
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.20.0
+      '@ipld/car':
+        specifier: ^5.4.0
+        version: 5.4.0
       '@ipld/dag-cbor':
         specifier: ^9.2.2
         version: 9.2.2
@@ -132,6 +135,9 @@ importers:
       '@typescript-eslint/typescript-estree':
         specifier: ^8.23.0
         version: 8.23.0(typescript@5.7.3)
+      cborg:
+        specifier: ^4.2.8
+        version: 4.2.8
       esbuild:
         specifier: ^0.25.0
         version: 0.25.0
@@ -183,8 +189,8 @@ importers:
 
 packages:
 
-  '@adviser/cement@0.3.19':
-    resolution: {integrity: sha512-vEAMdyzgeBbZNxIvxQgH0yMNaEneQljcgLxFrI/xmk+5ti7qDTlaDYdEdLBMmv/O3vwcIM2lqUfJnCkQtO/t3A==}
+  '@adviser/cement@0.3.20':
+    resolution: {integrity: sha512-G6YDbkmr17KAjqFwW7RC0VUha2cjlv/rojFxTrMj55Vwu4crcL3iwerP/RCpxyFZ8Sf9ypaOAX/PRuxmPoL5pw==}
     engines: {node: '>=20'}
 
   '@aws-crypto/crc32@5.2.0':
@@ -1175,10 +1181,11 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@0.20.0-dev-preview-29':
-    resolution: {integrity: sha512-fjhopvC/DZ5SC1McD+QFSnxf29L+12HDmgksubbAjfaa2UmKPhlq3sG4Gvua7UvuLH34R6Yfwjxo5+kLS1QOYw==}
+  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz':
+    resolution: {integrity: sha512-+1Y9u2NBaAAODj9HtKtxLCReU0RJ4WsSxMexzvWOtqZfhds5F0Reh+tbukNMTLk//sCsChjt8x3zk3I5JP/8UQ==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
+    version: 0.0.0-smoke
     peerDependencies:
-      '@adviser/cement': ~0.3.0
+      '@adviser/cement': ~0.3.19
       react: '>=18.0.0'
 
   '@fireproof/vendor@1.1.0-dev':
@@ -1210,10 +1217,6 @@ packages:
     resolution: {integrity: sha512-c7hNEllBlenFTHBky65mhq8WD2kbN9Q6gk0bTk8lSBvc554jpXSkST1iePudpt7+A/AQvuHs9EMqjHDXMY1lrA==}
     engines: {node: '>=18.18'}
 
-  '@ipld/car@5.3.3':
-    resolution: {integrity: sha512-4vgV5Ml4HCJ2iTx7vYhu0ui+Xxo1HQTtVeYgD+JKd5Wij8TlOFZnxOSickqpLcuf1fdGEStgqVItx15UWfzDYA==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-
   '@ipld/car@5.4.0':
     resolution: {integrity: sha512-FiGxOhTUh3fn/kkA+YvNYQjA/T8T5DcKG0NZwAi3aXrizN1qm99HzdYTccEwcX/rUCtI8wTUCKDNPBLUb7pBIQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
@@ -1224,10 +1227,6 @@ packages:
 
   '@ipld/dag-json@10.2.3':
     resolution: {integrity: sha512-itacv1j1hvYgLox2B42Msn70QLzcr0MEo5yGIENuw2SM/lQzq9bmBiMky+kDsIrsqqblKTXcHBZnnmK7D4a6ZQ==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-
-  '@ipld/dag-pb@4.1.2':
-    resolution: {integrity: sha512-BSztO4l3C+ya9HjCaQot26Y4AVsqIKtnn6+23ubc1usucnf6yoTBme18oCCdM6gKBMxuPqju5ye3lh9WEJsdeQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
   '@ipld/dag-pb@4.1.3':
@@ -2154,10 +2153,6 @@ packages:
 
   carstream@2.2.0:
     resolution: {integrity: sha512-/gHkK0lQjmGM45fhdx8JD+x7a1XS1qUk3T9xWWSt3oZiWPLq4u/lnDstp+N55K7hqTKKlb0CCr43EHTrlbmJSQ==}
-
-  cborg@4.2.7:
-    resolution: {integrity: sha512-zHTUAm+HAoRLtGEQ1b28HXBm8d/5YP+7eiSKzEu/mpFkptGYaMQCHv15OiQBuyNlIgbCBXvBbZQPl3xvcZTJXg==}
-    hasBin: true
 
   cborg@4.2.8:
     resolution: {integrity: sha512-z9M+TZCWQbf89Gl8ulpYThM9fqmkjBDdMiq+wS72OAK2zqDaXNquoAWFDrAKHQAukVtPspmadB9chuFC0ut7ew==}
@@ -3154,6 +3149,9 @@ packages:
 
   multiformats@13.3.1:
     resolution: {integrity: sha512-QxowxTNwJ3r5RMctoGA5p13w5RbRT2QDkoM+yFlqfLiioBp78nhDjnRLvmSBI9+KAqN4VdgOVWM9c0CHd86m3g==}
+
+  multiformats@13.3.2:
+    resolution: {integrity: sha512-qbB0CQDt3QKfiAzZ5ZYjLFOs+zW43vA4uyM8g27PeEuXZybUOFyjrVdP93HPBHMoglibwfkdVwbzfUq8qGcH6g==}
 
   murmurhash3js-revisited@3.0.0:
     resolution: {integrity: sha512-/sF3ee6zvScXMb1XFJ8gDsSnY+X8PbOyjIuBhtgis10W2Jx4ZjIhikUCIF9c4gpJxVnQIsPAFrSwTCuAjicP6g==}
@@ -4163,7 +4161,7 @@ packages:
 
 snapshots:
 
-  '@adviser/cement@0.3.19(typescript@5.7.3)':
+  '@adviser/cement@0.3.20(typescript@5.7.3)':
     dependencies:
       ts-essentials: 10.0.4(typescript@5.7.3)
       yaml: 2.7.0
@@ -5083,9 +5081,9 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.20.0-dev-preview-29(@adviser/cement@0.3.19(typescript@5.7.3))(react@18.3.1)':
+  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(@adviser/cement@0.3.20(typescript@5.7.3))(react@18.3.1)':
     dependencies:
-      '@adviser/cement': 0.3.19(typescript@5.7.3)
+      '@adviser/cement': 0.3.20(typescript@5.7.3)
       '@fireproof/vendor': 1.1.0-dev
       '@ipld/car': 5.4.0
       '@ipld/dag-cbor': 9.2.2
@@ -5095,7 +5093,7 @@ snapshots:
       charwise: 3.0.1
       idb: 8.0.2
       ipfs-unixfs-exporter: 13.6.1
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       p-limit: 6.2.0
       p-map: 7.0.3
       p-retry: 6.2.1
@@ -5126,18 +5124,11 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.1': {}
 
-  '@ipld/car@5.3.3':
-    dependencies:
-      '@ipld/dag-cbor': 9.2.2
-      cborg: 4.2.7
-      multiformats: 13.3.1
-      varint: 6.0.0
-
   '@ipld/car@5.4.0':
     dependencies:
       '@ipld/dag-cbor': 9.2.2
       cborg: 4.2.8
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       varint: 6.0.0
 
   '@ipld/dag-cbor@9.2.2':
@@ -5148,10 +5139,6 @@ snapshots:
   '@ipld/dag-json@10.2.3':
     dependencies:
       cborg: 4.2.8
-      multiformats: 13.3.1
-
-  '@ipld/dag-pb@4.1.2':
-    dependencies:
       multiformats: 13.3.1
 
   '@ipld/dag-pb@4.1.3':
@@ -5180,7 +5167,7 @@ snapshots:
       '@multiformats/murmur3': 2.1.8
       '@perma/map': 1.0.3
       actor: 2.3.1
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       protobufjs: 7.4.0
       rabin-rs: 2.1.0
 
@@ -5952,7 +5939,7 @@ snapshots:
 
   '@web3-storage/access@20.1.1':
     dependencies:
-      '@ipld/car': 5.3.3
+      '@ipld/car': 5.4.0
       '@ipld/dag-ucan': 3.4.5
       '@scure/bip39': 1.4.0
       '@storacha/one-webcrypto': 1.0.1
@@ -6352,8 +6339,6 @@ snapshots:
       '@ipld/dag-cbor': 9.2.2
       multiformats: 13.3.1
       uint8arraylist: 2.4.8
-
-  cborg@4.2.7: {}
 
   cborg@4.2.8: {}
 
@@ -7090,7 +7075,7 @@ snapshots:
   interface-blockstore@5.3.1:
     dependencies:
       interface-store: 6.0.2
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   interface-store@6.0.2: {}
 
@@ -7098,7 +7083,7 @@ snapshots:
     dependencies:
       '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-json': 10.2.3
-      '@ipld/dag-pb': 4.1.2
+      '@ipld/dag-pb': 4.1.3
       '@multiformats/murmur3': 2.1.8
       hamt-sharding: 3.0.6
       interface-blockstore: 5.3.1
@@ -7109,7 +7094,7 @@ snapshots:
       it-parallel: 3.0.8
       it-pipe: 3.0.1
       it-pushable: 3.2.3
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       p-queue: 8.0.1
       progress-events: 1.0.1
 
@@ -7620,6 +7605,8 @@ snapshots:
   multiformats@12.1.3: {}
 
   multiformats@13.3.1: {}
+
+  multiformats@13.3.2: {}
 
   murmurhash3js-revisited@3.0.0: {}
 

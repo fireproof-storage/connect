@@ -1,7 +1,6 @@
-import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store.js";
-import { bs, Database } from "@fireproof/core";
+import { Attachable, GatewayUrlsParam } from "@fireproof/core";
 import { registerNetlifyStoreProtocol } from "./gateway.js";
-import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
+import { BuildURI, runtimeFn, URI } from "@adviser/cement";
 
 // Usage:
 //
@@ -22,25 +21,43 @@ if (!runtimeFn().isBrowser) {
 
 registerNetlifyStoreProtocol();
 
-const connectionCache = new KeyedResolvOnce<bs.Connection>();
-export const connect: ConnectFunction = (
-  db: Database,
-  remoteDbName = "",
-  url = "netlify://localhost:8888?protocol=ws"
-) => {
-  const { sthis, name: dbName } = db;
-  if (!dbName) {
-    throw new Error("dbName is required");
-  }
-  const urlObj = BuildURI.from(url);
-  const existingName = urlObj.getParam("name");
-  urlObj.defParam("name", remoteDbName || existingName || dbName);
-  urlObj.defParam("localName", dbName);
-  urlObj.defParam("storekey", `@${dbName}:data@`);
-  return connectionCache.get(urlObj.toString()).once(() => {
-    makeKeyBagUrlExtractable(sthis);
-    const connection = connectionFactory(sthis, urlObj);
-    connection.connect(db.ledger.crdt.blockstore);
-    return connection;
-  });
-};
+export function toNetlify(url = "netlify://localhost:8888?protocol=ws"): Attachable {
+  const urlObj = URI.from(url);
+  // const existingName = urlObj.getParam("name");
+  // urlObj.defParam("name", remoteDbName || existingName || dbName);
+  // urlObj.defParam("localName", dbName);
+  // urlObj.defParam("storekey", `@${dbName}:data@`);
+  return {
+    name: urlObj.protocol,
+    prepare(): Promise<GatewayUrlsParam> {
+      return Promise.resolve({
+        car: { url: urlObj },
+        file: { url: urlObj },
+        meta: { url: urlObj },
+      });
+    },
+  };
+}
+
+// const connectionCache = new KeyedResolvOnce<bs.Connection>();
+// export const connect: ConnectFunction = (
+//   db: Database,
+//   remoteDbName = "",
+//   url = "netlify://localhost:8888?protocol=ws"
+// ) => {
+//   const { sthis, name: dbName } = db;
+//   if (!dbName) {
+//     throw new Error("dbName is required");
+//   }
+//   const urlObj = BuildURI.from(url);
+//   const existingName = urlObj.getParam("name");
+//   urlObj.defParam("name", remoteDbName || existingName || dbName);
+//   urlObj.defParam("localName", dbName);
+//   urlObj.defParam("storekey", `@${dbName}:data@`);
+//   return connectionCache.get(urlObj.toString()).once(() => {
+//     makeKeyBagUrlExtractable(sthis);
+//     const connection = connectionFactory(sthis, urlObj);
+//     connection.connect(db.ledger.crdt.blockstore);
+//     return connection;
+//   });
+// };

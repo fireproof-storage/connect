@@ -1,10 +1,9 @@
 /* eslint-disable no-console */
-import { ensureSuperThis, fireproof } from "@fireproof/core";
-import { connectionFactory } from "./connection-from-store.js";
+import { fireproof } from "@fireproof/core";
 import { URI } from "@adviser/cement";
 
 async function main() {
-  const sthis = ensureSuperThis();
+  // const sthis = ensureSuperThis();
   const url = URI.from("file://./dist/connect_to?storekey=@bla@");
   console.log("--1");
   const wdb = fireproof("my-database", {
@@ -13,10 +12,10 @@ async function main() {
     },
   });
   // db.connect("s3://testbucket/connector");
-  console.log("--2");
-  const connection = await connectionFactory(sthis, url);
-  console.log("--3");
-  await connection.connect(wdb.ledger.crdt.blockstore);
+  // console.log("--2");
+  // const connection = await connectionFactory(sthis, url);
+  // console.log("--3");
+  // await connection.connect(wdb.ledger.crdt.blockstore);
 
   // await new Promise((res) => setTimeout(res, 1000));
 
@@ -39,7 +38,7 @@ async function main() {
   const docs = await wdb.allDocs();
   console.log("--6");
   expect(docs.rows.length).toBeGreaterThanOrEqual(count);
-  (await wdb.ledger.crdt.blockstore.loader?.WALStore())?.processQueue.waitIdle();
+  (await wdb.ledger.crdt.blockstore.loader.attachedStores.local().active.wal)?.processQueue.waitIdle();
   // console.log("--7")
   await wdb.ledger.crdt.blockstore.destroy();
   // console.log("--8")

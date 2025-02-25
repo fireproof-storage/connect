@@ -11,7 +11,7 @@ describe("MetaKeyHack", () => {
     protocol: "hack:",
     defaultURI: () => URI.from(`hack://localhost?version=hack`),
     serdegateway: async () => {
-      return new AddKeyToDbMetaGateway(memGw);
+      return new AddKeyToDbMetaGateway(memGw, "v2");
     },
   });
 
@@ -27,7 +27,7 @@ describe("MetaKeyHack", () => {
 
   it("inject key into meta", async () => {
     const loader = db.ledger.crdt.blockstore.loader;
-    const metaStore = await loader.metaStore();
+    const metaStore = loader.attachedStores.local().active.meta;
     const subscribeFn = vitest.fn();
     const unreg = await metaStore.realGateway.subscribe(
       ctx,
@@ -37,7 +37,7 @@ describe("MetaKeyHack", () => {
     expect(unreg.isOk()).toBeTruthy();
     await db.put({ val: "test" });
 
-    const dataStore = await loader.carStore();
+    const dataStore = loader.attachedStores.local().active.car;
     const kb = new rt.KeyBag(db.ledger.opts.keyBag);
     const rDataStoreKeyItem = await kb.getNamedKey(dataStore.url().getParam(PARAM.STORE_KEY) ?? "");
 

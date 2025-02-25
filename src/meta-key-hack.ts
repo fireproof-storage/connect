@@ -125,10 +125,10 @@ function toV2SerializedMetaKey(or: NonNullable<unknown>): V2SerializedMetaKey {
 
 export class AddKeyToDbMetaGateway implements bs.SerdeGateway {
   private readonly sdGw: rt.gw.DefSerdeGateway;
-  readonly version: "v1" | "v2"
+  readonly version: "v1" | "v2";
   constructor(gw: bs.Gateway, version: "v1" | "v2") {
     this.sdGw = new rt.gw.DefSerdeGateway(gw);
-    this.version = version
+    this.version = version;
   }
 
   buildUrl(ctx: bs.SerdeGatewayCtx, baseUrl: URI, key: string): Promise<Result<URI>> {
@@ -146,12 +146,12 @@ export class AddKeyToDbMetaGateway implements bs.SerdeGateway {
         ...ctx,
         encoder: {
           meta: async (sthis: SuperThis, payload: rt.gw.SerializedMeta[]): Promise<Result<Uint8Array>> => {
-            const carStore = await ctx.loader.carStore();
+            const carStore = ctx.loader.attachedStores.local().active.car;
             const kb = await ctx.loader.keyBag();
             if (!kb) {
               return Promise.resolve(Result.Err(new Error("missing keybag")));
             }
-            const keyName = carStore?.url().getParam(PARAM.STORE_KEY) ?? "";
+            const keyName = carStore.url().getParam(PARAM.STORE_KEY) ?? "";
             const rKex = await kb.getNamedKey(keyName);
             if (rKex.isErr()) {
               return Promise.resolve(Result.Err(rKex.Err()));
@@ -162,27 +162,29 @@ export class AddKeyToDbMetaGateway implements bs.SerdeGateway {
               .asKeysItem()
               .then((i) => Object.values(i.keys).map((i) => i.key));
             try {
-              let serialized: string
+              let serialized: string;
               switch (this.version) {
                 case "v1":
                   serialized = JSON.stringify(
-                    payload.map((p) => ({
-                      ...p,
-                      key: keyMaterials,
-                    } satisfies V1SerializedMetaKey)))
-                  break
+                    payload.map(
+                      (p) =>
+                        ({
+                          ...p,
+                          key: keyMaterials,
+                        }) satisfies V1SerializedMetaKey
+                    )
+                  );
+                  break;
                 case "v2":
                   serialized = JSON.stringify({
                     metas: payload,
                     keys: keyMaterials,
-                  } satisfies V2SerializedMetaKey)
-                  break
+                  } satisfies V2SerializedMetaKey);
+                  break;
                 default:
                   return Promise.resolve(Result.Err(`unknown version:[${this.version}]`));
               }
-              return Promise.resolve(
-                Result.Ok(sthis.txt.encode(serialized))
-              );
+              return Promise.resolve(Result.Ok(sthis.txt.encode(serialized)));
             } catch (e) {
               return Promise.resolve(Result.Err(`failed to extract key for ${keyName}: ${(e as Error).message}`));
             }
@@ -219,7 +221,7 @@ export class AddKeyToDbMetaGateway implements bs.SerdeGateway {
             this.lastDecodedMetas.shift();
           }
           this.lastDecodedMetas.push(v2);
-          const dataUrl = (await ctx.loader.carStore()).url();
+          const dataUrl = await ctx.loader.attachedStores.local().active.car.url();
           const keyName = dataUrl.getParam(PARAM.STORE_KEY);
           if (!keyName) {
             ctx.loader.sthis.logger.Warn().Url(dataUrl).Msg("missing store key");

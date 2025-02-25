@@ -1,7 +1,6 @@
-import { ConnectFunction, connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store.js";
-import { bs, Database } from "@fireproof/core";
+import { Attachable, GatewayUrlsParam } from "@fireproof/core";
 import { registerPartyKitStoreProtocol } from "./gateway.js";
-import { BuildURI, KeyedResolvOnce, runtimeFn } from "@adviser/cement";
+import { BuildURI, runtimeFn, URI } from "@adviser/cement";
 
 // Usage:
 //
@@ -26,26 +25,44 @@ if (!runtimeFn().isBrowser) {
 
 registerPartyKitStoreProtocol();
 
-const connectionCache = new KeyedResolvOnce<bs.Connection>();
-export const connect: ConnectFunction = (
-  db: Database,
-  remoteDbName = "",
-  url = "http://localhost:1999?protocol=ws"
-) => {
-  const { sthis, name: dbName } = db;
-  if (!dbName) {
-    throw new Error("dbName is required");
-  }
-  const urlObj = BuildURI.from(url);
-  const existingName = urlObj.getParam("name");
-  urlObj.defParam("name", remoteDbName || existingName || dbName);
-  urlObj.defParam("localName", dbName);
-  urlObj.defParam("storekey", `@${dbName}:data@`);
-  const fpUrl = urlObj.toString().replace("http://", "partykit://").replace("https://", "partykit://");
-  return connectionCache.get(fpUrl).once(() => {
-    makeKeyBagUrlExtractable(sthis);
-    const connection = connectionFactory(sthis, fpUrl);
-    connection.connect(db.ledger.crdt.blockstore);
-    return connection;
-  });
-};
+// const connectionCache = new KeyedResolvOnce<bs.Connection>();
+// export const connect: ConnectFunction = (
+//   db: Database,
+//   remoteDbName = "",
+//   url = "http://localhost:1999?protocol=ws"
+// ) => {
+//   const { sthis, name: dbName } = db;
+//   if (!dbName) {
+//     throw new Error("dbName is required");
+//   }
+//   const urlObj = BuildURI.from(url);
+//   const existingName = urlObj.getParam("name");
+//   urlObj.defParam("name", remoteDbName || existingName || dbName);
+//   urlObj.defParam("localName", dbName);
+//   urlObj.defParam("storekey", `@${dbName}:data@`);
+//   const fpUrl = urlObj.toString().replace("http://", "partykit://").replace("https://", "partykit://");
+//   return connectionCache.get(fpUrl).once(() => {
+//     makeKeyBagUrlExtractable(sthis);
+//     const connection = connectionFactory(sthis, fpUrl);
+//     connection.connect(db.ledger.crdt.blockstore);
+//     return connection;
+//   });
+// };
+
+export function toPartyKit(url = "partykit://localhost:1999?protocol=ws"): Attachable {
+  const urlObj = URI.from(url);
+  // const existingName = urlObj.getParam("name");
+  // urlObj.defParam("name", remoteDbName || existingName || dbName);
+  // urlObj.defParam("localName", dbName);
+  // urlObj.defParam("storekey", `@${dbName}:data@`);
+  return {
+    name: urlObj.protocol,
+    prepare(): Promise<GatewayUrlsParam> {
+      return Promise.resolve({
+        car: { url: urlObj },
+        file: { url: urlObj },
+        meta: { url: urlObj },
+      });
+    },
+  };
+}

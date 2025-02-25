@@ -28,7 +28,7 @@ describe("PartyKitGateway", () => {
     unregister = registerPartyKitStoreProtocol("partykit:");
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     const config: ConfigOpts = {
       storeUrls: {
         base: process.env.FP_STORAGE_URL || "partykit://localhost:1999",
@@ -37,6 +37,7 @@ describe("PartyKitGateway", () => {
     const name = "partykit-test-db-" + Math.random().toString(36).substring(7);
     db = fireproof(name, config);
     ctx = { loader: db.ledger.crdt.blockstore.loader };
+    await db.ready();
   });
 
   afterEach(() => {
@@ -70,7 +71,7 @@ describe("PartyKitGateway", () => {
     //   throw new Error("Loader stores.base is not defined");
     // }
 
-    const baseUrl = URI.from(loader.ebOpts.storeUrls.data);
+    const baseUrl = URI.from(loader.ebOpts.storeUrls.car);
     expect(baseUrl.protocol).toBe("partykit:");
     expect(baseUrl.hostname).toBe("localhost");
     expect(baseUrl.port || "").toBe("1999");
@@ -107,7 +108,7 @@ describe("PartyKitGateway", () => {
 
   it("should subscribe to changes", async () => {
     // Extract stores from the loader
-    const metaStore = await db.ledger.crdt.blockstore.loader?.metaStore(); // as unknown as ExtendedStore;
+    const metaStore = await db.ledger.crdt.blockstore.loader.attachedStores.local().active.meta;
 
     const metaGateway = metaStore.realGateway;
 

@@ -1,6 +1,6 @@
-import { connectionFactory } from "../connection-from-store.js";
-import { CoerceURI } from "@adviser/cement";
-import { Database } from "@fireproof/core";
+import { CoerceURI, URI } from "@adviser/cement";
+import { Attachable, GatewayUrlsParam } from "@fireproof/core";
+import { registerS3StoreProtocol } from "./s3-gateway.js";
 
 // Usage:
 //
@@ -18,11 +18,34 @@ import { Database } from "@fireproof/core";
 //
 // const cx = connect.s3(db, url);
 
-export const connect = {
-  s3: async (db: Database, url?: CoerceURI) => {
-    const { sthis } = db;
-    const connection = await connectionFactory(sthis, url);
-    await connection.connect(db.ledger.crdt.blockstore);
-    // return connection;
-  },
-};
+// export const connect = {
+//   s3: async (db: Database, url?: CoerceURI) => {
+//     const { sthis } = db;
+//     const connection = await connectionFactory(sthis, url);
+//     await connection.connect(db.ledger.crdt.blockstore);
+//     // return connection;
+//   },
+// };
+
+registerS3StoreProtocol();
+
+export function toS3(url: CoerceURI): Attachable {
+  const urlObj = URI.from(url);
+  if (urlObj.protocol !== "s3") {
+    throw new Error("url must have s3 protocol");
+  }
+  // const existingName = urlObj.getParam("name");
+  // urlObj.defParam("name", remoteDbName || existingName || dbName);
+  // urlObj.defParam("localName", dbName);
+  // urlObj.defParam("storekey", `@${dbName}:data@`);
+  return {
+    name: urlObj.protocol,
+    prepare(): Promise<GatewayUrlsParam> {
+      return Promise.resolve({
+        car: { url: urlObj },
+        file: { url: urlObj },
+        meta: { url: urlObj },
+      });
+    },
+  };
+}

@@ -54,7 +54,7 @@ describe("AWSGateway", () => {
     // console.log("Loader stores:", loader.ebOpts.store.stores);
 
     // Test base URL configuration
-    const baseUrl = URI.from(loader.ebOpts.storeUrls.data.toString());
+    const baseUrl = URI.from(loader.ebOpts.storeUrls.car.toString());
     expect(baseUrl.protocol).toBe("aws:");
     expect(baseUrl.hostname).toBe("aws");
 

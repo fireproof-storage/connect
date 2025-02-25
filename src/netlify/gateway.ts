@@ -16,9 +16,9 @@ export class NetlifyGateway implements bs.Gateway {
   }
 
   async destroy(url: URI): Promise<Result<void>> {
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
 
-    if (store !== "meta") {
+    if (pathPart !== "meta") {
       // why are the other store types not supported?
       return Result.Ok(undefined);
       // return Result.Err(new Error("Store is not meta"));
@@ -68,7 +68,7 @@ export class NetlifyGateway implements bs.Gateway {
   }
 
   async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
 
     const rParams = url.getParamsResult("key", "name");
     if (rParams.isErr()) {
@@ -86,7 +86,7 @@ export class NetlifyGateway implements bs.Gateway {
       return Result.Err(new Error("Remote base URL not found in the URI"));
     }
     const fetchUrl = BuildURI.from(remoteBaseUrl);
-    switch (store) {
+    switch (pathPart) {
       case "meta":
         fetchUrl.setParam("meta", name);
         break;
@@ -109,14 +109,14 @@ export class NetlifyGateway implements bs.Gateway {
         .Url(fetchUrl.URI())
         .Int("status", done.status)
         .Str("statusText", done.statusText)
-        .Msg(`failed to upload ${store}`)
+        .Msg(`failed to upload ${pathPart}`)
         .ResultError();
     }
     return Result.Ok(undefined);
   }
 
   async get(url: URI): Promise<bs.GetResult> {
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
     const rParams = url.getParamsResult("key", "name", "remoteBaseUrl");
     if (rParams.isErr()) {
       return Result.Err(rParams.Err());
@@ -129,7 +129,7 @@ export class NetlifyGateway implements bs.Gateway {
     }
     name += ".fp";
     const fetchUrl = BuildURI.from(remoteBaseUrl);
-    switch (store) {
+    switch (pathPart) {
       case "meta":
         fetchUrl.setParam("meta", name);
         break;
@@ -147,7 +147,7 @@ export class NetlifyGateway implements bs.Gateway {
     const response = rresponse.Ok();
 
     if (!response.ok) {
-      return Result.Err(new NotFoundError(`${store} not found: ${url}`));
+      return Result.Err(new NotFoundError(`${pathPart} not found: ${url}`));
     }
 
     const data = new Uint8Array(await response.arrayBuffer());
@@ -161,7 +161,7 @@ export class NetlifyGateway implements bs.Gateway {
   }
 
   async delete(url: URI): Promise<bs.VoidResult> {
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
     const rParams = url.getParamsResult("key", "name", "remoteBaseUrl");
     if (rParams.isErr()) {
       return Result.Err(rParams.Err());
@@ -175,7 +175,7 @@ export class NetlifyGateway implements bs.Gateway {
     }
     name += ".fp";
     const fetchUrl = BuildURI.from(remoteBaseUrl);
-    switch (store) {
+    switch (pathPart) {
       case "meta":
         fetchUrl.setParam("meta", name);
         break;

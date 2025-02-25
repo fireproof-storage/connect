@@ -1,4 +1,4 @@
-import { ensureSuperThis, fireproof, SysFileSystem, rt } from "@fireproof/core";
+import { ensureSuperThis, fireproof, SysFileSystem, rt, storeType2DataMetaWal, StoreType } from "@fireproof/core";
 import { registerSqliteStoreProtocol } from "./gateway-sql.js";
 import { V0_19SQL_VERSION } from "./v0.19/version.js";
 import { URI } from "@adviser/cement";
@@ -11,11 +11,11 @@ describe("sqlite", () => {
   const sthis = ensureSuperThis();
   let fsx: SysFileSystem;
 
-  function params(store: string, taste: string) {
+  function params(store: StoreType, taste: string) {
     return Object.entries({
       store,
       name: my_app(),
-      storekey: `@${my_app()}-${store}@`,
+      storekey: `@${my_app()}-${storeType2DataMetaWal(store)}@`,
       taste,
       version: V0_19SQL_VERSION,
     });
@@ -50,15 +50,15 @@ describe("sqlite", () => {
     await db.put({ name: "my-app" });
     expect((await fsx.stat(dbFile)).isFile()).toBeTruthy();
     expect(db.name).toBe(my_app());
-    const carStore = await db.ledger.crdt.blockstore.loader?.carStore();
-    for (const [k, v] of params("data", taste)) {
+    const carStore = await db.ledger.crdt.blockstore.loader.attachedStores.local().active.car;
+    for (const [k, v] of params("car", taste)) {
       expect(carStore?.url().getParam(k)).toBe(v);
     }
-    const fileStore = await db.ledger.crdt.blockstore.loader?.fileStore();
-    for (const [k, v] of params("data", taste)) {
+    const fileStore = await db.ledger.crdt.blockstore.loader.attachedStores.local().active.file;
+    for (const [k, v] of params("file", taste)) {
       expect(fileStore?.url().getParam(k)).toBe(v);
     }
-    const metaStore = await db.ledger.crdt.blockstore.loader?.metaStore();
+    const metaStore = await db.ledger.crdt.blockstore.loader.attachedStores.local().active.meta;
     for (const [k, v] of params("meta", taste)) {
       expect(metaStore?.url().getParam(k)).toBe(v);
     }
@@ -72,12 +72,12 @@ describe("sqlite", () => {
         // meta: `${base}/meta?taste=${taste}`,
         data: {
           meta: `${base}/meta?taste=${taste}`,
-          data: `${base}/data?taste=${taste}`,
+          car: `${base}/data?taste=${taste}`,
           wal: `${base}/wal?taste=${taste}`,
         },
         idx: {
           meta: `${base}/idx-meta?taste=${taste}`,
-          data: `${base}/idx-data?taste=${taste}`,
+          car: `${base}/idx-data?taste=${taste}`,
           wal: `${base}/idx-wal?taste=${taste}`,
         },
         // wal: `${base}/wal?taste=${taste}`,
@@ -88,16 +88,16 @@ describe("sqlite", () => {
 
     await db.put({ name: my_app() });
 
-    const carStore = await db.ledger.crdt.blockstore.loader?.carStore();
-    for (const [k, v] of params("data", taste)) {
+    const carStore = await db.ledger.crdt.blockstore.loader.attachedStores.local().active.car;
+    for (const [k, v] of params("car", taste)) {
       expect(carStore?.url().getParam(k)).toBe(v);
     }
 
-    const fileStore = await db.ledger.crdt.blockstore.loader?.fileStore();
-    for (const [k, v] of params("data", taste)) {
+    const fileStore = await db.ledger.crdt.blockstore.loader.attachedStores.local().active.file;
+    for (const [k, v] of params("file", taste)) {
       expect(fileStore?.url().getParam(k)).toBe(v);
     }
-    const metaStore = await db.ledger.crdt.blockstore.loader?.metaStore();
+    const metaStore = await db.ledger.crdt.blockstore.loader.attachedStores.local().active.meta;
     for (const [k, v] of params("meta", taste)) {
       expect(metaStore?.url().getParam(k)).toBe(v);
     }
