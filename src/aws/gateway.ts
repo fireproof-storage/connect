@@ -53,14 +53,14 @@ export class AWSGateway implements bs.Gateway {
   }
 
   async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
 
     const rParams = url.getParamsResult("uploadUrl", "key", "name");
     if (rParams.isErr()) {
       return this.logger.Error().Url(url).Err(rParams).Msg("Put Error").ResultError();
     }
     const { uploadUrl, key, name } = rParams.Ok();
-    return this.putData(uploadUrl, store, key, name, body);
+    return this.putData(uploadUrl, pathPart, key, name, body);
     // return store === "meta"
     //   ? this.putMeta(url, uploadUrl, key, name, body)
     //   : this.putData(uploadUrl, store, key, name, body);
@@ -157,8 +157,8 @@ export class AWSGateway implements bs.Gateway {
   }
 
   async get(url: URI): Promise<bs.GetResult> {
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
-    switch (store) {
+    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
+    switch (pathPart) {
       case "meta":
         return this.getMeta(url);
       case "data":
@@ -166,7 +166,7 @@ export class AWSGateway implements bs.Gateway {
       case "wal":
         return this.getWal(url);
       default:
-        throw new Error(`Unknown store type: ${store}`);
+        throw new Error(`Unknown store type: ${pathPart}`);
     }
   }
 
@@ -305,7 +305,7 @@ export function registerAWSStoreProtocol(protocol = "aws:", overrideBaseURL?: st
       defaultURI: () =>
         BuildURI.from(`${protocol}://`).hostname("s3.amazonaws.com").setParam("region", "us-east-2").URI(),
       serdegateway: async (sthis) => {
-        return new AddKeyToDbMetaGateway(new AWSGateway(sthis));
+        return new AddKeyToDbMetaGateway(new AWSGateway(sthis), "v2");
       },
     });
   });

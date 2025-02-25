@@ -163,13 +163,13 @@ export class S3Gateway implements bs.Gateway {
   }
 
   async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
     const { bucket, prefix } = getBucket(this.sthis, url);
     this.logger.Debug().Url(url).Str("bucket", bucket).Str("key", prefix).Msg("put");
     const putObjectCommand = new PutObjectCommand({
       Key: prefix,
       Bucket: bucket,
-      ContentType: `fireproof/${store}`,
+      ContentType: `fireproof/${pathPart}`,
       Body: body,
     });
     try {

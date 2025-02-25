@@ -124,7 +124,7 @@ export class FireproofCloudGateway implements bs.Gateway {
 
   async put(uri: URI, body: Uint8Array): Promise<Result<void>> {
     await this.ready();
-    const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
+    const { pathPart } = getStore(uri, this.sthis, (...args) => args.join("/"));
     // if (store === "meta") {
     //   const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
     //   if (bodyRes.isErr()) {
@@ -136,12 +136,12 @@ export class FireproofCloudGateway implements bs.Gateway {
     const rkey = uri.getParamResult("key");
     if (rkey.isErr()) return Result.Err(rkey.Err());
     const key = rkey.Ok();
-    if (store === "meta") {
+    if (pathPart === "meta") {
       const uploadUrl = pkMetaURL(uri, key);
       return exception2Result(async () => {
         const response = await fetch(uploadUrl.asURL(), { method: "PUT", body: body });
         if (response.status === 404) {
-          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
+          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${pathPart}!`).AsError();
         }
       });
     } else {
@@ -155,13 +155,13 @@ export class FireproofCloudGateway implements bs.Gateway {
           .Str("status-text", response.statusText)
           .Msg("put");
         if (response.status === 404) {
-          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
+          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${pathPart}!`).AsError();
         }
         const url = (await response.json()).url;
         this.logger.Debug().Url(url).Msg("put");
         const uploadResponse = await fetch(url, { method: "PUT", body: body });
         if (uploadResponse.status === 404) {
-          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${store}!`).AsError();
+          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${pathPart}!`).AsError();
         }
       });
     }
@@ -197,12 +197,12 @@ export class FireproofCloudGateway implements bs.Gateway {
   async get(uri: URI): Promise<bs.GetResult> {
     await this.ready();
     return exception2Result(async () => {
-      const { store } = getStore(uri, this.sthis, (...args) => args.join("/"));
+      const { pathPart } = getStore(uri, this.sthis, (...args) => args.join("/"));
       const key = uri.getParam("key");
       if (!key) throw new Error("key not found");
       let downloadUrl;
-      this.logger.Debug().Str("store", store).Str("key", key).Msg("get");
-      switch (store) {
+      this.logger.Debug().Str("store", pathPart).Str("key", key).Msg("get");
+      switch (pathPart) {
         case "meta":
           downloadUrl = pkMetaURL(uri, key);
           break;
@@ -210,11 +210,11 @@ export class FireproofCloudGateway implements bs.Gateway {
           downloadUrl = pkCarGetURL(uri, key);
           break;
         default:
-          throw new Error(`Unsupported store: ${store}`);
+          throw new Error(`Unsupported store: ${pathPart}`);
       }
       const response = await fetch(downloadUrl.toString(), { method: "GET" });
       if (response.status === 404) {
-        throw new Error(`Failure in downloading ${store}!`);
+        throw new Error(`Failure in downloading ${pathPart}!`);
       }
       const body = new Uint8Array(await response.arrayBuffer());
       // if (store === "meta") {
@@ -321,7 +321,7 @@ export function registerFireproofCloudStoreProtocol(protocol = "fireproof:", ove
         return URI.from(overrideBaseURL || "fireproof://localhost:1999");
       },
       serdegateway: async (sthis) => {
-        return new AddKeyToDbMetaGateway(new FireproofCloudGateway(sthis));
+        return new AddKeyToDbMetaGateway(new FireproofCloudGateway(sthis), "v2");
       },
     });
   });

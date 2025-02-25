@@ -56,7 +56,7 @@ describe("UCANGateway", () => {
     expect(loader.ebOpts.storeUrls).toBeDefined();
 
     // Test base URL configuration
-    const baseUrl = URI.from(loader.ebOpts.storeUrls.data.toString());
+    const baseUrl = URI.from(loader.ebOpts.storeUrls.car);
     expect(baseUrl.protocol).toBe("ucan:");
     expect(baseUrl.hostname).toBe("localhost");
     expect(baseUrl.port).toBe("8787");

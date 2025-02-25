@@ -1,5 +1,5 @@
-import { KeyedResolvOnce, URI } from "@adviser/cement";
-import { bs, type Database } from "@fireproof/core";
+import { URI } from "@adviser/cement";
+import { Attachable, GatewayUrlsParam } from "@fireproof/core";
 import { Delegation, Principal, SignerArchive } from "@ucanto/interface";
 import { Agent, type AgentMeta, type AgentData, type AgentDataExport } from "@web3-storage/access/agent";
 import { Absentee, ed25519 } from "@ucanto/principal";
@@ -14,7 +14,6 @@ import type { Signer as SignerWithoutVerifier } from "@ipld/dag-ucan";
 
 import * as Client from "./client.js";
 import * as ClockCaps from "./clock/capabilities.js";
-import { connectionFactory, makeKeyBagUrlExtractable } from "../connection-from-store.js";
 import { registerUCANStoreProtocol } from "./ucan-gateway.js";
 import stateStore from "./store/state/index.js";
 import { Service, type AgentWithStoreName, type Clock, type ClockWithoutDelegation, type Server } from "./types.js";
@@ -33,78 +32,69 @@ registerUCANStoreProtocol();
 // CONNECT
 // =======
 
-const connectionCache = new KeyedResolvOnce<bs.Connection>();
+// const connectionCache = new KeyedResolvOnce<bs.Connection>();
 
 export interface ConnectionParams {
-  readonly agent: AgentWithStoreName;
-  readonly clock: Clock | ClockWithoutDelegation;
+  readonly agent?: AgentWithStoreName;
+  readonly clock?: Clock | ClockWithoutDelegation;
+  readonly poll?: boolean;
+  readonly server?: Server;
   readonly email: Principal<DidMailto>;
-  readonly poll: boolean;
-  readonly server: Server;
+  readonly databaseName: string;
 }
 
-export async function connect(
-  db: Database,
-  params: Partial<ConnectionParams> = {}
-): Promise<{
-  agent: AgentWithStoreName;
-  clock: Clock | ClockWithoutDelegation;
-  connection: bs.Connection;
-  server: Server;
-}> {
-  const { sthis, name: dbName } = db;
-  const { email } = params;
+class UCANAttable implements Attachable {
+  readonly name = "ucan";
+  agent!: AgentWithStoreName;
+  clock!: Clock | ClockWithoutDelegation;
+  server!: Server;
 
-  // URL param validation
-  if (!dbName) {
-    throw new Error("`dbName` is required");
+  readonly params: ConnectionParams;
+
+  constructor(params: ConnectionParams) {
+    this.params = params;
   }
 
-  // Parts
-  const agnt = params.agent || (await agent());
-  const serv = params.server || (await server());
+  async prepare(): Promise<GatewayUrlsParam> {
+    // Parts
+    this.agent = this.params.agent || (await agent());
+    this.server = this.params.server || (await server());
 
-  // Typescript being weird?
-  const klok = (params.clock || (await clock({ audience: email || agnt.agent, databaseName: dbName }))) as
-    | Clock
-    | ClockWithoutDelegation;
+    // Typescript being weird?
+    this.clock = (this.params.clock ||
+      (await clock({ audience: this.params.email || this.agent, databaseName: this.params.databaseName }))) as
+      | Clock
+      | ClockWithoutDelegation;
 
-  // DB name
-  const existingName = serv.uri.getParam("name");
-  const name = existingName || dbName;
+    // DB name
+    const existingName = this.server.uri.getParam("name");
+    const name = existingName || this.params.databaseName;
 
-  // Build FP URL
-  const fpUrl = serv.uri
-    .build()
-    .protocol("ucan:")
-    .setParam("agent-store", agnt.storeName)
-    .setParam("clock-id", klok.id.did())
-    .setParam("name", name)
-    .setParam("poll", params.poll === true ? "t" : "f")
-    .setParam("server-host", serv.uri.toString())
-    .setParam("server-id", serv.id.did())
-    .setParam("storekey", `@${dbName}:data@`);
+    // Build FP URL
+    const fpUrl = this.server.uri
+      .build()
+      .protocol("ucan:")
+      .setParam("agent-store", this.agent.storeName)
+      .setParam("clock-id", this.clock.id.did())
+      .setParam("name", name)
+      .setParam("poll", this.params.poll ? "t" : "f")
+      .setParam("server-host", this.server.uri.toString())
+      .setParam("server-id", this.server.id.did());
+    // .setParam("storekey", `@${dbName}:data@`);
 
-  if ("storeName" in klok) fpUrl.setParam("clock-store", klok.storeName);
-  if (email) fpUrl.setParam("email-id", email.did());
+    if ("storeName" in this.clock) fpUrl.setParam("clock-store", this.clock.storeName);
+    if (this.params.email) fpUrl.setParam("email-id", this.params.email.did());
+    // Fin
+    return {
+      car: { url: fpUrl },
+      file: { url: fpUrl },
+      meta: { url: fpUrl },
+    };
+  }
+}
 
-  // Connect
-  const connection = await connectionCache.get(fpUrl.toString()).once(async () => {
-    makeKeyBagUrlExtractable(sthis);
-    const conn = connectionFactory(sthis, fpUrl);
-    await conn.connect(db.ledger.crdt.blockstore);
-    return conn;
-  });
-
-  await connection.loaded;
-
-  // Fin
-  return {
-    agent: agnt,
-    clock: klok,
-    connection,
-    server: serv,
-  };
+export function toUCAN(params: ConnectionParams): Attachable {
+  return new UCANAttable(params);
 }
 
 // AGENT

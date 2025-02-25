@@ -44,7 +44,7 @@ describe("NetlifyGateway", () => {
     //   throw new Error("Loader stores.base is not defined");
     // }
 
-    const baseUrl = URI.from(loader.ebOpts.storeUrls.data);
+    const baseUrl = URI.from(loader.ebOpts.storeUrls.car);
     expect(baseUrl.protocol).toBe("netlify:");
     expect(baseUrl.hostname).toBe("localhost");
     expect(baseUrl.port).toBe("8888");

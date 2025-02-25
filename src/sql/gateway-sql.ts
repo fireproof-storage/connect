@@ -283,7 +283,8 @@ class SQLStoreGateway implements bs.Gateway {
         return this.metaGateway.once(async () => {
           return new SQLMetaGateway(this.sthis);
         });
-      case "data":
+      case "file":
+      case "car":
         return this.dataGateway.once(async () => {
           return new SQLDataGateway(this.sthis);
         });

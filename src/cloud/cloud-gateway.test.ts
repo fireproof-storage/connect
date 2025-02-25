@@ -68,7 +68,7 @@ describe("FireproofCloudGateway", () => {
     //   throw new Error("Loader stores.base is not defined");
     // }
 
-    const baseUrl = URI.from(loader.ebOpts.storeUrls.data);
+    const baseUrl = URI.from(loader.ebOpts.storeUrls.car);
     expect(baseUrl.protocol).toBe("fireproof:");
     // expect(baseUrl.hostname).toBe("localhost");
     // expect(baseUrl.port || "").toBe("1999");
@@ -105,7 +105,7 @@ describe("FireproofCloudGateway", () => {
 
   it("should subscribe to changes", async () => {
     // Extract stores from the loader
-    const metaStore = await db.ledger.crdt.blockstore.loader?.metaStore();
+    const metaStore = db.ledger.crdt.blockstore.loader.attachedStores.local().active.meta;
 
     const metaGateway = metaStore.realGateway;
 

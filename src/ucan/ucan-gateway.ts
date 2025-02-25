@@ -122,7 +122,7 @@ export class UCANGateway implements bs.Gateway {
   }
 
   async #put(url: URI, body: Uint8Array): Promise<void> {
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
 
     if (this.inst === undefined) {
       throw new Error("Not started yet");
@@ -138,9 +138,9 @@ export class UCANGateway implements bs.Gateway {
       throw new Error("Name not found in the URI");
     }
 
-    this.logger.Debug().Str("store", store).Str("key", key).Msg("put");
+    this.logger.Debug().Str("store", pathPart).Str("key", key).Msg("put");
 
-    switch (store.toLowerCase()) {
+    switch (pathPart) {
       case "data": {
         await Client.store({
           agent: this.inst.agent.issuer,
@@ -202,7 +202,7 @@ export class UCANGateway implements bs.Gateway {
   }
 
   async #get(url: URI): Promise<Uint8Array> {
-    const { store } = getStore(url, this.sthis, (...args) => args.join("/"));
+    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
 
     if (this.inst === undefined) {
       throw new Error("Not started yet");
@@ -223,9 +223,9 @@ export class UCANGateway implements bs.Gateway {
       name += `-${index}`;
     }
 
-    this.logger.Debug().Str("store", store).Str("key", key).Msg("get");
+    this.logger.Debug().Str("store", pathPart).Str("key", key).Msg("get");
 
-    switch (store.toLowerCase()) {
+    switch (pathPart) {
       case "data": {
         const cid = CID.parse(key).toV1();
 
@@ -373,7 +373,7 @@ export function registerUCANStoreProtocol(protocol = "ucan:", overrideBaseURL?: 
       protocol,
       defaultURI: () => URI.from(overrideBaseURL || `${protocol}://localhost`),
       serdegateway: async (sthis) => {
-        return new AddKeyToDbMetaGateway(new UCANGateway(sthis));
+        return new AddKeyToDbMetaGateway(new UCANGateway(sthis), "v2");
       },
     });
   });
