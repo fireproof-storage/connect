@@ -314,7 +314,7 @@ async function search(logger: Logger, fileName: string, auth: string): Promise<s
   var exists = false;
   const url = 'https://www.googleapis.com/drive/v3/files';
   try {
-    response = await fetch(url+'?q=mimeType="text/plain" and name="'+fileName+'"',{
+    response = await fetch(url+'?q=name="'+fileName+'"',{
       headers: {
         'Authorization': 'Bearer '+auth,
     }
