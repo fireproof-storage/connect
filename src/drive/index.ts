@@ -6,17 +6,18 @@ import { BuildURI, KeyedResolvOnce } from "@adviser/cement";
 // Usage:
 //
 // import { useFireproof } from 'use-fireproof'
-// import { connect } from '@fireproof/aws'
-//
+// import { connect } from '@fireproof/drive'
 // const { db } = useFireproof('test')
+// const cx = connect(db);
 //
-// const cx = connect.aws(db);
+// OR:
+//
+// const { useDocument, useLiveQuery, database } = useFireproof("testDB");
+// connect(database);
+// 
 
-// TODO need to set the keybag url automatically
 
-// if (!process.env.FP_KEYBAG_URL) {
-//   process.env.FP_KEYBAG_URL = "file://./dist/kb-dir-aws?fs=mem";
-// }
+
 
 registerGDriveStoreProtocol();
 
@@ -24,7 +25,7 @@ const connectionCache = new KeyedResolvOnce<bs.Connection>();
 export const connect: ConnectFunction = (
   db: Database,
   auth = 'yourtoken',
-  url = "https://www.googleapis.com/drive/v3/files/",
+  url = "gdrive://googleapis.com/drive/v3/files/",
   remoteDbName = ""
 ) => {
   const { sthis, blockstore, name: dbName } = db;
