@@ -1,6 +1,6 @@
 import { PartySocket, PartySocketOptions } from "partysocket";
 import { Result, URI, BuildURI, KeyedResolvOnce, runtimeFn, exception2Result, Logger } from "@adviser/cement";
-import { bs, ensureLogger, getStore, rt, SuperThis } from "@fireproof/core";
+import { bs, ensureLogger, getStore, NotFoundError, rt, SuperThis } from "@fireproof/core";
 import { AddKeyToDbMetaGateway } from "../meta-key-hack.js";
 
 export class FireproofCloudGateway implements bs.Gateway {
@@ -100,7 +100,7 @@ export class FireproofCloudGateway implements bs.Gateway {
       this.party = new PartySocket(this.pso);
       let exposedResolve: (value: boolean) => void;
       const openFn = () => {
-        this.logger.Debug().Msg("party open");
+        this.logger.Debug().Any({pso:this.pso}).Msg("party open");
         this.party?.addEventListener("message", async (event: MessageEvent<string>) => {
           this.logger.Debug().Msg(`got message: ${event.data}`);
           const mbin = this.sthis.txt.encode(event.data);
@@ -154,14 +154,14 @@ export class FireproofCloudGateway implements bs.Gateway {
           .Uint64("status", response.status)
           .Str("status-text", response.statusText)
           .Msg("put");
-        if (response.status === 404) {
-          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${pathPart}!`).AsError();
+        if (!response.ok) {
+          throw this.logger.Error().Url(uploadUrl).Msg(`Failure get upload ${pathPart} -- ${uploadUrl.toString()}`).AsError();
         }
         const url = (await response.json()).url;
         this.logger.Debug().Url(url).Msg("put");
         const uploadResponse = await fetch(url, { method: "PUT", body: body });
-        if (uploadResponse.status === 404) {
-          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${pathPart}!`).AsError();
+        if (!uploadResponse.ok) { 
+          throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${pathPart} -- ${url}`).AsError();
         }
       });
     }
@@ -188,7 +188,6 @@ export class FireproofCloudGateway implements bs.Gateway {
     }
 
     this.subscriberCallbacks.add(callback);
-
     return Result.Ok(() => {
       this.subscriberCallbacks.delete(callback);
     });
@@ -206,6 +205,7 @@ export class FireproofCloudGateway implements bs.Gateway {
         case "meta":
           downloadUrl = pkMetaURL(uri, key);
           break;
+        case "wal":
         case "data":
           downloadUrl = pkCarGetURL(uri, key);
           break;
@@ -214,7 +214,10 @@ export class FireproofCloudGateway implements bs.Gateway {
       }
       const response = await fetch(downloadUrl.toString(), { method: "GET" });
       if (response.status === 404) {
-        throw new Error(`Failure in downloading ${pathPart}!`);
+        throw new NotFoundError(`NOTFoundError ${pathPart} -- ${downloadUrl.toString()}`);
+      }
+      if (!response.ok) {
+        throw new Error(`Error in fetching ${pathPart} -- ${downloadUrl.toString()}`);
       }
       const body = new Uint8Array(await response.arrayBuffer());
       // if (store === "meta") {
@@ -301,10 +304,10 @@ function pkCarGetURL(uri: URI, key: string): URI {
   }
   const name = uri.getParam("name");
   const idx = uri.getParam("index") || "";
-  const baseUri = URI.from(baseUrl).asURL();
-  baseUri.pathname = `/${name}${idx}/${key}`;
+  const baseUri = URI.from(baseUrl)
+  const pathname = `${baseUri.pathname}/${name}${idx}/${key}`;
   // console.log("pkCarGetURL", baseUri.toString());
-  return BuildURI.from(baseUri).URI();
+  return BuildURI.from(baseUri).pathname(pathname).URI();
 }
 
 function pkMetaURL(uri: URI, key: string): URI {
@@ -321,7 +324,7 @@ export function registerFireproofCloudStoreProtocol(protocol = "fireproof:", ove
         return URI.from(overrideBaseURL || "fireproof://localhost:1999");
       },
       serdegateway: async (sthis) => {
-        return new AddKeyToDbMetaGateway(new FireproofCloudGateway(sthis), "v2");
+        return new AddKeyToDbMetaGateway(new FireproofCloudGateway(sthis), "v1");
       },
     });
   });

@@ -1,6 +1,6 @@
 import { URI } from "@adviser/cement";
 import { AddKeyToDbMetaGateway, V2SerializedMetaKey } from "./meta-key-hack.js";
-import { rt, bs, fireproof, PARAM, ensureSuperThis } from "@fireproof/core";
+import { rt, bs, fireproof, PARAM, ensureSuperThis, Database } from "@fireproof/core";
 
 describe("MetaKeyHack", () => {
   const storageMap = new Map();
@@ -15,15 +15,20 @@ describe("MetaKeyHack", () => {
     },
   });
 
-  const db = fireproof("test", {
-    storeUrls: {
-      base: "hack://localhost",
-    },
-    keyBag: {
-      url: "memory://./dist/kb-dir-partykit?extractKey=_deprecated_internal_api",
-    },
+  let db: Database;
+  let ctx: { loader: bs.Loadable };
+  beforeAll(async () => {
+    db = fireproof("test", {
+      storeUrls: {
+        base: "hack://localhost",
+      },
+      keyBag: {
+        url: "memory://./dist/kb-dir-partykit?extractKey=_deprecated_internal_api",
+      },
+    });
+    await db.ready();
+    ctx = { loader: db.ledger.crdt.blockstore.loader };
   });
-  const ctx = { loader: db.ledger.crdt.blockstore.loader };
 
   it("inject key into meta", async () => {
     const loader = db.ledger.crdt.blockstore.loader;
@@ -79,13 +84,14 @@ describe("MetaKeyHack", () => {
     });
 
     // expect(keyMaterials.every((k) => k === dataStoreKeyMaterial.keyStr)).toBeTruthy()
-    expect(subscribeFn).toHaveBeenCalledTimes(1);
+    // expect(subscribeFn.mock.calls).toEqual([]);
+    expect(subscribeFn).toHaveBeenCalledTimes(2);
     const addKeyToDbMetaGateway = metaStore.realGateway as AddKeyToDbMetaGateway;
     expect(
       subscribeFn.mock.calls.map((i) =>
-        i.map((i) => i.payload.map((i: bs.DbMetaEvent) => i.eventCid.toString())).flat()
-      )
-    ).toEqual([addKeyToDbMetaGateway.lastDecodedMetas.map((i) => i.metas.map((i) => i.cid)).flat()]);
+        i.map((i) => i.payload.map((i: bs.DbMetaEvent) => i.eventCid.toString()))
+      ).flat()
+    ).toEqual(addKeyToDbMetaGateway.lastDecodedMetas.map((i) => i.metas.map((i) => i.cid)));
     unreg.Ok()();
   });
 });

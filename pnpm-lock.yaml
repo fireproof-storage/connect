@@ -16,10 +16,10 @@ importers:
         version: 3.744.0
       '@fireproof/core':
         specifier: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz
-        version: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(@adviser/cement@0.3.20(typescript@5.7.3))(react@18.3.1)
+        version: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(@adviser/cement@0.3.20(typescript@5.7.3))(@fireproof/vendor@2.0.1)(react@18.3.1)
       '@fireproof/vendor':
-        specifier: ^1.1.0-dev
-        version: 1.1.0-dev
+        specifier: ~2.0.0
+        version: 2.0.1
       '@ipld/dag-ucan':
         specifier: ^3.4.5
         version: 3.4.5
@@ -68,6 +68,9 @@ importers:
       assert:
         specifier: ^2.1.0
         version: 2.1.0
+      aws4fetch:
+        specifier: ^1.0.20
+        version: 1.0.20
       better-sqlite3:
         specifier: ^11.8.1
         version: 11.8.1
@@ -150,6 +153,9 @@ importers:
       eslint:
         specifier: ^9.20.0
         version: 9.20.0
+      partyserver:
+        specifier: ^0.0.64
+        version: 0.0.64(@cloudflare/workers-types@4.20240718.0)
       prettier:
         specifier: ^3.5.0
         version: 3.5.0
@@ -182,7 +188,7 @@ importers:
         version: 3.0.5(@types/node@22.13.1)(tsx@4.19.2)(yaml@2.7.0)
       wrangler:
         specifier: ^3.107.3
-        version: 3.107.3
+        version: 3.107.3(@cloudflare/workers-types@4.20240718.0)
       zx:
         specifier: ^8.3.2
         version: 8.3.2
@@ -1182,14 +1188,15 @@ packages:
     engines: {node: '>=14'}
 
   '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz':
-    resolution: {integrity: sha512-+1Y9u2NBaAAODj9HtKtxLCReU0RJ4WsSxMexzvWOtqZfhds5F0Reh+tbukNMTLk//sCsChjt8x3zk3I5JP/8UQ==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
+    resolution: {integrity: sha512-sMU6/CPSqPPDV+uC6i/Rk+qG/SMvKHxKYeb+Bn32B9aY+tK4gAHD5iRqr6fYh0mUwpb3xCz0n9zHtnCVhMaUbQ==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
     version: 0.0.0-smoke
     peerDependencies:
-      '@adviser/cement': ~0.3.19
+      '@adviser/cement': ~0.3.20
+      '@fireproof/vendor': ~2.0.0
       react: '>=18.0.0'
 
-  '@fireproof/vendor@1.1.0-dev':
-    resolution: {integrity: sha512-Ouc/ZlJNmlJ+rQ00Ayebbqp+YrHbwtO3lD/UI8QFg1xOS99k78QGXkf4bps+1+ie7ADKrkYB7t75MEpJtZIRpQ==}
+  '@fireproof/vendor@2.0.1':
+    resolution: {integrity: sha512-MrPNoq8ElPvg4RcYW4QU/NwQl3n6DLeG3fK4srzSUZBmX4exhOG6KP0GcCHbJPHAmWI85pCAon4Tyu64drOBRw==}
 
   '@hapi/hoek@9.3.0':
     resolution: {integrity: sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==}
@@ -2066,6 +2073,9 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
+
+  aws4fetch@1.0.20:
+    resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
 
   axios@1.7.9:
     resolution: {integrity: sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw==}
@@ -3173,6 +3183,11 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanoid@5.1.2:
+    resolution: {integrity: sha512-b+CiXQCNMUGe0Ri64S9SXFcP9hogjAJ2Rd6GdVxhPLRm7mhGaM7VgOvCAJ1ZshfHbqVDI3uqTI5C8/GaKuLI7g==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+
   napi-build-utils@1.0.2:
     resolution: {integrity: sha512-ONmRUqK7zj7DWX0D9ADe03wbwOBZxNAfF20PlGfCWQcD3+/MakShIHrMqx9YwPTfxDdF1zLeL+RGZiR9kGMLdg==}
 
@@ -3333,6 +3348,11 @@ packages:
   partykit@0.0.111:
     resolution: {integrity: sha512-pbUzJmulPTqZWgtH++eClnLlddTWS0RPKOAQyexYiSqGEg2/Ff84Ep0qWFqy+53wiz098DPFekRI375Qy2GsZw==}
     hasBin: true
+
+  partyserver@0.0.64:
+    resolution: {integrity: sha512-DuEdsGt2kvss6+P517PRY0PgW/C6v3hQaF2XaVCx0ZmLVSAcsYhDjurHvIFwh5Q1Hp5pJ8vvFAEXvfKEZw8Q8Q==}
+    peerDependencies:
+      '@cloudflare/workers-types': ^4.20240729.0
 
   partysocket@1.0.3:
     resolution: {integrity: sha512-7sSojS4oCRK1Fe1h+Sa0Za5dwOf+M9VksQlynD8yqwGpLvnO4oxx9ppmOSeh6CJTMbF5gbnvUQKMK525QSBdBw==}
@@ -5081,10 +5101,10 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(@adviser/cement@0.3.20(typescript@5.7.3))(react@18.3.1)':
+  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(@adviser/cement@0.3.20(typescript@5.7.3))(@fireproof/vendor@2.0.1)(react@18.3.1)':
     dependencies:
       '@adviser/cement': 0.3.20(typescript@5.7.3)
-      '@fireproof/vendor': 1.1.0-dev
+      '@fireproof/vendor': 2.0.1
       '@ipld/car': 5.4.0
       '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-json': 10.2.3
@@ -5100,10 +5120,10 @@ snapshots:
       prolly-trees: 1.0.4
       react: 18.3.1
 
-  '@fireproof/vendor@1.1.0-dev':
+  '@fireproof/vendor@2.0.1':
     dependencies:
       '@ipld/dag-cbor': 9.2.2
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@hapi/hoek@9.3.0': {}
 
@@ -6231,6 +6251,8 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.0.0
+
+  aws4fetch@1.0.20: {}
 
   axios@1.7.9:
     dependencies:
@@ -7622,6 +7644,8 @@ snapshots:
 
   nanoid@3.3.8: {}
 
+  nanoid@5.1.2: {}
+
   napi-build-utils@1.0.2: {}
 
   native-fetch@3.0.0(node-fetch@2.7.0(encoding@0.1.13)):
@@ -7824,6 +7848,11 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
+
+  partyserver@0.0.64(@cloudflare/workers-types@4.20240718.0):
+    dependencies:
+      '@cloudflare/workers-types': 4.20240718.0
+      nanoid: 5.1.2
 
   partysocket@1.0.3:
     dependencies:
@@ -8674,7 +8703,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20250129.0
       '@cloudflare/workerd-windows-64': 1.20250129.0
 
-  wrangler@3.107.3:
+  wrangler@3.107.3(@cloudflare/workers-types@4.20240718.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.3.4
       '@esbuild-plugins/node-globals-polyfill': 0.2.3(esbuild@0.17.19)
@@ -8686,6 +8715,7 @@ snapshots:
       unenv: 2.0.0-rc.1
       workerd: 1.20250129.0
     optionalDependencies:
+      '@cloudflare/workers-types': 4.20240718.0
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil

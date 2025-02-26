@@ -1,7 +1,7 @@
 import { Database } from "@fireproof/core";
 
 export async function smokeDB(db: Database) {
-  const ran = Math.random().toString();
+  const ran = db.sthis.nextId().str;
   for (let i = 0; i < 10; i++) {
     await db.put({ _id: `key${i}:${ran}`, hello: `world${i}` });
   }
