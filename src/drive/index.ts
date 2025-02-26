@@ -8,12 +8,12 @@ import { BuildURI, KeyedResolvOnce } from "@adviser/cement";
 // import { useFireproof } from 'use-fireproof'
 // import { connect } from '@fireproof/drive'
 // const { db } = useFireproof('test')
-// const cx = connect(db);
+// const cx = connect(db, 'your_access_token');
 //
 // OR:
 //
 // const { useDocument, useLiveQuery, database } = useFireproof("testDB");
-// connect(database);
+// connect(database, 'your_access_token');
 // 
 
 
