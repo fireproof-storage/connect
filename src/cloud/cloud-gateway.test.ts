@@ -1,7 +1,7 @@
-import { fireproof, Database, ConfigOpts, bs } from "@fireproof/core";
+import { fireproof, Database, ConfigOpts, bs, ensureSuperThis } from "@fireproof/core";
 import { registerFireproofCloudStoreProtocol } from "./gateway.js";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { URI } from "@adviser/cement";
+import { Future, URI } from "@adviser/cement";
 import { smokeDB } from "../../tests/helper.js";
 
 // has to leave
@@ -21,26 +21,28 @@ describe("FireproofCloudGateway", () => {
   let db: Database;
   let unregister: () => void;
   let ctx: bs.SerdeGatewayCtx;
+  const sthis = ensureSuperThis();
 
   beforeAll(() => {
     unregister = registerFireproofCloudStoreProtocol("fireproof:");
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     const config: ConfigOpts = {
       storeUrls: {
-        base: process.env.FP_STORAGE_URL || "fireproof://localhost:1999",
+        base: process.env.FP_STORAGE_URL || "fireproof://localhost:1998",
       },
     };
-    const name = "fireproof-cloud-test-db-" + Math.random().toString(36).substring(7);
+    const name = "fireproof-cloud-test-db-" + sthis.nextId().str;
     db = fireproof(name, config);
     ctx = { loader: db.ledger.crdt.blockstore.loader };
+    await db.ready();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Clear the database before each test
     if (db) {
-      db.destroy();
+      // await db.destroy();
     }
   });
 
@@ -115,22 +117,21 @@ describe("FireproofCloudGateway", () => {
     let didCall = false;
 
     if (metaGateway.subscribe) {
-      let resolve: () => void;
-      const p = new Promise<void>((r) => {
-        resolve = r;
-      });
+      const p = new Future<void>();
 
       const metaSubscribeResult = await metaGateway.subscribe(ctx, metaUrl?.Ok(), async (data) => {
         // const decodedData = sthis.txt.decode(data);
         expect(data.payload).toContain("parents");
-        didCall = true;
-        resolve();
+        if (!didCall) {
+          didCall = true;
+          p.resolve();
+        }
       });
       expect(metaSubscribeResult?.Ok()).toBeTruthy();
       const ok = await db.put({ _id: "key1", hello: "world1" });
       expect(ok).toBeTruthy();
       expect(ok.id).toBe("key1");
-      await p;
+      await p.asPromise();
       expect(didCall).toBeTruthy();
     }
   });

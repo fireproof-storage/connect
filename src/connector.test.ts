@@ -2,16 +2,16 @@
 // import { registerS3StoreProtocol } from "./s3/s3-gateway";
 import { URI, runtimeFn } from "@adviser/cement";
 import { type Database, type SuperThis, bs, ensureSuperThis, fireproof } from "@fireproof/core";
-import type { ConnectFunction } from "./connection-from-store.js";
+// import type { ConnectFunction } from "./connection-from-store.js";
 import { smokeDB } from "../tests/helper.js";
 
 // import { registerPartyKitStoreProtocol } from "./partykit/gateway";
 // import { a } from "@adviser/cement/base-sys-abstraction-C9WW3w57";
 
-async function getConnect(moduleName: string) {
-  const connect = await import(`./${moduleName}`).then((module) => module.connect);
-  return connect;
-}
+// async function getConnect(moduleName: string) {
+//   const connect = await import(`./${moduleName}`).then((module) => module.connect);
+//   return connect;
+// }
 
 // MUST go if superthis is there
 // interface ExtendedGateway extends bs.Gateway {
@@ -30,11 +30,11 @@ async function getConnect(moduleName: string) {
 
 describe.skip("loading the base store", () => {
   let db: Database;
-  let cx: bs.Connection;
+  // let cx: bs.Connection;
   let dbName: string;
   let emptyDbName: string;
-  let remoteDbName: string;
-  let connect: ConnectFunction;
+  // let remoteDbName: string;
+  // let connect: ConnectFunction;
   const sthis = ensureSuperThis();
   let ctx: bs.SerdeGatewayCtx;
 
@@ -51,7 +51,7 @@ describe.skip("loading the base store", () => {
     process.env.FP_STORAGE_URL = "./dist/fp-dir-file";
     dbName = "test-local-" + sthis.nextId().str;
     emptyDbName = "test-empty-" + sthis.nextId().str;
-    remoteDbName = "test-remote-" + sthis.nextId().str;
+    // remoteDbName = "test-remote-" + sthis.nextId().str;
     db = fireproof(dbName);
     if (context.task.file.projectName === undefined) {
       throw new Error("projectName is undefined");
@@ -61,9 +61,9 @@ describe.skip("loading the base store", () => {
     // db.attach(toNetlify())
     // db.attach(toFireproofCloud())
 
-    connect = await getConnect(context.task.file.projectName);
-    cx = await Promise.resolve(connect(db, remoteDbName));
-    await cx.loaded;
+    // connect = await getConnect(context.task.file.projectName);
+    // cx = await Promise.resolve(connect(db, remoteDbName));
+    // await cx.loaded;
     await smokeDB(db);
     await db.ledger.crdt.blockstore.loader.attachedStores.local().active.wal.process();
   });
@@ -163,10 +163,10 @@ describe.skip("loading the base store", () => {
     // parsedUrl.searchParams.set("cache", "two");
 
     // const cx2 = connect(db2, parsedUrl.toString());
-    const cx2 = connect(db2, remoteDbName); //, `partykit://localhost:1999/?name=${remoteDbName}&protocol=ws&cache=bust`);
+    // const cx2 = connect(db2, remoteDbName); //, `partykit://localhost:1999/?name=${remoteDbName}&protocol=ws&cache=bust`);
     // const cx2 = connect(db2, remoteDbName);
 
-    await cx2.loaded;
+    // await cx2.loaded;
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const carLog = db2.ledger.crdt.blockstore.loader.carLog;

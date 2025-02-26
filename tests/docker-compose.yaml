@@ -15,6 +15,14 @@ services:
     ports:
       - 1999:1999
 
+  fp-cloud:
+    image: connect-fp-cloud
+    build:
+      context: ..
+      dockerfile: ./tests/Dockerfile.connect-fp-cloud
+    ports:
+      - 1998:1998
+
   minio:
     image: minio/minio
     ports:
@@ -67,11 +75,13 @@ services:
 
   wait-for-ready:
     image: curlimages/curl
-    command: "sh -c 'while true; do curl -f http://netlify:8888 > netlify && curl -f http://minio:9000/minio/health/live > minio && curl -X POST http://ucan:8787 > ucan && curl -f http://partykit:1999 > partykit && echo ready > ready ; ls; sleep 5; done'"
+    command: "sh -c 'while true; do curl -f http://netlify:8888 > netlify && curl -f http://minio:9000/minio/health/live > minio && curl -X POST http://ucan:8787 > ucan && curl -f http://partykit:1999 > partykit && curl -f http://fp-cloud:1998/health > fp-cloud && echo ready > ready ; ls; sleep 5; done'"
     depends_on:
       netlify:
         condition: service_started
       partykit:
+        condition: service_started
+      fp-cloud:
         condition: service_started
       ucan:
         condition: service_started

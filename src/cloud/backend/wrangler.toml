@@ -1,0 +1,31 @@
+name = "fireproof-cloud"
+main = "src/index.ts"
+compatibility_date = "2024-04-19"
+
+[[durable_objects.bindings]]
+name = "Fireproof"
+class_name = "Fireproof"
+
+[[migrations]]
+tag = "v1" # Should be unique for each entry
+new_classes = ["Fireproof"]
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[vars]
+ACCESS_KEY_ID = "minioadmin"
+SECRET_ACCESS_KEY = "minioadmin"
+STORAGE_URL = "http://127.0.0.1:9000/testbucket/fp-cloud-test"
+
+# // const url = URI.from("s3://testbucket/fp-test").build();
+# // url.setParam("region", "eu-central-1");
+# // url.setParam("accessKey", "minioadmin");
+# // url.setParam("secretKey", "minioadmin");
+# // url.setParam("ensureBucket", "true");
+# // url.setParam("endpoint", "http://127.0.0.1:9000");
+
+
+# STORAGE_UR
+#     `https://${env.BUCKET_NAME}.${env.ACCOUNT_ID}.r2.cloudflarestorage.com/${dbName}/${carId}`;

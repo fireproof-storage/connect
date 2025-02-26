@@ -373,7 +373,7 @@ export function registerUCANStoreProtocol(protocol = "ucan:", overrideBaseURL?: 
       protocol,
       defaultURI: () => URI.from(overrideBaseURL || `${protocol}://localhost`),
       serdegateway: async (sthis) => {
-        return new AddKeyToDbMetaGateway(new UCANGateway(sthis), "v2");
+        return new AddKeyToDbMetaGateway(new UCANGateway(sthis), "v1");
       },
     });
   });

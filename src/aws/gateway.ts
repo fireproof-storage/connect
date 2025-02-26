@@ -5,7 +5,13 @@ import { AddKeyToDbMetaGateway } from "../meta-key-hack.js";
 async function resultFetch(logger: Logger, curl: CoerceURI, init?: RequestInit): Promise<Result<Response>> {
   const url = URI.from(curl);
   try {
-    const ret = await fetch(url.asURL(), init);
+    const ret = await fetch(url.asURL(), {
+      ...init,
+      headers: {
+        ...init?.headers,
+        'content-type': 'application/json'
+      },
+    });
     // logger.Debug().Url(url).Any("init", init).Int("status", ret.status).Msg("Fetch Done");
     return Result.Ok(ret);
   } catch (err) {
@@ -20,6 +26,11 @@ export class AWSGateway implements bs.Gateway {
   constructor(sthis: SuperThis) {
     this.sthis = ensureSuperLog(sthis, "AWSGateway");
     this.logger = this.sthis.logger;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getPlain(url: URI, key: string, sthis: SuperThis): Promise<Result<Uint8Array>> {
+    throw new Error("Method not implemented.");
   }
 
   async buildUrl(baseUrl: URI, key: string): Promise<Result<URI>> {
@@ -60,66 +71,65 @@ export class AWSGateway implements bs.Gateway {
       return this.logger.Error().Url(url).Err(rParams).Msg("Put Error").ResultError();
     }
     const { uploadUrl, key, name } = rParams.Ok();
-    return this.putData(uploadUrl, pathPart, key, name, body);
-    // return store === "meta"
-    //   ? this.putMeta(url, uploadUrl, key, name, body)
-    //   : this.putData(uploadUrl, store, key, name, body);
+    return pathPart === "meta"
+      ? this.putMeta(url, uploadUrl, key, name, body)
+      : this.putData(uploadUrl, pathPart, key, name, body);
   }
-  // private async putMeta(
-  //   url: URI,
-  //   uploadUrl: string,
-  //   key: string,
-  //   name: string,
-  //   body: Uint8Array
-  // ): Promise<bs.VoidResult> {
-  //   const index = url.getParam("index");
-  //   if (index) {
-  //     name += `-${index}`;
-  //   }
-  //   name += ".fp";
-  //   const fetchUrl = BuildURI.from(uploadUrl)
-  //     .setParam("type", "meta")
-  //     .setParam("key", key)
-  //     .setParam("name", name)
-  //     .URI();
+  private async putMeta(
+    url: URI,
+    uploadUrl: string,
+    key: string,
+    name: string,
+    body: Uint8Array
+  ): Promise<bs.VoidResult> {
+    const index = url.getParam("index");
+    if (index) {
+      name += `-${index}`;
+    }
+    name += ".fp";
+    const fetchUrl = BuildURI.from(uploadUrl)
+      .setParam("type", "meta")
+      .setParam("key", key)
+      .setParam("name", name)
+      .URI();
 
-  //   // const rPrefetch = await resultFetch(this.logger, fetchUrl, { method: "GET" });
-  //   // if (rPrefetch.isErr()) {
-  //   //   return Result.Err(rPrefetch.Err());
-  //   // }
-  //   // const prefetch = rPrefetch.Ok();
-  //   // // if (!prefetch.ok) {
-  //   // //   return this.logger.Error().Url(fetchUrl).Int("status", prefetch.status).Msg("failed to upload meta").ResultError();
-  //   // // }
+    // const rPrefetch = await resultFetch(this.logger, fetchUrl, { method: "GET" });
+    // if (rPrefetch.isErr()) {
+    //   return Result.Err(rPrefetch.Err());
+    // }
+    // const prefetch = rPrefetch.Ok();
+    // // if (!prefetch.ok) {
+    // //   return this.logger.Error().Url(fetchUrl).Int("status", prefetch.status).Msg("failed to upload meta").ResultError();
+    // // }
 
-  //   // const doneJson = await prefetch.json();
-  //   // if (!doneJson.uploadURL) {
-  //   //   return this.logger.Error().Url(fetchUrl).Any({doneJson}).Msg("Upload URL not found in the response").ResultError();
-  //   // }
+    // const doneJson = await prefetch.json();
+    // if (!doneJson.uploadURL) {
+    //   return this.logger.Error().Url(fetchUrl).Any({doneJson}).Msg("Upload URL not found in the response").ResultError();
+    // }
 
-  //   const meta = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
-  //   if (meta.isErr()) {
-  //     return Result.Err(meta.Err());
-  //   }
-  //   this.logger.Debug().Url(fetchUrl).Any({ meta }).Msg("putMeta");
-  //   const rDone = await resultFetch(this.logger, fetchUrl, {
-  //     method: "PUT",
-  //     body: this.sthis.txt.decode(meta.Ok()),
-  //   });
-  //   if (rDone.isErr()) {
-  //     return Result.Err(rDone.Err());
-  //   }
-  //   const done = rDone.Ok();
-  //   if (!done.ok) {
-  //     return this.logger
-  //       .Error()
-  //       .Url(fetchUrl)
-  //       .Any({ done, x: await done.text() })
-  //       .Msg("failed to upload meta")
-  //       .ResultError();
-  //   }
-  //   return Result.Ok(undefined);
-  // }
+    // const meta = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
+    // if (meta.isErr()) {
+    //   return Result.Err(meta.Err());
+    // }
+    this.logger.Debug().Url(fetchUrl).Any({ body }).Msg("putMeta");
+    const rDone = await resultFetch(this.logger, fetchUrl, {
+      method: "PUT",
+      body: body,
+    });
+    if (rDone.isErr()) {
+      return Result.Err(rDone.Err());
+    }
+    const done = rDone.Ok();
+    if (!done.ok) {
+      return this.logger
+        .Error()
+        .Url(fetchUrl)
+        .Any({ done, x: await done.text() })
+        .Msg("failed to upload meta")
+        .ResultError();
+    }
+    return Result.Ok(undefined);
+  }
 
   private async putData(
     uploadUrl: string,
@@ -227,7 +237,7 @@ export class AWSGateway implements bs.Gateway {
     }
 
     const data = new Uint8Array(await response.arrayBuffer());
-    // bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
+    // // bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
     // const res = await bs.setCryptoKeyFromGatewayMetaPayload(url, this.sthis, data);
     // if (res.isErr()) {
     //   return Result.Err(res.Err());
@@ -287,17 +297,28 @@ export class AWSGateway implements bs.Gateway {
       clearTimeout(timeoutId);
     });
   }
-
-  async getPlain(iurl: URI, key: string): Promise<Result<Uint8Array>> {
-    const url = iurl.build().setParam("key", key).URI();
-    const buffer = await this.get(url);
-    return buffer;
-  }
 }
 
+// export class AWSTestStore implements bs.TestGateway {
+//   readonly logger: Logger;
+//   readonly sthis: SuperThis;
+//   readonly gateway: bs.Gateway;
+
+//   constructor(sthis: SuperThis, gw: bs.Gateway) {
+//     this.sthis = ensureSuperLog(sthis, "AWSTestStore");
+//     this.logger = this.sthis.logger;
+//     this.gateway = gw;
+//   }
+
+//   async get(iurl: URI, key: string): Promise<Uint8Array> {
+//     const url = iurl.build().setParam("key", key).URI();
+//     const buffer = await this.gateway.get(url);
+//     return buffer.Ok();
+//   }
+// }
+
 const onceRegisterAWSStoreProtocol = new KeyedResolvOnce<() => void>();
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function registerAWSStoreProtocol(protocol = "aws:", overrideBaseURL?: string) {
+export function registerAWSStoreProtocol(protocol = "aws:") {
   return onceRegisterAWSStoreProtocol.get(protocol).once(() => {
     URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
@@ -305,7 +326,7 @@ export function registerAWSStoreProtocol(protocol = "aws:", overrideBaseURL?: st
       defaultURI: () =>
         BuildURI.from(`${protocol}://`).hostname("s3.amazonaws.com").setParam("region", "us-east-2").URI(),
       serdegateway: async (sthis) => {
-        return new AddKeyToDbMetaGateway(new AWSGateway(sthis), "v2");
+        return new AddKeyToDbMetaGateway(new AWSGateway(sthis), "v1");
       },
     });
   });
