@@ -100,7 +100,7 @@ export class FireproofCloudGateway implements bs.Gateway {
       this.party = new PartySocket(this.pso);
       let exposedResolve: (value: boolean) => void;
       const openFn = () => {
-        this.logger.Debug().Any({pso:this.pso}).Msg("party open");
+        this.logger.Debug().Any({ pso: this.pso }).Msg("party open");
         this.party?.addEventListener("message", async (event: MessageEvent<string>) => {
           this.logger.Debug().Msg(`got message: ${event.data}`);
           const mbin = this.sthis.txt.encode(event.data);
@@ -155,12 +155,16 @@ export class FireproofCloudGateway implements bs.Gateway {
           .Str("status-text", response.statusText)
           .Msg("put");
         if (!response.ok) {
-          throw this.logger.Error().Url(uploadUrl).Msg(`Failure get upload ${pathPart} -- ${uploadUrl.toString()}`).AsError();
+          throw this.logger
+            .Error()
+            .Url(uploadUrl)
+            .Msg(`Failure get upload ${pathPart} -- ${uploadUrl.toString()}`)
+            .AsError();
         }
         const url = (await response.json()).url;
         this.logger.Debug().Url(url).Msg("put");
         const uploadResponse = await fetch(url, { method: "PUT", body: body });
-        if (!uploadResponse.ok) { 
+        if (!uploadResponse.ok) {
           throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${pathPart} -- ${url}`).AsError();
         }
       });
@@ -207,7 +211,28 @@ export class FireproofCloudGateway implements bs.Gateway {
           break;
         case "wal":
         case "data":
-          downloadUrl = pkCarGetURL(uri, key);
+          {
+            if (uri.getParam("getNeedsAuth")) {
+              const backendUrl = pkURL(uri, key, "car");
+              const response = await fetch(backendUrl.asURL(), { method: "GET" });
+              this.logger
+                .Debug()
+                .Url(backendUrl)
+                .Uint64("status", response.status)
+                .Str("status-text", response.statusText)
+                .Msg("get");
+              if (!response.ok) {
+                throw this.logger
+                  .Error()
+                  .Url(backendUrl)
+                  .Msg(`Failure get download ${pathPart} -- ${backendUrl.toString()}`)
+                  .AsError();
+              }
+              downloadUrl = (await response.json()).url;
+            } else {
+              downloadUrl = pkCarGetURL(uri, key);
+            }
+          }
           break;
         default:
           throw new Error(`Unsupported store: ${pathPart}`);
@@ -304,7 +329,7 @@ function pkCarGetURL(uri: URI, key: string): URI {
   }
   const name = uri.getParam("name");
   const idx = uri.getParam("index") || "";
-  const baseUri = URI.from(baseUrl)
+  const baseUri = URI.from(baseUrl);
   const pathname = `${baseUri.pathname}/${name}${idx}/${key}`;
   // console.log("pkCarGetURL", baseUri.toString());
   return BuildURI.from(baseUri).pathname(pathname).URI();
