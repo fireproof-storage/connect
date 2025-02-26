@@ -30,7 +30,7 @@ export class GDriveGateway implements bs.Gateway {
     let { name } = rParams.Ok();    
     name += ".fp";    
 
-    const fileId = await search(this.logger, '', name, auth);
+    const fileId = await search(this.logger, name, auth);
     if ('undefined' !== typeof fileId || fileId !== 404) {
         const fileMetadata = await get(this.logger, fileId, 'fileMetaData', auth);
 
@@ -74,7 +74,7 @@ export class GDriveGateway implements bs.Gateway {
     }
     name += ".fp";    
 
-    const fileId = await search(this.logger, '', name, auth);
+    const fileId = await search(this.logger, name, auth);
     if ('undefined' !== typeof fileId || fileId !== 404) {
         const fileMetadata = await get(this.logger, fileId, 'fileMetaData', auth);
         const fileData = new Blob([body], { type: "text/plain" });
@@ -109,7 +109,7 @@ export class GDriveGateway implements bs.Gateway {
     name += ".fp";
     
     try{
-      const fileId = await search(this.logger, '', name, auth);
+      const fileId = await search(this.logger, name, auth);
       if( 'undefined' !== typeof fileId && fileId !== 404){
         response = await get(this.logger, fileId, 'fileContent', auth);
         var contentArray = new Array(response.length);
@@ -120,6 +120,8 @@ export class GDriveGateway implements bs.Gateway {
 
         return Result.Ok(data);
 
+      }else{
+        return this.logger.Error().Url(url).Err(rParams).Msg("Database not found").ResultError();
       }     
 
     }catch(err){
@@ -143,7 +145,7 @@ export class GDriveGateway implements bs.Gateway {
     name += ".fp";
 
     try{
-      const fileId = await search(this.logger, '', name, auth);
+      const fileId = await search(this.logger, name, auth);
       if('undefined'!== typeof fileId && fileId !== 404){
         response = await deleteDB(this.logger, fileId, auth);
         if(response.id){
@@ -306,13 +308,13 @@ async function insert(logger: Logger, fileName: string, content: string, auth: s
   
     
 }
-async function search(logger: Logger, query = '', fileName: string, auth: string): Promise<string | number | Result<unknown> | undefined>  {
+async function search(logger: Logger, fileName: string, auth: string): Promise<string | number | Result<unknown> | undefined>  {
   let response;
   var result;
   var exists = false;
   const url = 'https://www.googleapis.com/drive/v3/files';
   try {
-    response = await fetch(url+"?q="+query,{
+    response = await fetch(url+'?q=mimeType="text/plain" and name="'+fileName+'"',{
       headers: {
         'Authorization': 'Bearer '+auth,
     }
