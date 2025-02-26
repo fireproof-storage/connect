@@ -75,7 +75,7 @@ services:
 
   wait-for-ready:
     image: curlimages/curl
-    command: "sh -c 'while true; do curl -f http://netlify:8888 > netlify && curl -f http://minio:9000/minio/health/live > minio && curl -X POST http://ucan:8787 > ucan && curl -f http://partykit:1999 > partykit && curl -f http://fp-cloud:1998/health > fp-cloud && echo ready > ready ; ls; sleep 5; done'"
+    command: "sh -c 'while true; do curl -f http://netlify:8888 > netlify && curl -f http://minio:9000/minio/health/live > minio && curl -f http://ucan:8787/health > ucan && curl -f http://partykit:1999 > partykit && curl -f http://fp-cloud:1998/health > fp-cloud && echo ready > ready && exit 0 ; ls; sleep 5; done'"
     depends_on:
       netlify:
         condition: service_started

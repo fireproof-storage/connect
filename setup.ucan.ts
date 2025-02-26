@@ -13,6 +13,7 @@ const clock = await Connector.createAndSaveClock({
 
 const serverId = "did:key:z6Mkj3oU3VKyLv1ZNdjC2oKgHPrZDCnzSJLczrefoq3ZQMVf";
 const server = await Connector.server("http://localhost:8787", serverId);
+// const server = await Connector.server("http://localhost:51648", serverId);
 
 const uri = server.uri
   .build()

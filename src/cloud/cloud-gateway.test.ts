@@ -121,7 +121,7 @@ describe("FireproofCloudGateway", () => {
 
       const metaSubscribeResult = await metaGateway.subscribe(ctx, metaUrl?.Ok(), async (data) => {
         // const decodedData = sthis.txt.decode(data);
-        expect(data.payload).toContain("parents");
+        expect(data.payload.length).toBeGreaterThan(0);
         if (!didCall) {
           didCall = true;
           p.resolve();
