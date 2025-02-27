@@ -18,7 +18,7 @@ jobs:
         name: Install pnpm
         with:
           run_install: false
-          version: 9
+          version: 10
 
       #- uses: actions/checkout@v4
       #  with:
@@ -103,6 +103,21 @@ jobs:
       - name: pretest docker
         working-directory: ./connector
         run: pnpm run pretest-docker
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: djkfdlsgadlsghgdummy
+          aws-secret-access-key: LdjfdfDSFKDSfdDfdkjdlfgkdgjdglgkaghdummy
+          aws-region: us-east-1
+
+      - name: pretest sam
+        working-directory: ./connector
+        run: pnpm run pretest-sam &
 
       - name: test
         working-directory: ./connector

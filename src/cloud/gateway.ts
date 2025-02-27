@@ -161,7 +161,7 @@ export class FireproofCloudGateway implements bs.Gateway {
             .Msg(`Failure get upload ${pathPart} -- ${uploadUrl.toString()}`)
             .AsError();
         }
-        const url = (await response.json()).url;
+        const url = ((await response.json()) as { url: string }).url;
         this.logger.Debug().Url(url).Msg("put");
         const uploadResponse = await fetch(url, { method: "PUT", body: body });
         if (!uploadResponse.ok) {
@@ -228,7 +228,7 @@ export class FireproofCloudGateway implements bs.Gateway {
                   .Msg(`Failure get download ${pathPart} -- ${backendUrl.toString()}`)
                   .AsError();
               }
-              downloadUrl = (await response.json()).url;
+              downloadUrl = ((await response.json()) as { url: string }).url;
             } else {
               downloadUrl = pkCarGetURL(uri, key);
             }

@@ -1,0 +1,23 @@
+FROM node:20-slim AS base
+RUN apt update 
+RUN apt install -y wget unzip
+RUN npm install -g esbuild
+RUN wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-arm64.zip
+RUN unzip aws-sam-cli-linux-arm64.zip -d sam-installation
+RUN ./sam-installation/install
+CMD bash
+#
+#   4  apt update
+#    5  curl https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-arm64.zip
+#    6  apt install curl
+#    7  curl https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-arm64.zip
+#    8  apt install wget
+#    9  wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-arm64.zip
+#   10  ls -la
+#   11  unzip aws-sam-cli-linux-arm64.zip -d sam-installation
+##   12  apt install unzip
+#   13  unzip aws-sam-cli-linux-arm64.zip -d sam-installation
+#   14  ./sam-installation/install
+#   15  sam
+#   16  history
+

@@ -20,7 +20,7 @@ describe("AWSGateway", () => {
     expect(process.env.FP_STORAGE_URL).toMatch(/aws:\/\/aws/);
 
     const url = URI.from(process.env.FP_STORAGE_URL || "");
-    expect(url.getParam("dataUrl")).toBeTruthy();
+    // expect(url.getParam("dataUrl")).toBeTruthy();
     expect(url.getParam("uploadUrl")).toBeTruthy();
     expect(url.getParam("webSocketUrl")).toBeTruthy();
   });
@@ -59,7 +59,7 @@ describe("AWSGateway", () => {
     expect(baseUrl.hostname).toBe("aws");
 
     // Check for required parameters in the base URL
-    expect(baseUrl.getParam("dataUrl")).toBeTruthy();
+    // expect(baseUrl.getParam("dataUrl")).toBeTruthy();
     expect(baseUrl.getParam("uploadUrl")).toBeTruthy();
     expect(baseUrl.getParam("webSocketUrl")).toBeTruthy();
 

@@ -27,68 +27,68 @@ export class PartyKitGateway implements bs.Gateway {
   pso?: PartySocketOptions;
   async start(uri: URI): Promise<Result<URI>> {
     const ret = await exception2Result(async (): Promise<URI> => {
-    this.logger.Debug().Msg("Starting PartyKitGateway with URI: " + uri.toString());
+      this.logger.Debug().Msg("Starting PartyKitGateway with URI: " + uri.toString());
 
-    await this.sthis.start();
+      await this.sthis.start();
 
-    this.url = uri;
-    const ret = uri.build().defParam("version", "v0.1-partykit");
+      this.url = uri;
+      const ret = uri.build().defParam("version", "v0.1-partykit");
 
-    const rName = uri.getParamResult("name");
-    if (rName.isErr()) {
-      throw this.logger.Error().Err(rName).Msg("name not found").AsError();
-    }
-    let dbName = rName.Ok();
-    if (this.url.hasParam("index")) {
-      dbName = dbName + "-idx";
-    }
-    ret.defParam("party", "fireproof");
-    ret.defParam("protocol", "wss");
-    // const party = uri.getParam("party") || "fireproof";
-    // const proto = uri.getParam("protocol") || "wss";
-    let possibleUndef: {
-      protocol: "wss" | "ws" | undefined;
-      protocols?: string[];
-      prefix?: string;
-    } = { protocol: ret.getParam("protocol") as "wss" | "ws" };
-
-    const protocolsStr = uri.getParam("protocols");
-    if (protocolsStr) {
-      const ps = protocolsStr
-        .split(",")
-        .map((x) => x.trim())
-        .filter((x) => x);
-      if (ps.length > 0) {
-        possibleUndef = { ...possibleUndef, protocols: ps };
+      const rName = uri.getParamResult("name");
+      if (rName.isErr()) {
+        throw this.logger.Error().Err(rName).Msg("name not found").AsError();
       }
-    }
-    const prefixStr = uri.getParam("prefix");
-    if (prefixStr) {
-      possibleUndef = { ...possibleUndef, prefix: prefixStr };
-    }
+      let dbName = rName.Ok();
+      if (this.url.hasParam("index")) {
+        dbName = dbName + "-idx";
+      }
+      ret.defParam("party", "fireproof");
+      ret.defParam("protocol", "wss");
+      // const party = uri.getParam("party") || "fireproof";
+      // const proto = uri.getParam("protocol") || "wss";
+      let possibleUndef: {
+        protocol: "wss" | "ws" | undefined;
+        protocols?: string[];
+        prefix?: string;
+      } = { protocol: ret.getParam("protocol") as "wss" | "ws" };
 
-    const query: PartySocketOptions["query"] = {};
+      const protocolsStr = uri.getParam("protocols");
+      if (protocolsStr) {
+        const ps = protocolsStr
+          .split(",")
+          .map((x) => x.trim())
+          .filter((x) => x);
+        if (ps.length > 0) {
+          possibleUndef = { ...possibleUndef, protocols: ps };
+        }
+      }
+      const prefixStr = uri.getParam("prefix");
+      if (prefixStr) {
+        possibleUndef = { ...possibleUndef, prefix: prefixStr };
+      }
 
-    const partySockOpts: PartySocketOptions = {
-      id: this.id,
-      host: this.url.host,
-      room: dbName,
-      party: ret.getParam("party"),
-      ...possibleUndef,
-      query,
-      path: this.url.pathname.replace(/^\//, ""),
-    };
+      const query: PartySocketOptions["query"] = {};
 
-    if (runtimeFn().isNodeIsh) {
-      const { WebSocket } = await import("ws");
-      partySockOpts.WebSocket = WebSocket;
-    }
-    this.pso = partySockOpts;
-    return ret.URI();
-  });
-    console.log("start-ok", ret.isOk())
+      const partySockOpts: PartySocketOptions = {
+        id: this.id,
+        host: this.url.host,
+        room: dbName,
+        party: ret.getParam("party"),
+        ...possibleUndef,
+        query,
+        path: this.url.pathname.replace(/^\//, ""),
+      };
 
-    return ret
+      if (runtimeFn().isNodeIsh) {
+        const { WebSocket } = await import("ws");
+        partySockOpts.WebSocket = WebSocket;
+      }
+      this.pso = partySockOpts;
+      return ret.URI();
+    });
+    // console.log("start-ok", ret.isOk());
+
+    return ret;
   }
 
   async ready(): Promise<void> {
@@ -123,7 +123,7 @@ export class PartyKitGateway implements bs.Gateway {
     await this.ready();
     this.logger.Debug().Msg("close");
     this.party?.close();
-    console.log("close-ok")
+    // console.log("close-ok");
     return Result.Ok(undefined);
   }
 
@@ -149,7 +149,7 @@ export class PartyKitGateway implements bs.Gateway {
         throw this.logger.Error().Url(uploadUrl).Msg(`Failure in uploading ${pathPart}!`).AsError();
       }
     });
-    console.log("put-ok", ret.isOk())
+    // console.log("put-ok", ret.isOk());
     return ret;
   }
 
@@ -209,8 +209,8 @@ export class PartyKitGateway implements bs.Gateway {
       // }
       return body;
     });
-    console.log("get-ok", ret.isOk())
-    return ret
+    // console.log("get-ok", ret.isOk());
+    return ret;
   }
 
   async delete(uri: URI): Promise<bs.VoidResult> {
@@ -226,7 +226,7 @@ export class PartyKitGateway implements bs.Gateway {
         throw new Error(`Failure in deleting ${pathPart}!`);
       }
     });
-    console.log("delete-ok", ret.isOk())
+    // console.log("delete-ok", ret.isOk());
     return ret;
   }
 
@@ -240,7 +240,7 @@ export class PartyKitGateway implements bs.Gateway {
       }
       return Result.Ok(undefined);
     });
-    console.log("destroy-ok", ret.isOk())
+    // console.log("destroy-ok", ret.isOk());
     return ret;
   }
 
