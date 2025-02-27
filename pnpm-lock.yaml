@@ -33,8 +33,8 @@ importers:
         specifier: ^4.20250224.0
         version: 4.20250224.0
       '@fireproof/core':
-        specifier: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz
-        version: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(@adviser/cement@0.3.20(typescript@5.7.3))(@fireproof/vendor@2.0.1)(react@18.3.1)
+        specifier: 0.20.0-dev-preview-50
+        version: 0.20.0-dev-preview-50(@adviser/cement@0.3.20(typescript@5.7.3))(@fireproof/vendor@2.0.1)(react@18.3.1)
       '@fireproof/vendor':
         specifier: ~2.0.0
         version: 2.0.1
@@ -1293,9 +1293,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz':
-    resolution: {integrity: sha512-sMU6/CPSqPPDV+uC6i/Rk+qG/SMvKHxKYeb+Bn32B9aY+tK4gAHD5iRqr6fYh0mUwpb3xCz0n9zHtnCVhMaUbQ==, tarball: file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz}
-    version: 0.0.0-smoke
+  '@fireproof/core@0.20.0-dev-preview-50':
+    resolution: {integrity: sha512-xLaObyykXEtELgPNFEu8ANdctGEDmZIuYHbieEJoZ/7SHK1heuBHmQenv5GPBbXZTEfuygkqD9RrDKQqUiDH2g==}
     peerDependencies:
       '@adviser/cement': ~0.3.20
       '@fireproof/vendor': ~2.0.0
@@ -5937,7 +5936,7 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@file:../fireproof/dist/fireproof-core/fireproof-core-0.0.0-smoke.tgz(@adviser/cement@0.3.20(typescript@5.7.3))(@fireproof/vendor@2.0.1)(react@18.3.1)':
+  '@fireproof/core@0.20.0-dev-preview-50(@adviser/cement@0.3.20(typescript@5.7.3))(@fireproof/vendor@2.0.1)(react@18.3.1)':
     dependencies:
       '@adviser/cement': 0.3.20(typescript@5.7.3)
       '@fireproof/vendor': 2.0.1
