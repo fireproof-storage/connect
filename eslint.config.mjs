@@ -17,6 +17,7 @@ export default tseslint.config(
       "**/examples/",
       "**/.wrangler/",
       "smoke/react/",
+      "src/aws/backend/.aws-sam/**/*",
       "tests/connect-netlify/app/**/*.js",
     ],
   },

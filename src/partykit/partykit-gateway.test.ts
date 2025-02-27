@@ -116,7 +116,6 @@ describe("PartyKitGateway", () => {
     const metaUrl = await metaGateway?.buildUrl(ctx, metaStore.url(), "main");
     await metaGateway.start(ctx, metaStore.url());
 
-
     if (metaGateway.subscribe) {
       const p = new Future<void>();
       let didCall = false;

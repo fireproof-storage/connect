@@ -23,6 +23,56 @@ services:
     ports:
       - 1998:1998
 
+  dynamo:
+    image: amazon/dynamodb-local
+    ports:
+      - 8000:8000
+
+  #  lambda-function:
+  #    image: aws-lambda
+  #    build:
+  #      context: ..
+  #      dockerfile: ./tests/Dockerfile.aws-lambda
+  #    environment:
+  #      AWS_SAM_LOCAL: true
+  #      AWS_LAMBDA_FUNCTION_MEMORY_SIZE: 128
+  #      AWS_LAMBDA_FUNCTION_TIMEOUT: 3
+  #      AWS_REGION: us-east-1
+  #      AWS_DEFAULT_REGION: us-east-1
+  #      AWS_ACCOUNT_ID: 123456789012
+  #      AWS_LAMBDA_INITIALIZATION_TYPE: on-demand
+  #      UploadBucket: testbucket
+  #      OVERRIDE_AWS_ACCESS_KEY_ID: minioadmin
+  #      OVERRIDE_AWS_SECRET_ACCESS_KEY: minioadmin
+  #      LANG: en_US.UTF-8
+  #      LOG_LEVEL: debug
+  #    ports:
+  #      - "8001:8080"
+
+  #  lambda-function:
+  #    image: public.ecr.aws/lambda/nodejs:20-rapid-arm64
+  #    ports:
+  #      - "8001:8080" # Lambda Runtime Interface Emulator (RIE) listens on port 8080
+  #    volumes:
+  #      - /Users/menabe/Software/fproof/connect/fp-aws-backend/.aws-sam/build/UploadsFunction:/var/task # Mount your Lambda function code
+  #    command: ["app.handler"]
+  #    environment:
+  #      AWS_SAM_LOCAL: true
+  #      AWS_LAMBDA_FUNCTION_MEMORY_SIZE: 128
+  #      AWS_LAMBDA_FUNCTION_TIMEOUT: 3
+  #      AWS_LAMBDA_FUNCTION_HANDLER: app.handler
+  #      AWS_LAMBDA_FUNCTION_NAME: UploadsFunction
+  #      AWS_LAMBDA_FUNCTION_VERSION: $LATEST
+  #      AWS_REGION: us-east-1
+  #      AWS_DEFAULT_REGION: us-east-1
+  #      AWS_ACCOUNT_ID: 123456789012
+  #      AWS_LAMBDA_INITIALIZATION_TYPE: on-demand
+  #      UploadBucket: testbucket
+  #      OVERRIDE_AWS_ACCESS_KEY_ID: minioadmin
+  #      OVERRIDE_AWS_SECRET_ACCESS_KEY: minioadmin
+  #      LANG: en_US.UTF-8
+  #      LOG_LEVEL: debug
+
   minio:
     image: minio/minio
     ports:
@@ -42,9 +92,20 @@ services:
       AWS_SECRET_ACCESS_KEY: minioadmin
       AWS_EC2_METADATA_DISABLED: true
     entrypoint: ""
-    command: sh -c 'while true; do if `curl -q http://minio:9000/minio/health/live` ; then aws --endpoint-url http://minio:9000/ s3 mb s3://testbucket ;  exit 0; fi ; sleep 5; done'
+    command: bash -c 'while true; do if `curl -q http://minio:9000/minio/health/live` ; then aws --endpoint-url http://minio:9000/ s3 mb s3://testbucket ; exit 0; fi ; sleep 5; done;'
     depends_on:
       minio:
+        condition: service_started
+
+  create-dynamo:
+    image: amazon/aws-cli
+    entrypoint: ""
+    environment:
+      AWS_ACCESS_KEY_ID: djkfdlsgadlsghgdummy
+      AWS_SECRET_ACCESS_KEY: LdjfdfDSFKDSfdDfdkjdlfgkdgjdglgkaghdummy
+    command: bash -c 'while true; do aws dynamodb list-tables --endpoint-url http://dynamo:8000 --region local && (aws dynamodb delete-table --table-name metaStore --endpoint-url http://dynamo:8000 --region local ; aws dynamodb create-table  --table-name metaStore  --attribute-definitions AttributeName=name,AttributeType=S AttributeName=cid,AttributeType=S --key-schema AttributeName=name,KeyType=HASH AttributeName=cid,KeyType=RANGE  --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 --endpoint-url http://dynamo:8000 --region local) && exit 0 ; sleep 5; done;'
+    depends_on:
+      dynamo:
         condition: service_started
 
   #docker run  --entrypoint "" -ti amazon/aws-cli  sh -c 'aws help; exit 7'
@@ -75,7 +136,7 @@ services:
 
   wait-for-ready:
     image: curlimages/curl
-    command: "sh -c 'while true; do curl -f http://netlify:8888 > netlify && curl -f http://minio:9000/minio/health/live > minio && curl -f http://ucan:8787/health > ucan && curl -f http://partykit:1999 > partykit && curl -f http://fp-cloud:1998/health > fp-cloud && echo ready > ready && exit 0 ; ls; sleep 5; done'"
+    command: "sh -c 'while [ ! -e healthy ] ; do curl -f http://netlify:8888 > netlify && curl -f http://minio:9000/minio/health/live > minio && curl -f http://ucan:8787/health > ucan && curl -f http://partykit:1999 > partykit && curl -f http://fp-cloud:1998/health > fp-cloud && echo ready > ready ; ls; sleep 5; done'"
     depends_on:
       netlify:
         condition: service_started
@@ -91,7 +152,47 @@ services:
       test:
         - CMD-SHELL
         - "-c"
-        - "test -e ready"
+        - "test -e ready && touch healthy"
       interval: 5s
       retries: 30
       timeout: 2s
+#docker rm -f kong
+#
+#cat > kong.yml <<EOF
+#
+#_format_version: "3.0"
+#_transform: true
+#
+#routes:
+#- name: lambda1
+#  paths: [ "/uploads" ]
+#plugins:
+#- route: lambda1
+#  name: aws-lambda
+#  config:
+#    host: tests-lambda-function-1
+#    #host: heuristic_northcutt
+#    port: 8080
+#    disable_https: true
+#    aws_key: djkfdlsgadlsghgdummy
+#    aws_secret: LdjfdfDSFKDSfdDfdkjdlfgkdgjdglgkaghdummy
+#    aws_region: us-east-1
+#    function_name: function
+#EOF
+#
+#
+#docker run -d --name kong \
+#    --network tests_default \
+#    -v "$(pwd):/kong/declarative/" \
+#    -e "KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yml" \
+#    -e "KONG_DATABASE=off" \
+#    -e "KONG_PROXY_ACCESS_LOG=/dev/stdout" \
+#    -e "KONG_ADMIN_ACCESS_LOG=/dev/stdout" \
+#    -e "KONG_PROXY_ERROR_LOG=/dev/stderr" \
+#    -e "KONG_ADMIN_ERROR_LOG=/dev/stderr" \
+#    -e "KONG_ADMIN_LISTEN=0.0.0.0:8001, 0.0.0.0:8444 ssl" \
+#    -p 18000:8000 \
+#    -p 18443:8443 \
+#    -p 18001:8001 \
+#    -p 18444:8444 \
+#    kong/kong
