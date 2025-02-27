@@ -30,11 +30,11 @@ import { DynamoDBDocumentClient, PutCommand, DeleteCommand } from "@aws-sdk/lib-
 
 // AWS.config.update({region: 'us-east-1'})
 // AWS.config.update({ region: process.env.AWS_REGION })
-const client = new DynamoDBClient({
+const dbClient = new DynamoDBClient({
   region: "local",
   endpoint: "http://tests-dynamo-1:8000",
 });
-const dynamo = DynamoDBDocumentClient.from(client);
+const dynamo = DynamoDBDocumentClient.from(dbClient);
 const lambda = new Lambda();
 const tableName = "metaStore";
 // const s3 = new S3Client({
@@ -43,6 +43,18 @@ const tableName = "metaStore";
 
 // Change this value to adjust the signed URL's expiration
 const URL_EXPIRATION_SECONDS = 300;
+
+const s3Client = new S3Client({
+  credentials: {
+    accessKeyId: process.env.OVERRIDE_AWS_ACCESS_KEY_ID ?? (process.env.AWS_ACCESS_KEY_ID as string),
+    secretAccessKey: process.env.OVERRIDE_AWS_SECRET_ACCESS_KEY ?? (process.env.AWS_SECRET_ACCESS_KEY as string),
+  },
+  endpoint: process.env.AWS_S3_ENDPOINT,
+  forcePathStyle: !!process.env.AWS_S3_ENDPOINT,
+  region: process.env.AWS_REGION,
+});
+
+console.log("S3_ENDPOINT", process.env.AWS_S3_ENDPOINT);
 
 // Main Lambda entry point
 export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
@@ -124,14 +136,6 @@ async function getUploadURL(event: APIGatewayProxyEvent): Promise<string> {
     }
     const s3Params = uploadParams(path);
 
-    const client = new S3Client({
-      credentials: {
-        accessKeyId: process.env.OVERRIDE_AWS_ACCESS_KEY_ID ?? (process.env.AWS_ACCESS_KEY_ID as string),
-        secretAccessKey: process.env.OVERRIDE_AWS_SECRET_ACCESS_KEY ?? (process.env.AWS_SECRET_ACCESS_KEY as string),
-      },
-      endpoint: process.env.AWS_ENDPOINT,
-      region: process.env.AWS_REGION,
-    });
     let command;
     if (event.httpMethod === "PUT") {
       command = new PutObjectCommand({
@@ -144,7 +148,7 @@ async function getUploadURL(event: APIGatewayProxyEvent): Promise<string> {
         Key: s3Params.Key,
       });
     }
-    const uploadURL = await getSignedUrl(client, command, { expiresIn: 3600 });
+    const uploadURL = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
     return JSON.stringify({
       // ...process.env,
       uploadURL: uploadURL,

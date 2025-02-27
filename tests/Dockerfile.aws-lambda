@@ -1,7 +1,24 @@
-FROM public.ecr.aws/lambda/nodejs:20
+FROM node:20-slim AS base
+
+RUN apt update 
+RUN apt install -y wget unzip
+RUN npm install -g esbuild
+RUN wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-arm64.zip
+RUN unzip aws-sam-cli-linux-arm64.zip -d sam-installation
+RUN ./sam-installation/install
+
+COPY src/aws/backend /app/prebuild
+# COPY package.json /app/prebuild
+
+RUN cd /app/prebuild && \
+    npm init -y && \
+    npm install @adviser/cement @types/aws-lambda @aws-sdk/client-dynamodb @aws-sdk/client-lambda @aws-sdk/client-s3 @aws-sdk/lib-dynamodb @aws-sdk/s3-request-presigner aws-lambda && \
+    sam build --debug
+
+FROM public.ecr.aws/lambda/nodejs:20 AS runtime
 
 # Copy function code
-COPY src/aws/backend/.aws-sam/build/UploadsFunction/app.js ${LAMBDA_TASK_ROOT}
+COPY --from=base /app/prebuild/.aws-sam/build/UploadsFunction ${LAMBDA_TASK_ROOT}
   
 # Set the CMD to your handler (could also be done as a parameter override outside of the Dockerfile)
 CMD [ "app.handler" ]
