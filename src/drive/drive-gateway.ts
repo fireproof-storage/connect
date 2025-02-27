@@ -266,9 +266,7 @@ async function update(logger: Logger, fileId: string, fileMetadata: object, file
       ${content}
       
       --${boundary}--`;
-    }
-              
-    try{
+      try{
       response = await fetch(url+`${fileId}?uploadType=multipart&fields=id`, {
         method: 'PATCH',
         headers,
@@ -277,7 +275,10 @@ async function update(logger: Logger, fileId: string, fileMetadata: object, file
       return await response.json();
     }catch(err){
       return logger.Error().Url(url).Any("init", auth).Err(err).Msg("Insert Error").ResultError();
-    }       
+    }
+    }
+              
+           
 
 
 }
