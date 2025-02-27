@@ -104,7 +104,7 @@
     "@fireproof/vendor": "~2.0.0",
     "@ipld/dag-ucan": "^3.4.5",
     "@jspm/core": "^2.1.0",
-    "@netlify/blobs": "^8.1.0",
+    "@netlify/blobs": "^8.1.1",
     "@ucanto/client": "^9.0.1",
     "@ucanto/core": "^10.2.1",
     "@ucanto/interface": "^10.1.1",
