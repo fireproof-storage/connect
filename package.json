@@ -130,7 +130,6 @@
     "partykit": "^0.0.111",
     "partysocket": "^1.0.3",
     "path": "^0.12.7",
-    "serverless-offline": "^14.4.0",
     "util": "^0.12.5",
     "wait-on": "^8.0.2",
     "ws": "^8.18.0"

@@ -111,11 +111,11 @@ jobs:
           use-installer: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: djkfdlsgadlsghgdummy
-          aws-secret-access-key: LdjfdfDSFKDSfdDfdkjdlfgkdgjdglgkaghdummy
-          aws-region: us-east-1
+      #- uses: aws-actions/configure-aws-credentials@v2
+      #  with:
+      #    aws-access-key-id: djkfdlsgadlsghgdummy
+      #    aws-secret-access-key: LdjfdfDSFKDSfdDfdkjdlfgkdgjdglgkaghdummy
+      #    aws-region: us-east-1
 
       - name: pretest sam
         working-directory: ./connector
