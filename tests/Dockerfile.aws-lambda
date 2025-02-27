@@ -1,19 +1,29 @@
 FROM node:20-slim AS base
 
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN npm install -g corepack@latest
+RUN corepack enable
+
 RUN apt update 
-RUN apt install -y wget unzip
-RUN npm install -g esbuild
-RUN wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-arm64.zip
-RUN unzip aws-sam-cli-linux-arm64.zip -d sam-installation
-RUN ./sam-installation/install
+RUN pnpm install -g esbuild
 
 COPY src/aws/backend /app/prebuild
+
+RUN pnpm init  && \
+    pnpm add @adviser/cement @types/aws-lambda @aws-sdk/client-dynamodb @aws-sdk/client-lambda @aws-sdk/client-s3 @aws-sdk/lib-dynamodb @aws-sdk/s3-request-presigner aws-lambda 
+
+RUN cd /app/prebuild && esbuild app.ts --bundle --platform=node \
+    --outdir=./.aws-sam/build/UploadsFunction --format=cjs --minify --target=es2020 --sourcemap
+
+#RUN wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-arm64.zip
+#RUN unzip aws-sam-cli-linux-arm64.zip -d sam-installation
+#RUN ./sam-installation/install
+
 # COPY package.json /app/prebuild
 
-RUN cd /app/prebuild && \
-    npm init -y && \
-    npm install @adviser/cement @types/aws-lambda @aws-sdk/client-dynamodb @aws-sdk/client-lambda @aws-sdk/client-s3 @aws-sdk/lib-dynamodb @aws-sdk/s3-request-presigner aws-lambda && \
-    sam build --debug
+#RUN cd /app/prebuild && \
+#    sam build --debug
 
 FROM public.ecr.aws/lambda/nodejs:20 AS runtime
 
