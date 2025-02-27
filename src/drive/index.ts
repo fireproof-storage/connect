@@ -14,17 +14,14 @@ import { BuildURI, KeyedResolvOnce } from "@adviser/cement";
 //
 // const { useDocument, useLiveQuery, database } = useFireproof("testDB");
 // connect(database, 'your_access_token');
-// 
-
-
-
+//
 
 registerGDriveStoreProtocol();
 
 const connectionCache = new KeyedResolvOnce<bs.Connection>();
 export const connect: ConnectFunction = (
   db: Database,
-  auth = 'yourtoken',
+  auth = "yourtoken",
   url = "gdrive://googleapis.com/drive/v3/files/",
   remoteDbName = ""
 ) => {
@@ -38,7 +35,7 @@ export const connect: ConnectFunction = (
   urlObj.defParam("localName", dbName);
   urlObj.defParam("storekey", `@${dbName}:data@`);
   urlObj.defParam("auth", auth);
-  
+
   return connectionCache.get(urlObj.toString()).once(() => {
     makeKeyBagUrlExtractable(sthis);
     const connection = connectionFactory(sthis, urlObj);

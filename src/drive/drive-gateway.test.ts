@@ -4,7 +4,6 @@ import { describe, it } from "vitest";
 import { smokeDB } from "../../tests/helper.js";
 
 describe("store-register", () => {
-  
   it("should store and retrieve data", async () => {
     const unreg = registerGDriveStoreProtocol("gdrive:");
     const db = fireproof("my-database", {
@@ -18,6 +17,4 @@ describe("store-register", () => {
     await db.destroy();
     unreg();
   });
-
- 
 });
