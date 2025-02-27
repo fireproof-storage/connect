@@ -106,10 +106,10 @@ jobs:
         working-directory: ./connector
         run: pnpm run pretest-docker
 
-      - uses: aws-actions/setup-sam@v2
-        with:
-          use-installer: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+      #- uses: aws-actions/setup-sam@v2
+      #  with:
+      #    use-installer: true
+      #    token: ${{ secrets.GITHUB_TOKEN }}
 
       #- uses: aws-actions/configure-aws-credentials@v2
       #  with:
@@ -117,9 +117,9 @@ jobs:
       #    aws-secret-access-key: LdjfdfDSFKDSfdDfdkjdlfgkdgjdglgkaghdummy
       #    aws-region: us-east-1
 
-      - name: pretest sam
-        working-directory: ./connector
-        run: pnpm run pretest-sam &
+      #- name: pretest sam
+      #  working-directory: ./connector
+      #  run: pnpm run pretest-sam
 
       - name: test
         working-directory: ./connector

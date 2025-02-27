@@ -28,26 +28,33 @@ services:
     ports:
       - 8000:8000
 
-  #  lambda-function:
-  #    image: aws-lambda
-  #    build:
-  #      context: ..
-  #      dockerfile: ./tests/Dockerfile.aws-lambda
-  #    environment:
-  #      AWS_SAM_LOCAL: true
-  #      AWS_LAMBDA_FUNCTION_MEMORY_SIZE: 128
-  #      AWS_LAMBDA_FUNCTION_TIMEOUT: 3
-  #      AWS_REGION: us-east-1
-  #      AWS_DEFAULT_REGION: us-east-1
-  #      AWS_ACCOUNT_ID: 123456789012
-  #      AWS_LAMBDA_INITIALIZATION_TYPE: on-demand
-  #      UploadBucket: testbucket
-  #      OVERRIDE_AWS_ACCESS_KEY_ID: minioadmin
-  #      OVERRIDE_AWS_SECRET_ACCESS_KEY: minioadmin
-  #      LANG: en_US.UTF-8
-  #      LOG_LEVEL: debug
-  #    ports:
-  #      - "8001:8080"
+  lambda:
+    image: aws-lambda
+    build:
+      context: ..
+      dockerfile: ./tests/Dockerfile.aws-lambda
+    environment:
+      AWS_SAM_LOCAL: true
+      AWS_LAMBDA_FUNCTION_MEMORY_SIZE: 128
+      AWS_LAMBDA_FUNCTION_TIMEOUT: 3
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCOUNT_ID: 123456789012
+      AWS_LAMBDA_INITIALIZATION_TYPE: on-demand
+      AWS_S3_ENDPOINT: "http://127.0.0.1:9000/"
+      UploadBucket: testbucket
+      OVERRIDE_AWS_ACCESS_KEY_ID: minioadmin
+      OVERRIDE_AWS_SECRET_ACCESS_KEY: minioadmin
+      LANG: en_US.UTF-8
+      LOG_LEVEL: debug
+    ports:
+      - "8001:8080"
+
+  slow-apigw:
+    image: ghcr.io/mabels/slow-apigw:0.0.0-dev-4
+    command: ["--base-endpoint", "http://lambda:8080"]
+    ports:
+      - "18000:18000"
 
   #  lambda-function:
   #    image: public.ecr.aws/lambda/nodejs:20-rapid-arm64
