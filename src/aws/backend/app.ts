@@ -54,6 +54,7 @@ const s3Client = new S3Client({
   region: process.env.AWS_REGION,
 });
 
+// eslint-disable-next-line no-console
 console.log("S3_ENDPOINT", process.env.AWS_S3_ENDPOINT);
 
 // Main Lambda entry point
