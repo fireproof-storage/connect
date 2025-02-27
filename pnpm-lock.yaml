@@ -105,8 +105,8 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2
       multiformats:
-        specifier: ^13.3.1
-        version: 13.3.1
+        specifier: ^13.3.2
+        version: 13.3.2
       node-sqlite3-wasm:
         specifier: ^0.8.34
         version: 0.8.34
@@ -3452,9 +3452,6 @@ packages:
     resolution: {integrity: sha512-eajQ/ZH7qXZQR2AgtfpmSMizQzmyYVmCql7pdhldPuYQi4atACekbJaQplk6dWyIi10jCaFnd6pqvcEFXjbaJw==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
-  multiformats@13.3.1:
-    resolution: {integrity: sha512-QxowxTNwJ3r5RMctoGA5p13w5RbRT2QDkoM+yFlqfLiioBp78nhDjnRLvmSBI9+KAqN4VdgOVWM9c0CHd86m3g==}
-
   multiformats@13.3.2:
     resolution: {integrity: sha512-qbB0CQDt3QKfiAzZ5ZYjLFOs+zW43vA4uyM8g27PeEuXZybUOFyjrVdP93HPBHMoglibwfkdVwbzfUq8qGcH6g==}
 
@@ -5772,22 +5769,22 @@ snapshots:
   '@ipld/dag-cbor@9.2.2':
     dependencies:
       cborg: 4.2.8
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@ipld/dag-json@10.2.3':
     dependencies:
       cborg: 4.2.8
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@ipld/dag-pb@4.1.3':
     dependencies:
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@ipld/dag-ucan@3.4.5':
     dependencies:
       '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-json': 10.2.3
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@ipld/unixfs@2.2.0':
     dependencies:
@@ -5844,7 +5841,7 @@ snapshots:
 
   '@multiformats/murmur3@2.1.8':
     dependencies:
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       murmurhash3js-revisited: 3.0.0
 
   '@netlify/blobs@8.1.0': {}
@@ -6510,12 +6507,12 @@ snapshots:
       '@ipld/dag-cbor': 9.2.2
       '@ipld/dag-ucan': 3.4.5
       '@ucanto/interface': 10.1.1
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@ucanto/interface@10.1.1':
     dependencies:
       '@ipld/dag-ucan': 3.4.5
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@ucanto/principal@9.0.2':
     dependencies:
@@ -6524,7 +6521,7 @@ snapshots:
       '@noble/ed25519': 1.7.3
       '@noble/hashes': 1.7.1
       '@ucanto/interface': 10.1.1
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       one-webcrypto: 1.0.3
 
   '@ucanto/server@10.0.0':
@@ -6545,7 +6542,7 @@ snapshots:
       '@ipld/dag-cbor': 9.2.2
       '@ucanto/core': 10.2.1
       '@ucanto/interface': 10.1.1
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@vitest/expect@3.0.5':
     dependencies:
@@ -6616,7 +6613,7 @@ snapshots:
       '@ucanto/interface': 10.1.1
       '@web3-storage/capabilities': 18.0.1
       carstream: 2.2.0
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       uint8arrays: 5.1.0
 
   '@web3-storage/capabilities@18.0.1':
@@ -6641,13 +6638,13 @@ snapshots:
       '@ucanto/validator': 9.0.3
       '@web3-storage/pail': 0.5.0
       hashlru: 2.3.0
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       p-retry: 6.2.0
 
   '@web3-storage/data-segment@5.2.0':
     dependencies:
       '@ipld/dag-cbor': 9.2.2
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       sync-multihash-sha2: 1.0.0
 
   '@web3-storage/did-mailto@2.1.0': {}
@@ -6674,7 +6671,7 @@ snapshots:
   '@web3-storage/pail@0.6.0':
     dependencies:
       '@ipld/dag-cbor': 9.2.2
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   '@web3-storage/upload-client@17.1.3(encoding@0.1.13)':
     dependencies:
@@ -7023,7 +7020,7 @@ snapshots:
   carstream@2.2.0:
     dependencies:
       '@ipld/dag-cbor': 9.2.2
-      multiformats: 13.3.1
+      multiformats: 13.3.2
       uint8arraylist: 2.4.8
 
   cborg@4.2.8: {}
@@ -8351,8 +8348,6 @@ snapshots:
 
   multiformats@12.1.3: {}
 
-  multiformats@13.3.1: {}
-
   multiformats@13.3.2: {}
 
   murmurhash3js-revisited@3.0.0: {}
@@ -9261,7 +9256,7 @@ snapshots:
 
   uint8arrays@5.1.0:
     dependencies:
-      multiformats: 13.3.1
+      multiformats: 13.3.2
 
   undici-types@6.20.0: {}
 
