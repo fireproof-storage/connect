@@ -1,5 +1,5 @@
 {
-  "name": "@fireproof/cloud",
+  "name": "@fireproof/v1-cloud",
   "version": "0.18.0",
   "description": "Fireproof Cloud gateway for Fireproof",
   "main": "./index.cjs",

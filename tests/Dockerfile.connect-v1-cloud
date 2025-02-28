@@ -4,7 +4,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN npm install -g corepack@latest
 RUN corepack enable
 RUN apt update && apt install -y git
-COPY src/cloud/backend /usr/src/app/
+COPY src/v1-cloud/backend /usr/src/app/
 WORKDIR /usr/src/app/
 RUN rm -rf node_modules && pnpm i 
 CMD pnpm run dev --port 1998 --ip 0.0.0.0

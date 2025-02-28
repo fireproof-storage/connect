@@ -7,7 +7,7 @@
   "scripts": {
     "publish": "pnpm run '/publish:/'",
     "publish:aws": "tsx ./publish-package.ts ./dist/aws/package.json",
-    "publish:cloud": "tsx ./publish-package.ts ./dist/cloud/package.json",
+    "publish:v1-cloud": "tsx ./publish-package.ts ./dist/v1-cloud/package.json",
     "publish:netlify": "tsx ./publish-package.ts ./dist/netlify/package.json",
     "publish:s3": "tsx ./publish-package.ts ./dist/s3/package.json",
     "publish:partykit": "tsx ./publish-package.ts ./dist/partykit/package.json",
@@ -19,7 +19,7 @@
     "build:tsup": "tsup",
     "pub:noop": "echo",
     "pub:aws": "tsx ./version-copy-package.ts ./dist/aws/package-aws.json && cp ./src/aws/README.md ./dist/aws/",
-    "pub:cloud": "tsx ./version-copy-package.ts ./dist/cloud/package-cloud.json && cp ./src/cloud/README.md ./dist/cloud/",
+    "pub:v1-cloud": "tsx ./version-copy-package.ts ./dist/v1-cloud/package-v1-cloud.json && cp ./src/v1-cloud/README.md ./dist/v1-cloud/",
     "pub:netlify": "tsx ./version-copy-package.ts ./dist/netlify/package-netlify.json && cp ./src/netlify/server.ts ./dist/netlify/ && cp ./src/netlify/README.md ./dist/netlify/",
     "pub:s3": "tsx ./version-copy-package.ts ./dist/s3/package-s3.json && cp ./src/s3/README.md ./dist/s3/",
     "pub:partykit": "tsx ./version-copy-package.ts ./dist/partykit/package-partykit.json && cp ./src/partykit/server.ts ./dist/partykit/ && cp ./src/partykit/README.md ./dist/partykit/",

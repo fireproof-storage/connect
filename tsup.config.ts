@@ -241,10 +241,10 @@ const LIBRARY_BUNDLES: Options[] = [
   {
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["iife"],
-    name: "@fireproof/cloud",
-    entry: ["src/cloud/index.ts"],
+    name: "@fireproof/v1-cloud",
+    entry: ["src/v1-cloud/index.ts"],
     platform: "browser",
-    outDir: "dist/cloud",
+    outDir: "dist/v1-cloud",
     esbuildPlugins: [
       // polyfillNode(),
       replace({
@@ -262,10 +262,10 @@ const LIBRARY_BUNDLES: Options[] = [
   {
     ...LIBRARY_BUNDLE_OPTIONS,
     format: ["esm", "cjs"],
-    name: "@fireproof/cloud",
-    entry: ["src/cloud/index.ts"],
+    name: "@fireproof/v1-cloud",
+    entry: ["src/v1-cloud/index.ts"],
     platform: "browser",
-    outDir: "dist/cloud",
+    outDir: "dist/v1-cloud",
     esbuildPlugins: [
       // polyfillNode(),
       replace({
@@ -277,7 +277,7 @@ const LIBRARY_BUNDLES: Options[] = [
       }),
     ],
     dts: {
-      footer: "declare module '@fireproof/cloud'",
+      footer: "declare module '@fireproof/v1-cloud'",
     },
   },
   // IIFE build with moduleReplacementPlugin
