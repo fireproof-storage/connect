@@ -151,6 +151,27 @@ const LIBRARY_BUNDLES: Options[] = [
       footer: "declare module '@fireproof/s3'",
     },
   },
+  {
+    ...LIBRARY_BUNDLE_OPTIONS,
+    format: ["esm", "cjs"],
+    name: "@fireproof/drive",
+    entry: ["src/drive/index.ts"],
+    platform: "browser",
+    outDir: "dist/drive",
+    esbuildPlugins: [
+      // polyfillNode(),
+      replace({
+        __packageVersion__: packageVersion(),
+        include: /version/,
+      }),
+      resolve({
+        //        ...ourMultiformat,
+      }),
+    ],
+    dts: {
+      footer: "declare module '@fireproof/drive'",
+    },
+  },
   // IIFE build with moduleReplacementPlugin
   {
     ...LIBRARY_BUNDLE_OPTIONS,

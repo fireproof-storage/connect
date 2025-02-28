@@ -1,0 +1,27 @@
+{
+  "name": "@fireproof/drive",
+  "version": "0.18.0",
+  "description": "Fireproof Google drive gateway for Fireproof",
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "browser": "./index.global.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs",
+      "script": "./index.global.js",
+      "types": "./index.d.ts"
+    }
+  },
+  "types": "./index.d.ts",
+  "type": "module",
+  "scripts": {},
+  "keywords": ["fireproof", "partykit", "gateway"],
+  "devDependencies": {},
+  "dependencies": {
+    "@fireproof/core": "from-package-json",
+    "partykit": "from-package-json",
+    "partysocket": "from-package-json",
+    "@adviser/cement": "from-package-json"
+  }
+}
