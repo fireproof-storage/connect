@@ -4,6 +4,7 @@
 import type { DurableObjectNamespace } from "@cloudflare/workers-types";
 // import { WSEvents } from "hono/ws";
 import { FPRoomDurableObject, FPBackendDurableObject } from "./server.ts";
+import { CFExposeCtx } from "./cf-hono-server.ts";
 
 export interface Env {
   // bucket: R2Bucket;
@@ -47,6 +48,8 @@ export interface Env {
   CF_WS_ROOM_KEY: string;
 
   FP_WS_ROOM: DurableObjectNamespace<FPRoomDurableObject>;
+
+  FP_EXPOSE_CTX: CFExposeCtx;
 
   // WS_EVENTS: WSEvents;
 }

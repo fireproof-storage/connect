@@ -69,7 +69,7 @@ export async function v0_19sqliteConnectionFactory(
   switch (upUrl.getParam("taste")) {
     case "libsql": {
       const { V0_19LS3Connection } = await import("./sqlite/libsql/sqlite-connection.js");
-      sthis.logger.Debug().Str("databaseURL", upUrl.toString()).Msg("connecting to better-sqlite3");
+      sthis.logger.Debug().Str("databaseURL", upUrl.toString()).Msg("connecting to libsql");
       return {
         dbConn: new V0_19LS3Connection(sthis, upUrl, opts),
         url: upUrl.build().setParam("taste", "libsql").URI(),

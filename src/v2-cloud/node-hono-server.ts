@@ -1,12 +1,30 @@
-import { UpgradeWebSocket, WSContext, WSContextInit, WSEvents } from "hono/ws";
-import { ConnMiddleware, HonoServerBase, HonoServerFactory, HonoServerImpl, RunTimeParams } from "./hono-server.js";
+import { UpgradeWebSocket, WSContext, WSEvents, WSMessageReceive } from "hono/ws";
+import {
+  ConnMiddleware,
+  HonoServerBase,
+  HonoServerFactory,
+  HonoServerImpl,
+  RunTimeParams,
+  WSContextWithId,
+  WSEventsConnId,
+} from "./hono-server.js";
 import { HttpHeader, URI } from "@adviser/cement";
 import { Context, Hono } from "hono";
 import { ensureLogger, SuperThis } from "@fireproof/core";
 import { defaultMsgParams, jsonEnDe } from "./msger.js";
-import { defaultGestalt, Gestalt, MsgerParams } from "./msg-types.js";
+import {
+  defaultGestalt,
+  Gestalt,
+  MsgBase,
+  MsgerParams,
+  MsgIsWithConn,
+  MsgWithConn,
+  QSId,
+  qsidKey,
+} from "./msg-types.js";
 import { SQLDatabase } from "./meta-merger/abstract-sql.js";
 import { WSRoom } from "./ws-room.js";
+import { ConnItem } from "./msg-dispatch.js";
 
 interface ServerType {
   close(fn: () => void): void;
@@ -20,34 +38,113 @@ export interface NodeHonoFactoryParams {
   readonly sql: SQLDatabase;
 }
 
-const wsConnections = new Map<string, WebSocket>();
+// const wsConnections = new Map<string, WSContextWithId<WSContext>>();
 class NodeWSRoom implements WSRoom {
   readonly sthis: SuperThis;
+  readonly id: string;
+
+  readonly _conns = new Map<string, ConnItem>();
   constructor(sthis: SuperThis) {
     this.sthis = sthis;
+    this.id = sthis.nextId(12).str;
   }
-  acceptConnection(ws: WebSocket, wse: WSEvents): Promise<void> {
+
+  getConns(): ConnItem[] {
+    return Array.from(this._conns.values());
+  }
+  removeConn(conn: QSId): void {
+    // console.log("removeConn", this.id, qsidKey(conn));
+    this._conns.delete(qsidKey(conn));
+  }
+  addConn(ws: WSContextWithId<unknown>, conn: QSId): QSId {
+    // console.log("addConn", this.id, qsidKey(conn));
+    const key = qsidKey(conn);
+    let ci = this._conns.get(key);
+    if (!ci) {
+      ci = { ws, conn, touched: new Date() };
+      this._conns.set(key, ci);
+    }
+    return ci.conn;
+  }
+
+  isConnected(msg: MsgBase): msg is MsgWithConn<MsgBase> {
+    if (!MsgIsWithConn(msg)) {
+      return false;
+    }
+    return this._conns.has(qsidKey(msg.conn));
+  }
+
+  // addConn(ws: WSContextWithId): void {
+  //   wsConnections.add(ws);
+  // }
+
+  // delConn(ws: WSContextWithId): void {
+  //   wsConnections.delete(ws);
+  // }
+
+  // #ensureWSContextWithId(id: string, ws: WSContext) {
+  //   let wsId = wsConnections.get(id);
+  //   if (wsId) {
+  //     return wsId;
+  //   }
+  //   wsId = new WSContextWithId(this.sthis.nextId(12).str, ws);
+  //   wsConnections.set(id, wsId);
+  //   return wsId;
+  // }
+
+  createEvents(outer: WSEventsConnId<unknown>): (c: Context) => WSEvents<unknown> {
     const id = this.sthis.nextId(12).str;
-    wsConnections.set(id, ws);
+    return (_c: Context) => ({
+      onOpen: (evt: Event, ws: WSContext) => {
+        // console.log("onOpen", id);
+        outer.onOpen(evt, new WSContextWithId(id, ws));
+      },
+      onMessage: (evt: MessageEvent<WSMessageReceive>, ws: WSContext) => {
+        outer.onMessage(evt, new WSContextWithId(id, ws));
+      },
+      onClose: (evt: CloseEvent, ws: WSContext) => {
+        // console.log("onClose", id);
+        outer.onClose(evt, new WSContextWithId(id, ws));
+        // wsConnections.delete(id);
+      },
+      onError: (evt: Event, ws: WSContext) => {
+        outer.onError(evt, new WSContextWithId(id, ws));
+      },
+    });
+  }
 
-    const wsCtx = new WSContext(ws as WSContextInit);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  acceptConnection(ws: WebSocket, wse: WSEvents): Promise<void> {
+    // const id = this.sthis.nextId(12).str;
+    // wsConnections.set(id, ws);
+    // this.
 
-    ws.onerror = (err) => {
-      // console.log("onerror", err);
-      wse.onError?.(err, wsCtx);
-    };
-    ws.onclose = (ev) => {
-      // console.log("onclose", ev);
-      wse.onClose?.(ev, wsCtx);
-    };
-    ws.onmessage = (evt) => {
-      // console.log("onmessage", evt);
-      // wsCtx.send("Hellox from server");
-      wse.onMessage?.(evt, wsCtx);
-    };
+    throw new Error("Method not implemented.");
+    // const wsCtx = new WSContextWithId(this.sthis.nextId(12).str, ws as WSContextInit);
 
-    ws.accept();
-    return Promise.resolve();
+    // console.log("acceptConnection", wsCtx);
+    // ws.onopen = function(this, ev) {
+    //   console.log("onopen", ev);
+    //   wsConnections.set(wsCtx.id, wsCtx);
+    //   wse.onOpen?.(ev, wsCtx);
+    // }
+    // ws.onerror = (err) => {
+    //   console.log("onerror", err);
+    //   wse.onError?.(err, wsCtx);
+    // };
+    // ws.onclose = function(this, ev) {
+    //   console.log("onclose", ev);
+    //   wse.onClose?.(ev, wsCtx);
+    //   wsConnections.delete(wsCtx.id);
+    // };
+    // ws.onmessage = (evt) => {
+    //   console.log("onmessage", evt);
+    //   // wsCtx.send("Hellox from server");
+    //   wse.onMessage?.(evt, wsCtx);
+    // };
+
+    // ws.accept();
+    // return Promise.resolve();
   }
 }
 
@@ -56,6 +153,8 @@ export class NodeHonoFactory implements HonoServerFactory {
   _injectWebSocket!: (t: unknown) => void;
   _serve!: serveFn;
   _server!: ServerType;
+
+  readonly _wsRoom: NodeWSRoom;
   // _env!: Env;
 
   readonly sthis: SuperThis;
@@ -63,6 +162,7 @@ export class NodeHonoFactory implements HonoServerFactory {
   constructor(sthis: SuperThis, params: NodeHonoFactoryParams) {
     this.sthis = sthis;
     this.params = params;
+    this._wsRoom = new NodeWSRoom(sthis);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
@@ -85,9 +185,8 @@ export class NodeHonoFactory implements HonoServerFactory {
       defaultGestalt(msgP, {
         id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
       });
-    const wsRoom = new NodeWSRoom(sthis);
-    const nhs = new NodeHonoServer(sthis, this, gs, this.params.sql, wsRoom);
-    return nhs.start().then((nhs) => fn({ sthis, logger, ende, impl: nhs }));
+    const nhs = new NodeHonoServer(sthis, this, gs, this.params.sql, this._wsRoom);
+    return nhs.start().then((nhs) => fn({ sthis, logger, ende, impl: nhs, wsRoom: this._wsRoom }));
   }
 
   async start(app: Hono): Promise<void> {
@@ -121,6 +220,7 @@ export class NodeHonoFactory implements HonoServerFactory {
 
 export class NodeHonoServer extends HonoServerBase implements HonoServerImpl {
   readonly _upgradeWebSocket: UpgradeWebSocket;
+  // readonly wsRoom: NodeWSRoom;
   constructor(
     sthis: SuperThis,
     factory: NodeHonoFactory,
@@ -133,10 +233,21 @@ export class NodeHonoServer extends HonoServerBase implements HonoServerImpl {
     this._upgradeWebSocket = factory._upgradeWebSocket;
   }
 
-  override upgradeWebSocket(createEvents: (c: Context) => WSEvents | Promise<WSEvents>): ConnMiddleware {
+  // upgradeWebSocket<WebSocket>(createEvents: (c: Context) => WSEventsConnId<WebSocket> | Promise<WSEventsConnId<WebSocket>>): ConnMiddleware {
+  upgradeWebSocket(
+    createEvents: (c: Context) => WSEventsConnId<unknown> | Promise<WSEventsConnId<unknown>>
+  ): ConnMiddleware {
     return async (_conn, c, next) => {
-      // conn.attachWSPair({ client: c.req, server: c.res });
-      return this._upgradeWebSocket(createEvents)(c, next);
+      const wse = await createEvents(c);
+      return this._upgradeWebSocket((this.wsRoom as NodeWSRoom).createEvents(wse))(c, next);
     };
   }
+
+  // override getConnected(): Connected[] {
+  //   // console.log("getConnected", wsConnections.size);
+  //   return Array.from(wsConnections.values()).map(m => ({
+  //     connId: m.id,
+  //     ws: m,
+  //   }))
+  // }
 }

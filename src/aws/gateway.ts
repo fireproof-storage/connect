@@ -1,6 +1,7 @@
 import { BuildURI, CoerceURI, exception2Result, KeyedResolvOnce, Logger, param, Result, URI } from "@adviser/cement";
 import { bs, getStore, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
 import { AddKeyToDbMetaGateway } from "../meta-key-hack.js";
+import { to_uint8 } from "../coerce-binary.js";
 
 async function resultFetch(logger: Logger, curl: CoerceURI, init?: RequestInit): Promise<Result<Response>> {
   const url = URI.from(curl);

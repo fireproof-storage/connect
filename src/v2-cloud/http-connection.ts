@@ -29,6 +29,10 @@ export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnec
     this.msgP = msgP;
   }
 
+  send<S extends MsgBase, Q extends MsgBase>(_msg: Q): Promise<MsgWithError<S>> {
+    throw new Error("Method not implemented.");
+  }
+
   async start(): Promise<Result<void>> {
     // if (this._qsOpen.req) {
     //   const sOpen = await this.request(this._qsOpen.req, { waitFor: MsgIsResOpen });
@@ -68,13 +72,11 @@ export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnec
             state.timeout = setTimeout(() => this.#poll(state), state.bind.opts.pollInterval ?? 1000);
           }
         } catch (err) {
-          console.log("poll error", err);
           state.controller?.error(err);
           state.controller?.close();
         }
       })
       .catch((err) => {
-        console.log("poll catch error", err);
         state.controller?.error(err);
         // state.controller?.close();
       });

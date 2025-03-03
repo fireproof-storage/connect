@@ -1,10 +1,11 @@
-import { CRDTEntry, Logger } from "@fireproof/core";
+import { CRDTEntry } from "@fireproof/core";
 import { MetaByTenantLedgerSql } from "./meta-by-tenant-ledger.js";
 import { MetaSendSql } from "./meta-send.js";
 import { TenantLedgerSql } from "./tenant-ledger.js";
 import { TenantSql } from "./tenant.js";
 import { SQLDatabase } from "./abstract-sql.js";
 import { QSId, TenantLedger } from "../msg-types.js";
+import { Logger } from "@adviser/cement";
 
 export interface Connection {
   readonly tenant: TenantLedger;
