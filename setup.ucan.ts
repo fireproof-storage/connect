@@ -30,5 +30,7 @@ const uri = server.uri
       "MgCZc476L5pn6Kiw5YdLHEy5CHZgw5gRWxNj/UcLRQoxaHu0BREgGEsI7N8cQxjO6fdgA/lEAphNmR/um1DEfmBTBByY"
   );
 
+// console.log(">>>>>>>", uri.toString());
+
 process.env.FP_STORAGE_URL = uri.toString();
-process.env.FP_KEYBAG_URL = "file://./dist/kb-dir-ucan?fs=mem&extractKey=_deprecated_internal_api";
+process.env.FP_KEYBAG_URL = "memory://kb-dir-ucan?extractKey=_deprecated_internal_api";

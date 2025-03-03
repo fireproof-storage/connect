@@ -74,6 +74,7 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
     };
     this.ws.onclose = () => {
       this.opened = false;
+      // console.log("onclose", this.id);
       this.close().catch((ierr) => {
         const err = this.logger.Error().Err(ierr).Msg("close error").AsError();
         onOpenFuture.resolve(Result.Err(err));
@@ -103,7 +104,10 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
     }
     const msg = rMsg.Ok();
     const waitFor = this.waitForTid.get(msg.tid);
-    this.#onMsg.forEach((cb) => cb(msg));
+    Array.from(this.#onMsg.values()).forEach((cb) => {
+      // console.log("cb-onmessage", this.id, msg, cb.toString());
+      cb(msg);
+    });
     if (waitFor) {
       if (MsgIsError(msg)) {
         this.waitForTid.delete(msg.tid);
@@ -133,9 +137,9 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
     return msg;
   }
 
-  sendMsg(msg: MsgBase): Promise<void> {
+  send<Q extends MsgBase, S extends MsgBase>(msg: Q): Promise<S> {
     this.ws.send(this.msgP.ende.encode(msg));
-    return Promise.resolve();
+    return Promise.resolve(msg as unknown as S);
   }
 
   onMsg<S extends MsgBase>(fn: OnMsgFn<S>): UnReg {
@@ -180,7 +184,7 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
             controller.enqueue(msg);
           }
         });
-        this.sendMsg(req);
+        this.send(req);
         const future = new Future<S>();
         this.waitForTid.set(req.tid, { tid: req.tid, future, waitFor: opts.waitFor, timeout: opts.timeout });
         future.asPromise().then((msg) => {
@@ -200,7 +204,7 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
     }
     const future = new Future<S>();
     this.waitForTid.set(req.tid, { tid: req.tid, future, waitFor: opts.waitFor, timeout: opts.timeout });
-    await this.sendMsg(req);
+    await this.send(req);
     return future.asPromise();
   }
 

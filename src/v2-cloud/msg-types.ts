@@ -1,5 +1,5 @@
-import { Future } from "@adviser/cement";
-import { Logger, SuperThis } from "@fireproof/core";
+import { Future, Logger } from "@adviser/cement";
+import { SuperThis } from "@fireproof/core";
 import { CalculatePreSignedUrl } from "./msg-types-data.js";
 import { PreSignedMsg } from "./pre-signed-url.js";
 
@@ -57,6 +57,14 @@ export function keyTenantLedger(t: TenantLedger): string {
 export interface QSId {
   readonly reqId: string;
   readonly resId: string;
+}
+
+export function qsidEqual(a: QSId, b: QSId): boolean {
+  return a.reqId === b.reqId && a.resId === b.resId;
+}
+
+export function qsidKey(qsid: QSId): string {
+  return `${qsid.reqId}:${qsid.resId}`;
 }
 
 // export interface Connection extends ReqResId{
@@ -256,6 +264,47 @@ export function defaultGestalt(msgP: MsgerParams, gestalt: GestaltParam): Gestal
   };
 }
 
+export interface ReqChat extends MsgWithConn {
+  readonly type: "reqChat";
+  readonly message: string;
+  readonly targets: QSId[];
+}
+export interface ResChat extends MsgWithConn {
+  readonly type: "resChat";
+  readonly message: string;
+  readonly targets: QSId[];
+}
+
+export function buildReqChat(sthis: NextId, conn: QSId, message: string, targets?: QSId[]): ReqChat {
+  return {
+    tid: sthis.nextId().str,
+    type: "reqChat",
+    version: VERSION,
+    conn,
+    message,
+    targets: targets ?? [],
+  };
+}
+
+export function buildResChat(req: ReqChat, conn?: QSId, message?: string, targets?: QSId[]): ResChat {
+  return {
+    ...req,
+    conn: conn || req.conn,
+    message: message || req.message,
+    targets: targets || req.targets,
+    type: "resChat",
+    version: VERSION,
+  };
+}
+
+export function MsgIsReqChat(msg: MsgBase): msg is ReqChat {
+  return msg.type === "reqChat";
+}
+
+export function MsgIsResChat(msg: MsgBase): msg is ResChat {
+  return msg.type === "resChat";
+}
+
 /**
  * The ReqGestalt message is used to request the
  * features of the Responder.
@@ -263,21 +312,26 @@ export function defaultGestalt(msgP: MsgerParams, gestalt: GestaltParam): Gestal
 export interface ReqGestalt extends MsgBase {
   readonly type: "reqGestalt";
   readonly gestalt: Gestalt;
+  readonly publish?: boolean; // for testing
 }
 
 export function MsgIsReqGestalt(msg: MsgBase): msg is ReqGestalt {
   return msg.type === "reqGestalt";
 }
 
-export function buildReqGestalt(sthis: NextId, gestalt: Gestalt): ReqGestalt {
+export function buildReqGestalt(sthis: NextId, gestalt: Gestalt, publish?: boolean): ReqGestalt {
   return {
     tid: sthis.nextId().str,
     type: "reqGestalt",
     version: VERSION,
     gestalt,
+    publish,
   };
 }
 
+export interface ConnInfo {
+  readonly connIds: string[];
+}
 /**
  * The ResGestalt message is used to respond with
  * the features of the Responder.
@@ -370,7 +424,7 @@ export function MsgIsResOpen(msg: MsgBase): msg is ResOpen {
   return msg.type === "resOpen";
 }
 
-export interface ReqClose extends Omit<ResOpen, "type"> {
+export interface ReqClose extends MsgWithConn {
   readonly type: "reqClose";
 }
 
@@ -378,12 +432,29 @@ export function MsgIsReqClose(msg: MsgBase): msg is ReqClose {
   return msg.type === "reqClose" && MsgIsWithConn(msg);
 }
 
-export interface ResClose extends Omit<ResOpen, "type"> {
+export interface ResClose extends MsgWithConn {
   readonly type: "resClose";
 }
 
 export function MsgIsResClose(msg: MsgBase): msg is ResClose {
   return msg.type === "resClose" && MsgIsWithConn(msg);
+}
+
+export function buildResClose(req: ReqClose, conn: QSId): ResClose {
+  return {
+    ...req,
+    type: "resClose",
+    conn,
+  };
+}
+
+export function buildReqClose(sthis: NextId, conn: QSId): ReqClose {
+  return {
+    tid: sthis.nextId().str,
+    type: "reqClose",
+    version: VERSION,
+    conn,
+  };
 }
 
 export interface SignedUrlParam {

@@ -1,10 +1,11 @@
 import { Logger } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
-import { Gestalt, MsgBase, buildErrorMsg, MsgWithError, MsgIsWithConn, MsgWithConn, QSId } from "./msg-types.js";
+import { Gestalt, MsgBase, buildErrorMsg, MsgWithError, MsgWithConn, QSId, EnDeCoder } from "./msg-types.js";
 
 import { PreSignedMsg } from "./pre-signed-url.js";
-import { HonoServerImpl } from "./hono-server.js";
+import { HonoServerImpl, WSContextWithId } from "./hono-server.js";
 import { UnReg } from "./msger.js";
+import { WSRoom } from "./ws-room.js";
 
 export interface MsgContext {
   calculatePreSignedUrl(p: PreSignedMsg): Promise<string>;
@@ -27,49 +28,33 @@ export class WSConnection {
   }
 }
 
-type Promisable<T> = T | Promise<T>;
+export type Promisable<T> = T | Promise<T>;
 
 // function WithValidConn<T extends MsgBase>(msg: T, rri?: ResOpen): msg is MsgWithConn<T> {
 //   return MsgIsWithConn(msg) && !!rri && rri.conn.resId === msg.conn.resId && rri.conn.reqId === msg.conn.reqId;
 // }
 
-interface ConnItem {
-  conn: QSId;
+export interface ConnItem<T = unknown> {
+  readonly conn: QSId;
   touched: Date;
+  readonly ws: WSContextWithId<T>;
 }
 
-class ConnectionManager {
-  readonly conns = new Map<string, ConnItem>();
-  readonly maxItems: number;
+// const connManager = new ConnectionManager();
 
-  constructor(maxItems?: number) {
-    this.maxItems = maxItems || 100;
-  }
-
-  addConn(conn: QSId): QSId {
-    if (this.conns.size >= this.maxItems) {
-      const oldest = Array.from(this.conns.values());
-      const oneHourAgo = new Date(new Date().getTime() - 60 * 60 * 1000).getTime();
-      oldest
-        .filter((item) => item.touched.getTime() < oneHourAgo)
-        .forEach((item) => this.conns.delete(item.conn.resId));
-    }
-    this.conns.set(`${conn.reqId}:${conn.resId}`, { conn, touched: new Date() });
-    return conn;
-  }
-
-  isConnected(msg: MsgBase): msg is MsgWithConn<MsgBase> {
-    if (!MsgIsWithConn(msg)) {
-      return false;
-    }
-    return this.conns.has(`${msg.conn.reqId}:${msg.conn.resId}`);
-  }
+export interface ConnectionInfo {
+  readonly conn: WSConnection;
+  readonly reqId: string;
+  readonly resId: string;
 }
-const connManager = new ConnectionManager();
 
 export interface MsgDispatcherCtx {
   readonly impl: HonoServerImpl;
+  readonly ws: WSContextWithId<unknown>;
+  readonly wsRoom: WSRoom;
+  // readonly send: (msg: MsgBase) => Promisable<Response>;
 }
+
 export interface MsgDispatchItem<S extends MsgBase, Q extends MsgBase> {
   readonly match: (msg: MsgBase) => boolean;
   readonly isNotConn?: boolean;
@@ -82,18 +67,23 @@ export class MsgDispatcher {
   // wsConn?: WSConnection;
   readonly gestalt: Gestalt;
   readonly id: string;
+  readonly ende: EnDeCoder;
 
-  readonly connManager = connManager;
+  // readonly connManager = connManager;
 
-  static new(sthis: SuperThis, gestalt: Gestalt): MsgDispatcher {
-    return new MsgDispatcher(sthis, gestalt);
+  readonly wsRoom: WSRoom;
+
+  static new(sthis: SuperThis, gestalt: Gestalt, ende: EnDeCoder, wsRoom: WSRoom): MsgDispatcher {
+    return new MsgDispatcher(sthis, gestalt, ende, wsRoom);
   }
 
-  private constructor(sthis: SuperThis, gestalt: Gestalt) {
+  private constructor(sthis: SuperThis, gestalt: Gestalt, ende: EnDeCoder, wsRoom: WSRoom) {
     this.sthis = sthis;
     this.logger = ensureLogger(sthis, "Dispatcher");
     this.gestalt = gestalt;
     this.id = sthis.nextId().str;
+    this.ende = ende;
+    this.wsRoom = wsRoom;
   }
 
   // addConn(msg: MsgBase): Result<QSId> {
@@ -114,26 +104,39 @@ export class MsgDispatcher {
     return () => ids.forEach((id) => this.items.delete(id));
   }
 
-  async dispatch(ctx: HonoServerImpl, msg: MsgBase, send: (msg: MsgBase) => Promisable<Response>): Promise<Response> {
+  send<T>(ws: WSContextWithId<T>, msg: MsgBase) {
+    const str = this.ende.encode(msg);
+    ws.send(str);
+    return new Response(str);
+  }
+
+  async dispatch(ctx: MsgDispatcherCtx, msg: MsgBase): Promise<Response> {
+    // console.log("dispatch-0", msg);
     const validateConn = async <T extends MsgBase>(
       msg: T,
       fn: (msg: MsgWithConn<T>) => Promisable<MsgWithError<MsgBase>>
     ): Promise<Response> => {
-      if (!connManager.isConnected(msg)) {
-        return send(buildErrorMsg(this.sthis, this.logger, { ...msg }, new Error("dispatch missing connection")));
+      if (!ctx.wsRoom.isConnected(msg)) {
+        return this.send(
+          ctx.ws,
+          buildErrorMsg(this.sthis, this.logger, { ...msg }, new Error("dispatch missing connection"))
+        );
         // return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("non open connection")));
       }
-      // if (WithValidConn(msg, this.myOpen)) {
       const r = await fn(msg);
-      return Promise.resolve(send(r));
+      return Promise.resolve(this.send(ctx.ws, r));
     };
+    // console.log("dispatch-1", msg);
     const found = Array.from(this.items.values()).find((item) => item.match(msg));
     if (!found) {
-      return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("unexpected message")));
+      // console.log("dispatch-2", msg);
+      return this.send(ctx.ws, buildErrorMsg(this.sthis, this.logger, msg, new Error("unexpected message")));
     }
     if (!found.isNotConn) {
-      return validateConn(msg, (msg) => found.fn(this.sthis, this.logger, { impl: ctx }, msg));
+      // console.log("dispatch-3", msg);
+      return validateConn(msg, (msg) => found.fn(this.sthis, this.logger, ctx, msg));
     }
-    return send(await found.fn(this.sthis, this.logger, { impl: ctx }, msg));
+    // console.log("dispatch-4", msg);
+    return this.send(ctx.ws, await found.fn(this.sthis, this.logger, ctx, msg));
   }
 }

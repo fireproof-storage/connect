@@ -19,6 +19,8 @@ import {
   QSId,
   MsgIsTid,
   ReqGestalt,
+  buildReqClose,
+  MsgIsResClose,
 } from "./msg-types.js";
 import { SuperThis } from "@fireproof/core";
 import { HttpConnection } from "./http-connection.js";
@@ -74,6 +76,7 @@ export interface MsgRawConnection<T extends MsgBase = MsgBase> {
   readonly activeBinds: Map<string, ActiveStream<T, MsgBase>>;
   bind<S extends T, Q extends T>(req: Q, opts: RequestOpts): ReadableStream<MsgWithError<S>>;
   request<S extends T, Q extends T>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>>;
+  send<S extends T, Q extends T>(msg: Q): Promise<MsgWithError<S>>;
   start(): Promise<Result<void>>;
   close(): Promise<Result<void>>;
   onMsg(msg: OnMsgFn<T>): UnReg;
@@ -138,12 +141,14 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
   readonly raw: MsgRawConnection;
   readonly exchangedGestalt: ExchangedGestalt;
   readonly activeBinds: Map<string, ActiveStream<MsgWithConn, MsgBase>>;
+  readonly id: string;
   private constructor(raw: MsgRawConnection, conn: QSId) {
     this.sthis = raw.sthis;
     this.raw = raw;
     this.exchangedGestalt = raw.exchangedGestalt;
     this.conn = conn;
     this.activeBinds = raw.activeBinds;
+    this.id = this.sthis.nextId().str;
   }
 
   bind<S extends MsgWithConn, Q extends MsgWithOptionalConn>(
@@ -163,7 +168,7 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
         }
       },
     });
-    // eslint-disable-next-line no-console
+
     // why the hell pipeTo sends an error that is undefined?
     stream.pipeThrough(ts);
     // stream.pipeTo(ts.writable).catch((err) => err && err.message && console.error("bind error", err));
@@ -173,11 +178,18 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
   request<S extends MsgWithConn, Q extends MsgWithOptionalConn>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>> {
     return this.raw.request({ ...req, conn: req.conn || this.conn }, opts);
   }
+
+  send<S extends MsgWithConn, Q extends MsgWithOptionalConn>(msg: Q): Promise<MsgWithError<S>> {
+    return this.raw.send({ ...msg, conn: msg.conn || this.conn });
+  }
+
   start(): Promise<Result<void>> {
     return this.raw.start();
   }
-  close(): Promise<Result<void>> {
-    return this.raw.close();
+  async close(): Promise<Result<void>> {
+    await this.request(buildReqClose(this.sthis, this.conn), { waitFor: MsgIsResClose });
+    return await this.raw.close();
+    // return Result.Ok(undefined);
   }
   onMsg(msgFn: OnMsgFn<MsgWithConn>): UnReg {
     return this.raw.onMsg((msg) => {
@@ -208,7 +220,7 @@ export class Msger {
   ): Promise<Result<MsgRawConnection>> {
     let ws: WebSocket;
     // const { encode } = jsonEnDe(sthis);
-    url = url.build().URI();
+    url = url.build().setParam("random", sthis.nextId().str).URI();
     // .setParam("reqOpen", sthis.txt.decode(encode(qOpen)))
     if (runtimeFn().isNodeIsh) {
       const { WebSocket } = await import("ws");

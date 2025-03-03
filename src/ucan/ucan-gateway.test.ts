@@ -1,6 +1,6 @@
 import { URI } from "@adviser/cement";
 import { fireproof, Database, ConfigOpts } from "@fireproof/core";
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from "vitest";
 
 import { registerUCANStoreProtocol } from "./ucan-gateway.js";
 import { smokeDB } from "../../tests/helper.js";
@@ -11,16 +11,16 @@ import { smokeDB } from "../../tests/helper.js";
 
 describe("UCANGateway", () => {
   let db: Database;
-  let unregister: () => void;
+  // let unregister: () => void;
   let uri: URI;
 
   beforeAll(() => {
-    unregister = registerUCANStoreProtocol("ucan:");
+    registerUCANStoreProtocol("ucan:");
   });
 
-  afterAll(() => {
-    unregister();
-  });
+  //  afterAll(() => {
+  //    unregister();
+  //  });
 
   beforeEach(async () => {
     uri = URI.from(process.env.FP_STORAGE_URL);

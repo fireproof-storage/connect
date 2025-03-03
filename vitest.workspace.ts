@@ -7,6 +7,7 @@ import libsql from "./vitest.libsql.config.ts";
 // import nodeSqlite3Wasm from "./vitest.node-sqlite3-wasm.config.ts";
 import partykit from "./vitest.partykit.config.ts";
 import v1Cloud from "./vitest.v1-cloud.config.ts";
+import v2Cloud from "./vitest.v2-cloud.config.ts";
 import s3 from "./vitest.s3.config.ts";
 // import connector from "./vitest.connector.config.ts";
 // import netlify from "./vitest.netlify.config.ts";
@@ -27,6 +28,7 @@ export default defineWorkspace([
   // netlify,
   partykit,
   v1Cloud,
+  v2Cloud,
   cfWorker,
   ucan,
 ]);

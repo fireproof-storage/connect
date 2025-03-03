@@ -32,7 +32,6 @@ export class NetlifyGateway implements bs.Gateway {
     if (index) {
       name += `-${index}`;
     }
-    name += ".fp";
     const remoteBaseUrl = url.getParam("remoteBaseUrl");
     if (!remoteBaseUrl) {
       return Result.Err(new Error("Remote base URL not found in the URI"));
@@ -80,7 +79,6 @@ export class NetlifyGateway implements bs.Gateway {
     if (index) {
       name += `-${index}`;
     }
-    name += ".fp";
     const remoteBaseUrl = url.getParam("remoteBaseUrl");
     if (!remoteBaseUrl) {
       return Result.Err(new Error("Remote base URL not found in the URI"));
@@ -94,6 +92,7 @@ export class NetlifyGateway implements bs.Gateway {
         fetchUrl.setParam("car", key);
         break;
     }
+    // console.log("put", pathPart, key, body.length, fetchUrl.URI().toString());
     // if (store === "meta") {
     //   const bodyRes = await bs.addCryptoKeyToGatewayMetaPayload(url, this.sthis, body);
     //   if (bodyRes.isErr()) {
@@ -102,7 +101,11 @@ export class NetlifyGateway implements bs.Gateway {
     //   body = bodyRes.Ok();
     // }
 
-    const done = await fetch(fetchUrl.asURL(), { method: "PUT", body });
+    const done = await fetch(fetchUrl.asURL(), {
+      method: "PUT",
+      body,
+      headers: { "Content-Type": "application/octet-stream" },
+    });
     if (!done.ok) {
       return this.logger
         .Error()
@@ -127,7 +130,6 @@ export class NetlifyGateway implements bs.Gateway {
     if (index) {
       name += `-${index}`;
     }
-    name += ".fp";
     const fetchUrl = BuildURI.from(remoteBaseUrl);
     switch (pathPart) {
       case "meta":
@@ -173,7 +175,6 @@ export class NetlifyGateway implements bs.Gateway {
     if (index) {
       name += `-${index}`;
     }
-    name += ".fp";
     const fetchUrl = BuildURI.from(remoteBaseUrl);
     switch (pathPart) {
       case "meta":

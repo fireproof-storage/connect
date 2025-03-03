@@ -1,6 +1,6 @@
 // import PartySocket, { PartySocketOptions } from "partysocket";
-import { Result, URI, KeyedResolvOnce, exception2Result, key } from "@adviser/cement";
-import { bs, ensureLogger, Logger, NotFoundError, rt, SuperThis } from "@fireproof/core";
+import { Result, URI, KeyedResolvOnce, exception2Result, Logger, param } from "@adviser/cement";
+import { bs, ensureLogger, NotFoundError, SuperThis } from "@fireproof/core";
 import {
   buildErrorMsg,
   buildReqOpen,
@@ -86,12 +86,12 @@ abstract class BaseGateway {
     conn: MsgConnected
   ): Promise<MsgWithError<S>> {
     const rParams = uri.getParamsResult({
-      key: key.REQUIRED,
-      store: key.REQUIRED,
-      path: key.OPTIONAL,
-      tenant: key.REQUIRED,
-      name: key.REQUIRED,
-      index: key.OPTIONAL,
+      key: param.REQUIRED,
+      store: param.REQUIRED,
+      path: param.OPTIONAL,
+      tenant: param.REQUIRED,
+      name: param.REQUIRED,
+      index: param.OPTIONAL,
     });
     if (rParams.isErr()) {
       return buildErrorMsg(this.sthis, this.logger, {} as MsgBase, rParams.Err());
@@ -444,11 +444,11 @@ export class FireproofCloudGateway implements bs.Gateway {
   // fireproof://localhost:1999/?name=test-public-api&protocol=ws&store=meta
   async getCloudConnection(uri: URI): Promise<Result<MsgConnected>> {
     const rParams = uri.getParamsResult({
-      name: key.REQUIRED,
+      name: param.REQUIRED,
       protocol: "https",
-      store: key.REQUIRED,
-      storekey: key.OPTIONAL,
-      tenant: key.REQUIRED,
+      store: param.REQUIRED,
+      storekey: param.OPTIONAL,
+      tenant: param.REQUIRED,
     });
     if (rParams.isErr()) {
       return this.logger.Error().Url(uri).Err(rParams).Msg("getCloudConnection:err").ResultError();
@@ -555,50 +555,29 @@ export class FireproofCloudGateway implements bs.Gateway {
     await Promise.all(Array.from(trackPuts).map(async (k) => this.delete(URI.from(k))));
     return Result.Ok(undefined);
   }
-}
 
-// function pkKey(set?: ConnectionKey): string {
-//   const ret = JSON.stringify(
-//     Object.entries(set || {})
-//       .sort(([a], [b]) => a.localeCompare(b))
-//       .filter(([k]) => k !== "id")
-//       .map(([k, v]) => ({ [k]: v }))
-//   );
-//   return ret;
-// }
-
-export class FireproofCloudTestStore implements bs.TestGateway {
-  readonly logger: Logger;
-  readonly sthis: SuperThis;
-  readonly gateway: bs.Gateway;
-  constructor(gw: bs.Gateway, sthis: SuperThis) {
-    this.sthis = sthis;
-    this.logger = ensureLogger(sthis, "FireproofCloudTestStore");
-    this.gateway = gw;
-  }
-  async get(uri: URI, key: string): Promise<Uint8Array> {
-    const url = uri.build().setParam("key", key).URI();
-    const dbFile = this.sthis.pathOps.join(rt.getPath(url, this.sthis), rt.getFileName(url, this.sthis));
-    this.logger.Debug().Url(url).Str("dbFile", dbFile).Msg("get");
-    const buffer = await this.gateway.get(url);
-    this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer).Msg("got");
-    return buffer.Ok();
+  async getPlain(): Promise<Result<Uint8Array>> {
+    return Result.Err(new Error("Not implemented"));
+    // const url = uri.build().setParam("key", key).URI();
+    // const dbFile = this.sthis.pathOps.join(rt.getPath(url, this.sthis), rt.getFileName(url, this.sthis));
+    // this.logger.Debug().Url(url).Str("dbFile", dbFile).Msg("get");
+    // const buffer = await this.gateway.get(url);
+    // this.logger.Debug().Url(url).Str("dbFile", dbFile).Len(buffer).Msg("got");
+    // return buffer.Ok();
   }
 }
 
 const onceRegisterFireproofCloudStoreProtocol = new KeyedResolvOnce<() => void>();
-export function registerFireproofCloudStoreProtocol(protocol = "fireproof:", overrideBaseURL?: string) {
+export function registerFireproofCloudStoreProtocol(protocol = "fpcloud:") {
   return onceRegisterFireproofCloudStoreProtocol.get(protocol).once(() => {
     URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
       protocol,
-      overrideBaseURL,
+      defaultURI() {
+        return URI.from("fpcloud://fireproof.cloud/");
+      },
       gateway: async (sthis) => {
         return new FireproofCloudGateway(sthis);
-      },
-      test: async (sthis: SuperThis) => {
-        const gateway = new FireproofCloudGateway(sthis);
-        return new FireproofCloudTestStore(gateway, sthis);
       },
     });
   });

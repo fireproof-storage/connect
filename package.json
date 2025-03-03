@@ -31,6 +31,7 @@
     "pretest-docker": "tsx tests/docker-compose.ts -f tests/docker-compose.yaml up -d --wait --build",
     "test": "vitest --run",
     "posttest-docker": "tsx tests/docker-compose.ts -f tests/docker-compose.yaml down",
+    "dev:netlify": "netlify functions:serve --functions src/netlify/backend --port 8888",
     "format": "prettier .",
     "lint": "eslint"
   },
@@ -68,6 +69,8 @@
     "esbuild-plugin-replace": "^1.4.0",
     "esbuild-plugin-resolve": "^2.0.0",
     "eslint": "^9.22.0",
+    "netlify": "^13.3.3",
+    "netlify-cli": "^19.0.0",
     "partyserver": "^0.0.65",
     "prettier": "^3.5.3",
     "semver": "^7.7.1",
@@ -104,11 +107,12 @@
     "@cloudflare/workers-types": "^4.20250303.0",
     "@fireproof/core": "0.20.0-dev-preview-53",
     "@fireproof/vendor": "~2.0.0",
-    "@ipld/dag-ucan": "^3.4.5",
+    "@hono/node-server": "^1.13.8",
     "@hono/node-ws": "^1.0.4",
+    "@ipld/dag-ucan": "^3.4.5",
     "@jspm/core": "^2.1.0",
-    "@netlify/blobs": "^8.1.1",
     "@libsql/client": "^0.14.0",
+    "@netlify/blobs": "^8.1.1",
     "@ucanto/client": "^9.0.1",
     "@ucanto/core": "^10.3.1",
     "@ucanto/interface": "^10.2.0",
@@ -126,7 +130,7 @@
     "aws4fetch": "^1.0.20",
     "better-sqlite3": "^11.8.1",
     "cmd-ts": "^0.13.0",
-    "dotenv": "^16.4.5", 
+    "dotenv": "^16.4.5",
     "events": "^3.3.0",
     "hono": "^4.6.13",
     "idb-keyval": "^6.2.1",
@@ -155,12 +159,15 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@parcel/watcher",
       "aws-sdk",
       "better-sqlite3",
       "es5-ext",
       "esbuild",
+      "netlify-cli",
       "protobufjs",
       "sharp",
+      "unix-dgram",
       "workerd"
     ]
   }
