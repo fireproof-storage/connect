@@ -93,7 +93,7 @@
   "homepage": "https://github.com/fireproof-storage/connect#readme",
   "dependencies": {
     "@adviser/cement": "^0.3.20",
-    "@aws-sdk/client-dynamodb": "^3.751.0",
+    "@aws-sdk/client-dynamodb": "^3.758.0",
     "@aws-sdk/client-lambda": "^3.750.0",
     "@aws-sdk/client-s3": "^3.750.0",
     "@aws-sdk/lib-dynamodb": "^3.751.0",
