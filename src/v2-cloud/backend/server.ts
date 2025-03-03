@@ -50,7 +50,7 @@ export class FPBackendDurableObject extends DurableObject<Env> {
 export class FPRoomDurableObject extends DurableObject<Env> {
   private wsEvents?: WSEvents;
 
-  async acceptWebSocket(ws: WebSocket, wsEvents: WSEvents): Promise<void> {
+  acceptWebSocket(ws: WebSocket, wsEvents: WSEvents): void {
     this.ctx.acceptWebSocket(ws);
     this.wsEvents = wsEvents;
   }

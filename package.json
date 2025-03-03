@@ -31,6 +31,7 @@
     "pretest-docker": "tsx tests/docker-compose.ts -f tests/docker-compose.yaml up -d --wait --build",
     "test": "vitest --run",
     "posttest-docker": "tsx tests/docker-compose.ts -f tests/docker-compose.yaml down",
+    "dev:netlify": "netlify functions:serve --functions src/netlify/backend --port 8888",
     "format": "prettier .",
     "lint": "eslint"
   },
@@ -68,6 +69,8 @@
     "esbuild-plugin-replace": "^1.4.0",
     "esbuild-plugin-resolve": "^2.0.0",
     "eslint": "^9.20.0",
+    "netlify": "^13.3.3",
+    "netlify-cli": "^19.0.0",
     "partyserver": "^0.0.64",
     "prettier": "^3.5.0",
     "semver": "^7.7.1",
@@ -78,7 +81,7 @@
     "typescript-eslint": "^8.23.0",
     "vite": "^6.1.0",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.0.5",
+    "vitest": "^3.0.6",
     "wait-on": "^8.0.2",
     "wrangler": "^3.107.3",
     "zx": "^8.3.2"
@@ -92,7 +95,7 @@
   },
   "homepage": "https://github.com/fireproof-storage/connect#readme",
   "peerDependencies": {
-    "@adviser/cement": "^0.3.5"
+    "@adviser/cement": "~0.3.20"
   },
   "dependencies": {
     "@adviser/cement": "^0.3.20",
@@ -103,13 +106,15 @@
     "@aws-sdk/s3-request-presigner": "^3.750.0",
     "@cloudflare/vitest-pool-workers": "^0.7.4",
     "@cloudflare/workers-types": "^4.20250224.0",
-    "@fireproof/core": "0.20.0-dev-preview-50",
+    "@fireproof/core": "0.20.0-dev-preview-51",
     "@fireproof/vendor": "~2.0.0",
-    "@ipld/dag-ucan": "^3.4.5",
+    "@hono/node-server": "^1.13.8",
     "@hono/node-ws": "^1.0.4",
+    "@ipld/dag-ucan": "^3.4.5",
     "@jspm/core": "^2.1.0",
     "@libsql/client": "^0.14.0",
     "@netlify/blobs": "^8.1.0",
+    "@netlify/functions": "^3.0.0",
     "@ucanto/client": "^9.0.1",
     "@ucanto/core": "^10.2.1",
     "@ucanto/interface": "^10.1.1",
@@ -127,7 +132,7 @@
     "aws4fetch": "^1.0.20",
     "better-sqlite3": "^11.8.1",
     "cmd-ts": "^0.13.0",
-    "dotenv": "^16.4.5", 
+    "dotenv": "^16.4.5",
     "events": "^3.3.0",
     "hono": "^4.6.13",
     "idb-keyval": "^6.2.1",

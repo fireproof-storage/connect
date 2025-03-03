@@ -33,13 +33,15 @@ export function getRoomDurableObject(env: Env) {
   return dObjNs.get(id);
 }
 
-class CFWSRoom implements WSRoom {
-  readonly dobj: DurableObjectStub<FPRoomDurableObject>;
-  constructor(dobj: DurableObjectStub<FPRoomDurableObject>) {
-    this.dobj = dobj;
-  }
-  async acceptConnection(ws: WebSocket, wse: WSEvents): Promise<void> {
-    const ret = await this.dobj.acceptWebSocket(ws, wse);
+class CFWSRoom implements WSRoom<Env> {
+  // readonly dobj: DurableObjectStub<FPRoomDurableObject>;
+  // constructor(dobj: DurableObjectStub<FPRoomDurableObject>) {
+  //   this.dobj = dobj;
+  // }
+  async acceptConnection(ws: WebSocket, wse: WSEvents, ctx: Env): Promise<void> {
+    const dobj = getRoomDurableObject(ctx);
+    console.log("acceptConnection", dobj);
+    const ret = dobj.acceptWebSocket(ws, wse);
     const wsCtx = new WSContext(ws as WSContextInit);
     wse.onOpen?.({} as Event, wsCtx);
     // return Promise.resolve();
@@ -76,8 +78,16 @@ export class CFHonoFactory implements HonoServerFactory {
       id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
     });
 
-    const wsRoom = new CFWSRoom(c.env);
     const cfBackendMode = c.env.CF_BACKEND_MODE && c.env.CF_BACKEND_MODE === "DURABLE_OBJECT" ? "DURABLE_OBJECT" : "D1";
+
+
+    const dobjRoom = getRoomDurableObject(c.env);
+    dobjRoom.fetch(c.req.raw)
+
+    const wsRoom = new CFWSRoom();
+
+
+
     let db: SQLDatabase;
     switch (cfBackendMode) {
       case "DURABLE_OBJECT": {
@@ -132,7 +142,7 @@ export class CFHonoServer extends HonoServerBase {
     ende: EnDeCoder,
     gs: Gestalt,
     sqlDb: SQLDatabase,
-    wsRoom: WSRoom,
+    wsRoom: WSRoom<Env>,
     headers?: HttpHeader
   ) {
     super(sthis, logger, gs, sqlDb, wsRoom, headers);
@@ -177,7 +187,7 @@ export class CFHonoServer extends HonoServerBase {
       //   wsEvents.onOpen?.(ev, wsCtx);
       // }
 
-      await this.wsRoom.acceptConnection(server, wsEvents);
+      await this.wsRoom.acceptConnection(server, wsEvents, c.env);
 
       // server.send("Hello from server");
 

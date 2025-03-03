@@ -10,7 +10,6 @@ import { sha256 } from "multiformats/hashes/sha2";
 import * as ClockCaps from "./clock/capabilities.js";
 import * as StoreCaps from "./store/capabilities.js";
 import { Server, type Clock, type Service } from "./types.js";
-import { to_uint8 } from "../coerce-binary.js";
 
 ////////////////////////////////////////
 // CLOCK
@@ -141,13 +140,6 @@ export async function registerClock({
 ////////////////////////////////////////
 // CONNECTION
 ////////////////////////////////////////
-export function coerceHeaders(headers: Record<string, string> | Headers): Record<string, string> {
-  if ("entries" in headers) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return Object.fromEntries((headers as any).entries());
-  }
-  return headers as Record<string, string>;
-}
 
 export function service(server: Server): ConnectionView<Service> {
   const url = server.uri.toString();
@@ -161,11 +153,13 @@ export function service(server: Server): ConnectionView<Service> {
       });
 
       if (!response.ok) throw new Error(`HTTP Request failed. ${"POST"} ${url} → ${response.status}`);
-      const buffer = response.ok ? await response.arrayBuffer() : new Uint8Array();
+      const buffer = response.ok ? new Uint8Array(await response.arrayBuffer()) : new Uint8Array();
 
+      // console.log("response", response.headers);
       return {
-        headers: coerceHeaders(response.headers),
-        body: to_uint8(buffer),
+        headers: "entries" in response.headers ? Object.fromEntries((response.headers as unknown as Map<string, string>).entries()) : {},
+        // headers: {},
+        body: buffer
       };
     },
   };

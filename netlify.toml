@@ -1,5 +1,0 @@
-[build]
-  base = "tests/connect-netlify/app"
-  command = "# no build command"
-  publish = ""
-

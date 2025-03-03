@@ -40,8 +40,8 @@ describe.each([NodeHonoServerFactory(), CFHonoServerFactory("D1")])("$name - Gat
           .fill(async () => {
             url.setParam("store", "data");
             const key = `theDataKey-${sthis.nextId().str}`;
-            const kurl = (await gw.buildUrl(url.URI(), key)).Ok();
-            const res = await gw.get(kurl);
+            const kurl = (await gw.buildUrl(url.URI(), key, sthis)).Ok();
+            const res = await gw.get(kurl, sthis);
             expect(res.isErr()).toBeTruthy();
             expect(res.Err()).toBeInstanceOf(NotFoundError);
           })
@@ -53,22 +53,22 @@ describe.each([NodeHonoServerFactory(), CFHonoServerFactory("D1")])("$name - Gat
       await Promise.all(
         Array(20)
           .fill(async () => {
-            const resStart = await gw.start(url.URI());
+            const resStart = await gw.start(url.URI(), sthis);
             expect(resStart.isOk()).toBeTruthy();
 
             url.setParam("store", "data");
             const key = `theDataKey-${sthis.nextId().str}`;
-            const kurl = (await gw.buildUrl(url.URI(), key)).Ok();
+            const kurl = (await gw.buildUrl(url.URI(), key, sthis)).Ok();
 
-            const resPut = await gw.put(kurl, sthis.txt.encode("Hello, World!"));
+            const resPut = await gw.put(kurl, sthis.txt.encode("Hello, World!"), sthis);
             expect(resPut.isOk()).toBeTruthy();
-            const resGet = await gw.get(kurl);
+            const resGet = await gw.get(kurl, sthis);
             expect(resGet.isOk()).toBeTruthy();
             expect(sthis.txt.decode(resGet.Ok())).toBe("Hello, World!");
-            const resDel = await gw.delete(kurl);
+            const resDel = await gw.delete(kurl, sthis);
             expect(resDel.isOk()).toBeTruthy();
 
-            const res = await gw.get(kurl);
+            const res = await gw.get(kurl, sthis);
             expect(res.isErr()).toBeTruthy();
             expect(res.Err()).toBeInstanceOf(NotFoundError);
           })
@@ -84,8 +84,8 @@ describe.each([NodeHonoServerFactory(), CFHonoServerFactory("D1")])("$name - Gat
           .fill(async () => {
             url.setParam("store", "wal");
             const key = `theDataKey-${sthis.nextId().str}`;
-            const kurl = (await gw.buildUrl(url.URI(), key)).Ok();
-            const res = await gw.get(kurl);
+            const kurl = (await gw.buildUrl(url.URI(), key, sthis)).Ok();
+            const res = await gw.get(kurl, sthis);
             expect(res.isErr()).toBeTruthy();
             expect(res.Err()).toBeInstanceOf(NotFoundError);
           })
@@ -97,22 +97,22 @@ describe.each([NodeHonoServerFactory(), CFHonoServerFactory("D1")])("$name - Gat
       await Promise.all(
         Array(20)
           .fill(async () => {
-            const resStart = await gw.start(url.URI());
+            const resStart = await gw.start(url.URI(), sthis);
             expect(resStart.isOk()).toBeTruthy();
 
             url.setParam("store", "wal");
             const key = `theWALKey-${sthis.nextId().str}`;
-            const kurl = (await gw.buildUrl(url.URI(), key)).Ok();
+            const kurl = (await gw.buildUrl(url.URI(), key, sthis)).Ok();
 
-            const resPut = await gw.put(kurl, sthis.txt.encode("Hello, World!"));
+            const resPut = await gw.put(kurl, sthis.txt.encode("Hello, World!"), sthis);
             expect(resPut.isOk()).toBeTruthy();
-            const resGet = await gw.get(kurl);
+            const resGet = await gw.get(kurl, sthis);
             expect(resGet.isOk()).toBeTruthy();
             expect(sthis.txt.decode(resGet.Ok())).toBe("Hello, World!");
-            const resDel = await gw.delete(kurl);
+            const resDel = await gw.delete(kurl, sthis);
             expect(resDel.isOk()).toBeTruthy();
 
-            const res = await gw.get(kurl);
+            const res = await gw.get(kurl, sthis);
             expect(res.isErr()).toBeTruthy();
             expect(res.Err()).toBeInstanceOf(NotFoundError);
           })

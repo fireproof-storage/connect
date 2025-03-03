@@ -48,21 +48,32 @@ export function buildMsgDispatcher(sthis: SuperThis, gestalt: Gestalt): MsgDispa
     {
       match: MsgIsReqGestalt,
       isNotConn: true,
-      fn: (_sthis, _logger, _ctx, msg: ReqGestalt) => {
-        return buildResGestalt(msg, dp.gestalt);
+      fn: (_sthis, _logger, ctx, msg: ReqGestalt) => {
+        const cts = ctx.impl.getConnected()
+        const resGestalt = buildResGestalt(msg, dp.gestalt, {
+          connIds: cts.map((c) => c.connId)
+      });
+        if (msg.publish) {
+          for (const conn of cts)
+            if (ctx.ws.id !== conn.connId) {
+              conn.send(resGestalt);
+            }
+        }
+        return resGestalt;
       },
     },
     {
       match: MsgIsReqOpen,
       isNotConn: true,
-      fn: (sthis, logger, _ctx, msg) => {
+      fn: (sthis, logger, ctx, msg) => {
         if (!MsgIsReqOpenWithConn(msg)) {
           return buildErrorMsg(sthis, logger, msg, new Error("missing connection"));
         }
         if (dp.connManager.isConnected(msg)) {
           return buildResOpen(sthis, msg, msg.conn.resId);
         }
-        const resId = sthis.nextId(12).str;
+        // const resId = sthis.nextId(12).str;
+        const resId = ctx.ws.id;
         const resOpen = buildResOpen(sthis, msg, resId);
         dp.connManager.addConn(resOpen.conn);
         return resOpen;

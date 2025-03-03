@@ -150,7 +150,7 @@ export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnD
 }
 
 export async function resolveToml(backend: "D1" | "DO") {
-  const tomlFile = "src/cloud/backend/wrangler.toml";
+  const tomlFile = "src/v2-cloud/backend/wrangler.toml";
   const tomeStr = await fs.readFile(tomlFile, "utf-8");
   const wranglerFile = toml.parse(tomeStr) as unknown as {
     env: Record<string, { vars: Env }>;
@@ -176,6 +176,7 @@ export function NodeHonoServerFactory() {
     },
   };
 }
+
 export function CFHonoServerFactory(backend: "D1" | "DO") {
   return {
     name: `CFHonoServer(${backend})`,

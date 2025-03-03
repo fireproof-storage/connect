@@ -3,7 +3,7 @@ import { SuperThis, ensureLogger } from "@fireproof/core";
 import { Gestalt, MsgBase, buildErrorMsg, MsgWithError, MsgIsWithConn, MsgWithConn, QSId } from "./msg-types.js";
 
 import { PreSignedMsg } from "./pre-signed-url.js";
-import { HonoServerImpl } from "./hono-server.js";
+import { HonoServerImpl, WSContextWithId } from "./hono-server.js";
 import { UnReg } from "./msger.js";
 
 export interface MsgContext {
@@ -27,7 +27,7 @@ export class WSConnection {
   }
 }
 
-type Promisable<T> = T | Promise<T>;
+export type Promisable<T> = T | Promise<T>;
 
 // function WithValidConn<T extends MsgBase>(msg: T, rri?: ResOpen): msg is MsgWithConn<T> {
 //   return MsgIsWithConn(msg) && !!rri && rri.conn.resId === msg.conn.resId && rri.conn.reqId === msg.conn.reqId;
@@ -67,9 +67,18 @@ class ConnectionManager {
 }
 const connManager = new ConnectionManager();
 
+export interface ConnectionInfo {
+  readonly conn: WSConnection;
+  readonly reqId: string;
+  readonly resId: string;
+}
+
 export interface MsgDispatcherCtx {
   readonly impl: HonoServerImpl;
+  readonly ws: WSContextWithId;
+  readonly send: (msg: MsgBase) => Promisable<Response>;
 }
+
 export interface MsgDispatchItem<S extends MsgBase, Q extends MsgBase> {
   readonly match: (msg: MsgBase) => boolean;
   readonly isNotConn?: boolean;
@@ -114,26 +123,26 @@ export class MsgDispatcher {
     return () => ids.forEach((id) => this.items.delete(id));
   }
 
-  async dispatch(ctx: HonoServerImpl, msg: MsgBase, send: (msg: MsgBase) => Promisable<Response>): Promise<Response> {
+  async dispatch(ctx: MsgDispatcherCtx, msg: MsgBase): Promise<Response> {
     const validateConn = async <T extends MsgBase>(
       msg: T,
       fn: (msg: MsgWithConn<T>) => Promisable<MsgWithError<MsgBase>>
     ): Promise<Response> => {
       if (!connManager.isConnected(msg)) {
-        return send(buildErrorMsg(this.sthis, this.logger, { ...msg }, new Error("dispatch missing connection")));
+        return ctx.send(buildErrorMsg(this.sthis, this.logger, { ...msg }, new Error("dispatch missing connection")));
         // return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("non open connection")));
       }
       // if (WithValidConn(msg, this.myOpen)) {
       const r = await fn(msg);
-      return Promise.resolve(send(r));
+      return Promise.resolve(ctx.send(r));
     };
     const found = Array.from(this.items.values()).find((item) => item.match(msg));
     if (!found) {
-      return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("unexpected message")));
+      return ctx.send(buildErrorMsg(this.sthis, this.logger, msg, new Error("unexpected message")));
     }
     if (!found.isNotConn) {
-      return validateConn(msg, (msg) => found.fn(this.sthis, this.logger, { impl: ctx }, msg));
+      return validateConn(msg, (msg) => found.fn(this.sthis, this.logger, ctx, msg));
     }
-    return send(await found.fn(this.sthis, this.logger, { impl: ctx }, msg));
+    return ctx.send(await found.fn(this.sthis, this.logger, ctx, msg));
   }
 }

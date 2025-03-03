@@ -1,20 +1,24 @@
 import { getStore } from "@netlify/blobs";
-import { to_blob } from "../coerce-binary.js";
+import { to_blob } from "../../coerce-binary.js";
 
 // eslint-disable-next-line no-console
 console.log("fireproof edge function loaded netlify");
 
-interface CRDTEntry {
-  readonly data: string;
-  readonly cid: string;
-  readonly parents: string[];
-}
+// interface CRDTEntry {
+//   readonly data: string;
+//   readonly cid: string;
+//   readonly parents: string[];
+// }
 
 export default async (req: Request) => {
   // eslint-disable-next-line no-restricted-globals
   const url = new URL(req.url);
   const carId = url.searchParams.get("car");
   const metaDb = url.searchParams.get("meta");
+
+  if (url.searchParams.get("health")) {
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  }
 
   if (req.method === "PUT") {
     if (carId) {
@@ -24,7 +28,10 @@ export default async (req: Request) => {
       return new Response(JSON.stringify({ ok: true }), { status: 201 });
     } else if (metaDb) {
       const meta = getStore("meta");
-      const x = (await req.json()) as CRDTEntry[];
+      const bytes = new Uint8Array(await req.arrayBuffer());
+      // eslint-disable-next-line no-restricted-globals
+      const str = new TextDecoder().decode(bytes);
+      const x = JSON.parse(str);
       // fixme, marty changed to [0] as it is a slice of the structure we expected
       const { data, cid, parents } = x[0];
       await meta.setJSON(`${metaDb}/${cid}`, { data, parents });

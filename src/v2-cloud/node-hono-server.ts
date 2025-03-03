@@ -1,5 +1,5 @@
-import { UpgradeWebSocket, WSContext, WSContextInit, WSEvents } from "hono/ws";
-import { ConnMiddleware, HonoServerBase, HonoServerFactory, HonoServerImpl, RunTimeParams } from "./hono-server.js";
+import { UpgradeWebSocket, WSContext, WSContextInit, WSEvents, WSMessageReceive, } from "hono/ws";
+import { Connected, ConnMiddleware, HonoServerBase, HonoServerFactory, HonoServerImpl, RunTimeParams, WSContextWithId, WSEventsConnId } from "./hono-server.js";
 import { HttpHeader, URI } from "@adviser/cement";
 import { Context, Hono } from "hono";
 import { ensureLogger, SuperThis } from "@fireproof/core";
@@ -20,28 +20,79 @@ export interface NodeHonoFactoryParams {
   readonly sql: SQLDatabase;
 }
 
-const wsConnections = new Map<string, WebSocket>();
-class NodeWSRoom implements WSRoom {
+
+
+const wsConnections = new Map<string, WSContextWithId>();
+class NodeWSRoom implements WSRoom<void> {
   readonly sthis: SuperThis;
   constructor(sthis: SuperThis) {
     this.sthis = sthis;
   }
-  acceptConnection(ws: WebSocket, wse: WSEvents): Promise<void> {
+
+  // addConn(ws: WSContextWithId): void {
+  //   wsConnections.add(ws);
+  // }
+
+  // delConn(ws: WSContextWithId): void {
+  //   wsConnections.delete(ws);
+  // }
+
+  #ensureWSContextWithId(id: string, ws: WSContext) {
+    let wsId = wsConnections.get(id);
+    if (wsId) {
+      return wsId;
+    }
+    wsId = new WSContextWithId(this.sthis.nextId(12).str, ws); 
+    wsConnections.set(id, wsId);
+    return wsId;
+  }
+
+  createEvents(outer: WSEventsConnId): (c: Context) => WSEvents {
     const id = this.sthis.nextId(12).str;
-    wsConnections.set(id, ws);
+    return (_c: Context) => ({
+      onOpen: (evt: Event, ws: WSContext<unknown>) => {
+        console.log("onOpen", id);
+        outer.onOpen?.(evt, this.#ensureWSContextWithId(id, ws))
+      },
+      onMessage: (evt: MessageEvent<WSMessageReceive>, ws: WSContext<unknown>) => {
+        outer.onMessage?.(evt, this.#ensureWSContextWithId(id, ws))
+      },
+      onClose: (evt: CloseEvent, ws: WSContext<unknown>) => {
+        console.log("onClose", id);
+        outer.onClose?.(evt, this.#ensureWSContextWithId(id, ws))
+        wsConnections.delete(id);
+      },
+      onError: (evt: Event, ws: WSContext<unknown>) => {
+        outer.onError?.(evt, this.#ensureWSContextWithId(id, ws))
+      } 
+    })
+  }
 
-    const wsCtx = new WSContext(ws as WSContextInit);
+  acceptConnection(ws: WebSocket, wse: WSEvents): Promise<void> {
+    // const id = this.sthis.nextId(12).str;
+    // wsConnections.set(id, ws);
+    // this.
 
+    throw new Error("Method not implemented.");
+    const wsCtx = new WSContextWithId(this.sthis.nextId(12).str, ws as WSContextInit);
+
+    console.log("acceptConnection", wsCtx);
+    ws.onopen = function(this, ev) {
+      console.log("onopen", ev);
+      wsConnections.set(wsCtx.id, wsCtx);
+      wse.onOpen?.(ev, wsCtx);
+    }
     ws.onerror = (err) => {
-      // console.log("onerror", err);
+      console.log("onerror", err);
       wse.onError?.(err, wsCtx);
     };
-    ws.onclose = (ev) => {
-      // console.log("onclose", ev);
+    ws.onclose = function(this, ev) {
+      console.log("onclose", ev);
       wse.onClose?.(ev, wsCtx);
+      wsConnections.delete(wsCtx.id);
     };
     ws.onmessage = (evt) => {
-      // console.log("onmessage", evt);
+      console.log("onmessage", evt);
       // wsCtx.send("Hellox from server");
       wse.onMessage?.(evt, wsCtx);
     };
@@ -121,22 +172,32 @@ export class NodeHonoFactory implements HonoServerFactory {
 
 export class NodeHonoServer extends HonoServerBase implements HonoServerImpl {
   readonly _upgradeWebSocket: UpgradeWebSocket;
+  // readonly wsRoom: NodeWSRoom;
   constructor(
     sthis: SuperThis,
     factory: NodeHonoFactory,
     gs: Gestalt,
     sqldb: SQLDatabase,
-    wsRoom: WSRoom,
+    wsRoom: WSRoom<unknown>,
     headers?: HttpHeader
   ) {
     super(sthis, sthis.logger, gs, sqldb, wsRoom, headers);
     this._upgradeWebSocket = factory._upgradeWebSocket;
   }
 
-  override upgradeWebSocket(createEvents: (c: Context) => WSEvents | Promise<WSEvents>): ConnMiddleware {
+  override upgradeWebSocket(createEvents: (c: Context) => WSEventsConnId | Promise<WSEventsConnId>): ConnMiddleware {
     return async (_conn, c, next) => {
-      // conn.attachWSPair({ client: c.req, server: c.res });
-      return this._upgradeWebSocket(createEvents)(c, next);
+      const wse = await createEvents(c);
+      return this._upgradeWebSocket((this.wsRoom as NodeWSRoom).createEvents(wse))(c, next);
     };
   }
+
+  override getConnected(): Connected[] {
+    console.log("getConnected", wsConnections.size);
+    return Array.from(wsConnections.values()).map(m => ({
+      connId: m.id,
+      ws: m,
+    }))
+  }
+
 }

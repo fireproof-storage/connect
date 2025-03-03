@@ -1,5 +1,5 @@
 import { WSEvents } from "hono/ws";
 
-export interface WSRoom {
-  acceptConnection(ws: WebSocket, wse: WSEvents): Promise<void>;
+export interface WSRoom<CTX> {
+  acceptConnection(ws: WebSocket, wse: WSEvents, ctx: CTX): Promise<void>;
 }

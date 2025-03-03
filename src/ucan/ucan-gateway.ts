@@ -242,6 +242,7 @@ export class UCANGateway implements bs.Gateway {
         return res;
       }
       case "meta": {
+        console.log("meta-1");
         const head = await Client.getClockHead({
           agent: this.inst.agent.issuer,
           clockId: this.inst.clockId,
@@ -249,25 +250,31 @@ export class UCANGateway implements bs.Gateway {
           server: this.inst.server,
           service: this.inst.service,
         });
+        console.log("meta-2");
 
         this.logger.Debug().Any("head", head.out).Msg("Meta (head) retrieved");
 
         if (head.out.error) throw head.out.error;
         if (head.out.ok.head === undefined) throw new NotFoundError();
 
+        console.log("meta-3");
         const cid = CID.parse(head.out.ok.head).toV1();
 
+        console.log("meta-4");
         const res = await Client.retrieve({
           agent: this.inst.agent.issuer,
           cid: cid,
           server: this.inst.server,
           service: this.inst.service,
         });
+        console.log("meta-5");
 
         this.logger.Debug().Any("meta", res).Msg("Meta (bytes) retrieved");
 
         if (!res) throw new NotFoundError();
         const metadata = await Client.metadataFromClockEvent(res);
+
+        console.log("meta-6");
 
         // deserializeMetaWithKeySideEffect(this.sthis, metadata, loader: bs.Loadable): Promise<Result<Uint8Array>> {
 
@@ -368,10 +375,11 @@ export class UCANGateway implements bs.Gateway {
 const onceRegisterPartyKitStoreProtocol = new KeyedResolvOnce<() => void>();
 export function registerUCANStoreProtocol(protocol = "ucan:", overrideBaseURL?: string) {
   return onceRegisterPartyKitStoreProtocol.get(protocol).once(() => {
+    console.log("registerUCANStoreProtocol:", protocol);
     URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
       protocol,
-      defaultURI: () => URI.from(overrideBaseURL || `${protocol}://localhost`),
+      defaultURI: () => URI.from(overrideBaseURL ?? `${protocol}://localhost`),
       serdegateway: async (sthis) => {
         return new AddKeyToDbMetaGateway(new UCANGateway(sthis), "v1");
       },

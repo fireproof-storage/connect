@@ -1,5 +1,5 @@
-import { Future } from "@adviser/cement";
-import { Logger, SuperThis } from "@fireproof/core";
+import { Future, Logger } from "@adviser/cement";
+import { SuperThis } from "@fireproof/core";
 import { CalculatePreSignedUrl } from "./msg-types-data.js";
 import { PreSignedMsg } from "./pre-signed-url.js";
 
@@ -263,6 +263,7 @@ export function defaultGestalt(msgP: MsgerParams, gestalt: GestaltParam): Gestal
 export interface ReqGestalt extends MsgBase {
   readonly type: "reqGestalt";
   readonly gestalt: Gestalt;
+  readonly publish?: boolean; // for testing
 }
 
 export function MsgIsReqGestalt(msg: MsgBase): msg is ReqGestalt {
@@ -278,6 +279,10 @@ export function buildReqGestalt(sthis: NextId, gestalt: Gestalt): ReqGestalt {
   };
 }
 
+
+export interface ConnInfo {
+  readonly connIds: string[];
+}
 /**
  * The ResGestalt message is used to respond with
  * the features of the Responder.
@@ -285,14 +290,16 @@ export function buildReqGestalt(sthis: NextId, gestalt: Gestalt): ReqGestalt {
 export interface ResGestalt extends MsgBase {
   readonly type: "resGestalt";
   readonly gestalt: Gestalt;
+  readonly connInfo: ConnInfo;
 }
 
-export function buildResGestalt(req: ReqGestalt, gestalt: Gestalt): ResGestalt | ErrorMsg {
+export function buildResGestalt(req: ReqGestalt, gestalt: Gestalt, connInfo: ConnInfo): ResGestalt | ErrorMsg {
   return {
     tid: req.tid,
     type: "resGestalt",
     version: VERSION,
     gestalt,
+    connInfo,
   };
 }
 

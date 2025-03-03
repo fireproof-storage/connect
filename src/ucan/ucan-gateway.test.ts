@@ -18,9 +18,9 @@ describe("UCANGateway", () => {
     unregister = registerUCANStoreProtocol("ucan:");
   });
 
-  afterAll(() => {
-    unregister();
-  });
+//  afterAll(() => {
+//    unregister();
+//  });
 
   beforeEach(async () => {
     uri = URI.from(process.env.FP_STORAGE_URL);

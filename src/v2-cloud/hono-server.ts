@@ -1,5 +1,5 @@
-import { exception2Result, HttpHeader, param, ResolveOnce, Result, URI } from "@adviser/cement";
-import { Logger, SuperThis } from "@fireproof/core";
+import { exception2Result, HttpHeader, Logger, param, ResolveOnce, Result, URI } from "@adviser/cement";
+import { SuperThis } from "@fireproof/core";
 import { Context, Hono, Next } from "hono";
 import { top_uint8 } from "../coerce-binary.js";
 import {
@@ -14,8 +14,8 @@ import {
   GwCtx,
   MsgIsError,
 } from "./msg-types.js";
-import { MsgDispatcher, WSConnection } from "./msg-dispatch.js";
-import { WSEvents } from "hono/ws";
+import { MsgDispatcher, MsgDispatcherCtx, Promisable, WSConnection } from "./msg-dispatch.js";
+import { WSContext, WSContextInit, WSMessageReceive } from "hono/ws";
 import { calculatePreSignedUrl, PreSignedMsg } from "./pre-signed-url.js";
 import { buildMsgDispatcher } from "./msg-dispatcher-impl.js";
 import {
@@ -39,17 +39,40 @@ export interface RunTimeParams {
   readonly ende: EnDeCoder;
   readonly impl: HonoServerImpl;
 }
+
+export class WSContextWithId extends WSContext {
+  readonly id: string;
+  constructor(id: string, ws: WSContextInit) {
+    super(ws);
+    this.id = id;
+  }
+}
+
+export class WSEventsConnId {
+  onOpen?: (evt: Event, ws: WSContextWithId) => void;
+  onMessage?: (evt: MessageEvent<WSMessageReceive>, ws: WSContextWithId) => void;
+  onClose?: (evt: CloseEvent, ws: WSContextWithId) => void;
+  onError?: (evt: Event, ws: WSContextWithId) => void;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 export type ConnMiddleware = (conn: WSConnection, c: Context, next: Next) => Promise<Response | void>;
 export interface HonoServerImpl {
   start(): Promise<HonoServerImpl>;
   gestalt(): Gestalt;
+  getConnected(): Connected[];
   calculatePreSignedUrl(p: PreSignedMsg): Promise<Result<URI>>;
-  upgradeWebSocket: (createEvents: (c: Context) => WSEvents | Promise<WSEvents>) => ConnMiddleware;
+  upgradeWebSocket: (createEvents: (c: Context) => WSEventsConnId | Promise<WSEventsConnId>) => ConnMiddleware;
   handleBindGetMeta(sthis: SuperThis, logger: Logger, msg: BindGetMeta): Promise<MsgWithError<EventGetMeta>>;
   handleReqPutMeta(sthis: SuperThis, logger: Logger, msg: ReqPutMeta): Promise<MsgWithError<ResPutMeta>>;
   handleReqDelMeta(sthis: SuperThis, logger: Logger, msg: ReqDelMeta): Promise<MsgWithError<ResDelMeta>>;
   readonly headers: HttpHeader;
+}
+
+export interface Connected {
+  readonly connId: string;
+  readonly ws: WSContextWithId;
+  readonly send: (msg: MsgBase) => Promisable<Response>;
 }
 
 export abstract class HonoServerBase implements HonoServerImpl {
@@ -58,8 +81,15 @@ export abstract class HonoServerBase implements HonoServerImpl {
   readonly logger: Logger;
   readonly metaMerger: MetaMerger;
   readonly headers: HttpHeader;
-  readonly wsRoom: WSRoom;
-  constructor(sthis: SuperThis, logger: Logger, gs: Gestalt, sqlDb: SQLDatabase, wsRoom: WSRoom, headers?: HttpHeader) {
+  readonly wsRoom: WSRoom<unknown>;
+  constructor(
+    sthis: SuperThis,
+    logger: Logger,
+    gs: Gestalt,
+    sqlDb: SQLDatabase,
+    wsRoom: WSRoom<unknown>,
+    headers?: HttpHeader
+  ) {
     this.logger = logger;
     this._gs = gs;
     this.sthis = sthis;
@@ -68,7 +98,9 @@ export abstract class HonoServerBase implements HonoServerImpl {
     this.headers = headers ? headers.Clone().Merge(CORS) : CORS.Clone();
   }
 
-  abstract upgradeWebSocket(createEvents: (c: Context) => WSEvents | Promise<WSEvents>): ConnMiddleware;
+  abstract upgradeWebSocket(createEvents: (c: Context) => WSEventsConnId | Promise<WSEventsConnId>): ConnMiddleware;
+
+  abstract getConnected(): Connected[];
 
   start(drop = false): Promise<HonoServerImpl> {
     return this.metaMerger.createSchema(drop).then(() => this);
@@ -172,6 +204,21 @@ export const CORS = HttpHeader.from({
   "Access-Control-Max-Age": "86400", // Cache pre-flight response for 24 hours
 });
 
+class NoBackChannel implements MsgDispatcherCtx {
+  readonly impl: HonoServerImpl;
+  readonly ctx: Context;
+  constructor(impl: HonoServerImpl, c: Context) {
+    this.impl = impl;
+    this.ctx = c;
+  }
+  get ws(): WSContextWithId {
+    throw new Error("NoBackChannel: ws Method not implemented.");
+  }
+  send(msg: MsgBase) : Promisable<Response> {
+    return this.ctx.json(msg)
+  }
+}
+
 export class HonoServer {
   // readonly sthis: SuperThis;
   // readonly msgP: MsgerParams;
@@ -200,7 +247,7 @@ export class HonoServer {
             return c.json(buildErrorMsg(sthis, logger, { tid: "internal" }, rMsg.Err()));
           }
           const dispatcher = buildMsgDispatcher(sthis, impl.gestalt());
-          return dispatcher.dispatch(impl, rMsg.Ok(), (msg) => c.json(msg));
+          return dispatcher.dispatch(new NoBackChannel(impl, c), rMsg.Ok());
         })
       );
       app.get("/ws", (c, next) =>
@@ -230,14 +277,22 @@ export class HonoServer {
                     )
                   );
                 } else {
-                  await dp.dispatch(impl, rMsg.Ok(), (msg) => {
-                    const str = ende.encode(msg);
-                    ws.send(str);
-                    return new Response(str);
-                  });
+                  await dp.dispatch(
+                    {
+                      impl,
+                      ws, 
+                      send: (msg) => {
+                        const str = ende.encode(msg);
+                        ws.send(str);
+                        return new Response(str);
+                      }
+                    },
+                    rMsg.Ok()
+                  );
                 }
               },
-              onClose: () => {
+              onClose: (_evt, _ws) => {
+                // impl.delConn(ws);
                 dp = undefined as unknown as MsgDispatcher;
                 // console.log('Connection closed')
               },
