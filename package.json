@@ -95,7 +95,7 @@
     "@adviser/cement": "^0.3.20",
     "@aws-sdk/client-dynamodb": "^3.751.0",
     "@aws-sdk/client-lambda": "^3.750.0",
-    "@aws-sdk/client-s3": "^3.750.0",
+    "@aws-sdk/client-s3": "^3.758.0",
     "@aws-sdk/lib-dynamodb": "^3.751.0",
     "@aws-sdk/s3-request-presigner": "^3.750.0",
     "@cloudflare/vitest-pool-workers": "^0.7.4",
