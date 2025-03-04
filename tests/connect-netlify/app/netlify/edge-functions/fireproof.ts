@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { to_blob } from "../../../../../src/coerce-binary.js";
 
 // eslint-disable-next-line no-console
 console.log("fireproof edge function loaded netlify");
@@ -18,7 +19,7 @@ export default async (req: Request) => {
   if (req.method === "PUT") {
     if (carId) {
       const carFiles = getStore("cars");
-      const carArrayBuffer = new Uint8Array(await req.arrayBuffer());
+      const carArrayBuffer = to_blob(await req.arrayBuffer());
       await carFiles.set(carId, carArrayBuffer);
       return new Response(JSON.stringify({ ok: true }), { status: 201 });
     } else if (metaDb) {

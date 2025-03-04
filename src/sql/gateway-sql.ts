@@ -300,7 +300,7 @@ export function registerSqliteStoreProtocol() {
   return _register.once(() => {
     return bs.registerStoreProtocol({
       protocol: "sqlite:",
-      defaultURI: () => URI.from("sqlite://localhost"),
+      defaultURI: () => URI.from("sqlite://"),
       gateway: async (sthis) => {
         return new SQLStoreGateway(sthis);
       },
