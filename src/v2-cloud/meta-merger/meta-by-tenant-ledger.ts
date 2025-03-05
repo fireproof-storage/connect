@@ -65,29 +65,29 @@ export class MetaByTenantLedgerSql {
     this.tenantLedgerSql = tenantLedgerSql;
   }
 
-  readonly #sqlCreateMetaByTenantLedger = new ResolveOnce();
+  // readonly #sqlCreateMetaByTenantLedger = new ResolveOnce();
   sqlCreateMetaByTenantLedger(): SQLStatement[] {
-    return this.#sqlCreateMetaByTenantLedger.once(() => {
-      return MetaByTenantLedgerSql.schema().map((i) => this.db.prepare(i));
-    });
+    // return this.#sqlCreateMetaByTenantLedger.once(() => {
+    return MetaByTenantLedgerSql.schema().map((i) => this.db.prepare(i));
+    // });
   }
 
-  readonly #sqlInsertMetaByTenantLedger = new ResolveOnce();
+  // readonly #sqlInsertMetaByTenantLedger = new ResolveOnce();
   sqlEnsureMetaByTenantLedger(): SQLStatement {
-    return this.#sqlInsertMetaByTenantLedger.once(() => {
-      return this.db.prepare(`
+    // return this.#sqlInsertMetaByTenantLedger.once(() => {
+    return this.db.prepare(`
         INSERT INTO MetaByTenantLedger(tenant, ledger, reqId, resId, metaCID, meta, updatedAt)
           SELECT ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (
             SELECT 1 FROM MetaByTenantLedger WHERE metaCID = ?
           )
       `);
-    });
+    // });
   }
 
-  readonly #sqlDeleteByConnection = new ResolveOnce();
+  // readonly #sqlDeleteByConnection = new ResolveOnce();
   sqlDeleteByConnection(): SQLStatement {
-    return this.#sqlDeleteByConnection.once(() => {
-      return this.db.prepare(`
+    // return this.#sqlDeleteByConnection.once(() => {
+    return this.db.prepare(`
         DELETE FROM MetaByTenantLedger
           WHERE
             tenant = ?
@@ -100,7 +100,7 @@ export class MetaByTenantLedgerSql {
           AND
             metaCID NOT IN (SELECT value FROM json_each(?))
       `);
-    });
+    // });
   }
 
   /*

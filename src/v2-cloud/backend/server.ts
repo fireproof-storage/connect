@@ -10,11 +10,14 @@ import { WSMessageReceive } from "hono/ws";
 import { URI } from "@adviser/cement";
 
 const app = new Hono();
-const honoServer = new HonoServer(new CFHonoFactory());
+const honoServer = new HonoServer(new CFHonoFactory()).register(app);
 
 export default {
   fetch: async (req, env, ctx): Promise<Response> => {
-    await honoServer.register(app);
+    // console.log("fetch-1", req.url);
+    await honoServer.start();
+    // await honoServer.register(app);
+    // console.log("fetch-2", req.url);
     return app.fetch(req, env, ctx);
   },
 } satisfies ExportedHandler<Env>;
@@ -35,7 +38,11 @@ export interface ExecSQLResult {
 }
 
 export class FPBackendDurableObject extends DurableObject<Env> {
-  async execSql(sql: string, params: unknown[]): Promise<ExecSQLResult> {
+  doneSchema = false;
+  async execSql(sql: string, params: unknown[], schema?: boolean): Promise<ExecSQLResult> {
+    if (schema && this.doneSchema) {
+      return { rowsRead: 0, rowsWritten: 0, rawResults: [] };
+    }
     const cursor = await this.ctx.storage.sql.exec(sql, ...params);
     const rawResults = cursor.toArray();
     const res = {
@@ -95,12 +102,12 @@ export class FPRoomDurableObject extends DurableObject<Env> {
 
     const id = URI.from(request.url).getParam("ctxId", "none");
 
-    // console.log("DO-ids:", id, this.id);
+    console.log("DO-ids:", id, this.id);
 
-    this.env.FP_EXPOSE_CTX.wsRoom.applyGetWebSockets(id, () => this.ctx.getWebSockets());
+    this.env.FP_EXPOSE_CTX.get(id).wsRoom.applyGetWebSockets(id, () => this.ctx.getWebSockets());
     server.serializeAttachment({ id });
 
-    this.env.FP_EXPOSE_CTX.wsRoom.events.onOpen(id, {} as Event, server);
+    this.env.FP_EXPOSE_CTX.get(id).wsRoom.events.onOpen(id, {} as Event, server);
 
     // for (const ws of wss) {
     //   ws.setnd(`New WebSocket connection established: ${wss.length}`);
@@ -119,22 +126,22 @@ export class FPRoomDurableObject extends DurableObject<Env> {
 
   webSocketOpen(ws: WebSocket): void | Promise<void> {
     const { id } = ws.deserializeAttachment();
-    this.env.FP_EXPOSE_CTX.wsRoom.events.onOpen(id, {} as Event, ws);
+    this.env.FP_EXPOSE_CTX.get(id).wsRoom.events.onOpen(id, {} as Event, ws);
   }
 
   webSocketError(ws: WebSocket, error: unknown): void | Promise<void> {
     const { id } = ws.deserializeAttachment();
-    this.env.FP_EXPOSE_CTX.wsRoom.events.onError(id, error as Event, ws);
+    this.env.FP_EXPOSE_CTX.get(id).wsRoom.events.onError(id, error as Event, ws);
   }
 
   async webSocketMessage(ws: WebSocket, msg: string | ArrayBuffer): Promise<void> {
     const { id } = ws.deserializeAttachment();
     // console.log("webSocketMessage", msg);
-    this.env.FP_EXPOSE_CTX.wsRoom.events.onMessage(id, { data: msg } as MessageEvent, ws);
+    this.env.FP_EXPOSE_CTX.get(id).wsRoom.events.onMessage(id, { data: msg } as MessageEvent, ws);
   }
 
   webSocketClose(ws: WebSocket, code: number, reason: string): void | Promise<void> {
     const { id } = ws.deserializeAttachment();
-    this.env.FP_EXPOSE_CTX.wsRoom.events.onClose(id, { code, reason } as CloseEvent, ws);
+    this.env.FP_EXPOSE_CTX.get(id).wsRoom.events.onClose(id, { code, reason } as CloseEvent, ws);
   }
 }

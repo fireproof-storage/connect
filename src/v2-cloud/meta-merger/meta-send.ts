@@ -1,4 +1,4 @@
-import { ResolveOnce } from "@adviser/cement";
+// import { ResolveOnce } from "@adviser/cement";
 import { MetaByTenantLedgerSql } from "./meta-by-tenant-ledger.js";
 import { ByConnection } from "./meta-merger.js";
 import { CRDTEntry } from "@fireproof/core";
@@ -40,26 +40,26 @@ export class MetaSendSql {
     this.db = db;
   }
 
-  readonly #sqlCreateMetaSend = new ResolveOnce<SQLStatement>();
+  // readonly #sqlCreateMetaSend = new ResolveOnce<SQLStatement>();
   sqlCreateMetaSend(drop: boolean): SQLStatement[] {
-    return this.#sqlCreateMetaSend.once(() => {
-      return MetaSendSql.schema(drop).map((i) => this.db.prepare(i));
-    });
+    // return this.#sqlCreateMetaSend.once(() => {
+    return MetaSendSql.schema(drop).map((i) => this.db.prepare(i));
+    // });
   }
 
-  readonly #sqlInsertMetaSend = new ResolveOnce<SQLStatement>();
+  // readonly #sqlInsertMetaSend = new ResolveOnce<SQLStatement>();
   sqlInsertMetaSend(): SQLStatement {
-    return this.#sqlInsertMetaSend.once(() => {
-      return this.db.prepare(`
+    // return this.#sqlInsertMetaSend.once(() => {
+    return this.db.prepare(`
         INSERT INTO MetaSend(metaCID, reqId, resId, sendAt) VALUES(?, ?, ?, ?)
       `);
-    });
+    // });
   }
 
-  readonly #sqlSelectToAddSend = new ResolveOnce<SQLStatement>();
+  // readonly #sqlSelectToAddSend = new ResolveOnce<SQLStatement>();
   sqlSelectToAddSend(): SQLStatement {
-    return this.#sqlSelectToAddSend.once(() => {
-      return this.db.prepare(`
+    // return this.#sqlSelectToAddSend.once(() => {
+    return this.db.prepare(`
         SELECT t.metaCID, ? as reqId, ? as resId, ? as sendAt, t.meta FROM MetaByTenantLedger as t
           WHERE
             t.tenant = ?
@@ -68,30 +68,38 @@ export class MetaSendSql {
           AND
             NOT EXISTS (SELECT 1 FROM MetaSend AS s WHERE t.metaCID = s.metaCID and s.reqId = ? and s.resId = ?)
       `);
-    });
+    // });
   }
 
   async selectToAddSend(conn: ByConnection & { now: Date }): Promise<MetaSendRowWithMeta[]> {
+    console.log("selectToAddSend-1");
     const stmt = this.sqlSelectToAddSend();
-    const rows = await stmt.all<SQLMetaSendRowWithMeta>(
-      conn.reqId,
-      conn.resId,
-      conn.now,
-      conn.tenant,
-      conn.ledger,
-      conn.reqId,
-      conn.resId
-    );
-    return rows.map(
-      (i) =>
-        ({
-          metaCID: i.metaCID,
-          reqId: i.reqId,
-          resId: i.resId,
-          sendAt: new Date(i.sendAt),
-          meta: JSON.parse(i.meta) as CRDTEntry,
-        }) satisfies MetaSendRowWithMeta
-    );
+    console.log("selectToAddSend-2");
+    try {
+      const rows = await stmt.all<SQLMetaSendRowWithMeta>(
+        conn.reqId,
+        conn.resId,
+        conn.now,
+        conn.tenant,
+        conn.ledger,
+        conn.reqId,
+        conn.resId
+      );
+      console.log("selectToAddSend-3", rows);
+      return rows.map(
+        (i) =>
+          ({
+            metaCID: i.metaCID,
+            reqId: i.reqId,
+            resId: i.resId,
+            sendAt: new Date(i.sendAt),
+            meta: JSON.parse(i.meta) as CRDTEntry,
+          }) satisfies MetaSendRowWithMeta
+      );
+    } catch (e) {
+      console.log("selectToAddSend-2-error", e);
+      throw e;
+    }
   }
 
   async insert(t: MetaSendRow[]) {
@@ -101,10 +109,10 @@ export class MetaSendSql {
     }
   }
 
-  readonly #sqlDeleteByConnection = new ResolveOnce<SQLStatement>();
+  // readonly #sqlDeleteByConnection = new ResolveOnce<SQLStatement>();
   sqlDeleteByMetaCID(): SQLStatement {
-    return this.#sqlDeleteByConnection.once(() => {
-      return this.db.prepare(`
+    // return this.#sqlDeleteByConnection.once(() => {
+    return this.db.prepare(`
       DELETE FROM MetaSend
         WHERE metaCID in (SELECT metaCID FROM MetaByTenantLedger
                           WHERE
@@ -118,7 +126,7 @@ export class MetaSendSql {
                           AND
                             metaCID NOT IN (SELECT value FROM json_each(?)))
       `);
-    });
+    // });
   }
 
   async deleteByConnection(dmi: ByConnection & { metaCIDs: string[] }) {

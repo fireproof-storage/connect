@@ -94,6 +94,10 @@ FP_DEBUG = "FPMetaGroups"
 FP_PROTOCOL = "http"
 CF_BACKEND_MODE = "DURABLE_OBJECT"
 
+[[env.test-reqRes-DO.migrations]]
+tag = "v1" # Should be unique for each entry
+new_sqlite_classes = ["FPBackendDurableObject"]
+
 [env.test-reqRes-DO.durable_objects]
 bindings = [
   { name = "FP_BACKEND_DO", class_name = "FPBackendDurableObject" },

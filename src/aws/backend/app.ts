@@ -17,7 +17,7 @@
 // 'use strict'
 // import AWS from 'aws-sdk'
 // import { DynamoDB, Lambda, S3 } from 'aws-sdk';
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { InvocationRequest, Lambda } from "@aws-sdk/client-lambda";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";

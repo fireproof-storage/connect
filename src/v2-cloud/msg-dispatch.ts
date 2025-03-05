@@ -111,7 +111,6 @@ export class MsgDispatcher {
   }
 
   async dispatch(ctx: MsgDispatcherCtx, msg: MsgBase): Promise<Response> {
-    // console.log("dispatch-0", msg);
     const validateConn = async <T extends MsgBase>(
       msg: T,
       fn: (msg: MsgWithConn<T>) => Promisable<MsgWithError<MsgBase>>
@@ -126,17 +125,21 @@ export class MsgDispatcher {
       const r = await fn(msg);
       return Promise.resolve(this.send(ctx.ws, r));
     };
-    // console.log("dispatch-1", msg);
-    const found = Array.from(this.items.values()).find((item) => item.match(msg));
-    if (!found) {
-      // console.log("dispatch-2", msg);
-      return this.send(ctx.ws, buildErrorMsg(this.sthis, this.logger, msg, new Error("unexpected message")));
+    try {
+      // console.log("dispatch-1", msg);
+      const found = Array.from(this.items.values()).find((item) => item.match(msg));
+      if (!found) {
+        // console.log("dispatch-2", msg);
+        return this.send(ctx.ws, buildErrorMsg(this.sthis, this.logger, msg, new Error("unexpected message")));
+      }
+      if (!found.isNotConn) {
+        // console.log("dispatch-3", msg);
+        return validateConn(msg, (msg) => found.fn(this.sthis, this.logger, ctx, msg));
+      }
+      // console.log("dispatch-4", msg);
+      return this.send(ctx.ws, await found.fn(this.sthis, this.logger, ctx, msg));
+    } catch (e) {
+      return this.send(ctx.ws, buildErrorMsg(this.sthis, this.logger, msg, e as Error));
     }
-    if (!found.isNotConn) {
-      // console.log("dispatch-3", msg);
-      return validateConn(msg, (msg) => found.fn(this.sthis, this.logger, ctx, msg));
-    }
-    // console.log("dispatch-4", msg);
-    return this.send(ctx.ws, await found.fn(this.sthis, this.logger, ctx, msg));
   }
 }

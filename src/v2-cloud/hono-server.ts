@@ -1,4 +1,4 @@
-import { exception2Result, HttpHeader, Logger, param, ResolveOnce, Result, URI } from "@adviser/cement";
+import { exception2Result, HttpHeader, Logger, param, Result, URI } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core";
 import { Context, Hono, Next } from "hono";
 import { top_uint8 } from "../coerce-binary.js";
@@ -85,13 +85,24 @@ export abstract class HonoServerBase implements HonoServerImpl {
   readonly metaMerger: MetaMerger;
   readonly headers: HttpHeader;
   readonly wsRoom: WSRoom;
-  constructor(sthis: SuperThis, logger: Logger, gs: Gestalt, sqlDb: SQLDatabase, wsRoom: WSRoom, headers?: HttpHeader) {
+  readonly id: string;
+  constructor(
+    id: string,
+    sthis: SuperThis,
+    logger: Logger,
+    gs: Gestalt,
+    sqlDb: SQLDatabase,
+    wsRoom: WSRoom,
+    headers?: HttpHeader
+  ) {
     this.logger = logger;
     this._gs = gs;
     this.sthis = sthis;
     this.wsRoom = wsRoom;
-    this.metaMerger = new MetaMerger(sqlDb);
+    this.metaMerger = new MetaMerger(id, sqlDb);
     this.headers = headers ? headers.Clone().Merge(CORS) : CORS.Clone();
+    this.id = id;
+    // console.log("HonoServerBase-ctor", this.id, sqlDb);
   }
 
   abstract upgradeWebSocket(
@@ -147,20 +158,25 @@ export abstract class HonoServerBase implements HonoServerImpl {
     msg: MsgWithConn<BindGetMeta>,
     gwCtx: GwCtx = msg
   ): Promise<MsgWithError<EventGetMeta>> {
-    const rUrl = await buildRes("GET", "meta", "eventGetMeta", sthis, logger, msg, this);
-    if (MsgIsError(rUrl)) {
-      return rUrl;
+    const rMsg = await buildRes("GET", "meta", "eventGetMeta", sthis, logger, msg, this);
+    if (MsgIsError(rMsg)) {
+      return rMsg;
     }
-    return buildEventGetMeta(
+    console.log("handleBindGetMeta-in", msg, this.id);
+    const metas = await this.metaMerger.metaToSend(msg);
+    console.log("handleBindGetMeta-meta", metas);
+    const res = buildEventGetMeta(
       sthis,
       logger,
       msg,
       {
-        ...rUrl,
-        metas: await this.metaMerger.metaToSend(msg),
+        ...rMsg,
+        metas,
       },
       gwCtx
     );
+    console.log("handleBindGetMeta-out", res);
+    return res;
   }
 
   calculatePreSignedUrl(p: PreSignedMsg): Promise<Result<URI>> {
@@ -205,9 +221,11 @@ export const CORS = HttpHeader.from({
 class NoBackChannel implements MsgDispatcherCtx {
   readonly impl: HonoServerImpl;
   readonly ctx: Context;
-  constructor(impl: HonoServerImpl, c: Context) {
+  readonly _wsRoom: WSRoom;
+  constructor(impl: HonoServerImpl, c: Context, wsRoom: WSRoom) {
     this.impl = impl;
     this.ctx = c;
+    this._wsRoom = wsRoom;
   }
   get ws(): WSContextWithId<unknown> {
     return {
@@ -218,7 +236,8 @@ class NoBackChannel implements MsgDispatcherCtx {
     } as unknown as WSContextWithId<unknown>;
   }
   get wsRoom(): WSRoom {
-    throw new Error("NoBackChannel:wsRoom Method not implemented.");
+    return this._wsRoom;
+    // throw new Error("NoBackChannel:wsRoom Method not implemented.");
   }
 }
 
@@ -235,79 +254,102 @@ export class HonoServer {
     // this.gestalt = gestalt;
     this.factory = factory;
   }
-  readonly _register = new ResolveOnce<HonoServer>();
-  async register(app: Hono, port?: number): Promise<HonoServer> {
-    return this._register.once(async () => {
-      await this.factory.start(app);
-      // app.put('/gestalt', async (c) => c.json(buildResGestalt(await c.req.json(), defaultGestaltItem({ id: "server", hasPersistent: true }).gestalt)))
-      // app.put('/error', async (c) => c.json(buildErrorMsg(sthis, sthis.logger, await c.req.json(), new Error("test error"))))
-      app.put("/fp", (c) =>
-        this.factory.inject(c, async ({ sthis, logger, impl, ende, wsRoom }) => {
-          impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
-          const rMsg = await exception2Result(() => c.req.json() as Promise<MsgBase>);
-          if (rMsg.isErr()) {
-            c.status(400);
-            return c.json(buildErrorMsg(sthis, logger, { tid: "internal" }, rMsg.Err()));
-          }
-          const dispatcher = buildMsgDispatcher(sthis, impl.gestalt(), ende, wsRoom);
-          return dispatcher.dispatch(new NoBackChannel(impl, c), rMsg.Ok());
-        })
-      );
-      app.get("/ws", (c, next) =>
-        this.factory.inject(c, async ({ sthis, logger, ende, impl, wsRoom }) => {
-          return impl.upgradeWebSocket((_c) => {
-            let dp: MsgDispatcher;
-            // const id = sthis.nextId().str;
-            // console.log("upgradeWebSocket:inject:", id);
-            return {
-              onOpen: (_e, _ws) => {
-                dp = buildMsgDispatcher(sthis, impl.gestalt(), ende, wsRoom);
-                // console.log("onOpen:inject:", id);
-              },
-              onError: (error) => {
-                logger.Error().Err(error).Msg("WebSocket error");
-              },
-              onMessage: async (event, ws) => {
-                const rMsg = await exception2Result(async () => ende.decode(await top_uint8(event.data)) as MsgBase);
-                // console.log("onMessage:inject:", id, rMsg);
-                if (rMsg.isErr()) {
-                  ws.send(
-                    ende.encode(
-                      buildErrorMsg(
-                        sthis,
-                        logger,
-                        {
-                          message: event.data,
-                        } as ErrorMsg,
-                        rMsg.Err()
-                      )
+
+  start(): Promise<HonoServer> {
+    return this.factory.start(new Hono()).then(() => this);
+  }
+
+  /* only for testing */
+  async once(app: Hono, port?: number): Promise<HonoServer> {
+    this.register(app);
+    await this.factory.start(app);
+    await this.factory.serve(app, port);
+    return this;
+  }
+
+  async serve(app: Hono, port?: number): Promise<HonoServer> {
+    await this.factory.serve(app, port);
+    return this;
+  }
+  // readonly _register = new ResolveOnce<HonoServer>();
+  register(app: Hono): HonoServer {
+    // return this._register.once(async () => {
+    // console.log("register-1");
+    //   await this.factory.start(app);
+    // console.log("register-2");
+    // app.put('/gestalt', async (c) => c.json(buildResGestalt(await c.req.json(), defaultGestaltItem({ id: "server", hasPersistent: true }).gestalt)))
+    // app.put('/error', async (c) => c.json(buildErrorMsg(sthis, sthis.logger, await c.req.json(), new Error("test error"))))
+    app.put("/fp", (c) =>
+      this.factory.inject(c, async ({ sthis, logger, impl, ende, wsRoom }) => {
+        impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
+        const rMsg = await exception2Result(() => c.req.json() as Promise<MsgBase>);
+        if (rMsg.isErr()) {
+          c.status(400);
+          return c.json(buildErrorMsg(sthis, logger, { tid: "internal" }, rMsg.Err()));
+        }
+        const dispatcher = buildMsgDispatcher(sthis, impl.gestalt(), ende, wsRoom);
+        return dispatcher.dispatch(new NoBackChannel(impl, c, wsRoom), rMsg.Ok());
+      })
+    );
+    // console.log("register-2.1");
+    app.get("/ws", (c, next) =>
+      this.factory.inject(c, async ({ sthis, logger, ende, impl, wsRoom }) => {
+        return impl.upgradeWebSocket((_c) => {
+          let dp: MsgDispatcher;
+          const id = sthis.nextId().str;
+          // console.log("upgradeWebSocket:inject:", id);
+          return {
+            onOpen: (_e, _ws) => {
+              dp = buildMsgDispatcher(sthis, impl.gestalt(), ende, wsRoom);
+              console.log("onOpen:inject:", id);
+            },
+            onError: (error) => {
+              logger.Error().Err(error).Msg("WebSocket error");
+            },
+            onMessage: async (event, ws) => {
+              const rMsg = await exception2Result(async () => ende.decode(await top_uint8(event.data)) as MsgBase);
+              console.log("onMessage:inject:", id, rMsg);
+              if (rMsg.isErr()) {
+                ws.send(
+                  ende.encode(
+                    buildErrorMsg(
+                      sthis,
+                      logger,
+                      {
+                        message: event.data,
+                      } as ErrorMsg,
+                      rMsg.Err()
                     )
-                  );
-                } else {
-                  // console.log("dp-dispatch", rMsg.Ok(), dp);
-                  await dp.dispatch(
-                    {
-                      impl,
-                      ws,
-                      wsRoom: dp.wsRoom,
-                    },
-                    rMsg.Ok()
-                  );
-                }
-              },
-              onClose: (_evt, _ws) => {
-                // impl.delConn(ws);
-                // console.log("onClose:inject:", id);
-                dp = undefined as unknown as MsgDispatcher;
-                // console.log('Connection closed')
-              },
-            };
-          })(new WSConnection(), c, next);
-        })
-      );
-      await this.factory.serve(app, port);
-      return this;
-    });
+                  )
+                );
+              } else {
+                // console.log("dp-dispatch", rMsg.Ok(), dp);
+                await dp.dispatch(
+                  {
+                    impl,
+                    ws,
+                    wsRoom: dp.wsRoom,
+                  },
+                  rMsg.Ok()
+                );
+              }
+            },
+            onClose: (_evt, _ws) => {
+              // impl.delConn(ws);
+              console.log("onClose:inject:", id);
+              dp = undefined as unknown as MsgDispatcher;
+              // console.log('Connection closed')
+            },
+          };
+        })(new WSConnection(), c, next);
+      })
+    );
+    return this;
+    // console.log("register-3");
+    // await this.factory.serve(app, port);
+    // console.log("register-4");
+    // return this;
+    // });
   }
   async close() {
     const ret = await this.factory.close();

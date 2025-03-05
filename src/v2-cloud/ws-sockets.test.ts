@@ -14,6 +14,7 @@ describe("test multiple connections", () => {
     // dummy
     NodeHonoServerFactory(),
     CFHonoServerFactory("D1"),
+    CFHonoServerFactory("DO"),
   ])("$name - Gateway", ({ factory }) => {
     const msgP = defaultMsgParams(sthis, { hasPersistent: true });
     const port = +(process.env.FP_WRANGLER_PORT || 0) || 1024 + Math.floor(Math.random() * (65536 - 1024));
@@ -25,7 +26,7 @@ describe("test multiple connections", () => {
 
     beforeAll(async () => {
       const app = new Hono();
-      hserv = await factory(sthis, msgP, stype.remoteGestalt, port).then((srv) => srv.register(app, port));
+      hserv = await factory(sthis, msgP, stype.remoteGestalt, port).then((srv) => srv.once(app, port));
     });
     afterAll(async () => {
       await hserv.close();
@@ -61,6 +62,7 @@ describe("test multiple connections", () => {
 
       const rest = [...conns];
       for (const c of conns) {
+        console.log("Sending a chat request", rest.length, conns.length);
         const act = await c.request(buildReqChat(sthis, c.conn, "Hello"), { waitFor: MsgIsResChat });
         if (MsgIsResChat(act)) {
           expect(act.targets.length).toBe(rest.length);
