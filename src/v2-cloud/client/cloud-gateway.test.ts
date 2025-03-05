@@ -21,7 +21,7 @@ describe.each([NodeHonoServerFactory(), CFHonoServerFactory("D1")])("$name - Gat
   let url: BuildURI;
   beforeAll(async () => {
     const app = new Hono();
-    server = await factory(sthis, msgP, style.remoteGestalt, port).then((srv) => srv.register(app, port));
+    server = await factory(sthis, msgP, style.remoteGestalt, port).then((srv) => srv.once(app, port));
     unregister = registerFireproofCloudStoreProtocol("fireproof:");
     gw = new FireproofCloudGateway(sthis);
     url = BuildURI.from(`fireproof://localhost:${port}/`)

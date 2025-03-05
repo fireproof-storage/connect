@@ -1,4 +1,4 @@
-import { ResolveOnce } from "@adviser/cement";
+// import { ResolveOnce } from "@adviser/cement";
 import { conditionalDrop, SQLDatabase, SQLStatement } from "./abstract-sql.js";
 import { TenantSql } from "./tenant.js";
 
@@ -35,22 +35,22 @@ export class TenantLedgerSql {
     this.tenantSql = tenantSql;
   }
 
-  readonly #sqlCreateTenantLedger = new ResolveOnce<SQLStatement[]>();
+  // readonly #sqlCreateTenantLedger = new ResolveOnce<SQLStatement[]>();
   sqlCreateTenantLedger(): SQLStatement[] {
-    return this.#sqlCreateTenantLedger.once(() => {
-      return TenantLedgerSql.schema().map((i) => this.db.prepare(i));
-    });
+    // return this.#sqlCreateTenantLedger.once(() => {
+    return TenantLedgerSql.schema().map((i) => this.db.prepare(i));
+    // });
   }
 
-  readonly #sqlInsertTenantLedger = new ResolveOnce<SQLStatement>();
+  // readonly #sqlInsertTenantLedger = new ResolveOnce<SQLStatement>();
   sqlEnsureTenantLedger(): SQLStatement {
-    return this.#sqlInsertTenantLedger.once(() => {
-      return this.db.prepare(`
+    // return this.#sqlInsertTenantLedger.once(() => {
+    return this.db.prepare(`
         INSERT INTO TenantLedger(tenant, ledger, createdAt)
           SELECT ?, ?, ? WHERE
             NOT EXISTS(SELECT 1 FROM TenantLedger WHERE tenant = ? and ledger = ?)
       `);
-    });
+    // });
   }
 
   async ensure(t: TenantLedgerRow) {

@@ -87,7 +87,7 @@ describe("Connection", () => {
             const app = new Hono();
             server = await honoServer
               .factory(sthis, msgP, style.remoteGestalt, port)
-              .then((srv) => srv.register(app, port));
+              .then((srv) => srv.once(app, port));
           });
           afterAll(async () => {
             // console.log("closing server");

@@ -1,4 +1,4 @@
-import { ResolveOnce } from "@adviser/cement";
+// import { ResolveOnce } from "@adviser/cement";
 import { conditionalDrop, SQLDatabase, SQLStatement } from "./abstract-sql.js";
 
 export interface TenantRow {
@@ -27,21 +27,21 @@ export class TenantSql {
     this.db = db;
   }
 
-  readonly #sqlCreateTenant = new ResolveOnce<SQLStatement[]>();
+  // readonly #sqlCreateTenant = new ResolveOnce<SQLStatement[]>();
   sqlCreateTenant(): SQLStatement[] {
-    return this.#sqlCreateTenant.once(() => {
-      return TenantSql.schema().map((i) => this.db.prepare(i));
-    });
+    // return this.#sqlCreateTenant.once(() => {
+    return TenantSql.schema().map((i) => this.db.prepare(i));
+    // });
   }
 
-  readonly #sqlInsertTenant = new ResolveOnce<SQLStatement>();
+  // readonly #sqlInsertTenant = new ResolveOnce<SQLStatement>();
   sqlEnsureTenant(): SQLStatement {
-    return this.#sqlInsertTenant.once(() => {
-      return this.db.prepare(`
+    // return this.#sqlInsertTenant.once(() => {
+    return this.db.prepare(`
         INSERT INTO Tenant(tenant, createdAt)
           SELECT ?, ? WHERE NOT EXISTS(SELECT 1 FROM Tenant WHERE tenant = ?)
       `);
-    });
+    // });
   }
 
   async ensure(t: TenantRow) {

@@ -43,7 +43,7 @@ function getSQLFlavours(): { name: string; factory: () => Promise<SQLDatabase> }
         factory: async () => {
           const { CFDObjSQLDatabase } = await import("../backend/cf-dobj-abstract-sql.js");
           const { env } = await import("cloudflare:test");
-          return new CFDObjSQLDatabase(getBackendDurableObject(env as Env));
+          return new CFDObjSQLDatabase(getBackendDurableObject(env as Env, "the-id"));
         },
       },
     ];
@@ -68,7 +68,7 @@ describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
   beforeAll(async () => {
     //    db = new Database(':memory:');
     const db = await flavour.factory();
-    mm = new MetaMerger(db);
+    mm = new MetaMerger("bong", db);
     await mm.createSchema();
   });
 

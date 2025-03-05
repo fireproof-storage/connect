@@ -187,7 +187,7 @@ export function CFHonoServerFactory(backend: "D1" | "DO") {
       const { tomlFile } = await resolveToml(backend);
       $.verbose = !!process.env.FP_DEBUG;
       const runningWrangler = $`
-                wrangler dev -c ${tomlFile} --port ${port} --env test-${remoteGestalt.protocolCapabilities[0]}-${backend} --no-show-interactive-dev-session &
+                wrangler dev -c ${tomlFile} --port ${port} --env test-${remoteGestalt.protocolCapabilities[0]}-${backend} --no-show-interactive-dev-session --no-live-reload &
                 waitPid=$!
                 echo "PID:$waitPid"
                 wait $waitPid`;

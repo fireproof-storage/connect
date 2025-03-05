@@ -43,8 +43,11 @@ export class MetaMerger {
     readonly metaSend: MetaSendSql;
   };
 
-  constructor(db: SQLDatabase) {
+  readonly id: string;
+
+  constructor(id: string, db: SQLDatabase) {
     this.db = db;
+    this.id = id;
     // this.sthis = sthis;
     const tenant = new TenantSql(db);
     const tenantLedger = new TenantLedgerSql(db, tenant);
@@ -102,8 +105,11 @@ export class MetaMerger {
   }
 
   async metaToSend(sink: Connection, now = new Date()): Promise<CRDTEntry[]> {
+    console.log("metaToSend-1", this.id);
     const bySink = toByConnection(sink);
+    console.log("metaToSend-2", this.id);
     const rows = await this.sql.metaSend.selectToAddSend({ ...bySink, now });
+    console.log("metaToSend-3", this.id);
     await this.sql.metaSend.insert(
       rows.map((row) => ({
         metaCID: row.metaCID,
@@ -112,6 +118,7 @@ export class MetaMerger {
         sendAt: row.sendAt,
       }))
     );
+    console.log("metaToSend-4");
     return rows.map((row) => row.meta);
   }
 }

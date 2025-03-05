@@ -173,6 +173,8 @@ export class NodeHonoFactory implements HonoServerFactory {
     const logger = ensureLogger(sthis, `NodeHono[${URI.from(c.req.url).pathname}]`);
     const ende = jsonEnDe(sthis);
 
+    const id = sthis.nextId(12).str;
+
     const fpProtocol = sthis.env.get("FP_PROTOCOL");
     const msgP =
       this.params.msgP ??
@@ -185,7 +187,7 @@ export class NodeHonoFactory implements HonoServerFactory {
       defaultGestalt(msgP, {
         id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
       });
-    const nhs = new NodeHonoServer(sthis, this, gs, this.params.sql, this._wsRoom);
+    const nhs = new NodeHonoServer(id, sthis, this, gs, this.params.sql, this._wsRoom);
     return nhs.start().then((nhs) => fn({ sthis, logger, ende, impl: nhs, wsRoom: this._wsRoom }));
   }
 
@@ -222,6 +224,7 @@ export class NodeHonoServer extends HonoServerBase implements HonoServerImpl {
   readonly _upgradeWebSocket: UpgradeWebSocket;
   // readonly wsRoom: NodeWSRoom;
   constructor(
+    id: string,
     sthis: SuperThis,
     factory: NodeHonoFactory,
     gs: Gestalt,
@@ -229,7 +232,7 @@ export class NodeHonoServer extends HonoServerBase implements HonoServerImpl {
     wsRoom: WSRoom,
     headers?: HttpHeader
   ) {
-    super(sthis, sthis.logger, gs, sqldb, wsRoom, headers);
+    super(id, sthis, sthis.logger, gs, sqldb, wsRoom, headers);
     this._upgradeWebSocket = factory._upgradeWebSocket;
   }
 

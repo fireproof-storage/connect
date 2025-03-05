@@ -139,6 +139,7 @@ export function buildMsgDispatcher(sthis: SuperThis, gestalt: Gestalt, ende: EnD
     {
       match: MsgIsBindGetMeta,
       fn: (sthis, logger, ctx, msg: MsgWithConn<BindGetMeta>) => {
+        // console.log("MsgIsBindGetMeta", msg);
         return ctx.impl.handleBindGetMeta(sthis, logger, msg);
       },
     },
