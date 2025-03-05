@@ -1,14 +1,15 @@
 import { UpgradeWebSocket, WSContext, WSEvents, WSMessageReceive } from "hono/ws";
 import {
   ConnMiddleware,
+  ExposeCtxItem,
+  ExposeCtxItemWithImpl,
   HonoServerBase,
   HonoServerFactory,
   HonoServerImpl,
-  RunTimeParams,
   WSContextWithId,
   WSEventsConnId,
 } from "./hono-server.js";
-import { HttpHeader, URI } from "@adviser/cement";
+import { URI } from "@adviser/cement";
 import { Context, Hono } from "hono";
 import { ensureLogger, SuperThis } from "@fireproof/core";
 import { defaultMsgParams, jsonEnDe } from "./msger.js";
@@ -165,8 +166,12 @@ export class NodeHonoFactory implements HonoServerFactory {
     this._wsRoom = new NodeWSRoom(sthis);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  inject(c: Context, fn: (rt: RunTimeParams) => Promise<Response | void>): Promise<Response | void> {
+  inject(
+    c: Context,
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+    fn: (rt: ExposeCtxItemWithImpl<NodeWSRoom>) => Promise<Response | void>
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  ): Promise<Response | void> {
     // this._env = c.env;
     // const sthis = ensureSuperThis();
     const sthis = this.sthis;
@@ -182,13 +187,24 @@ export class NodeHonoFactory implements HonoServerFactory {
         hasPersistent: true,
         protocolCapabilities: fpProtocol ? (fpProtocol === "ws" ? ["stream"] : ["reqRes"]) : ["reqRes", "stream"],
       });
-    const gs =
+    const gestalt =
       this.params.gs ??
       defaultGestalt(msgP, {
         id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
       });
-    const nhs = new NodeHonoServer(id, sthis, this, gs, this.params.sql, this._wsRoom);
-    return nhs.start().then((nhs) => fn({ sthis, logger, ende, impl: nhs, wsRoom: this._wsRoom }));
+
+    const ctx: ExposeCtxItem<NodeWSRoom> = {
+      id,
+      sthis,
+      logger,
+      wsRoom: this._wsRoom,
+      gestalt,
+      ende,
+      dbFactory: () => this.params.sql,
+    };
+
+    const nhs = new NodeHonoServer(id, this);
+    return nhs.start(ctx).then((nhs) => fn({ ...ctx, impl: nhs }));
   }
 
   async start(app: Hono): Promise<void> {
@@ -223,16 +239,18 @@ export class NodeHonoFactory implements HonoServerFactory {
 export class NodeHonoServer extends HonoServerBase implements HonoServerImpl {
   readonly _upgradeWebSocket: UpgradeWebSocket;
   // readonly wsRoom: NodeWSRoom;
+  readonly wsRoom: WSRoom;
   constructor(
     id: string,
-    sthis: SuperThis,
-    factory: NodeHonoFactory,
-    gs: Gestalt,
-    sqldb: SQLDatabase,
-    wsRoom: WSRoom,
-    headers?: HttpHeader
+    // sthis: SuperThis,
+    factory: NodeHonoFactory
+    // gs: Gestalt,
+    // sqldb: SQLDatabase,
+    // wsRoom: WSRoom,
+    // headers?: HttpHeader
   ) {
-    super(id, sthis, sthis.logger, gs, sqldb, wsRoom, headers);
+    super(id);
+    this.wsRoom = factory._wsRoom;
     this._upgradeWebSocket = factory._upgradeWebSocket;
   }
 

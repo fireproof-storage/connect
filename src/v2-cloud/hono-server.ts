@@ -1,18 +1,18 @@
 import { exception2Result, HttpHeader, Logger, param, Result, URI } from "@adviser/cement";
-import { SuperThis } from "@fireproof/core";
 import { Context, Hono, Next } from "hono";
 import { top_uint8 } from "../coerce-binary.js";
 import {
-  Gestalt,
   buildErrorMsg,
   MsgBase,
-  EnDeCoder,
   ErrorMsg,
   MsgWithError,
   buildRes,
   MsgWithConn,
   GwCtx,
   MsgIsError,
+  SuperThisLogger,
+  EnDeCoder,
+  Gestalt,
 } from "./msg-types.js";
 import { MsgDispatcher, MsgDispatcherCtx, Promisable, WSConnection } from "./msg-dispatch.js";
 import { WSContext, WSContextInit, WSMessageReceive } from "hono/ws";
@@ -29,17 +29,21 @@ import {
   ResDelMeta,
   ResPutMeta,
 } from "./msg-type-meta.js";
-import { MetaMerger } from "./meta-merger/meta-merger.js";
-import { SQLDatabase } from "./meta-merger/abstract-sql.js";
+// import { MetaMerger } from "./meta-merger/meta-merger.js";
+// import { SQLDatabase } from "./meta-merger/abstract-sql.js";
 import { WSRoom } from "./ws-room.js";
+import { CFExposeCtxItem } from "./backend/cf-hono-server.js";
+import { metaMerger } from "./meta-merger/meta-merger.js";
+import { SuperThis } from "@fireproof/core";
+import { SQLDatabase } from "./meta-merger/abstract-sql.js";
 
-export interface RunTimeParams {
-  readonly sthis: SuperThis;
-  readonly logger: Logger;
-  readonly ende: EnDeCoder;
-  readonly impl: HonoServerImpl;
-  readonly wsRoom: WSRoom;
-}
+// export interface RunTimeParams {
+//   readonly sthis: SuperThis;
+//   readonly logger: Logger;
+//   readonly ende: EnDeCoder;
+//   readonly impl: HonoServerImpl;
+//   readonly wsRoom: WSRoom;
+// }
 
 export class WSContextWithId<T> extends WSContext<T> {
   readonly id: string;
@@ -48,6 +52,19 @@ export class WSContextWithId<T> extends WSContext<T> {
     this.id = id;
   }
 }
+
+export interface ExposeCtxItem<T extends WSRoom> {
+  readonly sthis: SuperThis;
+  readonly wsRoom: T;
+  readonly logger: Logger;
+  readonly ende: EnDeCoder;
+  readonly gestalt: Gestalt;
+  readonly dbFactory: () => SQLDatabase;
+  // readonly metaMerger: MetaMerger;
+  readonly id: string;
+}
+
+export type ExposeCtxItemWithImpl<T extends WSRoom> = ExposeCtxItem<T> & { impl: HonoServerImpl };
 
 export interface WSEventsConnId<T> {
   readonly onOpen: (evt: Event, ws: WSContextWithId<T>) => void;
@@ -59,17 +76,17 @@ export interface WSEventsConnId<T> {
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 export type ConnMiddleware = (conn: WSConnection, c: Context, next: Next) => Promise<Response | void>;
 export interface HonoServerImpl {
-  start(): Promise<HonoServerImpl>;
-  gestalt(): Gestalt;
+  start(ctx: CFExposeCtxItem): Promise<HonoServerImpl>;
+  // gestalt(): Gestalt;
   // getConnected(): Connected[];
-  calculatePreSignedUrl(p: PreSignedMsg): Promise<Result<URI>>;
+  calculatePreSignedUrl(slogger: SuperThisLogger, p: PreSignedMsg): Promise<Result<URI>>;
   upgradeWebSocket(
     createEvents: (c: Context) => WSEventsConnId<unknown> | Promise<WSEventsConnId<unknown>>
   ): ConnMiddleware;
-  handleBindGetMeta(sthis: SuperThis, logger: Logger, msg: BindGetMeta): Promise<MsgWithError<EventGetMeta>>;
-  handleReqPutMeta(sthis: SuperThis, logger: Logger, msg: ReqPutMeta): Promise<MsgWithError<ResPutMeta>>;
-  handleReqDelMeta(sthis: SuperThis, logger: Logger, msg: ReqDelMeta): Promise<MsgWithError<ResDelMeta>>;
-  readonly headers: HttpHeader;
+  handleBindGetMeta(ctx: MsgDispatcherCtx, msg: BindGetMeta): Promise<MsgWithError<EventGetMeta>>;
+  handleReqPutMeta(ctx: MsgDispatcherCtx, msg: ReqPutMeta): Promise<MsgWithError<ResPutMeta>>;
+  handleReqDelMeta(ctx: MsgDispatcherCtx, msg: ReqDelMeta): Promise<MsgWithError<ResDelMeta>>;
+  // readonly headers: HttpHeader;
 }
 
 // export interface Connected {
@@ -79,28 +96,28 @@ export interface HonoServerImpl {
 // }
 
 export abstract class HonoServerBase implements HonoServerImpl {
-  readonly _gs: Gestalt;
-  readonly sthis: SuperThis;
-  readonly logger: Logger;
-  readonly metaMerger: MetaMerger;
-  readonly headers: HttpHeader;
-  readonly wsRoom: WSRoom;
+  // readonly _gs: Gestalt;
+  // readonly sthis: SuperThis;
+  // readonly logger: Logger;
+  // readonly metaMerger: MetaMerger;
+  // readonly headers: HttpHeader;
+  // readonly wsRoom: WSRoom;
   readonly id: string;
   constructor(
-    id: string,
-    sthis: SuperThis,
-    logger: Logger,
-    gs: Gestalt,
-    sqlDb: SQLDatabase,
-    wsRoom: WSRoom,
-    headers?: HttpHeader
+    id: string
+    // sthis: SuperThis,
+    // logger: Logger,
+    // gs: Gestalt,
+    // sqlDb: SQLDatabase,
+    // wsRoom: WSRoom,
+    // headers?: HttpHeader
   ) {
-    this.logger = logger;
-    this._gs = gs;
-    this.sthis = sthis;
-    this.wsRoom = wsRoom;
-    this.metaMerger = new MetaMerger(id, sqlDb);
-    this.headers = headers ? headers.Clone().Merge(CORS) : CORS.Clone();
+    // this.logger = logger;
+    // this._gs = gs;
+    // this.sthis = sthis;
+    // this.wsRoom = wsRoom;
+    // this.metaMerger = new MetaMerger(id, sqlDb);
+    // this.headers = headers ? headers.Clone().Merge(CORS) : CORS.Clone();
     this.id = id;
     // console.log("HonoServerBase-ctor", this.id, sqlDb);
   }
@@ -111,63 +128,53 @@ export abstract class HonoServerBase implements HonoServerImpl {
 
   // abstract getConnected(): Connected[];
 
-  start(drop = false): Promise<HonoServerImpl> {
-    return this.metaMerger.createSchema(drop).then(() => this);
+  start(ctx: ExposeCtxItem<WSRoom>, drop = false): Promise<HonoServerImpl> {
+    return metaMerger(ctx)
+      .createSchema(drop)
+      .then(() => this);
   }
 
-  gestalt(): Gestalt {
-    return this._gs;
-  }
+  // gestalt(): Gestalt {
+  //   return this._gs;
+  // }
 
-  async handleReqPutMeta(
-    sthis: SuperThis,
-    logger: Logger,
-    msg: MsgWithConn<ReqPutMeta>
-  ): Promise<MsgWithError<ResPutMeta>> {
-    const rUrl = await buildRes("PUT", "meta", "resPutMeta", sthis, logger, msg, this);
+  async handleReqPutMeta(ctx: MsgDispatcherCtx, msg: MsgWithConn<ReqPutMeta>): Promise<MsgWithError<ResPutMeta>> {
+    const rUrl = await buildRes("PUT", "meta", "resPutMeta", ctx, msg, this);
     if (MsgIsError(rUrl)) {
       return rUrl;
     }
-    await this.metaMerger.addMeta({
-      logger,
+    await metaMerger(ctx).addMeta({
       connection: msg,
       metas: msg.metas,
     });
-    return buildResPutMeta(sthis, logger, msg, { ...rUrl, metas: await this.metaMerger.metaToSend(msg) });
+    return buildResPutMeta(ctx, msg, { ...rUrl, metas: await metaMerger(ctx).metaToSend(msg) });
   }
 
-  async handleReqDelMeta(
-    sthis: SuperThis,
-    logger: Logger,
-    msg: MsgWithConn<ReqDelMeta>
-  ): Promise<MsgWithError<ResDelMeta>> {
-    const rUrl = await buildRes("DELETE", "meta", "resDelMeta", sthis, logger, msg, this);
+  async handleReqDelMeta(ctx: MsgDispatcherCtx, msg: MsgWithConn<ReqDelMeta>): Promise<MsgWithError<ResDelMeta>> {
+    const rUrl = await buildRes("DELETE", "meta", "resDelMeta", ctx, msg, this);
     if (MsgIsError(rUrl)) {
       return rUrl;
     }
-    await this.metaMerger.delMeta({
-      logger,
+    await metaMerger(ctx).delMeta({
       connection: msg,
     });
-    return buildResDelMeta(sthis, logger, msg, rUrl.signedUrl);
+    return buildResDelMeta(ctx, msg, rUrl.signedUrl);
   }
 
   async handleBindGetMeta(
-    sthis: SuperThis,
-    logger: Logger,
+    ctx: MsgDispatcherCtx,
     msg: MsgWithConn<BindGetMeta>,
     gwCtx: GwCtx = msg
   ): Promise<MsgWithError<EventGetMeta>> {
-    const rMsg = await buildRes("GET", "meta", "eventGetMeta", sthis, logger, msg, this);
+    const rMsg = await buildRes("GET", "meta", "eventGetMeta", ctx, msg, this);
     if (MsgIsError(rMsg)) {
       return rMsg;
     }
-    console.log("handleBindGetMeta-in", msg, this.id);
-    const metas = await this.metaMerger.metaToSend(msg);
-    console.log("handleBindGetMeta-meta", metas);
+    // console.log("handleBindGetMeta-in", msg, this.id);
+    const metas = await metaMerger(ctx).metaToSend(msg);
+    // console.log("handleBindGetMeta-meta", metas);
     const res = buildEventGetMeta(
-      sthis,
-      logger,
+      ctx,
       msg,
       {
         ...rMsg,
@@ -175,12 +182,12 @@ export abstract class HonoServerBase implements HonoServerImpl {
       },
       gwCtx
     );
-    console.log("handleBindGetMeta-out", res);
+    // console.log("handleBindGetMeta-out", res);
     return res;
   }
 
-  calculatePreSignedUrl(p: PreSignedMsg): Promise<Result<URI>> {
-    const rRes = this.sthis.env.gets({
+  calculatePreSignedUrl(ctx: SuperThisLogger, p: PreSignedMsg): Promise<Result<URI>> {
+    const rRes = ctx.sthis.env.gets({
       STORAGE_URL: param.REQUIRED,
       ACCESS_KEY_ID: param.REQUIRED,
       SECRET_ACCESS_KEY: param.REQUIRED,
@@ -201,9 +208,9 @@ export abstract class HonoServerBase implements HonoServerImpl {
   }
 }
 
-export interface HonoServerFactory {
+export interface HonoServerFactory<T extends WSRoom = WSRoom> {
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  inject(c: Context, fn: (rt: RunTimeParams) => Promise<Response | void>): Promise<Response | void>;
+  inject(c: Context, fn: (rt: ExposeCtxItemWithImpl<T>) => Promise<Response | void>): Promise<Response | void>;
 
   start(app: Hono): Promise<void>;
   serve(app: Hono, port?: number): Promise<void>;
@@ -219,14 +226,25 @@ export const CORS = HttpHeader.from({
 });
 
 class NoBackChannel implements MsgDispatcherCtx {
-  readonly impl: HonoServerImpl;
-  readonly ctx: Context;
-  readonly _wsRoom: WSRoom;
-  constructor(impl: HonoServerImpl, c: Context, wsRoom: WSRoom) {
-    this.impl = impl;
-    this.ctx = c;
-    this._wsRoom = wsRoom;
+  readonly ctx: ExposeCtxItemWithImpl<WSRoom>;
+  constructor(ctx: ExposeCtxItemWithImpl<WSRoom>) {
+    this.ctx = ctx;
+    this.impl = ctx.impl;
+    this.id = ctx.id;
+    this.sthis = ctx.sthis;
+    this.logger = ctx.logger;
+    this.ende = ctx.ende;
+    this.gestalt = ctx.gestalt;
+    this.dbFactory = ctx.dbFactory;
   }
+  readonly impl: HonoServerImpl;
+  readonly sthis: SuperThis;
+  readonly logger: Logger;
+  readonly ende: EnDeCoder;
+  readonly gestalt: Gestalt;
+  readonly dbFactory: () => SQLDatabase;
+  readonly id: string;
+
   get ws(): WSContextWithId<unknown> {
     return {
       id: "no-id",
@@ -236,7 +254,7 @@ class NoBackChannel implements MsgDispatcherCtx {
     } as unknown as WSContextWithId<unknown>;
   }
   get wsRoom(): WSRoom {
-    return this._wsRoom;
+    return this.ctx.wsRoom;
     // throw new Error("NoBackChannel:wsRoom Method not implemented.");
   }
 }
@@ -280,41 +298,40 @@ export class HonoServer {
     // app.put('/gestalt', async (c) => c.json(buildResGestalt(await c.req.json(), defaultGestaltItem({ id: "server", hasPersistent: true }).gestalt)))
     // app.put('/error', async (c) => c.json(buildErrorMsg(sthis, sthis.logger, await c.req.json(), new Error("test error"))))
     app.put("/fp", (c) =>
-      this.factory.inject(c, async ({ sthis, logger, impl, ende, wsRoom }) => {
-        impl.headers.Items().forEach(([k, v]) => c.res.headers.set(k, v[0]));
+      this.factory.inject(c, async (ctx) => {
+        Object.entries(c.req.header()).forEach(([k, v]) => c.res.headers.set(k, v[0]));
         const rMsg = await exception2Result(() => c.req.json() as Promise<MsgBase>);
         if (rMsg.isErr()) {
           c.status(400);
-          return c.json(buildErrorMsg(sthis, logger, { tid: "internal" }, rMsg.Err()));
+          return c.json(buildErrorMsg(ctx, { tid: "internal" }, rMsg.Err()));
         }
-        const dispatcher = buildMsgDispatcher(sthis, impl.gestalt(), ende, wsRoom);
-        return dispatcher.dispatch(new NoBackChannel(impl, c, wsRoom), rMsg.Ok());
+        const dispatcher = buildMsgDispatcher(ctx.sthis);
+        return dispatcher.dispatch(new NoBackChannel(ctx), rMsg.Ok());
       })
     );
     // console.log("register-2.1");
     app.get("/ws", (c, next) =>
-      this.factory.inject(c, async ({ sthis, logger, ende, impl, wsRoom }) => {
-        return impl.upgradeWebSocket((_c) => {
+      this.factory.inject(c, async (ctx) => {
+        return ctx.impl.upgradeWebSocket((_c) => {
           let dp: MsgDispatcher;
-          const id = sthis.nextId().str;
+          // const id = ctx.sthis.nextId().str;
           // console.log("upgradeWebSocket:inject:", id);
           return {
             onOpen: (_e, _ws) => {
-              dp = buildMsgDispatcher(sthis, impl.gestalt(), ende, wsRoom);
-              console.log("onOpen:inject:", id);
+              dp = buildMsgDispatcher(ctx.sthis);
+              // console.log("onOpen:inject:", id);
             },
             onError: (error) => {
-              logger.Error().Err(error).Msg("WebSocket error");
+              ctx.logger.Error().Err(error).Msg("WebSocket error");
             },
             onMessage: async (event, ws) => {
-              const rMsg = await exception2Result(async () => ende.decode(await top_uint8(event.data)) as MsgBase);
-              console.log("onMessage:inject:", id, rMsg);
+              const rMsg = await exception2Result(async () => ctx.ende.decode(await top_uint8(event.data)) as MsgBase);
+              // console.log("onMessage:inject:", id, rMsg);
               if (rMsg.isErr()) {
                 ws.send(
-                  ende.encode(
+                  ctx.ende.encode(
                     buildErrorMsg(
-                      sthis,
-                      logger,
+                      ctx,
                       {
                         message: event.data,
                       } as ErrorMsg,
@@ -324,19 +341,12 @@ export class HonoServer {
                 );
               } else {
                 // console.log("dp-dispatch", rMsg.Ok(), dp);
-                await dp.dispatch(
-                  {
-                    impl,
-                    ws,
-                    wsRoom: dp.wsRoom,
-                  },
-                  rMsg.Ok()
-                );
+                await dp.dispatch({ ...ctx, ws }, rMsg.Ok());
               }
             },
             onClose: (_evt, _ws) => {
               // impl.delConn(ws);
-              console.log("onClose:inject:", id);
+              // console.log("onClose:inject:", id);
               dp = undefined as unknown as MsgDispatcher;
               // console.log('Connection closed')
             },

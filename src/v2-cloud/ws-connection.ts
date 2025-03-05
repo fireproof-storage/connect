@@ -46,7 +46,7 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
     const onOpenFuture: Future<Result<unknown>> = new Future<Result<unknown>>();
     const timer = setTimeout(() => {
       const err = this.logger.Error().Dur("timeout", this.msgP.timeout).Msg("Timeout").AsError();
-      this.toMsg(buildErrorMsg(this.sthis, this.logger, {} as MsgBase, err));
+      this.toMsg(buildErrorMsg(this, {} as MsgBase, err));
       onOpenFuture.resolve(Result.Err(err));
     }, this.msgP.timeout);
     this.ws.onopen = () => {
@@ -56,18 +56,13 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
     this.ws.onerror = (ierr) => {
       const err = this.logger.Error().Err(ierr).Msg("WS Error").AsError();
       onOpenFuture.resolve(Result.Err(err));
-      const res = this.buildErrorMsg(this.logger.Error(), {}, err);
+      const res = this.buildErrorMsg(this, {}, err);
       this.toMsg(res);
     };
     this.ws.onmessage = (evt) => {
       if (!this.opened) {
         this.toMsg(
-          buildErrorMsg(
-            this.sthis,
-            this.logger,
-            {} as MsgBase,
-            this.logger.Error().Msg("Received message before onOpen").AsError()
-          )
+          buildErrorMsg(this, {} as MsgBase, this.logger.Error().Msg("Received message before onOpen").AsError())
         );
       }
       this.#wsOnMessage(evt);
@@ -78,7 +73,7 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
       this.close().catch((ierr) => {
         const err = this.logger.Error().Err(ierr).Msg("close error").AsError();
         onOpenFuture.resolve(Result.Err(err));
-        this.toMsg(buildErrorMsg(this.sthis, this.logger, { tid: "internal" } as MsgBase, err));
+        this.toMsg(buildErrorMsg(this, { tid: "internal" } as MsgBase, err));
       });
     };
     /* wait for onOpen */
@@ -200,7 +195,7 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
 
   async request<Q extends MsgBase, S extends MsgBase>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>> {
     if (!this.opened) {
-      return buildErrorMsg(this.sthis, this.logger, req, this.logger.Error().Msg("Connection not open").AsError());
+      return buildErrorMsg(this, req, this.logger.Error().Msg("Connection not open").AsError());
     }
     const future = new Future<S>();
     this.waitForTid.set(req.tid, { tid: req.tid, future, waitFor: opts.waitFor, timeout: opts.timeout });

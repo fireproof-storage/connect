@@ -30,9 +30,11 @@ export class TenantLedgerSql {
 
   readonly db: SQLDatabase;
   readonly tenantSql: TenantSql;
-  constructor(db: SQLDatabase, tenantSql: TenantSql) {
+  readonly id: string;
+  constructor(id: string, db: SQLDatabase, tenantSql: TenantSql) {
     this.db = db;
     this.tenantSql = tenantSql;
+    this.id = id;
   }
 
   // readonly #sqlCreateTenantLedger = new ResolveOnce<SQLStatement[]>();

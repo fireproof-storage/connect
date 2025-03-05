@@ -530,14 +530,13 @@ export type ReqRes<Q extends MsgBase, S extends MsgBase> = Readonly<UpdateReqRes
 // }
 
 export function buildErrorMsg(
-  sthis: SuperThis,
-  logger: Logger,
+  slogger: SuperThisLogger,
   base: Partial<MsgBase & { ref?: unknown }>,
   error: Error,
   body?: string,
   stack?: string[]
 ): ErrorMsg {
-  if (!stack && sthis.env.get("FP_STACK")) {
+  if (!stack && slogger.sthis.env.get("FP_STACK")) {
     stack = error.stack?.split("\n");
   }
   const msg = {
@@ -549,7 +548,7 @@ export function buildErrorMsg(
     body,
     stack,
   } satisfies ErrorMsg;
-  logger.Any("ErrorMsg", msg);
+  slogger.logger.Any("ErrorMsg", msg);
   return msg;
 }
 
@@ -604,12 +603,16 @@ export interface ResOptionalSignedUrl extends MsgWithTenantLedger<MsgWithConn> {
   readonly signedUrl?: string;
 }
 
+export interface SuperThisLogger {
+  readonly sthis: SuperThis;
+  readonly logger: Logger;
+}
+
 export async function buildRes<Q extends MsgWithTenantLedger<MsgWithConn<ReqSignedUrl>>, S extends ResSignedUrl>(
   method: SignedUrlParam["method"],
   store: FPStoreTypes,
   type: string,
-  sthis: SuperThis,
-  logger: Logger,
+  slogger: SuperThisLogger,
   req: Q,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<S>> {
@@ -625,9 +628,9 @@ export async function buildRes<Q extends MsgWithTenantLedger<MsgWithConn<ReqSign
     tenant: req.tenant,
     tid: req.tid,
   } satisfies PreSignedMsg;
-  const rSignedUrl = await ctx.calculatePreSignedUrl(psm);
+  const rSignedUrl = await ctx.calculatePreSignedUrl(slogger, psm);
   if (rSignedUrl.isErr()) {
-    return buildErrorMsg(sthis, logger, req, rSignedUrl.Err());
+    return buildErrorMsg(slogger, req, rSignedUrl.Err());
   }
   return {
     ...req,

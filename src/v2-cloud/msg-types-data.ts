@@ -1,5 +1,4 @@
-import { Logger, Result, URI } from "@adviser/cement";
-import { SuperThis } from "@fireproof/core";
+import { Result, URI } from "@adviser/cement";
 import {
   ReqSignedUrl,
   NextId,
@@ -12,6 +11,7 @@ import {
   GwCtx,
   MsgIsTenantLedger,
   MsgWithConn,
+  SuperThisLogger,
 } from "./msg-types.js";
 import { PreSignedMsg } from "./pre-signed-url.js";
 
@@ -37,16 +37,15 @@ export function MsgIsResGetData(msg: MsgBase): msg is ResGetData {
 }
 
 export interface CalculatePreSignedUrl {
-  calculatePreSignedUrl(p: PreSignedMsg): Promise<Result<URI>>;
+  calculatePreSignedUrl(ctx: SuperThisLogger, p: PreSignedMsg): Promise<Result<URI>>;
 }
 
 export function buildResGetData(
-  sthis: SuperThis,
-  logger: Logger,
+  slogger: SuperThisLogger,
   req: MsgWithConn<ReqGetData>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResGetData>> {
-  return buildRes<MsgWithConn<ReqGetData>, ResGetData>("GET", "data", "resGetData", sthis, logger, req, ctx);
+  return buildRes<MsgWithConn<ReqGetData>, ResGetData>("GET", "data", "resGetData", slogger, req, ctx);
 }
 
 export interface ReqPutData extends ReqSignedUrl {
@@ -71,12 +70,11 @@ export function MsgIsResPutData(msg: MsgBase): msg is ResPutData {
 }
 
 export function buildResPutData(
-  sthis: SuperThis,
-  logger: Logger,
+  slogger: SuperThisLogger,
   req: MsgWithConn<ReqPutData>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResPutData>> {
-  return buildRes<MsgWithConn<ReqPutData>, ResPutData>("PUT", "data", "resPutData", sthis, logger, req, ctx);
+  return buildRes<MsgWithConn<ReqPutData>, ResPutData>("PUT", "data", "resPutData", slogger, req, ctx);
 }
 
 export interface ReqDelData extends ReqSignedUrl {
@@ -100,10 +98,9 @@ export function MsgIsResDelData(msg: MsgBase): msg is ResDelData {
 }
 
 export function buildResDelData(
-  sthis: SuperThis,
-  logger: Logger,
+  slogger: SuperThisLogger,
   req: MsgWithConn<ReqDelData>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResDelData>> {
-  return buildRes<MsgWithConn<ReqDelData>, ResDelData>("DELETE", "data", "resDelData", sthis, logger, req, ctx);
+  return buildRes<MsgWithConn<ReqDelData>, ResDelData>("DELETE", "data", "resDelData", slogger, req, ctx);
 }

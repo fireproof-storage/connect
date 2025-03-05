@@ -36,8 +36,10 @@ export class MetaSendSql {
   }
 
   readonly db: SQLDatabase;
-  constructor(db: SQLDatabase) {
+  readonly id: string;
+  constructor(id: string, db: SQLDatabase) {
     this.db = db;
+    this.id = id;
   }
 
   // readonly #sqlCreateMetaSend = new ResolveOnce<SQLStatement>();
@@ -72,9 +74,9 @@ export class MetaSendSql {
   }
 
   async selectToAddSend(conn: ByConnection & { now: Date }): Promise<MetaSendRowWithMeta[]> {
-    console.log("selectToAddSend-1");
+    // console.log("selectToAddSend-1");
     const stmt = this.sqlSelectToAddSend();
-    console.log("selectToAddSend-2");
+    // console.log("selectToAddSend-2");
     try {
       const rows = await stmt.all<SQLMetaSendRowWithMeta>(
         conn.reqId,
@@ -85,7 +87,7 @@ export class MetaSendSql {
         conn.reqId,
         conn.resId
       );
-      console.log("selectToAddSend-3", rows);
+      // console.log("selectToAddSend-3", rows);
       return rows.map(
         (i) =>
           ({
@@ -97,7 +99,8 @@ export class MetaSendSql {
           }) satisfies MetaSendRowWithMeta
       );
     } catch (e) {
-      console.log("selectToAddSend-2-error", e);
+      // eslint-disable-next-line no-console
+      console.error("selectToAddSend:error", this.id, e);
       throw e;
     }
   }
