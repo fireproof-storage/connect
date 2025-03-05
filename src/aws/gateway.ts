@@ -1,6 +1,7 @@
 import { BuildURI, CoerceURI, exception2Result, KeyedResolvOnce, Logger, param, Result, URI } from "@adviser/cement";
 import { bs, getStore, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
 import { AddKeyToDbMetaGateway } from "../meta-key-hack.js";
+import { to_uint8 } from "../coerce-binary.js";
 
 async function resultFetch(logger: Logger, curl: CoerceURI, init?: RequestInit): Promise<Result<Response>> {
   const url = URI.from(curl);
@@ -155,7 +156,7 @@ export class AWSGateway implements bs.Gateway {
       return this.logger.Error().Any({ resp: done }).Msg("failed to upload meta").ResultError();
     }
 
-    const doneJson = (await done.json()) as { uploadURL: string };
+    const doneJson = (await done.json()) as { uploadURL?: string };
     if (!doneJson.uploadURL) {
       return this.logger.Error().Url(fetchUrl).Msg("Upload URL not found in the response").ResultError();
     }
@@ -217,7 +218,7 @@ export class AWSGateway implements bs.Gateway {
       return Result.Err(new NotFoundError(`data not found: ${url}`));
     }
 
-    const data = new Uint8Array(await response.arrayBuffer());
+    const data = to_uint8(await response.arrayBuffer());
     return Result.Ok(data);
   }
 
@@ -284,7 +285,7 @@ export class AWSGateway implements bs.Gateway {
       // console.log("Download Wal response error:", response.status);
       return Result.Err(new NotFoundError(`wal not found: ${url}`));
     }
-    const data = new Uint8Array(await response.arrayBuffer());
+    const data = to_uint8(await response.arrayBuffer());
     return Result.Ok(data);
   }
 
