@@ -1,5 +1,3 @@
-import { Logger } from "@adviser/cement";
-import { SuperThis } from "@fireproof/core";
 import {
   MsgBase,
   MsgWithError,
@@ -13,6 +11,7 @@ import {
   MsgIsTenantLedger,
   MsgWithTenantLedger,
   MsgWithConn,
+  SuperThisLogger,
 } from "./msg-types.js";
 import { CalculatePreSignedUrl } from "./msg-types-data.js";
 
@@ -38,20 +37,11 @@ export function MsgIsResGetWAL(msg: MsgBase): msg is ResGetWAL {
 }
 
 export function buildResGetWAL(
-  sthis: SuperThis,
-  logger: Logger,
+  slogger: SuperThisLogger,
   req: MsgWithTenantLedger<MsgWithConn<ReqGetWAL>>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResGetWAL>> {
-  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqGetWAL>>, ResGetWAL>(
-    "GET",
-    "wal",
-    "resGetWAL",
-    sthis,
-    logger,
-    req,
-    ctx
-  );
+  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqGetWAL>>, ResGetWAL>("GET", "wal", "resGetWAL", slogger, req, ctx);
 }
 
 export interface ReqPutWAL extends Omit<ReqSignedUrl, "type"> {
@@ -76,20 +66,11 @@ export function MsgIsResPutWAL(msg: MsgBase): msg is ResPutWAL {
 }
 
 export function buildResPutWAL(
-  sthis: SuperThis,
-  logger: Logger,
+  slogger: SuperThisLogger,
   req: MsgWithTenantLedger<MsgWithConn<ReqPutWAL>>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResPutWAL>> {
-  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqPutWAL>>, ResPutWAL>(
-    "PUT",
-    "wal",
-    "resPutWAL",
-    sthis,
-    logger,
-    req,
-    ctx
-  );
+  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqPutWAL>>, ResPutWAL>("PUT", "wal", "resPutWAL", slogger, req, ctx);
 }
 
 export interface ReqDelWAL extends Omit<ReqSignedUrl, "type"> {
@@ -113,8 +94,7 @@ export function MsgIsResDelWAL(msg: MsgBase): msg is ResDelWAL {
 }
 
 export function buildResDelWAL(
-  sthis: SuperThis,
-  logger: Logger,
+  slogger: SuperThisLogger,
   req: MsgWithTenantLedger<MsgWithConn<ReqDelWAL>>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResDelWAL>> {
@@ -122,8 +102,7 @@ export function buildResDelWAL(
     "DELETE",
     "wal",
     "resDelWAL",
-    sthis,
-    logger,
+    slogger,
     req,
     ctx
   );

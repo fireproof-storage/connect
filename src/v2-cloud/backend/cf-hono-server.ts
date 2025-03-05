@@ -1,12 +1,13 @@
-import { BuildURI, HttpHeader, Logger, LoggerImpl, URI } from "@adviser/cement";
+import { BuildURI, Logger, LoggerImpl, URI } from "@adviser/cement";
 import { Context, Hono } from "hono";
 import {
   ConnMiddleware,
   HonoServerFactory,
-  RunTimeParams,
   HonoServerBase,
   WSEventsConnId,
   WSContextWithId,
+  ExposeCtxItem,
+  ExposeCtxItemWithImpl,
 } from "../hono-server.js";
 import { SendOptions, WSContextInit, WSMessageReceive, WSReadyState } from "hono/ws";
 import {
@@ -88,12 +89,12 @@ class CFWSRoom implements WSRoom {
   constructor(sthis: SuperThis) {
     this.sthis = sthis;
     this.id = sthis.nextId(12).str;
-    console.log("CFWSRoom", this.id);
+    // console.log("CFWSRoom", this.id);
   }
 
   #getWebSockets?: () => WebSocket[];
-  applyGetWebSockets(id: string, fn: () => WebSocket[]): void {
-    console.log("applyGetWebSockets", this.id, id, fn);
+  applyGetWebSockets(_id: string, fn: () => WebSocket[]): void {
+    // console.log("applyGetWebSockets", this.id, id, fn);
     // let val = this.eventsWithConnId.get(id);
     // if (!val) {
     //   val = {};
@@ -123,8 +124,6 @@ class CFWSRoom implements WSRoom {
     // }
     const getWebSockets = this.#getWebSockets;
     if (!getWebSockets) {
-      // eslint-disable-next-line no-console
-      // console.error("getConns:missing-getWebSockets", conn);
       return [];
     }
     // console.log("getConns-enter:", this.id);
@@ -146,7 +145,7 @@ class CFWSRoom implements WSRoom {
         })
         .filter((i) => !!i);
       // console.log("getConns", this.id, res);
-      console.log("getConns-leave:", this.id, conns.length, res.length);
+      // console.log("getConns-leave:", this.id, conns.length, res.length);
       return res;
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -176,14 +175,14 @@ class CFWSRoom implements WSRoom {
   }
   addConn(ws: WSContextWithId<WebSocket>, conn: QSId): QSId {
     if (!this.isWebsocket) {
-      console.log("addConn-local", this.id, conn);
+      // console.log("addConn-local", this.id, conn);
       this.notWebSockets.push({ conn, touched: new Date(), ws });
       return conn;
     }
     const x = ws.raw?.deserializeAttachment();
     ws.raw?.serializeAttachment({ ...x, conn });
     // throw new Error("Method not implemented.");
-    console.log("addConn", this.id, conn);
+    // console.log("addConn", this.id, conn);
     return conn;
   }
   isConnected(msg: MsgBase): msg is MsgWithConn<MsgBase> {
@@ -267,18 +266,10 @@ class CFWSRoom implements WSRoom {
   //   }
 }
 
-interface CFExposeCtxItem {
-  readonly sthis: SuperThis;
-  readonly wsRoom: CFWSRoom;
-  readonly logger: Logger;
-  readonly ende: EnDeCoder;
-  readonly gs: Gestalt;
-  readonly db: SQLDatabase;
-  readonly id: string;
-}
+export type CFExposeCtxItem = ExposeCtxItem<CFWSRoom>;
 
 export class CFExposeCtx {
-  #ctxs = new Map<string, CFExposeCtxItem>();
+  #ctxs = new Map<string, ExposeCtxItem<CFWSRoom>>();
 
   public static attach(
     env: Env,
@@ -287,12 +278,12 @@ export class CFExposeCtx {
     logger: Logger,
     ende: EnDeCoder,
     gs: Gestalt,
-    db: SQLDatabase,
+    dbFactory: () => SQLDatabase,
     wsRoom: CFWSRoom
-  ): void {
+  ): CFExposeCtxItem {
     // const ctx = new CFExposeCtx(id, sthis, logger, ende, gs, db, wsRoom);
     env.FP_EXPOSE_CTX = env.FP_EXPOSE_CTX ?? new CFExposeCtx();
-    env.FP_EXPOSE_CTX.attach(id, sthis, logger, ende, gs, db, wsRoom);
+    return env.FP_EXPOSE_CTX.attach(id, sthis, logger, ende, gs, dbFactory, wsRoom);
   }
 
   private constructor() {
@@ -312,11 +303,13 @@ export class CFExposeCtx {
     sthis: SuperThis,
     logger: Logger,
     ende: EnDeCoder,
-    gs: Gestalt,
-    db: SQLDatabase,
+    gestalt: Gestalt,
+    dbFactory: () => SQLDatabase,
     wsRoom: CFWSRoom
   ) {
-    this.#ctxs.set(id, { id, sthis, logger, ende, gs, db, wsRoom });
+    const item = { id, sthis, logger, ende, gestalt, dbFactory, wsRoom };
+    this.#ctxs.set(id, item);
+    return item;
   }
 }
 
@@ -329,8 +322,12 @@ export class CFHonoFactory implements HonoServerFactory {
   ) {
     this._onClose = onClose;
   }
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  async inject(c: Context, fn: (rt: RunTimeParams) => Promise<Response | void>): Promise<Response | void> {
+  async inject(
+    c: Context,
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+    fn: (rt: ExposeCtxItemWithImpl<CFWSRoom>) => Promise<Response | void>
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  ): Promise<Response | void> {
     // this._env = c.env
     const sthis = ensureSuperThis({
       logger: new LoggerImpl(),
@@ -351,24 +348,20 @@ export class CFHonoFactory implements HonoServerFactory {
     });
 
     const cfBackendMode = c.env.CF_BACKEND_MODE && c.env.CF_BACKEND_MODE === "DURABLE_OBJECT" ? "DURABLE_OBJECT" : "D1";
-    let db: SQLDatabase;
-    let cfBackendKey: string;
+    let db: () => SQLDatabase;
+    // let cfBackendKey: string;
     switch (cfBackendMode) {
       case "DURABLE_OBJECT":
-        {
-          cfBackendKey = c.env.CF_BACKEND_KEY ?? "FP_BACKEND_DO";
-          // console.log("DO-CF_BACKEND_KEY", cfBackendKey, c.env[cfBackendKey]);
-          db = new CFDObjSQLDatabase(getBackendDurableObject(c.env, id));
-        }
+        // const cfBackendKey = c.env.CF_BACKEND_KEY ?? "FP_BACKEND_DO";
+        // console.log("DO-CF_BACKEND_KEY", cfBackendKey, c.env[cfBackendKey]);
+        db = () => new CFDObjSQLDatabase(getBackendDurableObject(c.env, id));
         break;
 
       case "D1":
       default:
-        {
-          cfBackendKey = c.env.CF_BACKEND_KEY ?? "FP_BACKEND_D1";
-          // console.log("D1-CF_BACKEND_KEY", cfBackendKey, c.env[cfBackendKey]);
-          db = new CFWorkerSQLDatabase(c.env[cfBackendKey] as D1Database);
-        }
+        // const cfBackendKey = ;
+        // console.log("D1-CF_BACKEND_KEY", cfBackendKey, c.env[cfBackendKey]);
+        db = () => new CFWorkerSQLDatabase(c.env[c.env.CF_BACKEND_KEY ?? "FP_BACKEND_D1"] as D1Database);
         break;
       // return startedChs
       //   .get(cfBackendKey)
@@ -382,15 +375,14 @@ export class CFHonoFactory implements HonoServerFactory {
     }
 
     const wsRoom = new CFWSRoom(sthis);
-    CFExposeCtx.attach(c.env, id, sthis, logger, ende, gs, db, wsRoom);
+    const item = CFExposeCtx.attach(c.env, id, sthis, logger, ende, gs, db, wsRoom);
     // wsRoom.applyGetWebSockets(c.env.FP_EXPOSE_CTX.getWebSockets);
 
     // TODO WE NEED TO START THE DURABLE OBJECT
     // but then on every request we import the schema
 
-    const chs = new CFHonoServer(id, sthis, logger, ende, gs, db, wsRoom);
-    return chs.start().then((chs) => fn({ sthis, logger, ende, impl: chs, wsRoom }));
-
+    const chs = new CFHonoServer(item);
+    return chs.start(item).then((chs) => fn({ ...item, impl: chs }));
     // return startedChs
     //   .get(cfBackendKey)
     //   .once(async () => {
@@ -420,28 +412,34 @@ export class CFHonoFactory implements HonoServerFactory {
 export class CFHonoServer extends HonoServerBase {
   // _upgradeWebSocket?: UpgradeWebSocket
 
-  readonly ende: EnDeCoder;
+  // readonly ende: EnDeCoder;
   // readonly env: Env;
   // readonly wsConnections = new Map<string, WSPair>()
-  constructor(
-    id: string,
-    sthis: SuperThis,
-    logger: Logger,
-    ende: EnDeCoder,
-    gs: Gestalt,
-    sqlDb: SQLDatabase,
-    wsRoom: WSRoom,
-    headers?: HttpHeader
-  ) {
-    super(id, sthis, logger, gs, sqlDb, wsRoom, headers);
-    this.ende = ende;
-    // this.env = env;
-  }
+  // constructor(
+  //   id: string,
+  //   // sthis: SuperThis,
+  //   // logger: Logger,
+  //   // ende: EnDeCoder,
+  //   // gs: Gestalt,
+  //   // sqlDb: SQLDatabase,
+  //   // wsRoom: WSRoom,
+  //   // headers?: HttpHeader
+  // ) {
+  //   super(id);
+  //   // this.ende = ende;
+  //   // this.env = env;
+  // }
 
   // getDurableObject(conn: Connection) {
   //     const id = env.FP_META_GROUPS.idFromName("fireproof");
   //     const stub = env.FP_META_GROUPS.get(id);
   // }
+
+  readonly ctx: CFExposeCtxItem;
+  constructor(ctx: CFExposeCtxItem) {
+    super(ctx.id);
+    this.ctx = ctx;
+  }
 
   upgradeWebSocket(
     createEvents: (c: Context) => WSEventsConnId<WebSocket> | Promise<WSEventsConnId<WebSocket>>
@@ -450,14 +448,14 @@ export class CFHonoServer extends HonoServerBase {
       const upgradeHeader = c.req.header("Upgrade");
       if (!upgradeHeader || upgradeHeader !== "websocket") {
         return new Response(
-          this.ende.encode(buildErrorMsg(this.sthis, this.logger, {}, new Error("expected Upgrade: websocket"))),
+          this.ctx.ende.encode(buildErrorMsg(this.ctx, {}, new Error("expected Upgrade: websocket"))),
           { status: 426 }
         );
       }
       const id = this.id;
       c.env.FP_EXPOSE_CTX.get(id).wsRoom.applyEvents(id, await createEvents(c));
       const url = BuildURI.from(c.req.url).setParam("ctxId", id).toString();
-      console.log("upgradeWebSocket", id, url);
+      // console.log("upgradeWebSocket", id, url);
       const dobjRoom = getRoomDurableObject(c.env, id);
       const ret = dobjRoom.fetch(url, c.req.raw);
       return ret;

@@ -1,4 +1,4 @@
-import { Logger, VERSION } from "@adviser/cement";
+import { VERSION } from "@adviser/cement";
 import { CRDTEntry } from "@fireproof/core";
 import {
   GwCtx,
@@ -9,6 +9,7 @@ import {
   NextId,
   ReqSignedUrlParam,
   ResOptionalSignedUrl,
+  SuperThisLogger,
 } from "./msg-types.js";
 
 /* Put Meta */
@@ -43,8 +44,7 @@ export function MsgIsReqPutMeta(msg: MsgBase): msg is ReqPutMeta {
 }
 
 export function buildResPutMeta(
-  _sthis: NextId,
-  _logger: Logger,
+  _slogger: SuperThisLogger,
   req: MsgWithTenantLedger<MsgWithConn<ReqPutMeta>>,
   meta: QSMeta
 ): ResPutMeta {
@@ -93,8 +93,7 @@ export function buildBindGetMeta(sthis: NextId, params: ReqSignedUrlParam, gwCtx
 }
 
 export function buildEventGetMeta(
-  _sthis: NextId,
-  _logger: Logger,
+  _slogger: SuperThisLogger,
   req: MsgWithTenantLedger<MsgWithConn<BindGetMeta>>,
   metaParam: QSMeta,
   gwCtx: GwCtx
@@ -138,8 +137,7 @@ export interface ResDelMeta extends MsgWithTenantLedger<MsgWithConn>, ResOptiona
 }
 
 export function buildResDelMeta(
-  _sthis: NextId,
-  _logger: Logger,
+  _slogger: SuperThisLogger,
   req: MsgWithTenantLedger<MsgWithConn<ReqDelMeta>>,
   signedUrl?: string
 ): ResDelMeta {

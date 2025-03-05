@@ -60,9 +60,11 @@ export class MetaByTenantLedgerSql {
 
   readonly db: SQLDatabase;
   readonly tenantLedgerSql: TenantLedgerSql;
-  constructor(db: SQLDatabase, tenantLedgerSql: TenantLedgerSql) {
+  readonly id: string;
+  constructor(id: string, db: SQLDatabase, tenantLedgerSql: TenantLedgerSql) {
     this.db = db;
     this.tenantLedgerSql = tenantLedgerSql;
+    this.id = id;
   }
 
   // readonly #sqlCreateMetaByTenantLedger = new ResolveOnce();

@@ -23,8 +23,10 @@ export class TenantSql {
   }
 
   readonly db: SQLDatabase;
-  constructor(db: SQLDatabase) {
+  readonly id: string;
+  constructor(id: string, db: SQLDatabase) {
     this.db = db;
+    this.id = id;
   }
 
   // readonly #sqlCreateTenant = new ResolveOnce<SQLStatement[]>();

@@ -68,7 +68,7 @@ describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
   beforeAll(async () => {
     //    db = new Database(':memory:');
     const db = await flavour.factory();
-    mm = new MetaMerger("bong", db);
+    mm = new MetaMerger("bong", logger, db);
     await mm.createSchema();
   });
 
@@ -88,14 +88,12 @@ describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
 
   afterEach(async () => {
     await mm.delMeta({
-      logger,
       connection,
     });
   });
 
   it("insert nothing", async () => {
     await mm.addMeta({
-      logger,
       connection,
       metas: [],
       now: new Date(),
@@ -113,7 +111,6 @@ describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
         data: "MomRkYXRho",
       });
       await mm.addMeta({
-        logger,
         connection,
         metas,
         now: new Date(),
@@ -143,7 +140,6 @@ describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
       };
       conns.push(conn);
       await mm.addMeta({
-        logger,
         connection: {
           ...connection,
           conn,
@@ -157,7 +153,6 @@ describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
     await Promise.all(
       conns.map(async (conn) =>
         mm.delMeta({
-          logger,
           connection: { ...connection, conn },
           metas: [],
         })
@@ -180,7 +175,6 @@ describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
         .map((m) => ({ ...m, cid: sthis.timeOrderedNextId().str }));
       ref.push({ metas, connection });
       await mm.addMeta({
-        logger,
         connection,
         metas,
         now: new Date(),
@@ -205,7 +199,6 @@ describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
     await Promise.all(
       connections.map(async (connection) =>
         mm.delMeta({
-          logger,
           connection,
           metas: [],
         })
@@ -215,7 +208,6 @@ describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
 
   it("delMeta", async () => {
     await mm.addMeta({
-      logger,
       connection,
       metas: [
         {
@@ -234,7 +226,6 @@ describe.each(getSQLFlavours())("$name - MetaMerger", (flavour) => {
     const rows = await mm.metaToSend(connection);
     expect(rows.length).toBe(2);
     await mm.delMeta({
-      logger,
       connection,
       metas: rows,
       now: new Date(),

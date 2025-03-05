@@ -31,8 +31,8 @@ import {
   MsgIsReqOpenWithConn,
   MsgWithConn,
   ReqGestalt,
-  Gestalt,
-  EnDeCoder,
+  // Gestalt,
+  // EnDeCoder,
   buildResChat,
   ReqChat,
   MsgIsReqChat,
@@ -49,110 +49,118 @@ import {
   ReqDelMeta,
   ReqPutMeta,
 } from "./msg-type-meta.js";
-import { WSRoom } from "./ws-room.js";
+// import { WSRoom } from "./ws-room.js";
 
-export function buildMsgDispatcher(sthis: SuperThis, gestalt: Gestalt, ende: EnDeCoder, wsRoom: WSRoom): MsgDispatcher {
-  const dp = MsgDispatcher.new(sthis, gestalt, ende, wsRoom);
+export function buildMsgDispatcher(
+  _sthis: SuperThis /*, gestalt: Gestalt, ende: EnDeCoder, wsRoom: WSRoom*/
+): MsgDispatcher {
+  const dp = MsgDispatcher.new(_sthis /*, gestalt, ende, wsRoom*/);
   dp.registerMsg(
     {
       match: MsgIsReqGestalt,
       isNotConn: true,
-      fn: (_sthis, _logger, _ctx, msg: ReqGestalt) => {
-        const resGestalt = buildResGestalt(msg, dp.gestalt);
+      fn: (ctx, msg: ReqGestalt) => {
+        const resGestalt = buildResGestalt(msg, ctx.gestalt);
         return resGestalt;
       },
     },
     {
       match: MsgIsReqOpen,
       isNotConn: true,
-      fn: (sthis, logger, ctx, msg) => {
+      fn: (ctx, msg) => {
         if (!MsgIsReqOpenWithConn(msg)) {
-          return buildErrorMsg(sthis, logger, msg, new Error("missing connection"));
+          return buildErrorMsg(ctx, msg, new Error("missing connection"));
         }
-        if (dp.wsRoom.isConnected(msg)) {
-          return buildResOpen(sthis, msg, msg.conn.resId);
+        if (ctx.wsRoom.isConnected(msg)) {
+          return buildResOpen(ctx.sthis, msg, msg.conn.resId);
         }
         // const resId = sthis.nextId(12).str;
         const resId = ctx.ws.id;
-        const resOpen = buildResOpen(sthis, msg, resId);
-        dp.wsRoom.addConn(ctx.ws, resOpen.conn);
+        const resOpen = buildResOpen(ctx.sthis, msg, resId);
+        ctx.wsRoom.addConn(ctx.ws, resOpen.conn);
         return resOpen;
       },
     },
     {
       match: MsgIsReqClose,
-      fn: (_sthis, _logger, _ctx, msg: MsgWithConn<ReqClose>) => {
-        dp.wsRoom.removeConn(msg.conn);
+      fn: (ctx, msg: MsgWithConn<ReqClose>) => {
+        ctx.wsRoom.removeConn(msg.conn);
         return buildResClose(msg, msg.conn);
       },
     },
     {
       match: MsgIsReqChat,
-      fn: (_sthis, _logger, _ctx, msg: MsgWithConn<ReqChat>) => {
-        const conns = dp.wsRoom.getConns(msg.conn);
+      fn: (ctx, msg: MsgWithConn<ReqChat>) => {
+        const conns = ctx.wsRoom.getConns(msg.conn);
         const ci = conns.map((c) => c.conn);
         for (const conn of conns) {
           if (qsidEqual(conn.conn, msg.conn)) {
             continue;
           }
-          dp.send(conn.ws, buildResChat(msg, conn.conn, `[${msg.conn.reqId}]: ${msg.message}`, ci));
+          dp.send(
+            {
+              ...ctx,
+              ws: conn.ws,
+            },
+            buildResChat(msg, conn.conn, `[${msg.conn.reqId}]: ${msg.message}`, ci)
+          );
         }
         return buildResChat(msg, msg.conn, `ack: ${msg.message}`, ci);
       },
     },
     {
       match: MsgIsReqGetData,
-      fn: (sthis, logger, ctx, msg: MsgWithConn<ReqGetData>) => {
-        return buildResGetData(sthis, logger, msg, ctx.impl);
+      fn: (ctx, msg: MsgWithConn<ReqGetData>) => {
+        return buildResGetData(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsReqPutData,
-      fn: (sthis, logger, ctx, msg: MsgWithConn<ReqPutData>) => {
-        return buildResPutData(sthis, logger, msg, ctx.impl);
+      fn: (ctx, msg: MsgWithConn<ReqPutData>) => {
+        return buildResPutData(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsReqDelData,
-      fn: (sthis, logger, ctx, msg: MsgWithConn<ReqDelData>) => {
-        return buildResDelData(sthis, logger, msg, ctx.impl);
+      fn: (ctx, msg: MsgWithConn<ReqDelData>) => {
+        return buildResDelData(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsReqGetWAL,
-      fn: (sthis, logger, ctx, msg: MsgWithConn<ReqGetWAL>) => {
-        return buildResGetWAL(sthis, logger, msg, ctx.impl);
+      fn: (ctx, msg: MsgWithConn<ReqGetWAL>) => {
+        return buildResGetWAL(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsReqPutWAL,
-      fn: (sthis, logger, ctx, msg: MsgWithConn<ReqPutWAL>) => {
-        return buildResPutWAL(sthis, logger, msg, ctx.impl);
+      fn: (ctx, msg: MsgWithConn<ReqPutWAL>) => {
+        return buildResPutWAL(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsReqDelWAL,
-      fn: (sthis, logger, ctx, msg: MsgWithConn<ReqDelWAL>) => {
-        return buildResDelWAL(sthis, logger, msg, ctx.impl);
+      fn: (ctx, msg: MsgWithConn<ReqDelWAL>) => {
+        return buildResDelWAL(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsBindGetMeta,
-      fn: (sthis, logger, ctx, msg: MsgWithConn<BindGetMeta>) => {
+      fn: (ctx, msg: MsgWithConn<BindGetMeta>) => {
         // console.log("MsgIsBindGetMeta", msg);
-        return ctx.impl.handleBindGetMeta(sthis, logger, msg);
+        return ctx.impl.handleBindGetMeta(ctx, msg);
       },
     },
     {
       match: MsgIsReqPutMeta,
-      fn: (sthis, logger, ctx, msg: MsgWithConn<ReqPutMeta>) => {
-        return ctx.impl.handleReqPutMeta(sthis, logger, msg);
+      fn: (ctx, msg: MsgWithConn<ReqPutMeta>) => {
+        return ctx.impl.handleReqPutMeta(ctx, msg);
       },
     },
     {
       match: MsgIsReqDelMeta,
-      fn: (sthis, logger, ctx, msg: MsgWithConn<ReqDelMeta>) => {
-        return ctx.impl.handleReqDelMeta(sthis, logger, msg);
+      fn: (ctx, msg: MsgWithConn<ReqDelMeta>) => {
+        return ctx.impl.handleReqDelMeta(ctx, msg);
       },
     }
   );

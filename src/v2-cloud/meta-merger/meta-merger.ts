@@ -13,7 +13,7 @@ export interface Connection {
 }
 
 export interface MetaMerge {
-  readonly logger: Logger;
+  // readonly logger Logger;
   readonly connection: Connection;
   readonly metas: CRDTEntry[];
   readonly now?: Date;
@@ -33,6 +33,15 @@ function toByConnection(connection: Connection): ByConnection {
   };
 }
 
+export function metaMerger(ctx: {
+  readonly id: string;
+  readonly logger: Logger;
+  readonly dbFactory: () => SQLDatabase;
+  // readonly sthis: SuperThis;
+}) {
+  return new MetaMerger(ctx.id, ctx.logger, ctx.dbFactory());
+}
+
 export class MetaMerger {
   readonly db: SQLDatabase;
   // readonly sthis: SuperThis;
@@ -43,19 +52,21 @@ export class MetaMerger {
     readonly metaSend: MetaSendSql;
   };
 
+  readonly logger: Logger;
   readonly id: string;
 
-  constructor(id: string, db: SQLDatabase) {
+  constructor(id: string, logger: Logger, db: SQLDatabase) {
     this.db = db;
     this.id = id;
+    this.logger = logger;
     // this.sthis = sthis;
-    const tenant = new TenantSql(db);
-    const tenantLedger = new TenantLedgerSql(db, tenant);
+    const tenant = new TenantSql(id, db);
+    const tenantLedger = new TenantLedgerSql(id, db, tenant);
     this.sql = {
       tenant,
       tenantLedger,
-      metaByTenantLedger: new MetaByTenantLedgerSql(db, tenantLedger),
-      metaSend: new MetaSendSql(db),
+      metaByTenantLedger: new MetaByTenantLedgerSql(id, db, tenantLedger),
+      metaSend: new MetaSendSql(id, db),
     };
   }
 
@@ -99,17 +110,14 @@ export class MetaMerger {
           updateAt: now,
         });
       } catch (e) {
-        mm.logger.Warn().Err(e).Str("metaCID", meta.cid).Msg("addMeta");
+        this.logger.Warn().Err(e).Str("metaCID", meta.cid).Msg("addMeta");
       }
     }
   }
 
   async metaToSend(sink: Connection, now = new Date()): Promise<CRDTEntry[]> {
-    console.log("metaToSend-1", this.id);
     const bySink = toByConnection(sink);
-    console.log("metaToSend-2", this.id);
     const rows = await this.sql.metaSend.selectToAddSend({ ...bySink, now });
-    console.log("metaToSend-3", this.id);
     await this.sql.metaSend.insert(
       rows.map((row) => ({
         metaCID: row.metaCID,
@@ -118,7 +126,6 @@ export class MetaMerger {
         sendAt: row.sendAt,
       }))
     );
-    console.log("metaToSend-4");
     return rows.map((row) => row.meta);
   }
 }

@@ -62,7 +62,7 @@ describe("test multiple connections", () => {
 
       const rest = [...conns];
       for (const c of conns) {
-        console.log("Sending a chat request", rest.length, conns.length);
+        // console.log("Sending a chat request", rest.length, conns.length);
         const act = await c.request(buildReqChat(sthis, c.conn, "Hello"), { waitFor: MsgIsResChat });
         if (MsgIsResChat(act)) {
           expect(act.targets.length).toBe(rest.length);

@@ -112,12 +112,7 @@ export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnec
     const rReqBody = exception2Result(() => this.msgP.ende.encode(req));
     if (rReqBody.isErr()) {
       return this.toMsg(
-        buildErrorMsg(
-          this.sthis,
-          this.logger,
-          req,
-          this.logger.Error().Err(rReqBody.Err()).Any("req", req).Msg("encode error").AsError()
-        )
+        buildErrorMsg(this, req, this.logger.Error().Err(rReqBody.Err()).Any("req", req).Msg("encode error").AsError())
       );
     }
     headers.Set("Content-Length", rReqBody.Ok().byteLength.toString());
@@ -135,16 +130,13 @@ export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnec
     );
     this.logger.Debug().Url(url).Any("body", rRes).Msg("response");
     if (rRes.isErr()) {
-      return this.toMsg(
-        buildErrorMsg(this.sthis, this.logger, req, this.logger.Error().Err(rRes).Msg("fetch error").AsError())
-      );
+      return this.toMsg(buildErrorMsg(this, req, this.logger.Error().Err(rRes).Msg("fetch error").AsError()));
     }
     const res = rRes.Ok();
     if (!res.ok) {
       return this.toMsg(
         buildErrorMsg(
-          this.sthis,
-          this.logger,
+          this,
           req,
           this.logger
             .Error()
@@ -162,8 +154,7 @@ export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnec
     if (ret.isErr()) {
       return this.toMsg(
         buildErrorMsg(
-          this.sthis,
-          this.logger,
+          this,
           req,
           this.logger.Error().Err(ret.Err()).Msg("decode error").AsError(),
           this.sthis.txt.decode(data)

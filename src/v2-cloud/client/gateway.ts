@@ -94,11 +94,11 @@ abstract class BaseGateway {
       index: param.OPTIONAL,
     });
     if (rParams.isErr()) {
-      return buildErrorMsg(this.sthis, this.logger, {} as MsgBase, rParams.Err());
+      return buildErrorMsg(this, {} as MsgBase, rParams.Err());
     }
     const params = rParams.Ok();
     if (store !== params.store) {
-      return buildErrorMsg(this.sthis, this.logger, {} as MsgBase, new Error("store mismatch"));
+      return buildErrorMsg(this, {} as MsgBase, new Error("store mismatch"));
     }
     const rsu = {
       tid: this.sthis.nextId().str,
