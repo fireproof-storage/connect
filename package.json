@@ -115,7 +115,7 @@
     "@web3-storage/clock": "^0.4.1",
     "@web3-storage/did-mailto": "^2.1.0",
     "@web3-storage/pail": "^0.6.0",
-    "@web3-storage/w3up-client": "^17.1.2",
+    "@web3-storage/w3up-client": "^17.2.0",
     "assert": "^2.1.0",
     "aws-lambda": "^1.0.7",
     "aws4fetch": "^1.0.20",
