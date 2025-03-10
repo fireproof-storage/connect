@@ -61,7 +61,7 @@
     "@types/node": "^22.13.8",
     "@types/wait-on": "^5.3.4",
     "@types/ws": "^8.5.14",
-    "@typescript-eslint/typescript-estree": "^8.25.0",
+    "@typescript-eslint/typescript-estree": "^8.26.0",
     "@web3-storage/access": "^20.2.0",
     "cborg": "^4.2.8",
     "esbuild": "^0.25.1",
