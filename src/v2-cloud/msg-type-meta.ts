@@ -1,6 +1,7 @@
 import { VERSION } from "@adviser/cement";
 import { CRDTEntry } from "@fireproof/core";
 import {
+  AuthType,
   GwCtx,
   MsgBase,
   MsgWithConn,
@@ -9,7 +10,7 @@ import {
   NextId,
   ReqSignedUrlParam,
   ResOptionalSignedUrl,
-  SuperThisLogger,
+  MsgTypesCtx,
 } from "./msg-types.js";
 
 /* Put Meta */
@@ -25,11 +26,13 @@ export interface ResPutMeta extends MsgWithTenantLedger<MsgWithConn>, QSMeta {
 
 export function buildReqPutMeta(
   sthis: NextId,
+  auth: AuthType,
   signedUrlParams: ReqSignedUrlParam,
   metas: CRDTEntry[],
   gwCtx: GwCtx
 ): ReqPutMeta {
   return {
+    auth,
     tid: sthis.nextId().str,
     type: "reqPutMeta",
     ...gwCtx,
@@ -44,7 +47,7 @@ export function MsgIsReqPutMeta(msg: MsgBase): msg is ReqPutMeta {
 }
 
 export function buildResPutMeta(
-  _slogger: SuperThisLogger,
+  _msgCtx: MsgTypesCtx,
   req: MsgWithTenantLedger<MsgWithConn<ReqPutMeta>>,
   meta: QSMeta
 ): ResPutMeta {
@@ -82,8 +85,9 @@ export interface EventGetMeta extends MsgWithTenantLedger<MsgWithConn>, ResOptio
   readonly type: "eventGetMeta";
 }
 
-export function buildBindGetMeta(sthis: NextId, params: ReqSignedUrlParam, gwCtx: GwCtx): BindGetMeta {
+export function buildBindGetMeta(sthis: NextId, auth: AuthType, params: ReqSignedUrlParam, gwCtx: GwCtx): BindGetMeta {
   return {
+    auth,
     tid: sthis.nextId().str,
     ...gwCtx,
     type: "bindGetMeta",
@@ -93,7 +97,7 @@ export function buildBindGetMeta(sthis: NextId, params: ReqSignedUrlParam, gwCtx
 }
 
 export function buildEventGetMeta(
-  _slogger: SuperThisLogger,
+  _msgCtx: MsgTypesCtx,
   req: MsgWithTenantLedger<MsgWithConn<BindGetMeta>>,
   metaParam: QSMeta,
   gwCtx: GwCtx
@@ -118,8 +122,14 @@ export interface ReqDelMeta extends MsgWithTenantLedger<MsgWithOptionalConn> {
   readonly params: ReqSignedUrlParam;
 }
 
-export function buildReqDelMeta(sthis: NextId, signedUrlParams: ReqSignedUrlParam, gwCtx: GwCtx): ReqDelMeta {
+export function buildReqDelMeta(
+  sthis: NextId,
+  auth: AuthType,
+  signedUrlParams: ReqSignedUrlParam,
+  gwCtx: GwCtx
+): ReqDelMeta {
   return {
+    auth,
     tid: sthis.nextId().str,
     ...gwCtx,
     type: "reqDelMeta",
@@ -137,11 +147,12 @@ export interface ResDelMeta extends MsgWithTenantLedger<MsgWithConn>, ResOptiona
 }
 
 export function buildResDelMeta(
-  _slogger: SuperThisLogger,
+  // msgCtx: MsgTypesCtx,
   req: MsgWithTenantLedger<MsgWithConn<ReqDelMeta>>,
   signedUrl?: string
 ): ResDelMeta {
   return {
+    auth: req.auth,
     params: { ...req.params, method: "DELETE", store: "meta" },
     signedUrl,
     tid: req.tid,

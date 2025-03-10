@@ -11,10 +11,18 @@ import {
   ReqSignedUrl,
   MsgWithError,
   ResSignedUrl,
+  authType,
 } from "../msg-types.js";
 import { to_uint8 } from "../../coerce-binary.js";
 import { MsgConnected, Msger } from "../msger.js";
-import { MsgIsResGetData, MsgIsResPutData, ResDelData, ResGetData, ResPutData } from "../msg-types-data.js";
+import {
+  MsgIsResDelData,
+  MsgIsResGetData,
+  MsgIsResPutData,
+  ResDelData,
+  ResGetData,
+  ResPutData,
+} from "../msg-types-data.js";
 
 const VERSION = "v0.1-fp-cloud";
 
@@ -58,7 +66,7 @@ abstract class BaseGateway {
   async delete(uri: URI, prConn: Promise<Result<MsgConnected>>): Promise<Result<void>> {
     const rConn = await prConn;
     if (rConn.isErr()) {
-      return this.logger.Error().Err(rConn).Msg("Error in putConn").ResultError();
+      return this.logger.Error().Err(rConn).Msg("Error in deleteConn").ResultError();
     }
     const conn = rConn.Ok();
     // this.logger.Debug().Any("conn", conn.key).Msg("del");
@@ -77,7 +85,7 @@ abstract class BaseGateway {
   //   return Result.Ok(buildReqSignedUrl(this.sthis, type, sig, conn))
   // }
 
-  async getResSignedUrl<S extends ResSignedUrl>(
+  async getReqSignedUrl<S extends ResSignedUrl>(
     type: string,
     method: HttpMethods,
     store: FPStoreTypes,
@@ -102,6 +110,7 @@ abstract class BaseGateway {
     }
     const rsu = {
       tid: this.sthis.nextId().str,
+      auth: await conn.authFactory(),
       type,
       // conn: conn.conn,
       tenant: {
@@ -179,7 +188,7 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
   }
   async getConn(uri: URI, conn: MsgConnected): Promise<Result<Uint8Array>> {
     // type: string, method: HttpMethods, store: FPStoreTypes, waitForFn:
-    const rResSignedUrl = await this.getResSignedUrl<ResGetData>(
+    const rResSignedUrl = await this.getReqSignedUrl<ResGetData>(
       "reqGetData",
       "GET",
       "data",
@@ -194,7 +203,7 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
     return this.getObject(uri, downloadUrl);
   }
   async putConn(uri: URI, body: Uint8Array, conn: MsgConnected): Promise<Result<void>> {
-    const rResSignedUrl = await this.getResSignedUrl<ResPutData>(
+    const rResSignedUrl = await this.getReqSignedUrl<ResPutData>(
       "reqPutData",
       "PUT",
       "data",
@@ -209,11 +218,11 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
     return this.putObject(uri, uploadUrl, body);
   }
   async delConn(uri: URI, conn: MsgConnected): Promise<Result<void>> {
-    const rResSignedUrl = await this.getResSignedUrl<ResDelData>(
+    const rResSignedUrl = await this.getReqSignedUrl<ResDelData>(
       "reqDelData",
       "DELETE",
       "data",
-      MsgIsResPutData,
+      MsgIsResDelData,
       uri,
       conn
     );
@@ -469,7 +478,13 @@ export class FireproofCloudGateway implements bs.Gateway {
     //   }
     //   tenant = rfingerprint.Ok().fingerPrint;
     // }
-    const qOpen = buildReqOpen(this.sthis, {});
+
+    const authJWK = uri.getParamResult("authJWK");
+    if (authJWK.isErr()) {
+      return this.logger.Error().Err(authJWK).Msg("Missing URI authJWK").ResultError();
+    }
+
+    const qOpen = buildReqOpen(this.sthis, authType(authJWK.Ok()), {});
 
     let cUrl = uri.build().protocol(params.protocol).cleanParams().URI();
     if (cUrl.pathname === "/") {

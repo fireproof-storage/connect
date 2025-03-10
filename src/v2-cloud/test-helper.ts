@@ -10,6 +10,7 @@ import {
   MsgIsResGestalt,
   MsgIsError,
   MsgBase,
+  AuthFactory,
 } from "./msg-types.js";
 import { defaultMsgParams, applyStart, Msger, MsgerParamsWithEnDe, MsgRawConnection } from "./msger.js";
 import { WSConnection } from "./ws-connection.js";
@@ -19,8 +20,15 @@ import { HonoServer } from "./hono-server.js";
 import { NodeHonoFactory } from "./node-hono-server.js";
 import { CFHonoFactory } from "./backend/cf-hono-server.js";
 import { BetterSQLDatabase } from "./meta-merger/bettersql-abstract-sql.js";
+import { envKeyDefaults, SessionTokenService, TokenForParam } from "../sts-service/sts-service.js";
 
-export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnDe, my: Gestalt) {
+export function httpStyle(
+  sthis: SuperThis,
+  authFactory: AuthFactory,
+  port: number,
+  msgP: MsgerParamsWithEnDe,
+  my: Gestalt
+) {
   const remote = defaultGestalt(defaultMsgParams(sthis, { hasPersistent: true, protocolCapabilities: ["reqRes"] }), {
     id: "HTTP-server",
   });
@@ -28,6 +36,7 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
   return {
     name: "HTTP",
     remoteGestalt: remote,
+    authFactory,
     cInstance: HttpConnection,
     ok: {
       url: () => URI.from(`http://127.0.0.1:${port}/fp`),
@@ -35,6 +44,7 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
         applyStart(
           Msger.openHttp(
             sthis,
+            authFactory,
             [URI.from(`http://localhost:${port}/fp`)],
             {
               ...msgP,
@@ -50,6 +60,7 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
       open: async (): Promise<Result<MsgRawConnection<MsgBase>>> => {
         const ret = await Msger.openHttp(
           sthis,
+          authFactory,
           [URI.from(`http://localhost:${port - 1}/fp`)],
           {
             ...msgP,
@@ -62,7 +73,9 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
           return ret;
         }
         // should fail
-        const res = await ret.Ok().request(buildReqGestalt(sthis, my), { waitFor: MsgIsResGestalt });
+        const res = await ret
+          .Ok()
+          .request(buildReqGestalt(sthis, await authFactory(), my), { waitFor: MsgIsResGestalt });
         if (MsgIsError(res)) {
           return Result.Err(res.message);
         }
@@ -74,6 +87,7 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
       open: async (): Promise<Result<MsgRawConnection<MsgBase>>> => {
         const ret = await Msger.openHttp(
           sthis,
+          authFactory,
           [URI.from(`http://4.7.1.1:${port}/fp`)],
           {
             ...msgP,
@@ -83,7 +97,9 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
           exGt
         );
         // should fail
-        const res = await ret.Ok().request(buildReqGestalt(sthis, my), { waitFor: MsgIsResGestalt });
+        const res = await ret
+          .Ok()
+          .request(buildReqGestalt(sthis, await authFactory(), my), { waitFor: MsgIsResGestalt });
         if (MsgIsError(res)) {
           return Result.Err(res.message);
         }
@@ -93,7 +109,13 @@ export function httpStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithE
   };
 }
 
-export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnDe, my: Gestalt) {
+export function wsStyle(
+  sthis: SuperThis,
+  authFactory: AuthFactory,
+  port: number,
+  msgP: MsgerParamsWithEnDe,
+  my: Gestalt
+) {
   const remote = defaultGestalt(defaultMsgParams(sthis, { hasPersistent: true, protocolCapabilities: ["stream"] }), {
     id: "WS-server",
   });
@@ -101,6 +123,7 @@ export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnD
   return {
     name: "WS",
     remoteGestalt: remote,
+    authFactory,
     cInstance: WSConnection,
     ok: {
       url: () => URI.from(`http://127.0.0.1:${port}/ws`),
@@ -108,6 +131,7 @@ export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnD
         applyStart(
           Msger.openWS(
             sthis,
+            authFactory,
             URI.from(`http://localhost:${port}/ws`),
             {
               ...msgP,
@@ -123,6 +147,7 @@ export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnD
       open: () =>
         Msger.openWS(
           sthis,
+          authFactory,
           URI.from(`http://localhost:${port - 1}/ws`),
           {
             ...msgP,
@@ -137,6 +162,7 @@ export function wsStyle(sthis: SuperThis, port: number, msgP: MsgerParamsWithEnD
       open: () =>
         Msger.openWS(
           sthis,
+          authFactory,
           URI.from(`http://4.7.1.1:${port - 1}/ws`),
           {
             ...msgP,
@@ -164,8 +190,9 @@ export async function resolveToml(backend: "D1" | "DO") {
 export function NodeHonoServerFactory() {
   return {
     name: "NodeHonoServer",
-    factory: async (sthis: SuperThis, msgP: MsgerParams, remoteGestalt: Gestalt, _port: number) => {
+    factory: async (sthis: SuperThis, msgP: MsgerParams, remoteGestalt: Gestalt, _port: number, pubEnvJWK: string) => {
       const { env } = await resolveToml("D1");
+      sthis.env.set(envKeyDefaults.PUBLIC, pubEnvJWK);
       sthis.env.sets(env as unknown as Record<string, string>);
       const nhf = new NodeHonoFactory(sthis, {
         msgP,
@@ -177,17 +204,27 @@ export function NodeHonoServerFactory() {
   };
 }
 
+async function writeEnvFile(sthis: SuperThis, tomlFile: string, env: string, envJWK: string) {
+  fs.writeFile(
+    sthis.pathOps.join(sthis.pathOps.dirname(tomlFile), `dev.vars.${env}`),
+    `${envKeyDefaults.PUBLIC}=${envJWK}\n`
+  );
+}
+
 export function CFHonoServerFactory(backend: "D1" | "DO") {
   return {
     name: `CFHonoServer(${backend})`,
-    factory: async (_sthis: SuperThis, _msgP: MsgerParams, remoteGestalt: Gestalt, port: number) => {
+    factory: async (sthis: SuperThis, _msgP: MsgerParams, remoteGestalt: Gestalt, port: number, pubEnvJWK: string) => {
       if (process.env.FP_WRANGLER_PORT) {
         return new HonoServer(new CFHonoFactory());
       }
       const { tomlFile } = await resolveToml(backend);
       $.verbose = !!process.env.FP_DEBUG;
+      const envName = `test-${remoteGestalt.protocolCapabilities[0]}-${backend}`;
+      await writeEnvFile(sthis, tomlFile, envName, pubEnvJWK);
+      // .dev.vars.<environment-name>
       const runningWrangler = $`
-                wrangler dev -c ${tomlFile} --port ${port} --env test-${remoteGestalt.protocolCapabilities[0]}-${backend} --no-show-interactive-dev-session --no-live-reload &
+                wrangler dev -c ${tomlFile} --port ${port} --env ${envName} --no-show-interactive-dev-session --no-live-reload &
                 waitPid=$!
                 echo "PID:$waitPid"
                 wait $waitPid`;
@@ -215,5 +252,30 @@ export function CFHonoServerFactory(backend: "D1" | "DO") {
         })
       );
     },
+  };
+}
+
+export async function mockGetAuthFactory(pk: string, factoryTp: TokenForParam, sthis: SuperThis): Promise<AuthFactory> {
+  const sts = await SessionTokenService.create(
+    {
+      token: pk,
+    },
+    sthis
+  );
+
+  return async (tp: Partial<TokenForParam> = {}) => {
+    const token = await sts.tokenFor({
+      ...factoryTp,
+      ...tp,
+      userId: tp.userId || factoryTp.userId,
+      tenants: tp.tenants || factoryTp.tenants,
+      ledgers: tp.ledgers || factoryTp.ledgers,
+    });
+    return {
+      type: "fp-cloud-jwk",
+      params: {
+        jwk: token,
+      },
+    };
   };
 }

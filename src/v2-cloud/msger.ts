@@ -21,6 +21,7 @@ import {
   ReqGestalt,
   buildReqClose,
   MsgIsResClose,
+  AuthFactory,
 } from "./msg-types.js";
 import { SuperThis } from "@fireproof/core";
 import { HttpConnection } from "./http-connection.js";
@@ -120,6 +121,7 @@ export async function applyStart(prC: Promise<Result<MsgRawConnection>>): Promis
 
 export class MsgConnected implements MsgRawConnection<MsgWithConn> {
   static async connect(
+    authFactory: AuthFactory,
     mrc: Result<MsgRawConnection> | MsgRawConnection,
     conn: Partial<QSId> = {}
   ): Promise<Result<MsgConnected>> {
@@ -129,11 +131,11 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
       }
       mrc = mrc.Ok();
     }
-    const res = await mrc.request(buildReqOpen(mrc.sthis, conn), { waitFor: MsgIsResOpen });
+    const res = await mrc.request(buildReqOpen(mrc.sthis, await authFactory(), conn), { waitFor: MsgIsResOpen });
     if (MsgIsError(res) || !MsgIsResOpen(res)) {
       return mrc.sthis.logger.Error().Err(res).Msg("unexpected response").ResultError();
     }
-    return Result.Ok(new MsgConnected(mrc, res.conn));
+    return Result.Ok(new MsgConnected(mrc, authFactory, res.conn));
   }
 
   readonly sthis: SuperThis;
@@ -142,11 +144,13 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
   readonly exchangedGestalt: ExchangedGestalt;
   readonly activeBinds: Map<string, ActiveStream<MsgWithConn, MsgBase>>;
   readonly id: string;
-  private constructor(raw: MsgRawConnection, conn: QSId) {
+  readonly authFactory: AuthFactory;
+  private constructor(raw: MsgRawConnection, auth: AuthFactory, conn: QSId) {
     this.sthis = raw.sthis;
     this.raw = raw;
     this.exchangedGestalt = raw.exchangedGestalt;
     this.conn = conn;
+    this.authFactory = auth;
     this.activeBinds = raw.activeBinds;
     this.id = this.sthis.nextId().str;
   }
@@ -162,7 +166,7 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
           return;
         }
         if (MsgIsConnected(chunk, this.conn)) {
-          if ((opts.waitFor && opts.waitFor(chunk)) || MsgIsError(chunk)) {
+          if (opts.waitFor?.(chunk) || MsgIsError(chunk)) {
             controller.enqueue(chunk);
           }
         }
@@ -187,7 +191,7 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
     return this.raw.start();
   }
   async close(): Promise<Result<void>> {
-    await this.request(buildReqClose(this.sthis, this.conn), { waitFor: MsgIsResClose });
+    await this.request(buildReqClose(this.sthis, await this.authFactory(), this.conn), { waitFor: MsgIsResClose });
     return await this.raw.close();
     // return Result.Ok(undefined);
   }
@@ -204,15 +208,17 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
 export class Msger {
   static async openHttp(
     sthis: SuperThis,
+    auth: AuthFactory,
     // reqOpen: ReqOpen | undefined,
     urls: URI[],
     msgP: MsgerParamsWithEnDe,
     exGestalt: ExchangedGestalt
   ): Promise<Result<MsgRawConnection>> {
-    return Result.Ok(new HttpConnection(sthis, urls, msgP, exGestalt));
+    return Result.Ok(new HttpConnection(sthis, auth, urls, msgP, exGestalt));
   }
   static async openWS(
     sthis: SuperThis,
+    authFactory: AuthFactory,
     // qOpen: ReqOpen,
     url: URI,
     msgP: MsgerParamsWithEnDe,
@@ -228,10 +234,11 @@ export class Msger {
     } else {
       ws = new WebSocket(url.toString());
     }
-    return Result.Ok(new WSConnection(sthis, ws, msgP, exGestalt));
+    return Result.Ok(new WSConnection(sthis, authFactory, ws, msgP, exGestalt));
   }
   static async open(
     sthis: SuperThis,
+    auth: AuthFactory,
     curl: CoerceURI,
     imsgP: Partial<MsgerParamsWithEnDe> = {}
   ): Promise<Result<MsgRawConnection>> {
@@ -242,12 +249,12 @@ export class Msger {
     /*
      * request Gestalt with Http
      */
-    const rHC = await Msger.openHttp(sthis, [url], jsMsgP, { my: gs, remote: gs });
+    const rHC = await Msger.openHttp(sthis, auth, [url], jsMsgP, { my: gs, remote: gs });
     if (rHC.isErr()) {
       return rHC;
     }
     const hc = rHC.Ok();
-    const resGestalt = await hc.request<ResGestalt, ReqGestalt>(buildReqGestalt(sthis, gs), {
+    const resGestalt = await hc.request<ResGestalt, ReqGestalt>(buildReqGestalt(sthis, await auth(), gs), {
       waitFor: MsgIsResGestalt,
     });
     if (!MsgIsResGestalt(resGestalt)) {
@@ -260,6 +267,7 @@ export class Msger {
       return applyStart(
         Msger.openHttp(
           sthis,
+          auth,
           exGt.remote.httpEndpoints.map((i) => BuildURI.from(url).resolve(i).URI()),
           msgP,
           exGt
@@ -267,17 +275,18 @@ export class Msger {
       );
     }
     return applyStart(
-      Msger.openWS(sthis, BuildURI.from(url).resolve(selectRandom(exGt.remote.wsEndpoints)).URI(), msgP, exGt)
+      Msger.openWS(sthis, auth, BuildURI.from(url).resolve(selectRandom(exGt.remote.wsEndpoints)).URI(), msgP, exGt)
     );
   }
 
   static connect(
     sthis: SuperThis,
+    auth: AuthFactory,
     curl: CoerceURI,
     imsgP: Partial<MsgerParamsWithEnDe> = {},
     conn: Partial<QSId> = {}
   ): Promise<Result<MsgConnected>> {
-    return Msger.open(sthis, curl, imsgP).then((srv) => MsgConnected.connect(srv, conn));
+    return Msger.open(sthis, auth, curl, imsgP).then((srv) => MsgConnected.connect(auth, srv, conn));
   }
 
   private constructor() {

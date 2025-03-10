@@ -10,7 +10,7 @@ import {
   MsgWithConn,
   GwCtx,
   MsgIsError,
-  SuperThisLogger,
+  MsgTypesCtx,
   EnDeCoder,
   Gestalt,
 } from "./msg-types.js";
@@ -79,7 +79,7 @@ export interface HonoServerImpl {
   start(ctx: CFExposeCtxItem): Promise<HonoServerImpl>;
   // gestalt(): Gestalt;
   // getConnected(): Connected[];
-  calculatePreSignedUrl(slogger: SuperThisLogger, p: PreSignedMsg): Promise<Result<URI>>;
+  calculatePreSignedUrl(msgCtx: MsgTypesCtx, p: PreSignedMsg): Promise<Result<URI>>;
   upgradeWebSocket(
     createEvents: (c: Context) => WSEventsConnId<unknown> | Promise<WSEventsConnId<unknown>>
   ): ConnMiddleware;
@@ -158,7 +158,7 @@ export abstract class HonoServerBase implements HonoServerImpl {
     await metaMerger(ctx).delMeta({
       connection: msg,
     });
-    return buildResDelMeta(ctx, msg, rUrl.signedUrl);
+    return buildResDelMeta(msg, rUrl.signedUrl);
   }
 
   async handleBindGetMeta(
@@ -186,7 +186,7 @@ export abstract class HonoServerBase implements HonoServerImpl {
     return res;
   }
 
-  calculatePreSignedUrl(ctx: SuperThisLogger, p: PreSignedMsg): Promise<Result<URI>> {
+  calculatePreSignedUrl(ctx: MsgTypesCtx, p: PreSignedMsg): Promise<Result<URI>> {
     const rRes = ctx.sthis.env.gets({
       STORAGE_URL: param.REQUIRED,
       ACCESS_KEY_ID: param.REQUIRED,

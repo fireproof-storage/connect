@@ -1,11 +1,12 @@
 import { Hono } from "hono";
 import { HonoServer } from "../hono-server.js";
 import { defaultGestalt } from "../msg-types.js";
-import { NodeHonoServerFactory, CFHonoServerFactory, wsStyle } from "../test-helper.js";
+import { NodeHonoServerFactory, CFHonoServerFactory, wsStyle, mockGetAuthFactory } from "../test-helper.js";
 import { bs, ensureSuperThis, NotFoundError } from "@fireproof/core";
 import { defaultMsgParams } from "../msger.js";
 import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./gateway.js";
 import { BuildURI } from "@adviser/cement";
+import { SessionTokenService } from "../../sts-service/sts-service.js";
 
 const sthis = ensureSuperThis();
 const msgP = defaultMsgParams(sthis, { hasPersistent: true });
@@ -13,15 +14,29 @@ const my = defaultGestalt(msgP, { id: "FP-Universal-Client" });
 
 describe.each([NodeHonoServerFactory(), CFHonoServerFactory("D1")])("$name - Gateway", ({ factory }) => {
   const port = 1024 + Math.floor(Math.random() * (65536 - 1024));
-  const style = wsStyle(sthis, port, msgP, my);
+  let style;
 
   let server: HonoServer;
   let gw: bs.Gateway;
   let unregister: () => void;
   let url: BuildURI;
   beforeAll(async () => {
+    const keyPair = await SessionTokenService.generateKeyPair();
+    const authFactory = await mockGetAuthFactory(
+      keyPair.strings.privateKey,
+      {
+        userId: "hello",
+        tenants: [],
+        ledgers: [],
+      },
+      sthis
+    );
+    // privEnvJWK = await jwk2env(keyPair.privateKey, sthis);
+    style = wsStyle(sthis, authFactory, port, msgP, my);
     const app = new Hono();
-    server = await factory(sthis, msgP, style.remoteGestalt, port).then((srv) => srv.once(app, port));
+    server = await factory(sthis, msgP, style.remoteGestalt, port, keyPair.strings.publicKey).then((srv) =>
+      srv.once(app, port)
+    );
     unregister = registerFireproofCloudStoreProtocol("fireproof:");
     gw = new FireproofCloudGateway(sthis);
     url = BuildURI.from(`fireproof://localhost:${port}/`)

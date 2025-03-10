@@ -1,6 +1,6 @@
 import { HttpHeader, Logger, Result, URI, exception2Result } from "@adviser/cement";
 import { SuperThis, ensureLogger } from "@fireproof/core";
-import { MsgBase, buildErrorMsg, MsgWithError, RequestOpts, MsgIsError } from "./msg-types.js";
+import { MsgBase, buildErrorMsg, MsgWithError, RequestOpts, MsgIsError, AuthFactory } from "./msg-types.js";
 import {
   ActiveStream,
   ExchangedGestalt,
@@ -21,12 +21,20 @@ export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnec
 
   readonly #onMsg = new Map<string, OnMsgFn>();
 
-  constructor(sthis: SuperThis, uris: URI[], msgP: MsgerParamsWithEnDe, exGestalt: ExchangedGestalt) {
+  readonly auth: AuthFactory;
+  constructor(
+    sthis: SuperThis,
+    auth: AuthFactory,
+    uris: URI[],
+    msgP: MsgerParamsWithEnDe,
+    exGestalt: ExchangedGestalt
+  ) {
     super(sthis, exGestalt);
     this.logger = ensureLogger(sthis, "HttpConnection");
     // this.msgParam = msgP;
     this.baseURIs = uris;
     this.msgP = msgP;
+    this.auth = auth;
   }
 
   send<S extends MsgBase, Q extends MsgBase>(_msg: Q): Promise<MsgWithError<S>> {

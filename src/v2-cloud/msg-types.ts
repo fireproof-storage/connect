@@ -2,6 +2,7 @@ import { Future, Logger } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core";
 import { CalculatePreSignedUrl } from "./msg-types-data.js";
 import { PreSignedMsg } from "./pre-signed-url.js";
+import { TokenForParam } from "../sts-service/sts-service.js";
 
 export const VERSION = "FP-MSG-1.0";
 
@@ -35,15 +36,23 @@ export interface NextId {
 }
 
 export interface AuthType {
-  readonly type: "ucan";
+  readonly type: "ucan" | "error" | "fp-cloud-jwk";
 }
 
-export interface UCanAuth {
+export interface UCanAuth extends AuthType {
   readonly type: "ucan";
   readonly params: {
     readonly tbd: string;
   };
 }
+export interface FPCloudAuth extends AuthType {
+  readonly type: "fp-cloud-jwk";
+  readonly params: {
+    readonly jwk: string;
+  };
+}
+
+export type AuthFactory = (tp?: Partial<TokenForParam>) => Promise<AuthType>;
 
 export interface TenantLedger {
   readonly tenant: string;
@@ -79,7 +88,7 @@ export interface MsgBase {
   readonly tid: string;
   readonly type: string;
   readonly version: string;
-  readonly auth?: AuthType;
+  readonly auth: AuthType;
 }
 
 export function MsgIsTid(msg: MsgBase, tid: string): boolean {
@@ -275,20 +284,22 @@ export interface ResChat extends MsgWithConn {
   readonly targets: QSId[];
 }
 
-export function buildReqChat(sthis: NextId, conn: QSId, message: string, targets?: QSId[]): ReqChat {
+export function buildReqChat(sthis: NextId, auth: AuthType, conn: QSId, message: string, targets?: QSId[]): ReqChat {
   return {
     tid: sthis.nextId().str,
     type: "reqChat",
     version: VERSION,
+    auth,
     conn,
     message,
     targets: targets ?? [],
   };
 }
 
-export function buildResChat(req: ReqChat, conn?: QSId, message?: string, targets?: QSId[]): ResChat {
+export function buildResChat(req: ReqChat, conn?: QSId, message?: string, targets?: QSId[], auth?: AuthType): ResChat {
   return {
     ...req,
+    auth: auth || req.auth,
     conn: conn || req.conn,
     message: message || req.message,
     targets: targets || req.targets,
@@ -319,9 +330,10 @@ export function MsgIsReqGestalt(msg: MsgBase): msg is ReqGestalt {
   return msg.type === "reqGestalt";
 }
 
-export function buildReqGestalt(sthis: NextId, gestalt: Gestalt, publish?: boolean): ReqGestalt {
+export function buildReqGestalt(sthis: NextId, auth: AuthType, gestalt: Gestalt, publish?: boolean): ReqGestalt {
   return {
     tid: sthis.nextId().str,
+    auth,
     type: "reqGestalt",
     version: VERSION,
     gestalt,
@@ -341,9 +353,10 @@ export interface ResGestalt extends MsgBase {
   readonly gestalt: Gestalt;
 }
 
-export function buildResGestalt(req: ReqGestalt, gestalt: Gestalt): ResGestalt | ErrorMsg {
+export function buildResGestalt(req: ReqGestalt, gestalt: Gestalt, auth?: AuthType): ResGestalt | ErrorMsg {
   return {
     tid: req.tid,
+    auth: auth || req.auth,
     type: "resGestalt",
     version: VERSION,
     gestalt,
@@ -370,9 +383,10 @@ export interface ReqOpen extends MsgBase {
   readonly conn: ReqOpenConn;
 }
 
-export function buildReqOpen(sthis: NextId, conn: ReqOpenConnection): ReqOpen {
+export function buildReqOpen(sthis: NextId, auth: AuthType, conn: ReqOpenConnection): ReqOpen {
   return {
     tid: sthis.nextId().str,
+    auth,
     type: "reqOpen",
     version: VERSION,
     conn: {
@@ -382,10 +396,10 @@ export function buildReqOpen(sthis: NextId, conn: ReqOpenConnection): ReqOpen {
   };
 }
 
-export function MsgIsReqOpenWithConn(imsg: MsgBase): imsg is MsgWithConn<ReqOpen> {
-  const msg = imsg as MsgWithConn<ReqOpen>;
-  return msg.type === "reqOpen" && !!msg.conn && !!msg.conn.reqId;
-}
+// export function MsgIsReqOpenWithConn(imsg: MsgBase): imsg is MsgWithConn<ReqOpen> {
+//   const msg = imsg as MsgWithConn<ReqOpen>;
+//   return msg.type === "reqOpen" && !!msg.conn && !!msg.conn.reqId;
+// }
 
 export function MsgIsReqOpen(imsg: MsgBase): imsg is MsgWithConn<ReqOpen> {
   const msg = imsg as MsgWithConn<ReqOpen>;
@@ -448,9 +462,10 @@ export function buildResClose(req: ReqClose, conn: QSId): ResClose {
   };
 }
 
-export function buildReqClose(sthis: NextId, conn: QSId): ReqClose {
+export function buildReqClose(sthis: NextId, auth: AuthType, conn: QSId): ReqClose {
   return {
     tid: sthis.nextId().str,
+    auth,
     type: "reqClose",
     version: VERSION,
     conn,
@@ -477,69 +492,18 @@ export interface UpdateReqRes<Q extends MsgBase, S extends MsgBase> {
 
 export type ReqRes<Q extends MsgBase, S extends MsgBase> = Readonly<UpdateReqRes<Q, S>>;
 
-// export interface ReqOptRes<Q extends MsgBase, S extends MsgBase> {
-//   readonly req: Q;
-//   readonly res?: S;
-// }
-
-// /* Signed URL */
-// export function buildReqSignedUrl(req: ReqSignedUrlParam): ReqSignedUrlParam {
-//   return {
-//     tid: req.tid,
-//     params: {
-//       // protocol: "wss",
-//       ...req.params,
-//     },
-//   };
-// }
-
-// export function MsgIsReqSignedUrl(msg: MsgBase): msg is ReqSignedUrl {
-//   return msg.type === "reqSignedUrl";
-// }
-
-// interface StoreAndType {
-//   readonly store: FPStoreTypes;
-//   readonly resType: string;
-// }
-// const reqToRes: Record<string, StoreAndType> = {
-//   reqGetData: { store: "data", resType: "resGetData" },
-//   reqPutData: { store: "data", resType: "resPutData" },
-//   reqDelData: { store: "data", resType: "resDelData" },
-//   reqGetWAL: { store: "wal", resType: "resGetWAL" },
-//   reqPutWAL: { store: "wal", resType: "resPutWAL" },
-//   reqDelWAL: { store: "wal", resType: "resDelWAL" },
-// };
-
-// export function getStoreFromType(req: MsgBase): StoreAndType {
-//   return (
-//     reqToRes[req.type] ||
-//     (() => {
-//       throw new Error(`unknown req.type=${req.type}`);
-//     })()
-//   );
-// }
-
-// export function buildResSignedUrl(req: ReqSignedUrl, signedUrl: string): ResSignedUrl {
-//   return {
-//     tid: req.tid,
-//     type: getStoreFromType(req).resType,
-//     version: VERSION,
-//     params: req.params,
-//     signedUrl,
-//   };
-// }
-
 export function buildErrorMsg(
-  slogger: SuperThisLogger,
+  msgCtx: { readonly logger: Logger; readonly sthis: SuperThis },
   base: Partial<MsgBase & { ref?: unknown }>,
   error: Error,
   body?: string,
   stack?: string[]
 ): ErrorMsg {
-  if (!stack && slogger.sthis.env.get("FP_STACK")) {
+  if (!stack && msgCtx.sthis.env.get("FP_STACK")) {
     stack = error.stack?.split("\n");
   }
   const msg = {
+    auth: base.auth || { type: "error" },
     src: base,
     type: "error",
     tid: base.tid || "internal",
@@ -548,11 +512,9 @@ export function buildErrorMsg(
     body,
     stack,
   } satisfies ErrorMsg;
-  slogger.logger.Any("ErrorMsg", msg);
+  msgCtx.logger.Any("ErrorMsg", msg);
   return msg;
 }
-
-// export type MsgWithTenantLedger<T extends MsgBase> = T & { readonly tenant: TenantLedger };
 
 export function MsgIsTenantLedger<T extends MsgBase>(msg: T): msg is MsgWithTenantLedger<T> {
   const t = (msg as MsgWithTenantLedger<T>).tenant;
@@ -603,21 +565,50 @@ export interface ResOptionalSignedUrl extends MsgWithTenantLedger<MsgWithConn> {
   readonly signedUrl?: string;
 }
 
-export interface SuperThisLogger {
+export interface MsgTypesCtx {
   readonly sthis: SuperThis;
   readonly logger: Logger;
+  // readonly auth: AuthFactory;
+}
+
+// export async function msgTypesCtxSync(msgCtx: MsgTypesCtx): Promise<MsgTypesCtxSync> {
+//   return {
+//     sthis: msgCtx.sthis,
+//     logger: msgCtx.logger,
+//     auth: await msgCtx.auth(),
+//   };
+// }
+
+export function authType(jwk: string): AuthType {
+  return {
+    type: "fp-cloud-jwk",
+    params: {
+      jwk,
+    },
+  } as FPCloudAuth;
+}
+
+export interface MsgTypesCtxSync {
+  readonly sthis: SuperThis;
+  readonly logger: Logger;
+  readonly auth: AuthType;
+}
+
+export function resAuth(msg: MsgBase): Promise<AuthType> {
+  return msg.auth ? Promise.resolve(msg.auth) : Promise.reject(new Error("No Auth"));
 }
 
 export async function buildRes<Q extends MsgWithTenantLedger<MsgWithConn<ReqSignedUrl>>, S extends ResSignedUrl>(
   method: SignedUrlParam["method"],
   store: FPStoreTypes,
   type: string,
-  slogger: SuperThisLogger,
+  msgCtx: MsgTypesCtx,
   req: Q,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<S>> {
   const psm = {
     type: "reqSignedUrl",
+    auth: await resAuth(req),
     version: req.version,
     params: {
       ...req.params,
@@ -628,9 +619,9 @@ export async function buildRes<Q extends MsgWithTenantLedger<MsgWithConn<ReqSign
     tenant: req.tenant,
     tid: req.tid,
   } satisfies PreSignedMsg;
-  const rSignedUrl = await ctx.calculatePreSignedUrl(slogger, psm);
+  const rSignedUrl = await ctx.calculatePreSignedUrl(msgCtx, psm);
   if (rSignedUrl.isErr()) {
-    return buildErrorMsg(slogger, req, rSignedUrl.Err());
+    return buildErrorMsg(msgCtx, req, rSignedUrl.Err());
   }
   return {
     ...req,

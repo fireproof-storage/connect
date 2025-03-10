@@ -50,6 +50,7 @@ export interface ConnectionInfo {
 export interface MsgDispatcherCtx extends ExposeCtxItemWithImpl<WSRoom> {
   readonly id: string;
   readonly impl: HonoServerImpl;
+  // readonly auth: AuthFactory;
   readonly ws: WSContextWithId<unknown>;
 }
 

@@ -11,6 +11,7 @@ import {
   GwCtx,
   MsgWithError,
   ResOptionalSignedUrl,
+  ReqOpen,
 } from "./msg-types.js";
 import {
   MsgIsResGetData,
@@ -32,7 +33,14 @@ import { applyStart, defaultMsgParams, MsgConnected, Msger } from "./msger.js";
 import { HonoServer } from "./hono-server.js";
 import { Hono } from "hono";
 import { calculatePreSignedUrl } from "./pre-signed-url.js";
-import { CFHonoServerFactory, httpStyle, NodeHonoServerFactory, resolveToml, wsStyle } from "./test-helper.js";
+import {
+  CFHonoServerFactory,
+  httpStyle,
+  mockGetAuthFactory,
+  NodeHonoServerFactory,
+  resolveToml,
+  wsStyle,
+} from "./test-helper.js";
 import {
   buildReqDelMeta,
   buildBindGetMeta,
@@ -45,6 +53,7 @@ import {
   MsgIsEventGetMeta,
   MsgIsResPutMeta,
 } from "./msg-type-meta.js";
+import { SessionTokenService } from "../sts-service/sts-service.js";
 
 async function refURL(sp: ResOptionalSignedUrl) {
   const { env } = await resolveToml("D1");
@@ -68,9 +77,14 @@ async function refURL(sp: ResOptionalSignedUrl) {
 describe("Connection", () => {
   const sthis = ensureSuperThis();
   const msgP = defaultMsgParams(sthis, { hasPersistent: true });
+  let pubEnvJWK: string;
+  // let privEnvJWK: string
 
   beforeAll(async () => {
     sthis.env.sets((await resolveToml("D1")).env as unknown as Record<string, string>);
+    const pair = await SessionTokenService.generateKeyPair();
+    pubEnvJWK = pair.strings.publicKey;
+    // privEnvJWK = await jwk2env(keyPair.privateKey, sthis);
   });
 
   describe.each([
@@ -80,17 +94,39 @@ describe("Connection", () => {
     CFHonoServerFactory("D1"),
   ])("$name - Connection", (honoServer) => {
     const port = +(process.env.FP_WRANGLER_PORT || 0) || 1024 + Math.floor(Math.random() * (65536 - 1024));
-    const qOpen = buildReqOpen(sthis, { reqId: "req-open-test" });
     const my = defaultGestalt(msgP, { id: "FP-Universal-Client" });
-    describe.each([
-      // force multiple lines
-      httpStyle(sthis, port, msgP, my),
-      wsStyle(sthis, port, msgP, my),
-    ])(`${honoServer.name} - $name`, (style) => {
+
+    const styles: (ReturnType<typeof wsStyle> | ReturnType<typeof httpStyle>)[] = [];
+    beforeAll(async () => {
+      const pair = await SessionTokenService.generateKeyPair();
+      const authFactory = await mockGetAuthFactory(
+        pair.strings.privateKey,
+        {
+          userId: "hello",
+          tenants: [],
+          ledgers: [],
+        },
+        sthis
+      );
+      styles.push(
+        ...[
+          // force multiple lines
+          httpStyle(sthis, authFactory, port, msgP, my),
+          wsStyle(sthis, authFactory, port, msgP, my),
+        ]
+      );
+    });
+
+    describe.each(styles)(`${honoServer.name} - $name`, (style) => {
+      const authFactory = style.authFactory;
       let server: HonoServer;
+      let qOpen: ReqOpen;
       beforeAll(async () => {
         const app = new Hono();
-        server = await honoServer.factory(sthis, msgP, style.remoteGestalt, port).then((srv) => srv.once(app, port));
+        qOpen = buildReqOpen(sthis, await authFactory(), { reqId: "req-open-test" });
+        server = await honoServer
+          .factory(sthis, msgP, style.remoteGestalt, port, pubEnvJWK)
+          .then((srv) => srv.once(app, port));
       });
       afterAll(async () => {
         // console.log("closing server");
@@ -111,7 +147,9 @@ describe("Connection", () => {
       describe(`connection`, () => {
         let c: MsgConnected;
         beforeEach(async () => {
-          const rC = await style.ok.open().then((r) => MsgConnected.connect(r, { reqId: "req-open-testx" }));
+          const rC = await style.ok
+            .open()
+            .then((r) => MsgConnected.connect(authFactory, r, { reqId: "req-open-testx" }));
           expect(rC.isOk()).toBeTruthy();
           c = rC.Ok();
           expect(c.conn).toEqual({
@@ -127,6 +165,7 @@ describe("Connection", () => {
           const r = await c.raw.request(
             {
               tid: "test",
+              auth: await authFactory(),
               type: "kaputt",
               version: "FP-MSG-1.0",
             },
@@ -150,7 +189,7 @@ describe("Connection", () => {
         });
         it("gestalt url http", async () => {
           const msgP = defaultMsgParams(sthis, {});
-          const req = buildReqGestalt(sthis, defaultGestalt(msgP, { id: "test" }));
+          const req = buildReqGestalt(sthis, await authFactory(), defaultGestalt(msgP, { id: "test" }));
           const r = await c.raw.request(req, { waitFor: MsgIsResGestalt });
           if (!MsgIsResGestalt(r)) {
             assert.fail("expected MsgError", JSON.stringify(r));
@@ -159,7 +198,7 @@ describe("Connection", () => {
         });
 
         it("openConnection", async () => {
-          const req = buildReqOpen(sthis, { ...c.conn });
+          const req = buildReqOpen(sthis, await authFactory(), { ...c.conn });
           const r = await c.raw.request(req, { waitFor: MsgIsResOpen });
           if (!MsgIsResOpen(r)) {
             assert.fail(JSON.stringify(r));
@@ -174,7 +213,7 @@ describe("Connection", () => {
       });
 
       it("open", async () => {
-        const rC = await Msger.connect(sthis, URI.from(`http://localhost:${port}/fp`), msgP, {
+        const rC = await Msger.connect(sthis, authFactory, URI.from(`http://localhost:${port}/fp`), msgP, {
           reqId: "req-open-testy",
         });
         expect(rC.isOk()).toBeTruthy();
@@ -194,7 +233,7 @@ describe("Connection", () => {
         let gwCtx: GwCtx;
         let conn: MsgConnected;
         beforeAll(async () => {
-          const rC = await Msger.connect(sthis, URI.from(`http://localhost:${port}/fp`), msgP, qOpen.conn);
+          const rC = await Msger.connect(sthis, authFactory, URI.from(`http://localhost:${port}/fp`), msgP, qOpen.conn);
           expect(rC.isOk()).toBeTruthy();
           conn = rC.Ok();
           gwCtx = {
@@ -209,7 +248,9 @@ describe("Connection", () => {
           await conn.close();
         });
         it("Open", async () => {
-          const res = await conn.raw.request(buildReqOpen(sthis, conn.conn), { waitFor: MsgIsResOpen });
+          const res = await conn.raw.request(buildReqOpen(sthis, await authFactory(), conn.conn), {
+            waitFor: MsgIsResOpen,
+          });
           if (!MsgIsResOpen(res)) {
             assert.fail("expected MsgResOpen", JSON.stringify(res));
           }
@@ -260,10 +301,11 @@ describe("Connection", () => {
           it("bind stop", async () => {
             const sp = sup();
             expect(conn.raw.activeBinds.size).toBe(0);
+            const auth = await authFactory();
             const streams: ReadableStream<MsgWithError<EventGetMeta>>[] = Array(5)
               .fill(0)
               .map(() => {
-                return conn.bind<EventGetMeta, BindGetMeta>(buildBindGetMeta(sthis, sp, gwCtx), {
+                return conn.bind<EventGetMeta, BindGetMeta>(buildBindGetMeta(sthis, auth, sp, gwCtx), {
                   waitFor: MsgIsEventGetMeta,
                 });
               });
@@ -289,7 +331,9 @@ describe("Connection", () => {
 
           it("Get", async () => {
             const sp = sup();
-            const res = await conn.request(buildBindGetMeta(sthis, sp, gwCtx), { waitFor: MsgIsEventGetMeta });
+            const res = await conn.request(buildBindGetMeta(sthis, await authFactory(), sp, gwCtx), {
+              waitFor: MsgIsEventGetMeta,
+            });
             if (MsgIsEventGetMeta(res)) {
               // expect(res.params).toEqual(sp);
               expect(URI.from(res.signedUrl).asObj()).toEqual(await refURL(res));
@@ -304,7 +348,9 @@ describe("Connection", () => {
               .map((data) => {
                 return { ...data, cid: sthis.timeOrderedNextId().str };
               });
-            const res = await conn.request(buildReqPutMeta(sthis, sp, metas, gwCtx), { waitFor: MsgIsResPutMeta });
+            const res = await conn.request(buildReqPutMeta(sthis, await authFactory(), sp, metas, gwCtx), {
+              waitFor: MsgIsResPutMeta,
+            });
             if (MsgIsResPutMeta(res)) {
               // expect(res.params).toEqual(sp);
               expect(URI.from(res.signedUrl).asObj()).toEqual(await refURL(res));
@@ -314,9 +360,12 @@ describe("Connection", () => {
           });
           it("Del", async () => {
             const sp = sup();
-            const res = await conn.request<ResDelMeta, ReqDelMeta>(buildReqDelMeta(sthis, sp, gwCtx), {
-              waitFor: MsgIsResDelMeta,
-            });
+            const res = await conn.request<ResDelMeta, ReqDelMeta>(
+              buildReqDelMeta(sthis, await authFactory(), sp, gwCtx),
+              {
+                waitFor: MsgIsResDelMeta,
+              }
+            );
             if (MsgIsResDelMeta(res)) {
               // expect(res.params).toEqual(sp);
               expect(URI.from(res.signedUrl).asObj()).toEqual(await refURL(res));

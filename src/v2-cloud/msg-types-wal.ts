@@ -11,7 +11,7 @@ import {
   MsgIsTenantLedger,
   MsgWithTenantLedger,
   MsgWithConn,
-  SuperThisLogger,
+  MsgTypesCtx,
 } from "./msg-types.js";
 import { CalculatePreSignedUrl } from "./msg-types-data.js";
 
@@ -37,11 +37,11 @@ export function MsgIsResGetWAL(msg: MsgBase): msg is ResGetWAL {
 }
 
 export function buildResGetWAL(
-  slogger: SuperThisLogger,
+  msgCtx: MsgTypesCtx,
   req: MsgWithTenantLedger<MsgWithConn<ReqGetWAL>>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResGetWAL>> {
-  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqGetWAL>>, ResGetWAL>("GET", "wal", "resGetWAL", slogger, req, ctx);
+  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqGetWAL>>, ResGetWAL>("GET", "wal", "resGetWAL", msgCtx, req, ctx);
 }
 
 export interface ReqPutWAL extends Omit<ReqSignedUrl, "type"> {
@@ -66,11 +66,11 @@ export function MsgIsResPutWAL(msg: MsgBase): msg is ResPutWAL {
 }
 
 export function buildResPutWAL(
-  slogger: SuperThisLogger,
+  msgCtx: MsgTypesCtx,
   req: MsgWithTenantLedger<MsgWithConn<ReqPutWAL>>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResPutWAL>> {
-  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqPutWAL>>, ResPutWAL>("PUT", "wal", "resPutWAL", slogger, req, ctx);
+  return buildRes<MsgWithTenantLedger<MsgWithConn<ReqPutWAL>>, ResPutWAL>("PUT", "wal", "resPutWAL", msgCtx, req, ctx);
 }
 
 export interface ReqDelWAL extends Omit<ReqSignedUrl, "type"> {
@@ -94,7 +94,7 @@ export function MsgIsResDelWAL(msg: MsgBase): msg is ResDelWAL {
 }
 
 export function buildResDelWAL(
-  slogger: SuperThisLogger,
+  msgCtx: MsgTypesCtx,
   req: MsgWithTenantLedger<MsgWithConn<ReqDelWAL>>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResDelWAL>> {
@@ -102,7 +102,7 @@ export function buildResDelWAL(
     "DELETE",
     "wal",
     "resDelWAL",
-    slogger,
+    msgCtx,
     req,
     ctx
   );

@@ -11,7 +11,7 @@ import {
   GwCtx,
   MsgIsTenantLedger,
   MsgWithConn,
-  SuperThisLogger,
+  MsgTypesCtx,
 } from "./msg-types.js";
 import { PreSignedMsg } from "./pre-signed-url.js";
 
@@ -37,15 +37,15 @@ export function MsgIsResGetData(msg: MsgBase): msg is ResGetData {
 }
 
 export interface CalculatePreSignedUrl {
-  calculatePreSignedUrl(ctx: SuperThisLogger, p: PreSignedMsg): Promise<Result<URI>>;
+  calculatePreSignedUrl(ctx: MsgTypesCtx, p: PreSignedMsg): Promise<Result<URI>>;
 }
 
 export function buildResGetData(
-  slogger: SuperThisLogger,
+  msgCtx: MsgTypesCtx,
   req: MsgWithConn<ReqGetData>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResGetData>> {
-  return buildRes<MsgWithConn<ReqGetData>, ResGetData>("GET", "data", "resGetData", slogger, req, ctx);
+  return buildRes<MsgWithConn<ReqGetData>, ResGetData>("GET", "data", "resGetData", msgCtx, req, ctx);
 }
 
 export interface ReqPutData extends ReqSignedUrl {
@@ -70,11 +70,11 @@ export function MsgIsResPutData(msg: MsgBase): msg is ResPutData {
 }
 
 export function buildResPutData(
-  slogger: SuperThisLogger,
+  msgCtx: MsgTypesCtx,
   req: MsgWithConn<ReqPutData>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResPutData>> {
-  return buildRes<MsgWithConn<ReqPutData>, ResPutData>("PUT", "data", "resPutData", slogger, req, ctx);
+  return buildRes<MsgWithConn<ReqPutData>, ResPutData>("PUT", "data", "resPutData", msgCtx, req, ctx);
 }
 
 export interface ReqDelData extends ReqSignedUrl {
@@ -98,9 +98,9 @@ export function MsgIsResDelData(msg: MsgBase): msg is ResDelData {
 }
 
 export function buildResDelData(
-  slogger: SuperThisLogger,
+  msgCtx: MsgTypesCtx,
   req: MsgWithConn<ReqDelData>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResDelData>> {
-  return buildRes<MsgWithConn<ReqDelData>, ResDelData>("DELETE", "data", "resDelData", slogger, req, ctx);
+  return buildRes<MsgWithConn<ReqDelData>, ResDelData>("DELETE", "data", "resDelData", msgCtx, req, ctx);
 }

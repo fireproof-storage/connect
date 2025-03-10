@@ -1,6 +1,7 @@
 import { SuperThis } from "@fireproof/core";
-import { MsgBase, ErrorMsg, buildErrorMsg, SuperThisLogger } from "./msg-types.js";
+import { MsgBase, ErrorMsg, buildErrorMsg } from "./msg-types.js";
 import { ExchangedGestalt, OnErrorFn, UnReg } from "./msger.js";
+import { Logger } from "@adviser/cement";
 
 export class MsgRawConnectionBase {
   readonly sthis: SuperThis;
@@ -18,13 +19,20 @@ export class MsgRawConnectionBase {
     return () => this.onErrorFns.delete(key);
   }
 
-  buildErrorMsg(slogger: SuperThisLogger, msg: Partial<MsgBase>, err: Error): ErrorMsg {
+  buildErrorMsg(
+    msgCtx: {
+      readonly logger: Logger;
+      readonly sthis: SuperThis;
+    },
+    msg: Partial<MsgBase>,
+    err: Error
+  ): ErrorMsg {
     // const logLine = this.sthis.logger.Error().Err(err).Any("msg", msg);
     const rmsg = Array.from(this.onErrorFns.values()).reduce((msg, fn) => {
       return fn(msg, err);
     }, msg);
-    const emsg = buildErrorMsg(slogger, rmsg, err);
-    slogger.logger.Error().Err(err).Any("msg", rmsg).Msg("connection error");
+    const emsg = buildErrorMsg(msgCtx, rmsg, err);
+    msgCtx.logger.Error().Err(err).Any("msg", rmsg).Msg("connection error");
     return emsg;
   }
 }

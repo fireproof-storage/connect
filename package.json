@@ -69,6 +69,7 @@
     "esbuild-plugin-replace": "^1.4.0",
     "esbuild-plugin-resolve": "^2.0.0",
     "eslint": "^9.22.0",
+    "jose": "^6.0.8",
     "netlify": "^13.3.3",
     "netlify-cli": "^19.0.0",
     "partyserver": "^0.0.65",

@@ -28,7 +28,6 @@ import {
   MsgIsReqOpen,
   buildErrorMsg,
   buildResOpen,
-  MsgIsReqOpenWithConn,
   MsgWithConn,
   ReqGestalt,
   // Gestalt,
@@ -68,7 +67,7 @@ export function buildMsgDispatcher(
       match: MsgIsReqOpen,
       isNotConn: true,
       fn: (ctx, msg) => {
-        if (!MsgIsReqOpenWithConn(msg)) {
+        if (!MsgIsReqOpen(msg)) {
           return buildErrorMsg(ctx, msg, new Error("missing connection"));
         }
         if (ctx.wsRoom.isConnected(msg)) {
