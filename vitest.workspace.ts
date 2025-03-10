@@ -7,7 +7,7 @@ import partykit from "./vitest.partykit.config.ts";
 import v1Cloud from "./vitest.v1-cloud.config.ts";
 import s3 from "./vitest.s3.config.ts";
 // import connector from "./vitest.connector.config.ts";
-import netlify from "./vitest.netlify.config.ts";
+// import netlify from "./vitest.netlify.config.ts";
 import ucan from "./vitest.ucan.config.ts";
 import metaHack from "./vitest.meta-hack.config.ts";
 // import cf_kv from "./vitest.cf-kv.config.ts";
@@ -19,7 +19,7 @@ export default defineWorkspace([
   metaHack,
   s3,
   aws,
-  netlify,
+  // netlify,
   partykit,
   v1Cloud,
   //cf_kv

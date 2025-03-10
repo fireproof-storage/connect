@@ -317,7 +317,9 @@ export async function isLoggedIn(params: {
 
 export async function login(params: { agent?: AgentWithStoreName; email: Principal<DidMailto> }) {
   const proxy = params.agent || (await agent());
-  const result = await W3.login({ agent: proxy.agent as unknown as Agent }, toEmail(params.email.did()));
+  // some kind of nasty
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await W3.login({ agent: proxy.agent as any }, toEmail(params.email.did()));
   if (result.error) throw result.error;
 
   const saved = await result.ok.save();
