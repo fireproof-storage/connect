@@ -58,7 +58,7 @@
     "@types/aws-lambda": "^8.10.147",
     "@types/better-sqlite3": "^7.6.12",
     "@types/eslint__js": "^9.14.0",
-    "@types/node": "^22.13.8",
+    "@types/node": "^22.13.10",
     "@types/wait-on": "^5.3.4",
     "@types/ws": "^8.18.0",
     "@typescript-eslint/typescript-estree": "^8.26.0",
