@@ -99,7 +99,7 @@
     "@aws-sdk/s3-request-presigner": "^3.758.0",
     "@cloudflare/vitest-pool-workers": "^0.7.7",
     "@cloudflare/workers-types": "^4.20250224.0",
-    "@fireproof/core": "0.20.0-dev-preview-50",
+    "@fireproof/core": "0.20.0-dev-preview-52",
     "@fireproof/vendor": "~2.0.0",
     "@ipld/dag-ucan": "^3.4.5",
     "@jspm/core": "^2.1.0",
