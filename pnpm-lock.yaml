@@ -69,8 +69,8 @@ importers:
         specifier: ^20.1.1
         version: 20.1.1
       '@web3-storage/capabilities':
-        specifier: ^18.0.1
-        version: 18.0.1
+        specifier: ^18.1.0
+        version: 18.1.0
       '@web3-storage/clock':
         specifier: ^0.4.1
         version: 0.4.1
@@ -1911,17 +1911,11 @@ packages:
     resolution: {integrity: sha512-mhzupWeRfxLljoULcagU++mOmQOriCBMKniUhsmrCXrtRV8voF7op/ymqix1f9uX1M5iB93YXcfxAVBwGWWKoA==}
     engines: {node: '>=16.15'}
 
-  '@web3-storage/capabilities@18.0.1':
-    resolution: {integrity: sha512-FLAUpuuFYkLrMkXy/W7iVNQdFlqGCZUrQr30L2C05SbQdpb/4tN6jqRG+l2nvAYTaYjWTYzsYLHGy2illsuNZQ==}
-
   '@web3-storage/capabilities@18.1.0':
     resolution: {integrity: sha512-jgZtymt2jJtER3SPsE0yoRSf1BzNo1hQIir6hfY3QlooxTwdETzPbF1rBs5El7BCCMHhQfB9hiLRniTIhnX4wA==}
 
   '@web3-storage/clock@0.4.1':
     resolution: {integrity: sha512-VHAyvbl7ZrNls6yltS5Djuwjz9Rw0rcA8tpv7qQp1WoheY00YBdqa8gjR1V4egVkqV1ZugGA06XH+ug0OhGXDg==}
-
-  '@web3-storage/data-segment@5.2.0':
-    resolution: {integrity: sha512-Jr/bdweoEQ0lWIaNuFcYxM6BHYmXHBWwfXygHyp370agkAdU+dIFIbm+tX+66XP/1YmEUi4JI2I80psDtoJ++Q==}
 
   '@web3-storage/data-segment@5.3.0':
     resolution: {integrity: sha512-zFJ4m+pEKqtKatJNsFrk/2lHeFSbkXZ6KKXjBe7/2ayA9wAar7T/unewnOcZrrZTnCWmaxKsXWqdMFy9bXK9dw==}
@@ -6299,7 +6293,7 @@ snapshots:
       '@ucanto/principal': 9.0.2
       '@ucanto/transport': 9.1.1
       '@ucanto/validator': 9.1.0
-      '@web3-storage/capabilities': 18.0.1
+      '@web3-storage/capabilities': 18.1.0
       '@web3-storage/did-mailto': 2.1.0
       bigint-mod-arith: 3.3.1
       conf: 11.0.2
@@ -6340,16 +6334,6 @@ snapshots:
       multiformats: 13.3.2
       uint8arrays: 5.1.0
 
-  '@web3-storage/capabilities@18.0.1':
-    dependencies:
-      '@ucanto/core': 10.3.1
-      '@ucanto/interface': 10.2.0
-      '@ucanto/principal': 9.0.2
-      '@ucanto/transport': 9.1.1
-      '@ucanto/validator': 9.1.0
-      '@web3-storage/data-segment': 5.2.0
-      uint8arrays: 5.1.0
-
   '@web3-storage/capabilities@18.1.0':
     dependencies:
       '@ucanto/core': 10.3.1
@@ -6374,12 +6358,6 @@ snapshots:
       hashlru: 2.3.0
       multiformats: 13.3.2
       p-retry: 6.2.0
-
-  '@web3-storage/data-segment@5.2.0':
-    dependencies:
-      '@ipld/dag-cbor': 9.2.2
-      multiformats: 13.3.2
-      sync-multihash-sha2: 1.0.0
 
   '@web3-storage/data-segment@5.3.0':
     dependencies:
@@ -6724,9 +6702,9 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  bundle-require@5.1.0(esbuild@0.25.0):
+  bundle-require@5.1.0(esbuild@0.25.1):
     dependencies:
-      esbuild: 0.25.0
+      esbuild: 0.25.1
       load-tsconfig: 0.2.5
 
   cac@6.7.14: {}
@@ -8872,12 +8850,12 @@ snapshots:
 
   tsup@8.4.0(postcss@8.5.1)(tsx@4.19.3)(typescript@5.7.3)(yaml@2.7.0):
     dependencies:
-      bundle-require: 5.1.0(esbuild@0.25.0)
+      bundle-require: 5.1.0(esbuild@0.25.1)
       cac: 6.7.14
       chokidar: 4.0.3
       consola: 3.4.0
       debug: 4.4.0
-      esbuild: 0.25.0
+      esbuild: 0.25.1
       joycon: 3.1.1
       picocolors: 1.1.1
       postcss-load-config: 6.0.1(postcss@8.5.1)(tsx@4.19.3)(yaml@2.7.0)
