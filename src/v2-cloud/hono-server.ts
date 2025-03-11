@@ -7,12 +7,12 @@ import {
   ErrorMsg,
   MsgWithError,
   buildRes,
-  MsgWithConn,
   GwCtx,
   MsgIsError,
   MsgTypesCtx,
   EnDeCoder,
   Gestalt,
+  MsgWithConnAuth,
 } from "./msg-types.js";
 import { MsgDispatcher, MsgDispatcherCtx, Promisable, WSConnection } from "./msg-dispatch.js";
 import { WSContext, WSContextInit, WSMessageReceive } from "hono/ws";
@@ -138,7 +138,7 @@ export abstract class HonoServerBase implements HonoServerImpl {
   //   return this._gs;
   // }
 
-  async handleReqPutMeta(ctx: MsgDispatcherCtx, msg: MsgWithConn<ReqPutMeta>): Promise<MsgWithError<ResPutMeta>> {
+  async handleReqPutMeta(ctx: MsgDispatcherCtx, msg: MsgWithConnAuth<ReqPutMeta>): Promise<MsgWithError<ResPutMeta>> {
     const rUrl = await buildRes("PUT", "meta", "resPutMeta", ctx, msg, this);
     if (MsgIsError(rUrl)) {
       return rUrl;
@@ -150,7 +150,7 @@ export abstract class HonoServerBase implements HonoServerImpl {
     return buildResPutMeta(ctx, msg, { ...rUrl, metas: await metaMerger(ctx).metaToSend(msg) });
   }
 
-  async handleReqDelMeta(ctx: MsgDispatcherCtx, msg: MsgWithConn<ReqDelMeta>): Promise<MsgWithError<ResDelMeta>> {
+  async handleReqDelMeta(ctx: MsgDispatcherCtx, msg: MsgWithConnAuth<ReqDelMeta>): Promise<MsgWithError<ResDelMeta>> {
     const rUrl = await buildRes("DELETE", "meta", "resDelMeta", ctx, msg, this);
     if (MsgIsError(rUrl)) {
       return rUrl;
@@ -163,7 +163,7 @@ export abstract class HonoServerBase implements HonoServerImpl {
 
   async handleBindGetMeta(
     ctx: MsgDispatcherCtx,
-    msg: MsgWithConn<BindGetMeta>,
+    msg: MsgWithConnAuth<BindGetMeta>,
     gwCtx: GwCtx = msg
   ): Promise<MsgWithError<EventGetMeta>> {
     const rMsg = await buildRes("GET", "meta", "eventGetMeta", ctx, msg, this);

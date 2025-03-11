@@ -17,7 +17,7 @@ import {
   Gestalt,
   MsgBase,
   MsgIsWithConn,
-  MsgWithConn,
+  MsgWithConnAuth,
   QSId,
   qsidEqual,
 } from "../msg-types.js";
@@ -185,7 +185,7 @@ class CFWSRoom implements WSRoom {
     // console.log("addConn", this.id, conn);
     return conn;
   }
-  isConnected(msg: MsgBase): msg is MsgWithConn<MsgBase> {
+  isConnected(msg: MsgBase): msg is MsgWithConnAuth<MsgBase> {
     if (!MsgIsWithConn(msg)) {
       return false;
     }

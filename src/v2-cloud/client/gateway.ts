@@ -1,5 +1,14 @@
 // import PartySocket, { PartySocketOptions } from "partysocket";
-import { Result, URI, KeyedResolvOnce, exception2Result, Logger, param } from "@adviser/cement";
+import {
+  Result,
+  URI,
+  KeyedResolvOnce,
+  exception2Result,
+  Logger,
+  param,
+  MatchResult,
+  ResolveOnce,
+} from "@adviser/cement";
 import { bs, ensureLogger, NotFoundError, SuperThis } from "@fireproof/core";
 import {
   buildErrorMsg,
@@ -11,10 +20,9 @@ import {
   ReqSignedUrl,
   MsgWithError,
   ResSignedUrl,
-  authType,
 } from "../msg-types.js";
 import { to_uint8 } from "../../coerce-binary.js";
-import { MsgConnected, Msger } from "../msger.js";
+import { MsgConnected, MsgConnectedAuth, Msger, authTypeFromUri } from "../msger.js";
 import {
   MsgIsResDelData,
   MsgIsResGetData,
@@ -27,9 +35,9 @@ import {
 const VERSION = "v0.1-fp-cloud";
 
 export interface StoreTypeGateway {
-  get(uri: URI, conn: Promise<Result<MsgConnected>>): Promise<Result<Uint8Array>>;
-  put(uri: URI, body: Uint8Array, conn: Promise<Result<MsgConnected>>): Promise<Result<void>>;
-  delete(uri: URI, conn: Promise<Result<MsgConnected>>): Promise<Result<void>>;
+  get(uri: URI, conn: Promise<Result<MsgConnectedAuth>>): Promise<Result<Uint8Array>>;
+  put(uri: URI, body: Uint8Array, conn: Promise<Result<MsgConnectedAuth>>): Promise<Result<void>>;
+  delete(uri: URI, conn: Promise<Result<MsgConnectedAuth>>): Promise<Result<void>>;
 }
 
 abstract class BaseGateway {
@@ -40,8 +48,8 @@ abstract class BaseGateway {
     this.logger = ensureLogger(sthis, module);
   }
 
-  abstract getConn(uri: URI, conn: MsgConnected): Promise<Result<Uint8Array>>;
-  async get(uri: URI, prConn: Promise<Result<MsgConnected>>): Promise<Result<Uint8Array>> {
+  abstract getConn(uri: URI, conn: MsgConnectedAuth): Promise<Result<Uint8Array>>;
+  async get(uri: URI, prConn: Promise<Result<MsgConnectedAuth>>): Promise<Result<Uint8Array>> {
     const rConn = await prConn;
     if (rConn.isErr()) {
       return this.logger.Error().Err(rConn).Msg("Error in getConn").ResultError();
@@ -51,8 +59,8 @@ abstract class BaseGateway {
     return this.getConn(uri, conn);
   }
 
-  abstract putConn(uri: URI, body: Uint8Array, conn: MsgConnected): Promise<Result<void>>;
-  async put(uri: URI, body: Uint8Array, prConn: Promise<Result<MsgConnected>>): Promise<Result<void>> {
+  abstract putConn(uri: URI, body: Uint8Array, conn: MsgConnectedAuth): Promise<Result<void>>;
+  async put(uri: URI, body: Uint8Array, prConn: Promise<Result<MsgConnectedAuth>>): Promise<Result<void>> {
     const rConn = await prConn;
     if (rConn.isErr()) {
       return this.logger.Error().Err(rConn).Msg("Error in putConn").ResultError();
@@ -62,8 +70,8 @@ abstract class BaseGateway {
     return this.putConn(uri, body, conn);
   }
 
-  abstract delConn(uri: URI, conn: MsgConnected): Promise<Result<void>>;
-  async delete(uri: URI, prConn: Promise<Result<MsgConnected>>): Promise<Result<void>> {
+  abstract delConn(uri: URI, conn: MsgConnectedAuth): Promise<Result<void>>;
+  async delete(uri: URI, prConn: Promise<Result<MsgConnectedAuth>>): Promise<Result<void>> {
     const rConn = await prConn;
     if (rConn.isErr()) {
       return this.logger.Error().Err(rConn).Msg("Error in deleteConn").ResultError();
@@ -91,7 +99,7 @@ abstract class BaseGateway {
     store: FPStoreTypes,
     waitForFn: (msg: MsgBase) => boolean,
     uri: URI,
-    conn: MsgConnected
+    conn: MsgConnectedAuth
   ): Promise<MsgWithError<S>> {
     const rParams = uri.getParamsResult({
       key: param.REQUIRED,
@@ -108,9 +116,13 @@ abstract class BaseGateway {
     if (store !== params.store) {
       return buildErrorMsg(this, {} as MsgBase, new Error("store mismatch"));
     }
+    const rAuth = await authTypeFromUri(this.logger, uri);
+    if (rAuth.isErr()) {
+      return buildErrorMsg(this, {} as MsgBase, rAuth.Err());
+    }
     const rsu = {
       tid: this.sthis.nextId().str,
-      auth: await conn.authFactory(),
+      auth: rAuth.Ok(),
       type,
       // conn: conn.conn,
       tenant: {
@@ -186,7 +198,7 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
   constructor(sthis: SuperThis) {
     super(sthis, "DataGateway");
   }
-  async getConn(uri: URI, conn: MsgConnected): Promise<Result<Uint8Array>> {
+  async getConn(uri: URI, conn: MsgConnectedAuth): Promise<Result<Uint8Array>> {
     // type: string, method: HttpMethods, store: FPStoreTypes, waitForFn:
     const rResSignedUrl = await this.getReqSignedUrl<ResGetData>(
       "reqGetData",
@@ -202,7 +214,7 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
     const { signedUrl: downloadUrl } = rResSignedUrl;
     return this.getObject(uri, downloadUrl);
   }
-  async putConn(uri: URI, body: Uint8Array, conn: MsgConnected): Promise<Result<void>> {
+  async putConn(uri: URI, body: Uint8Array, conn: MsgConnectedAuth): Promise<Result<void>> {
     const rResSignedUrl = await this.getReqSignedUrl<ResPutData>(
       "reqPutData",
       "PUT",
@@ -217,7 +229,7 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
     const { signedUrl: uploadUrl } = rResSignedUrl;
     return this.putObject(uri, uploadUrl, body);
   }
-  async delConn(uri: URI, conn: MsgConnected): Promise<Result<void>> {
+  async delConn(uri: URI, conn: MsgConnectedAuth): Promise<Result<void>> {
     const rResSignedUrl = await this.getReqSignedUrl<ResDelData>(
       "reqDelData",
       "DELETE",
@@ -240,7 +252,7 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getConn(uri: URI, conn: MsgConnected): Promise<Result<Uint8Array>> {
+  async getConn(uri: URI, conn: MsgConnectedAuth): Promise<Result<Uint8Array>> {
     // const rkey = uri.getParamResult("key");
     // if (rkey.isErr()) {
     //   return Result.Err(rkey.Err());
@@ -268,7 +280,7 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
     return Result.Ok(new Uint8Array());
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async putConn(uri: URI, body: Uint8Array, conn: MsgConnected): Promise<Result<void>> {
+  async putConn(uri: URI, body: Uint8Array, conn: MsgConnectedAuth): Promise<Result<void>> {
     // const bodyRes = Result.Ok(body); // await bs.addCryptoKeyToGatewayMetaPayload(uri, this.sthis, body);
     // if (bodyRes.isErr()) {
     //   return this.logger.Error().Err(bodyRes).Msg("Error in addCryptoKeyToGatewayMetaPayload").ResultError();
@@ -291,7 +303,7 @@ class MetaGateway extends BaseGateway implements StoreTypeGateway {
     return Result.Ok(undefined);
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async delConn(uri: URI, conn: MsgConnected): Promise<Result<void>> {
+  async delConn(uri: URI, conn: MsgConnectedAuth): Promise<Result<void>> {
     // const rsu = this.prepareReqSignedUrl(uri, "DELETE", conn.key);
     // if (rsu.isErr()) {
     //   return Result.Err(rsu.Err());
@@ -376,6 +388,12 @@ function getStoreTypeGateway(sthis: SuperThis, uri: URI): StoreTypeGateway {
   }
 }
 
+interface ConnectionItem {
+  readonly uri: URI;
+  readonly matchRes: MatchResult;
+  readonly connection: ResolveOnce<Result<MsgConnected>>;
+  readonly trackPuts: Set<string>;
+}
 // const keyedConnections = new KeyedResolvOnce<Connection>();
 interface Subscription {
   readonly sid: string;
@@ -383,12 +401,17 @@ interface Subscription {
   readonly callback: (msg: Uint8Array) => void;
   readonly unsub: () => void;
 }
+function connectionURI(uri: URI): URI {
+  return uri.build().delParam("authJWK").URI();
+}
+
+
 const subscriptions = new Map<string, Subscription[]>();
 // const doServerSubscribe = new KeyedResolvOnce();
-const trackPuts = new Set<string>();
 export class FireproofCloudGateway implements bs.Gateway {
   readonly logger: Logger;
   readonly sthis: SuperThis;
+  readonly #connectionURIs = new Map< string, ConnectionItem >();
 
   constructor(sthis: SuperThis) {
     this.sthis = sthis;
@@ -409,26 +432,36 @@ export class FireproofCloudGateway implements bs.Gateway {
       return this.logger.Error().Err(rName).Msg("name not found").ResultError();
     }
     ret.defParam("protocol", "wss");
-    return Result.Ok(ret.URI());
+    const retURI = ret.URI();
+    const matchURI = connectionURI(retURI);
+    this.#connectionURIs.set(matchURI.toString(), {
+      uri: matchURI,
+      matchRes: matchURI.match(uri),
+      connection: new ResolveOnce<Result<MsgConnected>>(),
+      trackPuts: new Set<string>(),
+    });
+    return Result.Ok(retURI);
   }
 
-  async get(uri: URI): Promise<bs.GetResult> {
-    return getStoreTypeGateway(this.sthis, uri).get(uri, this.getCloudConnection(uri));
+  async get(uri: URI, sthis: SuperThis): Promise<bs.GetResult> {
+    return getStoreTypeGateway(sthis, uri).get(uri, this.getCloudConnection(uri));
   }
 
-  async put(uri: URI, body: Uint8Array): Promise<Result<void>> {
-    const ret = await getStoreTypeGateway(this.sthis, uri).put(uri, body, this.getCloudConnection(uri));
+  async put(uri: URI, body: Uint8Array, sthis: SuperThis): Promise<Result<void>> {
+    const item = await this.getCloudConnectionItem(uri);
+    const ret = await getStoreTypeGateway(sthis, uri).put(uri, body, Promise.resolve(item.conn));
     if (ret.isOk()) {
       if (uri.getParam("testMode")) {
-        trackPuts.add(uri.toString());
+        item.citem.trackPuts.add(uri.toString());
       }
     }
     return ret;
   }
 
-  async delete(uri: URI): Promise<bs.VoidResult> {
-    trackPuts.delete(uri.toString());
-    return getStoreTypeGateway(this.sthis, uri).delete(uri, this.getCloudConnection(uri));
+  async delete(uri: URI, sthis: SuperThis): Promise<bs.VoidResult> {
+    const item = await this.getCloudConnectionItem(uri);
+    item.citem.trackPuts.delete(uri.toString());
+    return getStoreTypeGateway(sthis, uri).delete(uri, this.getCloudConnection(uri));
   }
 
   async close(uri: URI): Promise<bs.VoidResult> {
@@ -446,51 +479,69 @@ export class FireproofCloudGateway implements bs.Gateway {
       return this.logger.Error().Err(rConn).Msg("Error in getCloudConnection").ResultError();
     }
     const conn = rConn.Ok();
-    await conn.close();
+    const rAuth = await conn.msgConnAuth();
+    await conn.close(rAuth.Ok());
+    this.#connectionURIs.delete(connectionURI(uri).toString());
     return Result.Ok(undefined);
   }
 
   // fireproof://localhost:1999/?name=test-public-api&protocol=ws&store=meta
-  async getCloudConnection(uri: URI): Promise<Result<MsgConnected>> {
-    const rParams = uri.getParamsResult({
-      name: param.REQUIRED,
-      protocol: "https",
-      store: param.REQUIRED,
-      storekey: param.OPTIONAL,
-      tenant: param.REQUIRED,
+  async getCloudConnection(uri: URI): Promise<Result<MsgConnectedAuth>> {
+    return this.getCloudConnectionItem(uri).then((r) => {
+      return r.conn;
     });
-    if (rParams.isErr()) {
-      return this.logger.Error().Url(uri).Err(rParams).Msg("getCloudConnection:err").ResultError();
+  }
+  async getCloudConnectionItem(uri: URI): Promise<{ conn: Result<MsgConnectedAuth>; citem: ConnectionItem }> {
+    const matchURI = connectionURI(uri);
+    const rConn = this.#connectionURIs.get(matchURI.toString());
+    if (!rConn) {
+      return { conn: this.logger.Error().Url(uri).Msg("No connection found").ResultError(), citem: {} as ConnectionItem };
     }
-    const params = rParams.Ok();
-    // let tenant: string;
-    // if (params.tenant) {
-    //   tenant = params.tenant;
-    // } else {
-    //   if (!params.storekey) {
-    //     return this.logger.Error().Url(uri).Msg("no tendant or storekey given").ResultError();
-    //   }
-    //   const dataKey = params.storekey.replace(/:(meta|wal)@$/, `:data@`);
-    //   const kb = await rt.kb.getKeyBag(this.sthis);
-    //   const rfingerprint = await kb.getNamedKey(dataKey);
-    //   if (rfingerprint.isErr()) {
-    //     return this.logger.Error().Err(rfingerprint).Msg("Error in getNamedKey").ResultError();
-    //   }
-    //   tenant = rfingerprint.Ok().fingerPrint;
-    // }
+    const conn = await rConn.connection.once(async () => {
+      const rParams = uri.getParamsResult({
+        name: param.REQUIRED,
+        protocol: "https",
+        store: param.REQUIRED,
+        storekey: param.OPTIONAL,
+        tenant: param.REQUIRED,
+      });
+      if (rParams.isErr()) {
+        return this.logger.Error().Url(uri).Err(rParams).Msg("getCloudConnection:err").ResultError<MsgConnected>();
+      }
+      const params = rParams.Ok();
+      // let tenant: string;
+      // if (params.tenant) {
+      //   tenant = params.tenant;
+      // } else {
+      //   if (!params.storekey) {
+      //     return this.logger.Error().Url(uri).Msg("no tendant or storekey given").ResultError();
+      //   }
+      //   const dataKey = params.storekey.replace(/:(meta|wal)@$/, `:data@`);
+      //   const kb = await rt.kb.getKeyBag(this.sthis);
+      //   const rfingerprint = await kb.getNamedKey(dataKey);
+      //   if (rfingerprint.isErr()) {
+      //     return this.logger.Error().Err(rfingerprint).Msg("Error in getNamedKey").ResultError();
+      //   }
+      //   tenant = rfingerprint.Ok().fingerPrint;
+      // }
 
-    const authJWK = uri.getParamResult("authJWK");
-    if (authJWK.isErr()) {
-      return this.logger.Error().Err(authJWK).Msg("Missing URI authJWK").ResultError();
+      const rAuth = await authTypeFromUri(this.logger, uri);
+      if (rAuth.isErr()) {
+        return Result.Err<MsgConnected>(rAuth);
+      }
+
+      const qOpen = buildReqOpen(this.sthis, rAuth.Ok(), {});
+
+      let cUrl = uri.build().protocol(params.protocol).cleanParams().URI();
+      if (cUrl.pathname === "/") {
+        cUrl = cUrl.build().pathname("/fp").URI();
+      }
+      return Msger.connect(this.sthis, cUrl, qOpen);
+    });
+    if (conn.isErr()) {
+      return { conn: Result.Err(conn), citem: rConn };
     }
-
-    const qOpen = buildReqOpen(this.sthis, authType(authJWK.Ok()), {});
-
-    let cUrl = uri.build().protocol(params.protocol).cleanParams().URI();
-    if (cUrl.pathname === "/") {
-      cUrl = cUrl.build().pathname("/fp").URI();
-    }
-    return Msger.connect(this.sthis, cUrl, qOpen);
+    return { conn: Result.Ok(conn.Ok().attachAuth(() => authTypeFromUri(this.logger, uri))), citem: rConn };
     //  keyedConnections.get(keyTenantLedger(qOpen.conn.key)).once(async () => Msger.open(this.sthis, cUrl, qOpen));
   }
 
@@ -566,8 +617,9 @@ export class FireproofCloudGateway implements bs.Gateway {
     // return Result.Ok(unsub);
   }
 
-  async destroy(_uri: URI): Promise<Result<void>> {
-    await Promise.all(Array.from(trackPuts).map(async (k) => this.delete(URI.from(k))));
+  async destroy(uri: URI, sthis: SuperThis): Promise<Result<void>> {
+    const item = await this.getCloudConnectionItem(uri);
+    await Promise.all(Array.from(item.citem.trackPuts).map(async (k) => this.delete(URI.from(k), sthis)));
     return Result.Ok(undefined);
   }
 

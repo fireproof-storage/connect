@@ -19,7 +19,7 @@ import {
   MsgBase,
   MsgerParams,
   MsgIsWithConn,
-  MsgWithConn,
+  MsgWithConnAuth,
   QSId,
   qsidKey,
 } from "./msg-types.js";
@@ -68,7 +68,7 @@ class NodeWSRoom implements WSRoom {
     return ci.conn;
   }
 
-  isConnected(msg: MsgBase): msg is MsgWithConn<MsgBase> {
+  isConnected(msg: MsgBase): msg is MsgWithConnAuth<MsgBase> {
     if (!MsgIsWithConn(msg)) {
       return false;
     }

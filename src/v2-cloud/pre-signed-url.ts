@@ -1,8 +1,8 @@
 import { Result, URI } from "@adviser/cement";
 import { AwsClient } from "aws4fetch";
-import { MsgWithConn, MsgWithTenantLedger, SignedUrlParam } from "./msg-types.js";
+import { MsgWithConnAuth, MsgWithTenantLedger, SignedUrlParam } from "./msg-types.js";
 
-export interface PreSignedMsg extends MsgWithTenantLedger<MsgWithConn> {
+export interface PreSignedMsg extends MsgWithTenantLedger<MsgWithConnAuth> {
   readonly params: SignedUrlParam;
 }
 

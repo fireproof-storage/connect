@@ -1,4 +1,4 @@
-import { Future, Result, URI } from "@adviser/cement";
+import { BuildURI, CoerceURI, Future, Result, URI } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core";
 import { $, fs, sleep } from "zx";
 import { HttpConnection } from "./http-connection.js";
@@ -10,9 +10,8 @@ import {
   MsgIsResGestalt,
   MsgIsError,
   MsgBase,
-  AuthFactory,
 } from "./msg-types.js";
-import { defaultMsgParams, applyStart, Msger, MsgerParamsWithEnDe, MsgRawConnection } from "./msger.js";
+import { defaultMsgParams, applyStart, Msger, MsgerParamsWithEnDe, MsgRawConnection, authTypeFromUri } from "./msger.js";
 import { WSConnection } from "./ws-connection.js";
 import * as toml from "smol-toml";
 import { Env } from "./backend/env.js";
@@ -20,11 +19,34 @@ import { HonoServer } from "./hono-server.js";
 import { NodeHonoFactory } from "./node-hono-server.js";
 import { CFHonoFactory } from "./backend/cf-hono-server.js";
 import { BetterSQLDatabase } from "./meta-merger/bettersql-abstract-sql.js";
-import { envKeyDefaults, SessionTokenService, TokenForParam } from "../sts-service/sts-service.js";
+import { envKeyDefaults, KeysResult, SessionTokenService, TokenForParam } from "../sts-service/sts-service.js";
+
+export interface MockJWK {
+  keys: KeysResult;
+  applyAuthToURI: (uri: CoerceURI) => URI;
+}
+export async function mockJWK(claim: Partial<TokenForParam> = {}): Promise<MockJWK> {
+  const keys = await SessionTokenService.generateKeyPair()
+
+  const sts = await SessionTokenService.create({
+    token: keys.strings.privateKey
+  })
+  const jwk = await sts.tokenFor({
+    userId: "hello",
+    tenants: [],
+    ledgers: [],
+    ...claim
+  })
+
+  return {
+    keys,
+    applyAuthToURI: (uri: CoerceURI) => BuildURI.from(uri).setParam("authJWK", jwk).URI()
+  }
+}
 
 export function httpStyle(
   sthis: SuperThis,
-  authFactory: AuthFactory,
+  applyAuthToURI: (uri: CoerceURI) => URI,
   port: number,
   msgP: MsgerParamsWithEnDe,
   my: Gestalt
@@ -36,7 +58,6 @@ export function httpStyle(
   return {
     name: "HTTP",
     remoteGestalt: remote,
-    authFactory,
     cInstance: HttpConnection,
     ok: {
       url: () => URI.from(`http://127.0.0.1:${port}/fp`),
@@ -44,7 +65,6 @@ export function httpStyle(
         applyStart(
           Msger.openHttp(
             sthis,
-            authFactory,
             [URI.from(`http://localhost:${port}/fp`)],
             {
               ...msgP,
@@ -60,7 +80,6 @@ export function httpStyle(
       open: async (): Promise<Result<MsgRawConnection<MsgBase>>> => {
         const ret = await Msger.openHttp(
           sthis,
-          authFactory,
           [URI.from(`http://localhost:${port - 1}/fp`)],
           {
             ...msgP,
@@ -72,10 +91,12 @@ export function httpStyle(
         if (ret.isErr()) {
           return ret;
         }
+
+        const rAuth = await authTypeFromUri(sthis.logger, applyAuthToURI(`http://localhost:${port - 1}/fp`));
         // should fail
         const res = await ret
           .Ok()
-          .request(buildReqGestalt(sthis, await authFactory(), my), { waitFor: MsgIsResGestalt });
+          .request(buildReqGestalt(sthis, rAuth.Ok(), my), { waitFor: MsgIsResGestalt });
         if (MsgIsError(res)) {
           return Result.Err(res.message);
         }
@@ -87,7 +108,6 @@ export function httpStyle(
       open: async (): Promise<Result<MsgRawConnection<MsgBase>>> => {
         const ret = await Msger.openHttp(
           sthis,
-          authFactory,
           [URI.from(`http://4.7.1.1:${port}/fp`)],
           {
             ...msgP,
@@ -97,9 +117,10 @@ export function httpStyle(
           exGt
         );
         // should fail
+        const rAuth = await authTypeFromUri(sthis.logger, applyAuthToURI(`http://4.7.1.1:${port}/fp`));
         const res = await ret
           .Ok()
-          .request(buildReqGestalt(sthis, await authFactory(), my), { waitFor: MsgIsResGestalt });
+          .request(buildReqGestalt(sthis, rAuth.Ok(), my), { waitFor: MsgIsResGestalt });
         if (MsgIsError(res)) {
           return Result.Err(res.message);
         }
@@ -111,7 +132,7 @@ export function httpStyle(
 
 export function wsStyle(
   sthis: SuperThis,
-  authFactory: AuthFactory,
+  applyAuthToURI: (uri: CoerceURI) => URI,
   port: number,
   msgP: MsgerParamsWithEnDe,
   my: Gestalt
@@ -123,7 +144,6 @@ export function wsStyle(
   return {
     name: "WS",
     remoteGestalt: remote,
-    authFactory,
     cInstance: WSConnection,
     ok: {
       url: () => URI.from(`http://127.0.0.1:${port}/ws`),
@@ -131,8 +151,7 @@ export function wsStyle(
         applyStart(
           Msger.openWS(
             sthis,
-            authFactory,
-            URI.from(`http://localhost:${port}/ws`),
+            applyAuthToURI(URI.from(`http://localhost:${port}/ws`)),
             {
               ...msgP,
               // protocol: "ws",
@@ -147,8 +166,7 @@ export function wsStyle(
       open: () =>
         Msger.openWS(
           sthis,
-          authFactory,
-          URI.from(`http://localhost:${port - 1}/ws`),
+          applyAuthToURI(URI.from(`http://localhost:${port - 1}/ws`)),
           {
             ...msgP,
             // protocol: "ws",
@@ -162,8 +180,7 @@ export function wsStyle(
       open: () =>
         Msger.openWS(
           sthis,
-          authFactory,
-          URI.from(`http://4.7.1.1:${port - 1}/ws`),
+          applyAuthToURI(URI.from(`http://4.7.1.1:${port - 1}/ws`)),
           {
             ...msgP,
             // protocol: "ws",
@@ -255,27 +272,27 @@ export function CFHonoServerFactory(backend: "D1" | "DO") {
   };
 }
 
-export async function mockGetAuthFactory(pk: string, factoryTp: TokenForParam, sthis: SuperThis): Promise<AuthFactory> {
-  const sts = await SessionTokenService.create(
-    {
-      token: pk,
-    },
-    sthis
-  );
+// export async function mockGetAuthFactory(pk: string, factoryTp: TokenForParam, sthis: SuperThis): Promise<AuthFactory> {
+//   const sts = await SessionTokenService.create(
+//     {
+//       token: pk,
+//     },
+//     sthis
+//   );
 
-  return async (tp: Partial<TokenForParam> = {}) => {
-    const token = await sts.tokenFor({
-      ...factoryTp,
-      ...tp,
-      userId: tp.userId || factoryTp.userId,
-      tenants: tp.tenants || factoryTp.tenants,
-      ledgers: tp.ledgers || factoryTp.ledgers,
-    });
-    return {
-      type: "fp-cloud-jwk",
-      params: {
-        jwk: token,
-      },
-    };
-  };
-}
+//   return async (tp: Partial<TokenForParam> = {}) => {
+//     const token = await sts.tokenFor({
+//       ...factoryTp,
+//       ...tp,
+//       userId: tp.userId || factoryTp.userId,
+//       tenants: tp.tenants || factoryTp.tenants,
+//       ledgers: tp.ledgers || factoryTp.ledgers,
+//     });
+//     return {
+//       type: "fp-cloud-jwk",
+//       params: {
+//         jwk: token,
+//       },
+//     };
+//   };
+// }

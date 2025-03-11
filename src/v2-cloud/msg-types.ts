@@ -1,4 +1,4 @@
-import { Future, Logger } from "@adviser/cement";
+import { Future, Logger, Result } from "@adviser/cement";
 import { SuperThis } from "@fireproof/core";
 import { CalculatePreSignedUrl } from "./msg-types-data.js";
 import { PreSignedMsg } from "./pre-signed-url.js";
@@ -36,7 +36,7 @@ export interface NextId {
 }
 
 export interface AuthType {
-  readonly type: "ucan" | "error" | "fp-cloud-jwk";
+  readonly type: "ucan" | "error" | "fp-cloud-jwk" | "fp-cloud";
 }
 
 export interface UCanAuth extends AuthType {
@@ -45,14 +45,19 @@ export interface UCanAuth extends AuthType {
     readonly tbd: string;
   };
 }
-export interface FPCloudAuth extends AuthType {
+export interface FPJWKCloudAuthType extends AuthType {
   readonly type: "fp-cloud-jwk";
   readonly params: {
     readonly jwk: string;
   };
 }
 
-export type AuthFactory = (tp?: Partial<TokenForParam>) => Promise<AuthType>;
+export interface FPCloudAuthType extends AuthType {
+  readonly type: "fp-cloud";
+  readonly params: TokenForParam;
+}
+
+export type AuthFactory = (tp?: Partial<TokenForParam>) => Promise<Result<AuthType>>;
 
 export interface TenantLedger {
   readonly tenant: string;
@@ -95,9 +100,13 @@ export function MsgIsTid(msg: MsgBase, tid: string): boolean {
   return msg.tid === tid;
 }
 
-export type MsgWithConn<T extends MsgBase = MsgBase> = T & { readonly conn: QSId };
+type MsgWithConn<T extends MsgBase = MsgBase> = T & { readonly conn: QSId };
 
-export type MsgWithOptionalConn<T extends MsgBase = MsgBase> = T & { readonly conn?: QSId };
+export type MsgWithConnAuth<T extends MsgBase = MsgBase> = MsgWithConn<T> & { readonly auth: AuthType };
+
+type MsgWithOptionalConn<T extends MsgBase = MsgBase> = T & { readonly conn?: QSId };
+
+export type MsgWithOptionalConnAuth<T extends MsgBase = MsgBase> = MsgWithOptionalConn<T> & { readonly auth: AuthType };
 
 export type MsgWithTenantLedger<T extends MsgBase> = T & { readonly tenant: TenantLedger };
 
@@ -579,14 +588,7 @@ export interface MsgTypesCtx {
 //   };
 // }
 
-export function authType(jwk: string): AuthType {
-  return {
-    type: "fp-cloud-jwk",
-    params: {
-      jwk,
-    },
-  } as FPCloudAuth;
-}
+
 
 export interface MsgTypesCtxSync {
   readonly sthis: SuperThis;

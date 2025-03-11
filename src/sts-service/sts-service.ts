@@ -42,6 +42,11 @@ export const envKeyDefaults = {
   PUBLIC: "CLOUD_SESSION_TOKEN_PUBLIC",
 };
 
+export interface KeysResult {
+  readonly material: CryptoKeyPair;
+  readonly strings: { readonly publicKey: string; readonly privateKey: string };
+}
+
 export class SessionTokenService {
   readonly #key: CryptoKey;
   readonly #param: SessionTokenServiceParam;
@@ -49,7 +54,7 @@ export class SessionTokenService {
   static async generateKeyPair(
     alg = "ES256",
     options: GenerateKeyPairOptions = { extractable: true }
-  ): Promise<{ material: CryptoKeyPair; strings: { publicKey: string; privateKey: string } }> {
+  ): Promise<KeysResult> {
     const material = await generateKeyPair(alg, options);
     return {
       material,
@@ -60,7 +65,7 @@ export class SessionTokenService {
     };
   }
 
-  static async createFromEnv(sp: SessionTokenServiceFromEnvParam, sthis: SuperThis = ensureSuperThis()) {
+  static async createFromEnv(sp: SessionTokenServiceFromEnvParam = {}, sthis: SuperThis = ensureSuperThis()) {
     let envToken = sthis.env.get(sp.privateEnvKey ?? envKeyDefaults.SECRET);
     if (!envToken) {
       envToken = sthis.env.get(sp.publicEnvKey ?? envKeyDefaults.PUBLIC);

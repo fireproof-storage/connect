@@ -1,4 +1,4 @@
-import { BuildURI, CoerceURI, Result, runtimeFn, URI } from "@adviser/cement";
+import { BuildURI, CoerceURI, Logger, Result, runtimeFn, URI } from "@adviser/cement";
 import {
   buildReqGestalt,
   defaultGestalt,
@@ -10,22 +10,25 @@ import {
   RequestOpts,
   ResGestalt,
   MsgWithError,
-  MsgWithConn,
+  MsgWithConnAuth,
   buildReqOpen,
   MsgIsConnected,
   MsgIsError,
   MsgIsResOpen,
-  MsgWithOptionalConn,
+  MsgWithOptionalConnAuth,
   QSId,
   MsgIsTid,
   ReqGestalt,
   buildReqClose,
   MsgIsResClose,
   AuthFactory,
+  FPCloudAuthType,
+  AuthType,
 } from "./msg-types.js";
 import { SuperThis } from "@fireproof/core";
 import { HttpConnection } from "./http-connection.js";
 import { WSConnection } from "./ws-connection.js";
+import { SessionTokenService } from "../sts-service/sts-service.js";
 
 // const headers = {
 //     "Content-Type": "application/json",
@@ -79,7 +82,7 @@ export interface MsgRawConnection<T extends MsgBase = MsgBase> {
   request<S extends T, Q extends T>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>>;
   send<S extends T, Q extends T>(msg: Q): Promise<MsgWithError<S>>;
   start(): Promise<Result<void>>;
-  close(): Promise<Result<void>>;
+  close(o: T): Promise<Result<void>>;
   onMsg(msg: OnMsgFn<T>): UnReg;
 }
 
@@ -119,9 +122,29 @@ export async function applyStart(prC: Promise<Result<MsgRawConnection>>): Promis
   return rC;
 }
 
-export class MsgConnected implements MsgRawConnection<MsgWithConn> {
+export async function authTypeFromUri(logger: Logger, curi: CoerceURI): Promise<Result<FPCloudAuthType>> {
+  const uri = URI.from(curi);
+  const authJWK = uri.getParam("authJWK");
+  if (!authJWK) {
+    return logger.Error().Url(uri).Msg("authJWK is required").ResultError();
+  }
+  const sts = await SessionTokenService.createFromEnv()
+  const fpc = await sts.validate(authJWK)
+  if (fpc.isErr()) {
+    return logger.Error().Err(fpc).Msg("Invalid authJWK").ResultError();
+  } 
+  return Result.Ok({
+    type: "fp-cloud",
+    params: {
+      ...fpc.Ok().payload,
+      jwk: authJWK,
+    },
+  } satisfies FPCloudAuthType)
+}
+
+export class MsgConnected {
   static async connect(
-    authFactory: AuthFactory,
+    uri: CoerceURI,
     mrc: Result<MsgRawConnection> | MsgRawConnection,
     conn: Partial<QSId> = {}
   ): Promise<Result<MsgConnected>> {
@@ -131,31 +154,57 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
       }
       mrc = mrc.Ok();
     }
-    const res = await mrc.request(buildReqOpen(mrc.sthis, await authFactory(), conn), { waitFor: MsgIsResOpen });
+    const rAuthType = await authTypeFromUri(mrc.sthis.logger, uri);
+    if (rAuthType.isErr()) {
+      return Result.Err(rAuthType)
+    }
+    const res = await mrc.request(buildReqOpen(mrc.sthis, rAuthType.Ok(), conn), { waitFor: MsgIsResOpen });
     if (MsgIsError(res) || !MsgIsResOpen(res)) {
       return mrc.sthis.logger.Error().Err(res).Msg("unexpected response").ResultError();
     }
-    return Result.Ok(new MsgConnected(mrc, authFactory, res.conn));
+    return Result.Ok(new MsgConnected(mrc, res.conn));
   }
 
   readonly sthis: SuperThis;
   readonly conn: QSId;
   readonly raw: MsgRawConnection;
   readonly exchangedGestalt: ExchangedGestalt;
-  readonly activeBinds: Map<string, ActiveStream<MsgWithConn, MsgBase>>;
+  readonly activeBinds: Map<string, ActiveStream<MsgWithConnAuth, MsgBase>>;
   readonly id: string;
-  readonly authFactory: AuthFactory;
-  private constructor(raw: MsgRawConnection, auth: AuthFactory, conn: QSId) {
+  private constructor(raw: MsgRawConnection, conn: QSId) {
     this.sthis = raw.sthis;
     this.raw = raw;
     this.exchangedGestalt = raw.exchangedGestalt;
     this.conn = conn;
-    this.authFactory = auth;
     this.activeBinds = raw.activeBinds;
     this.id = this.sthis.nextId().str;
   }
 
-  bind<S extends MsgWithConn, Q extends MsgWithOptionalConn>(
+  attachAuth(auth: AuthFactory): MsgConnectedAuth {
+    return new MsgConnectedAuth(this, auth);
+  }
+}
+
+export class MsgConnectedAuth implements MsgRawConnection<MsgWithConnAuth> {
+  readonly sthis: SuperThis;
+  readonly conn: QSId;
+  readonly raw: MsgRawConnection;
+  readonly exchangedGestalt: ExchangedGestalt;
+  readonly activeBinds: Map<string, ActiveStream<MsgWithConnAuth, MsgBase>>;
+  readonly id: string;
+  readonly authFactory: AuthFactory;
+
+  constructor(conn: MsgConnected, authFactory: AuthFactory) {
+    this.id = conn.id;
+    this.raw = conn.raw;
+    this.conn = conn.conn;
+    this.sthis = conn.sthis;
+    this.authFactory = authFactory;
+    this.exchangedGestalt = conn.exchangedGestalt;
+    this.activeBinds = conn.activeBinds;
+  }
+
+  bind<S extends MsgWithConnAuth, Q extends MsgWithOptionalConnAuth>(
     req: Q,
     opts: RequestOpts
   ): ReadableStream<MsgWithError<S>> {
@@ -179,23 +228,36 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
     return ts.readable;
   }
 
-  request<S extends MsgWithConn, Q extends MsgWithOptionalConn>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>> {
+  authType(): Promise<Result<AuthType>> {
+    return this.authFactory();
+  }
+
+  msgConnAuth(): Promise< Result<MsgWithConnAuth>> {
+    return this.authType().then((r) => {
+      if (r.isErr()) {
+        return Result.Err(r);
+      }
+      return Result.Ok({ conn: this.conn, auth: r.Ok() } as MsgWithConnAuth);
+    });
+  }
+
+  request<S extends MsgWithConnAuth, Q extends MsgWithOptionalConnAuth>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>> {
     return this.raw.request({ ...req, conn: req.conn || this.conn }, opts);
   }
 
-  send<S extends MsgWithConn, Q extends MsgWithOptionalConn>(msg: Q): Promise<MsgWithError<S>> {
+  send<S extends MsgWithConnAuth, Q extends MsgWithOptionalConnAuth>(msg: Q): Promise<MsgWithError<S>> {
     return this.raw.send({ ...msg, conn: msg.conn || this.conn });
   }
 
   start(): Promise<Result<void>> {
     return this.raw.start();
   }
-  async close(): Promise<Result<void>> {
-    await this.request(buildReqClose(this.sthis, await this.authFactory(), this.conn), { waitFor: MsgIsResClose });
-    return await this.raw.close();
+  async close(t: MsgWithConnAuth): Promise<Result<void>> {
+    await this.request(buildReqClose(this.sthis, t.auth, this.conn), { waitFor: MsgIsResClose });
+    return await this.raw.close(t);
     // return Result.Ok(undefined);
   }
-  onMsg(msgFn: OnMsgFn<MsgWithConn>): UnReg {
+  onMsg(msgFn: OnMsgFn<MsgWithConnAuth>): UnReg {
     return this.raw.onMsg((msg) => {
       if (MsgIsConnected(msg, this.conn)) {
         msgFn(msg);
@@ -208,17 +270,15 @@ export class MsgConnected implements MsgRawConnection<MsgWithConn> {
 export class Msger {
   static async openHttp(
     sthis: SuperThis,
-    auth: AuthFactory,
     // reqOpen: ReqOpen | undefined,
     urls: URI[],
     msgP: MsgerParamsWithEnDe,
     exGestalt: ExchangedGestalt
   ): Promise<Result<MsgRawConnection>> {
-    return Result.Ok(new HttpConnection(sthis, auth, urls, msgP, exGestalt));
+    return Result.Ok(new HttpConnection(sthis, urls, msgP, exGestalt));
   }
   static async openWS(
     sthis: SuperThis,
-    authFactory: AuthFactory,
     // qOpen: ReqOpen,
     url: URI,
     msgP: MsgerParamsWithEnDe,
@@ -234,11 +294,10 @@ export class Msger {
     } else {
       ws = new WebSocket(url.toString());
     }
-    return Result.Ok(new WSConnection(sthis, authFactory, ws, msgP, exGestalt));
+    return Result.Ok(new WSConnection(sthis, ws, msgP, exGestalt));
   }
   static async open(
     sthis: SuperThis,
-    auth: AuthFactory,
     curl: CoerceURI,
     imsgP: Partial<MsgerParamsWithEnDe> = {}
   ): Promise<Result<MsgRawConnection>> {
@@ -249,25 +308,28 @@ export class Msger {
     /*
      * request Gestalt with Http
      */
-    const rHC = await Msger.openHttp(sthis, auth, [url], jsMsgP, { my: gs, remote: gs });
+    const rHC = await Msger.openHttp(sthis, [url], jsMsgP, { my: gs, remote: gs });
     if (rHC.isErr()) {
       return rHC;
     }
     const hc = rHC.Ok();
-    const resGestalt = await hc.request<ResGestalt, ReqGestalt>(buildReqGestalt(sthis, await auth(), gs), {
+    const rAuth = await authTypeFromUri(sthis.logger, url);
+    if (rAuth.isErr()) {
+      return Result.Err(rAuth)
+    }
+    const resGestalt = await hc.request<ResGestalt, ReqGestalt>(buildReqGestalt(sthis, rAuth.Ok(), gs), {
       waitFor: MsgIsResGestalt,
     });
     if (!MsgIsResGestalt(resGestalt)) {
       return Result.Err(new Error("Invalid Gestalt"));
     }
-    await hc.close();
+    await hc.close(resGestalt /* as MsgWithConnAuth */);
     const exGt = { my: gs, remote: resGestalt.gestalt } satisfies ExchangedGestalt;
     const msgP = defaultMsgParams(sthis, imsgP);
     if (exGt.remote.protocolCapabilities.includes("reqRes") && !exGt.remote.protocolCapabilities.includes("stream")) {
       return applyStart(
         Msger.openHttp(
           sthis,
-          auth,
           exGt.remote.httpEndpoints.map((i) => BuildURI.from(url).resolve(i).URI()),
           msgP,
           exGt
@@ -275,18 +337,17 @@ export class Msger {
       );
     }
     return applyStart(
-      Msger.openWS(sthis, auth, BuildURI.from(url).resolve(selectRandom(exGt.remote.wsEndpoints)).URI(), msgP, exGt)
+      Msger.openWS(sthis, BuildURI.from(url).resolve(selectRandom(exGt.remote.wsEndpoints)).URI(), msgP, exGt)
     );
   }
 
   static connect(
     sthis: SuperThis,
-    auth: AuthFactory,
     curl: CoerceURI,
     imsgP: Partial<MsgerParamsWithEnDe> = {},
     conn: Partial<QSId> = {}
   ): Promise<Result<MsgConnected>> {
-    return Msger.open(sthis, auth, curl, imsgP).then((srv) => MsgConnected.connect(auth, srv, conn));
+    return Msger.open(sthis, curl, imsgP).then((srv) => MsgConnected.connect(curl, srv, conn));
   }
 
   private constructor() {

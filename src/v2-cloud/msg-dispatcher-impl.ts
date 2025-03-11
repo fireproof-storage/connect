@@ -28,7 +28,6 @@ import {
   MsgIsReqOpen,
   buildErrorMsg,
   buildResOpen,
-  MsgWithConn,
   ReqGestalt,
   // Gestalt,
   // EnDeCoder,
@@ -39,6 +38,7 @@ import {
   MsgIsReqClose,
   buildResClose,
   ReqClose,
+  MsgWithConnAuth,
 } from "./msg-types.js";
 import {
   BindGetMeta,
@@ -82,14 +82,14 @@ export function buildMsgDispatcher(
     },
     {
       match: MsgIsReqClose,
-      fn: (ctx, msg: MsgWithConn<ReqClose>) => {
+      fn: (ctx, msg: MsgWithConnAuth<ReqClose>) => {
         ctx.wsRoom.removeConn(msg.conn);
         return buildResClose(msg, msg.conn);
       },
     },
     {
       match: MsgIsReqChat,
-      fn: (ctx, msg: MsgWithConn<ReqChat>) => {
+      fn: (ctx, msg: MsgWithConnAuth<ReqChat>) => {
         const conns = ctx.wsRoom.getConns(msg.conn);
         const ci = conns.map((c) => c.conn);
         for (const conn of conns) {
@@ -109,56 +109,56 @@ export function buildMsgDispatcher(
     },
     {
       match: MsgIsReqGetData,
-      fn: (ctx, msg: MsgWithConn<ReqGetData>) => {
+      fn: (ctx, msg: MsgWithConnAuth<ReqGetData>) => {
         return buildResGetData(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsReqPutData,
-      fn: (ctx, msg: MsgWithConn<ReqPutData>) => {
+      fn: (ctx, msg: MsgWithConnAuth<ReqPutData>) => {
         return buildResPutData(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsReqDelData,
-      fn: (ctx, msg: MsgWithConn<ReqDelData>) => {
+      fn: (ctx, msg: MsgWithConnAuth<ReqDelData>) => {
         return buildResDelData(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsReqGetWAL,
-      fn: (ctx, msg: MsgWithConn<ReqGetWAL>) => {
+      fn: (ctx, msg: MsgWithConnAuth<ReqGetWAL>) => {
         return buildResGetWAL(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsReqPutWAL,
-      fn: (ctx, msg: MsgWithConn<ReqPutWAL>) => {
+      fn: (ctx, msg: MsgWithConnAuth<ReqPutWAL>) => {
         return buildResPutWAL(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsReqDelWAL,
-      fn: (ctx, msg: MsgWithConn<ReqDelWAL>) => {
+      fn: (ctx, msg: MsgWithConnAuth<ReqDelWAL>) => {
         return buildResDelWAL(ctx, msg, ctx.impl);
       },
     },
     {
       match: MsgIsBindGetMeta,
-      fn: (ctx, msg: MsgWithConn<BindGetMeta>) => {
+      fn: (ctx, msg: MsgWithConnAuth<BindGetMeta>) => {
         // console.log("MsgIsBindGetMeta", msg);
         return ctx.impl.handleBindGetMeta(ctx, msg);
       },
     },
     {
       match: MsgIsReqPutMeta,
-      fn: (ctx, msg: MsgWithConn<ReqPutMeta>) => {
+      fn: (ctx, msg: MsgWithConnAuth<ReqPutMeta>) => {
         return ctx.impl.handleReqPutMeta(ctx, msg);
       },
     },
     {
       match: MsgIsReqDelMeta,
-      fn: (ctx, msg: MsgWithConn<ReqDelMeta>) => {
+      fn: (ctx, msg: MsgWithConnAuth<ReqDelMeta>) => {
         return ctx.impl.handleReqDelMeta(ctx, msg);
       },
     }

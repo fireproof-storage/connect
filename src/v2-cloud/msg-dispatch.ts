@@ -1,5 +1,5 @@
 import { SuperThis } from "@fireproof/core";
-import { MsgBase, buildErrorMsg, MsgWithError, MsgWithConn, QSId } from "./msg-types.js";
+import { MsgBase, buildErrorMsg, MsgWithError, QSId, MsgWithConnAuth } from "./msg-types.js";
 
 import { PreSignedMsg } from "./pre-signed-url.js";
 import { ExposeCtxItemWithImpl, HonoServerImpl, WSContextWithId } from "./hono-server.js";
@@ -112,7 +112,7 @@ export class MsgDispatcher {
   async dispatch(ctx: MsgDispatcherCtx, msg: MsgBase): Promise<Response> {
     const validateConn = async <T extends MsgBase>(
       msg: T,
-      fn: (msg: MsgWithConn<T>) => Promisable<MsgWithError<MsgBase>>
+      fn: (msg: MsgWithConnAuth<T>) => Promisable<MsgWithError<MsgBase>>
     ): Promise<Response> => {
       if (!ctx.wsRoom.isConnected(msg)) {
         return this.send(ctx, buildErrorMsg(ctx, { ...msg }, new Error("dispatch missing connection")));

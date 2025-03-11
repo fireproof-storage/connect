@@ -9,7 +9,6 @@ import {
   MsgWithError,
   RequestOpts,
   MsgIsTid,
-  AuthFactory,
 } from "./msg-types.js";
 import { ActiveStream, ExchangedGestalt, MsgerParamsWithEnDe, MsgRawConnection, OnMsgFn, UnReg } from "./msger.js";
 import { MsgRawConnectionBase } from "./msg-raw-connection-base.js";
@@ -33,11 +32,9 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
   opened = false;
 
   readonly id: string;
-  readonly auth: AuthFactory;
 
   constructor(
     sthis: SuperThis,
-    auth: AuthFactory,
     ws: WebSocket,
     msgP: MsgerParamsWithEnDe,
     exGestalt: ExchangedGestalt
@@ -47,7 +44,6 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
     this.logger = ensureLogger(sthis, "WSConnection");
     this.msgP = msgP;
     this.ws = ws;
-    this.auth = auth;
     // this.wqs = { ...wsq };
   }
 

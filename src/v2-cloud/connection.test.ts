@@ -36,7 +36,8 @@ import { calculatePreSignedUrl } from "./pre-signed-url.js";
 import {
   CFHonoServerFactory,
   httpStyle,
-  mockGetAuthFactory,
+  mockJWK,
+  MockJWK,
   NodeHonoServerFactory,
   resolveToml,
   wsStyle,
@@ -77,13 +78,10 @@ async function refURL(sp: ResOptionalSignedUrl) {
 describe("Connection", () => {
   const sthis = ensureSuperThis();
   const msgP = defaultMsgParams(sthis, { hasPersistent: true });
-  let pubEnvJWK: string;
   // let privEnvJWK: string
 
   beforeAll(async () => {
     sthis.env.sets((await resolveToml("D1")).env as unknown as Record<string, string>);
-    const pair = await SessionTokenService.generateKeyPair();
-    pubEnvJWK = pair.strings.publicKey;
     // privEnvJWK = await jwk2env(keyPair.privateKey, sthis);
   });
 
@@ -97,22 +95,16 @@ describe("Connection", () => {
     const my = defaultGestalt(msgP, { id: "FP-Universal-Client" });
 
     const styles: (ReturnType<typeof wsStyle> | ReturnType<typeof httpStyle>)[] = [];
+    let auth: MockJWK
+
     beforeAll(async () => {
-      const pair = await SessionTokenService.generateKeyPair();
-      const authFactory = await mockGetAuthFactory(
-        pair.strings.privateKey,
-        {
-          userId: "hello",
-          tenants: [],
-          ledgers: [],
-        },
-        sthis
-      );
+      auth = await mockJWK();
+      
       styles.push(
         ...[
           // force multiple lines
-          httpStyle(sthis, authFactory, port, msgP, my),
-          wsStyle(sthis, authFactory, port, msgP, my),
+          httpStyle(sthis, auth.applyAuthToURI, port, msgP, my),
+          wsStyle(sthis, auth.applyAuthToURI, port, msgP, my),
         ]
       );
     });

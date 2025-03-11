@@ -4,23 +4,23 @@ import {
   AuthType,
   GwCtx,
   MsgBase,
-  MsgWithConn,
-  MsgWithOptionalConn,
   MsgWithTenantLedger,
   NextId,
   ReqSignedUrlParam,
   ResOptionalSignedUrl,
   MsgTypesCtx,
+  MsgWithOptionalConnAuth,
+  MsgWithConnAuth,
 } from "./msg-types.js";
 
 /* Put Meta */
-export interface ReqPutMeta extends MsgWithTenantLedger<MsgWithOptionalConn> {
+export interface ReqPutMeta extends MsgWithTenantLedger<MsgWithOptionalConnAuth> {
   readonly type: "reqPutMeta";
   readonly params: ReqSignedUrlParam;
   readonly metas: CRDTEntry[];
 }
 
-export interface ResPutMeta extends MsgWithTenantLedger<MsgWithConn>, QSMeta {
+export interface ResPutMeta extends MsgWithTenantLedger<MsgWithConnAuth>, QSMeta {
   readonly type: "resPutMeta";
 }
 
@@ -48,7 +48,7 @@ export function MsgIsReqPutMeta(msg: MsgBase): msg is ReqPutMeta {
 
 export function buildResPutMeta(
   _msgCtx: MsgTypesCtx,
-  req: MsgWithTenantLedger<MsgWithConn<ReqPutMeta>>,
+  req: MsgWithTenantLedger<MsgWithConnAuth<ReqPutMeta>>,
   meta: QSMeta
 ): ResPutMeta {
   return {
@@ -67,7 +67,7 @@ export function MsgIsResPutMeta(qs: MsgBase): qs is ResPutMeta {
 }
 
 /* Bind Meta */
-export interface BindGetMeta extends MsgWithTenantLedger<MsgWithOptionalConn> {
+export interface BindGetMeta extends MsgWithTenantLedger<MsgWithOptionalConnAuth> {
   readonly type: "bindGetMeta";
   readonly params: ReqSignedUrlParam;
 }
@@ -81,7 +81,7 @@ export interface QSMeta extends ResOptionalSignedUrl {
   readonly keys?: string[];
 }
 
-export interface EventGetMeta extends MsgWithTenantLedger<MsgWithConn>, ResOptionalSignedUrl {
+export interface EventGetMeta extends MsgWithTenantLedger<MsgWithConnAuth>, ResOptionalSignedUrl {
   readonly type: "eventGetMeta";
 }
 
@@ -98,7 +98,7 @@ export function buildBindGetMeta(sthis: NextId, auth: AuthType, params: ReqSigne
 
 export function buildEventGetMeta(
   _msgCtx: MsgTypesCtx,
-  req: MsgWithTenantLedger<MsgWithConn<BindGetMeta>>,
+  req: MsgWithTenantLedger<MsgWithConnAuth<BindGetMeta>>,
   metaParam: QSMeta,
   gwCtx: GwCtx
 ): EventGetMeta {
@@ -117,7 +117,7 @@ export function MsgIsEventGetMeta(qs: MsgBase): qs is EventGetMeta {
 }
 
 /* Del Meta */
-export interface ReqDelMeta extends MsgWithTenantLedger<MsgWithOptionalConn> {
+export interface ReqDelMeta extends MsgWithTenantLedger<MsgWithOptionalConnAuth> {
   readonly type: "reqDelMeta";
   readonly params: ReqSignedUrlParam;
 }
@@ -142,13 +142,13 @@ export function MsgIsReqDelMeta(msg: MsgBase): msg is ReqDelMeta {
   return msg.type === "reqDelMeta";
 }
 
-export interface ResDelMeta extends MsgWithTenantLedger<MsgWithConn>, ResOptionalSignedUrl {
+export interface ResDelMeta extends MsgWithTenantLedger<MsgWithConnAuth>, ResOptionalSignedUrl {
   readonly type: "resDelMeta";
 }
 
 export function buildResDelMeta(
   // msgCtx: MsgTypesCtx,
-  req: MsgWithTenantLedger<MsgWithConn<ReqDelMeta>>,
+  req: MsgWithTenantLedger<MsgWithConnAuth<ReqDelMeta>>,
   signedUrl?: string
 ): ResDelMeta {
   return {

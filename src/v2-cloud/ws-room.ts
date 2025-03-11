@@ -1,5 +1,5 @@
 import { WSContextWithId } from "./hono-server.js";
-import { MsgBase, MsgWithConn, QSId } from "./msg-types.js";
+import { MsgBase, MsgWithConnAuth, QSId } from "./msg-types.js";
 import { ConnItem } from "./msg-dispatch.js";
 
 export interface WSRoom {
@@ -8,7 +8,7 @@ export interface WSRoom {
   getConns(conn: QSId): ConnItem[];
   removeConn(conn: QSId): void;
   addConn(ws: WSContextWithId<unknown>, conn: QSId): QSId;
-  isConnected(msg: MsgBase): msg is MsgWithConn<MsgBase>;
+  isConnected(msg: MsgBase): msg is MsgWithConnAuth<MsgBase>;
 }
 
 // class ConnectionManager {
