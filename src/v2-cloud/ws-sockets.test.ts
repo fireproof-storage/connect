@@ -1,12 +1,11 @@
 import { ensureSuperThis } from "@fireproof/core";
 
-import { CFHonoServerFactory, mockGetAuthFactory, NodeHonoServerFactory, wsStyle } from "./test-helper.js";
+import { CFHonoServerFactory, MockJWK, mockJWK, NodeHonoServerFactory, wsStyle } from "./test-helper.js";
 import { defaultMsgParams, Msger } from "./msger.js";
-import { AuthFactory, buildReqChat, defaultGestalt, MsgIsResChat } from "./msg-types.js";
+import { buildReqChat, defaultGestalt, MsgIsResChat } from "./msg-types.js";
 import { Hono } from "hono";
 import { HonoServer } from "./hono-server.js";
-import { Future } from "@adviser/cement";
-import { SessionTokenService } from "../sts-service/sts-service.js";
+import { Future, Result } from "@adviser/cement";
 
 describe("test multiple connections", () => {
   const sthis = ensureSuperThis();
@@ -25,23 +24,24 @@ describe("test multiple connections", () => {
 
     let hserv: HonoServer;
 
-    let authFactory: AuthFactory;
+    let auth: MockJWK
 
     beforeAll(async () => {
-      const pair = await SessionTokenService.generateKeyPair();
-      authFactory = await mockGetAuthFactory(
-        pair.strings.privateKey,
-        {
-          userId: "hello",
-          tenants: [],
-          ledgers: [],
-        },
-        sthis
-      );
-      stype = wsStyle(sthis, authFactory, port, msgP, my);
+      auth = await mockJWK();
+      // const pair = await SessionTokenService.generateKeyPair();
+      // authFactory = await mockGetAuthFactory(
+      //   pair.strings.privateKey,
+      //   {
+      //     userId: "hello",
+      //     tenants: [],
+      //     ledgers: [],
+      //   },
+      //   sthis
+      // );
+      stype = wsStyle(sthis, auth.applyAuthToURI, port, msgP, my);
 
       const app = new Hono();
-      hserv = await factory(sthis, msgP, stype.remoteGestalt, port, pair.strings.publicKey).then((srv) =>
+      hserv = await factory(sthis, msgP, stype.remoteGestalt, port, auth.keys.strings.publicKey).then((srv) =>
         srv.once(app, port)
       );
     });
@@ -54,9 +54,9 @@ describe("test multiple connections", () => {
         Array(connections)
           .fill(0)
           .map(() => {
-            return Msger.connect(sthis, authFactory, "http://localhost:" + port + "/fp");
+            return Msger.connect(sthis, auth.applyAuthToURI("http://localhost:" + port + "/fp"));
           })
-      ).then((cs) => cs.map((c) => c.Ok()));
+      ).then((cs) => cs.map((c) => c.Ok().attachAuth((() => Promise.resolve(Result.Ok(auth.authType))))));
 
       const ready = new Future<void>();
       let total = (connections * (connections + 1)) / 2;
@@ -79,8 +79,9 @@ describe("test multiple connections", () => {
 
       const rest = [...conns];
       for (const c of conns) {
+        
         // console.log("Sending a chat request", rest.length, conns.length);
-        const act = await c.request(buildReqChat(sthis, await authFactory(), c.conn, "Hello"), {
+        const act = await c.request(buildReqChat(sthis, auth.authType, c.conn, "Hello"), {
           waitFor: MsgIsResChat,
         });
         if (MsgIsResChat(act)) {
@@ -88,7 +89,7 @@ describe("test multiple connections", () => {
         } else {
           assert.fail("Expected a response");
         }
-        await c.close();
+        await c.close((await c.msgConnAuth()).Ok());
         rest.shift();
       }
 

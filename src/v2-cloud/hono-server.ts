@@ -1,6 +1,5 @@
-import { exception2Result, HttpHeader, Logger, param, Result, URI } from "@adviser/cement";
+import { exception2Result, HttpHeader, Logger, param, Result, top_uint8, URI } from "@adviser/cement";
 import { Context, Hono, Next } from "hono";
-import { top_uint8 } from "../coerce-binary.js";
 import {
   buildErrorMsg,
   MsgBase,

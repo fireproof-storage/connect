@@ -5,7 +5,7 @@ import { Block } from "multiformats/block";
 import { CID } from "multiformats";
 
 import type { Service } from "./types.js";
-import { to_arraybuf } from "../coerce-binary.js";
+import { to_arraybuf } from "@adviser/cement";
 
 export function agentProofs(
   agent: Agent<Service>,

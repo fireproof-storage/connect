@@ -10,6 +10,7 @@ import {
   MsgIsResGestalt,
   MsgIsError,
   MsgBase,
+  FPJWKCloudAuthType,
 } from "./msg-types.js";
 import { defaultMsgParams, applyStart, Msger, MsgerParamsWithEnDe, MsgRawConnection, authTypeFromUri } from "./msger.js";
 import { WSConnection } from "./ws-connection.js";
@@ -23,6 +24,7 @@ import { envKeyDefaults, KeysResult, SessionTokenService, TokenForParam } from "
 
 export interface MockJWK {
   keys: KeysResult;
+  authType: FPJWKCloudAuthType
   applyAuthToURI: (uri: CoerceURI) => URI;
 }
 export async function mockJWK(claim: Partial<TokenForParam> = {}): Promise<MockJWK> {
@@ -40,6 +42,12 @@ export async function mockJWK(claim: Partial<TokenForParam> = {}): Promise<MockJ
 
   return {
     keys,
+    authType: {
+      type: "fp-cloud-jwk",
+      params: {
+        jwk
+      }
+    },
     applyAuthToURI: (uri: CoerceURI) => BuildURI.from(uri).setParam("authJWK", jwk).URI()
   }
 }

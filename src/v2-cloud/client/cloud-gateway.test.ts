@@ -1,12 +1,11 @@
 import { Hono } from "hono";
 import { HonoServer } from "../hono-server.js";
 import { defaultGestalt } from "../msg-types.js";
-import { NodeHonoServerFactory, CFHonoServerFactory, wsStyle, mockGetAuthFactory } from "../test-helper.js";
+import { NodeHonoServerFactory, CFHonoServerFactory, wsStyle, MockJWK, mockJWK } from "../test-helper.js";
 import { bs, ensureSuperThis, NotFoundError } from "@fireproof/core";
 import { defaultMsgParams } from "../msger.js";
 import { FireproofCloudGateway, registerFireproofCloudStoreProtocol } from "./gateway.js";
 import { BuildURI } from "@adviser/cement";
-import { SessionTokenService } from "../../sts-service/sts-service.js";
 
 const sthis = ensureSuperThis();
 const msgP = defaultMsgParams(sthis, { hasPersistent: true });
@@ -20,21 +19,13 @@ describe.each([NodeHonoServerFactory(), CFHonoServerFactory("D1")])("$name - Gat
   let gw: bs.Gateway;
   let unregister: () => void;
   let url: BuildURI;
+  let auth: MockJWK;
   beforeAll(async () => {
-    const keyPair = await SessionTokenService.generateKeyPair();
-    const authFactory = await mockGetAuthFactory(
-      keyPair.strings.privateKey,
-      {
-        userId: "hello",
-        tenants: [],
-        ledgers: [],
-      },
-      sthis
-    );
+    auth = await mockJWK();
     // privEnvJWK = await jwk2env(keyPair.privateKey, sthis);
-    style = wsStyle(sthis, authFactory, port, msgP, my);
+    style = wsStyle(sthis, auth.applyAuthToURI, port, msgP, my);
     const app = new Hono();
-    server = await factory(sthis, msgP, style.remoteGestalt, port, keyPair.strings.publicKey).then((srv) =>
+    server = await factory(sthis, msgP, style.remoteGestalt, port, auth.keys.strings.publicKey).then((srv) =>
       srv.once(app, port)
     );
     unregister = registerFireproofCloudStoreProtocol("fireproof:");

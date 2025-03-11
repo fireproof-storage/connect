@@ -1,5 +1,5 @@
 import { ensureSuperThis } from "@fireproof/core";
-import { URI } from "@adviser/cement";
+import { Result, URI } from "@adviser/cement";
 import {
   buildReqGestalt,
   buildReqOpen,
@@ -29,7 +29,7 @@ import {
   MsgIsResPutWAL,
   MsgIsResDelWAL,
 } from "./msg-types-wal.js";
-import { applyStart, defaultMsgParams, MsgConnected, Msger } from "./msger.js";
+import { applyStart, defaultMsgParams, MsgConnected, MsgConnectedAuth, Msger } from "./msger.js";
 import { HonoServer } from "./hono-server.js";
 import { Hono } from "hono";
 import { calculatePreSignedUrl } from "./pre-signed-url.js";
@@ -54,7 +54,6 @@ import {
   MsgIsEventGetMeta,
   MsgIsResPutMeta,
 } from "./msg-type-meta.js";
-import { SessionTokenService } from "../sts-service/sts-service.js";
 
 async function refURL(sp: ResOptionalSignedUrl) {
   const { env } = await resolveToml("D1");
@@ -110,14 +109,13 @@ describe("Connection", () => {
     });
 
     describe.each(styles)(`${honoServer.name} - $name`, (style) => {
-      const authFactory = style.authFactory;
       let server: HonoServer;
       let qOpen: ReqOpen;
       beforeAll(async () => {
         const app = new Hono();
-        qOpen = buildReqOpen(sthis, await authFactory(), { reqId: "req-open-test" });
+        qOpen = buildReqOpen(sthis, auth.authType, { reqId: "req-open-test" });
         server = await honoServer
-          .factory(sthis, msgP, style.remoteGestalt, port, pubEnvJWK)
+          .factory(sthis, msgP, style.remoteGestalt, port, auth.keys.strings.publicKey)
           .then((srv) => srv.once(app, port));
       });
       afterAll(async () => {
@@ -137,27 +135,27 @@ describe("Connection", () => {
       });
 
       describe(`connection`, () => {
-        let c: MsgConnected;
+        let c: MsgConnectedAuth;
         beforeEach(async () => {
           const rC = await style.ok
             .open()
-            .then((r) => MsgConnected.connect(authFactory, r, { reqId: "req-open-testx" }));
+            .then((r) => MsgConnected.connect(auth.applyAuthToURI('http://test'), r, { reqId: "req-open-testx" }));
           expect(rC.isOk()).toBeTruthy();
-          c = rC.Ok();
+          c = rC.Ok().attachAuth(() => Promise.resolve(Result.Ok(auth.authType)));
           expect(c.conn).toEqual({
             reqId: "req-open-testx",
             resId: c.conn.resId,
           });
         });
         afterEach(async () => {
-          await c.close();
+          await c.close((await c.msgConnAuth()).Ok());
         });
 
         it("kaputt url http", async () => {
           const r = await c.raw.request(
             {
               tid: "test",
-              auth: await authFactory(),
+              auth: auth.authType,
               type: "kaputt",
               version: "FP-MSG-1.0",
             },
@@ -181,7 +179,7 @@ describe("Connection", () => {
         });
         it("gestalt url http", async () => {
           const msgP = defaultMsgParams(sthis, {});
-          const req = buildReqGestalt(sthis, await authFactory(), defaultGestalt(msgP, { id: "test" }));
+          const req = buildReqGestalt(sthis, auth.authType, defaultGestalt(msgP, { id: "test" }));
           const r = await c.raw.request(req, { waitFor: MsgIsResGestalt });
           if (!MsgIsResGestalt(r)) {
             assert.fail("expected MsgError", JSON.stringify(r));
@@ -190,7 +188,7 @@ describe("Connection", () => {
         });
 
         it("openConnection", async () => {
-          const req = buildReqOpen(sthis, await authFactory(), { ...c.conn });
+          const req = buildReqOpen(sthis, auth.authType, { ...c.conn });
           const r = await c.raw.request(req, { waitFor: MsgIsResOpen });
           if (!MsgIsResOpen(r)) {
             assert.fail(JSON.stringify(r));
@@ -205,11 +203,11 @@ describe("Connection", () => {
       });
 
       it("open", async () => {
-        const rC = await Msger.connect(sthis, authFactory, URI.from(`http://localhost:${port}/fp`), msgP, {
+        const rC = await Msger.connect(sthis, auth.applyAuthToURI(`http://localhost:${port}/fp`), msgP, {
           reqId: "req-open-testy",
         });
         expect(rC.isOk()).toBeTruthy();
-        const c = rC.Ok();
+        const c = rC.Ok().attachAuth(() => Promise.resolve(Result.Ok(auth.authType)));
         expect(c.conn).toEqual({
           reqId: "req-open-testy",
           resId: c.conn.resId,
@@ -219,15 +217,15 @@ describe("Connection", () => {
           my,
           remote: style.remoteGestalt,
         });
-        await c.close();
+        await c.close((await c.msgConnAuth()).Ok());  
       });
       describe(`${honoServer.name} - Msgs`, () => {
         let gwCtx: GwCtx;
-        let conn: MsgConnected;
+        let conn: MsgConnectedAuth;
         beforeAll(async () => {
-          const rC = await Msger.connect(sthis, authFactory, URI.from(`http://localhost:${port}/fp`), msgP, qOpen.conn);
+          const rC = await Msger.connect(sthis, auth.applyAuthToURI(`http://localhost:${port}/fp`), msgP, qOpen.conn);
           expect(rC.isOk()).toBeTruthy();
-          conn = rC.Ok();
+          conn = rC.Ok().attachAuth(() => Promise.resolve(Result.Ok(auth.authType)));
           gwCtx = {
             conn: conn.conn,
             tenant: {
@@ -237,10 +235,10 @@ describe("Connection", () => {
           };
         });
         afterAll(async () => {
-          await conn.close();
+          await conn.close((await conn.msgConnAuth()).Ok());
         });
         it("Open", async () => {
-          const res = await conn.raw.request(buildReqOpen(sthis, await authFactory(), conn.conn), {
+          const res = await conn.raw.request(buildReqOpen(sthis, auth.authType, conn.conn), {
             waitFor: MsgIsResOpen,
           });
           if (!MsgIsResOpen(res)) {
@@ -293,11 +291,10 @@ describe("Connection", () => {
           it("bind stop", async () => {
             const sp = sup();
             expect(conn.raw.activeBinds.size).toBe(0);
-            const auth = await authFactory();
             const streams: ReadableStream<MsgWithError<EventGetMeta>>[] = Array(5)
               .fill(0)
               .map(() => {
-                return conn.bind<EventGetMeta, BindGetMeta>(buildBindGetMeta(sthis, auth, sp, gwCtx), {
+                return conn.bind<EventGetMeta, BindGetMeta>(buildBindGetMeta(sthis, auth.authType, sp, gwCtx), {
                   waitFor: MsgIsEventGetMeta,
                 });
               });
@@ -323,7 +320,7 @@ describe("Connection", () => {
 
           it("Get", async () => {
             const sp = sup();
-            const res = await conn.request(buildBindGetMeta(sthis, await authFactory(), sp, gwCtx), {
+            const res = await conn.request(buildBindGetMeta(sthis, auth.authType, sp, gwCtx), {
               waitFor: MsgIsEventGetMeta,
             });
             if (MsgIsEventGetMeta(res)) {
@@ -340,7 +337,7 @@ describe("Connection", () => {
               .map((data) => {
                 return { ...data, cid: sthis.timeOrderedNextId().str };
               });
-            const res = await conn.request(buildReqPutMeta(sthis, await authFactory(), sp, metas, gwCtx), {
+            const res = await conn.request(buildReqPutMeta(sthis, auth.authType, sp, metas, gwCtx), {
               waitFor: MsgIsResPutMeta,
             });
             if (MsgIsResPutMeta(res)) {
@@ -353,7 +350,7 @@ describe("Connection", () => {
           it("Del", async () => {
             const sp = sup();
             const res = await conn.request<ResDelMeta, ReqDelMeta>(
-              buildReqDelMeta(sthis, await authFactory(), sp, gwCtx),
+              buildReqDelMeta(sthis, auth.authType, sp, gwCtx),
               {
                 waitFor: MsgIsResDelMeta,
               }
