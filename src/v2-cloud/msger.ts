@@ -128,23 +128,23 @@ export async function authTypeFromUri(logger: Logger, curi: CoerceURI): Promise<
   if (!authJWK) {
     return logger.Error().Url(uri).Msg("authJWK is required").ResultError();
   }
-  const sts = await SessionTokenService.createFromEnv()
-  const fpc = await sts.validate(authJWK)
+  const sts = await SessionTokenService.createFromEnv();
+  const fpc = await sts.validate(authJWK);
   if (fpc.isErr()) {
     return logger.Error().Err(fpc).Msg("Invalid authJWK").ResultError();
-  } 
+  }
   return Result.Ok({
     type: "fp-cloud",
     params: {
       ...fpc.Ok().payload,
       jwk: authJWK,
     },
-  } satisfies FPCloudAuthType)
+  } satisfies FPCloudAuthType);
 }
 
 export class MsgConnected {
   static async connect(
-    uri: CoerceURI,
+    auth: AuthType,
     mrc: Result<MsgRawConnection> | MsgRawConnection,
     conn: Partial<QSId> = {}
   ): Promise<Result<MsgConnected>> {
@@ -154,11 +154,7 @@ export class MsgConnected {
       }
       mrc = mrc.Ok();
     }
-    const rAuthType = await authTypeFromUri(mrc.sthis.logger, uri);
-    if (rAuthType.isErr()) {
-      return Result.Err(rAuthType)
-    }
-    const res = await mrc.request(buildReqOpen(mrc.sthis, rAuthType.Ok(), conn), { waitFor: MsgIsResOpen });
+    const res = await mrc.request(buildReqOpen(mrc.sthis, auth, conn), { waitFor: MsgIsResOpen });
     if (MsgIsError(res) || !MsgIsResOpen(res)) {
       return mrc.sthis.logger.Error().Err(res).Msg("unexpected response").ResultError();
     }
@@ -232,7 +228,7 @@ export class MsgConnectedAuth implements MsgRawConnection<MsgWithConnAuth> {
     return this.authFactory();
   }
 
-  msgConnAuth(): Promise< Result<MsgWithConnAuth>> {
+  msgConnAuth(): Promise<Result<MsgWithConnAuth>> {
     return this.authType().then((r) => {
       if (r.isErr()) {
         return Result.Err(r);
@@ -241,7 +237,10 @@ export class MsgConnectedAuth implements MsgRawConnection<MsgWithConnAuth> {
     });
   }
 
-  request<S extends MsgWithConnAuth, Q extends MsgWithOptionalConnAuth>(req: Q, opts: RequestOpts): Promise<MsgWithError<S>> {
+  request<S extends MsgWithConnAuth, Q extends MsgWithOptionalConnAuth>(
+    req: Q,
+    opts: RequestOpts
+  ): Promise<MsgWithError<S>> {
     return this.raw.request({ ...req, conn: req.conn || this.conn }, opts);
   }
 
@@ -298,6 +297,7 @@ export class Msger {
   }
   static async open(
     sthis: SuperThis,
+    auth: AuthType,
     curl: CoerceURI,
     imsgP: Partial<MsgerParamsWithEnDe> = {}
   ): Promise<Result<MsgRawConnection>> {
@@ -313,11 +313,11 @@ export class Msger {
       return rHC;
     }
     const hc = rHC.Ok();
-    const rAuth = await authTypeFromUri(sthis.logger, url);
-    if (rAuth.isErr()) {
-      return Result.Err(rAuth)
-    }
-    const resGestalt = await hc.request<ResGestalt, ReqGestalt>(buildReqGestalt(sthis, rAuth.Ok(), gs), {
+    // const rAuth = await authTypeFromUri(sthis.logger, url);
+    // if (rAuth.isErr()) {
+    //   return Result.Err(rAuth)
+    // }
+    const resGestalt = await hc.request<ResGestalt, ReqGestalt>(buildReqGestalt(sthis, auth, gs), {
       waitFor: MsgIsResGestalt,
     });
     if (!MsgIsResGestalt(resGestalt)) {
@@ -343,11 +343,12 @@ export class Msger {
 
   static connect(
     sthis: SuperThis,
+    auth: AuthType,
     curl: CoerceURI,
     imsgP: Partial<MsgerParamsWithEnDe> = {},
     conn: Partial<QSId> = {}
   ): Promise<Result<MsgConnected>> {
-    return Msger.open(sthis, curl, imsgP).then((srv) => MsgConnected.connect(curl, srv, conn));
+    return Msger.open(sthis, auth, curl, imsgP).then((srv) => MsgConnected.connect(auth, srv, conn));
   }
 
   private constructor() {

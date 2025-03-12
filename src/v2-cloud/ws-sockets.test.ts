@@ -24,7 +24,7 @@ describe("test multiple connections", () => {
 
     let hserv: HonoServer;
 
-    let auth: MockJWK
+    let auth: MockJWK;
 
     beforeAll(async () => {
       auth = await mockJWK();
@@ -54,9 +54,9 @@ describe("test multiple connections", () => {
         Array(connections)
           .fill(0)
           .map(() => {
-            return Msger.connect(sthis, auth.applyAuthToURI("http://localhost:" + port + "/fp"));
+            return Msger.connect(sthis, auth.authType, `http://localhost:${port}/fp`);
           })
-      ).then((cs) => cs.map((c) => c.Ok().attachAuth((() => Promise.resolve(Result.Ok(auth.authType))))));
+      ).then((cs) => cs.map((c) => c.Ok().attachAuth(() => Promise.resolve(Result.Ok(auth.authType)))));
 
       const ready = new Future<void>();
       let total = (connections * (connections + 1)) / 2;
@@ -79,7 +79,6 @@ describe("test multiple connections", () => {
 
       const rest = [...conns];
       for (const c of conns) {
-        
         // console.log("Sending a chat request", rest.length, conns.length);
         const act = await c.request(buildReqChat(sthis, auth.authType, c.conn, "Hello"), {
           waitFor: MsgIsResChat,

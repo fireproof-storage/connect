@@ -4,6 +4,9 @@
   "private": true,
   "description": "Live database connector for the web",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "xpublish": "pnpm run '/publish:/'",
     "xpublish:aws": "tsx ./publish-package.ts ./dist/aws/package.json",
@@ -58,7 +61,6 @@
     "@smithy/types": "^4.1.0",
     "@types/aws-lambda": "^8.10.147",
     "@types/better-sqlite3": "^7.6.12",
-    "@types/eslint__js": "^9.14.0",
     "@types/node": "^22.13.10",
     "@types/wait-on": "^5.3.4",
     "@types/ws": "^8.18.0",

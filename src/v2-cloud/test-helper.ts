@@ -12,7 +12,14 @@ import {
   MsgBase,
   FPJWKCloudAuthType,
 } from "./msg-types.js";
-import { defaultMsgParams, applyStart, Msger, MsgerParamsWithEnDe, MsgRawConnection, authTypeFromUri } from "./msger.js";
+import {
+  defaultMsgParams,
+  applyStart,
+  Msger,
+  MsgerParamsWithEnDe,
+  MsgRawConnection,
+  authTypeFromUri,
+} from "./msger.js";
 import { WSConnection } from "./ws-connection.js";
 import * as toml from "smol-toml";
 import { Env } from "./backend/env.js";
@@ -24,32 +31,32 @@ import { envKeyDefaults, KeysResult, SessionTokenService, TokenForParam } from "
 
 export interface MockJWK {
   keys: KeysResult;
-  authType: FPJWKCloudAuthType
+  authType: FPJWKCloudAuthType;
   applyAuthToURI: (uri: CoerceURI) => URI;
 }
 export async function mockJWK(claim: Partial<TokenForParam> = {}): Promise<MockJWK> {
-  const keys = await SessionTokenService.generateKeyPair()
+  const keys = await SessionTokenService.generateKeyPair();
 
   const sts = await SessionTokenService.create({
-    token: keys.strings.privateKey
-  })
+    token: keys.strings.privateKey,
+  });
   const jwk = await sts.tokenFor({
     userId: "hello",
     tenants: [],
     ledgers: [],
-    ...claim
-  })
+    ...claim,
+  });
 
   return {
     keys,
     authType: {
       type: "fp-cloud-jwk",
       params: {
-        jwk
-      }
+        jwk,
+      },
     },
-    applyAuthToURI: (uri: CoerceURI) => BuildURI.from(uri).setParam("authJWK", jwk).URI()
-  }
+    applyAuthToURI: (uri: CoerceURI) => BuildURI.from(uri).setParam("authJWK", jwk).URI(),
+  };
 }
 
 export function httpStyle(
@@ -102,9 +109,7 @@ export function httpStyle(
 
         const rAuth = await authTypeFromUri(sthis.logger, applyAuthToURI(`http://localhost:${port - 1}/fp`));
         // should fail
-        const res = await ret
-          .Ok()
-          .request(buildReqGestalt(sthis, rAuth.Ok(), my), { waitFor: MsgIsResGestalt });
+        const res = await ret.Ok().request(buildReqGestalt(sthis, rAuth.Ok(), my), { waitFor: MsgIsResGestalt });
         if (MsgIsError(res)) {
           return Result.Err(res.message);
         }
@@ -126,9 +131,7 @@ export function httpStyle(
         );
         // should fail
         const rAuth = await authTypeFromUri(sthis.logger, applyAuthToURI(`http://4.7.1.1:${port}/fp`));
-        const res = await ret
-          .Ok()
-          .request(buildReqGestalt(sthis, rAuth.Ok(), my), { waitFor: MsgIsResGestalt });
+        const res = await ret.Ok().request(buildReqGestalt(sthis, rAuth.Ok(), my), { waitFor: MsgIsResGestalt });
         if (MsgIsError(res)) {
           return Result.Err(res.message);
         }
@@ -230,10 +233,9 @@ export function NodeHonoServerFactory() {
 }
 
 async function writeEnvFile(sthis: SuperThis, tomlFile: string, env: string, envJWK: string) {
-  fs.writeFile(
-    sthis.pathOps.join(sthis.pathOps.dirname(tomlFile), `dev.vars.${env}`),
-    `${envKeyDefaults.PUBLIC}=${envJWK}\n`
-  );
+  const fname = sthis.pathOps.join(sthis.pathOps.dirname(tomlFile), `.dev.vars.${env}`);
+  // console.log("Writing to", fname);
+  await fs.writeFile(fname, `${envKeyDefaults.PUBLIC}=${envJWK}\n`);
 }
 
 export function CFHonoServerFactory(backend: "D1" | "DO") {

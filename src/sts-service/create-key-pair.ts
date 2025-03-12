@@ -1,6 +1,7 @@
-import { env2jwk, envKeyDefaults, SessionTokenService } from "./sts-service.js";
+// deno run --allow-env --unstable-sloppy-imports /Users/menabe/Software/fproof/connect/src/sts-service/create-key-pair.ts
+import { envKeyDefaults, SessionTokenService } from "./sts-service.js";
 
-const { strings, material } = await SessionTokenService.generateKeyPair();
+const { strings } = await SessionTokenService.generateKeyPair();
 
 // console.log(">", await exportJWK(privateKey))
 

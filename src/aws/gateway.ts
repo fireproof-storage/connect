@@ -1,4 +1,14 @@
-import { BuildURI, CoerceURI, exception2Result, KeyedResolvOnce, Logger, param, Result, to_uint8, URI } from "@adviser/cement";
+import {
+  BuildURI,
+  CoerceURI,
+  exception2Result,
+  KeyedResolvOnce,
+  Logger,
+  param,
+  Result,
+  to_uint8,
+  URI,
+} from "@adviser/cement";
 import { bs, getStore, NotFoundError, SuperThis, ensureSuperLog } from "@fireproof/core";
 import { AddKeyToDbMetaGateway } from "../meta-key-hack.js";
 

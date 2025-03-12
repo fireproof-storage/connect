@@ -1,8 +1,9 @@
 import { Result, URI } from "@adviser/cement";
 import { AwsClient } from "aws4fetch";
-import { MsgWithConnAuth, MsgWithTenantLedger, SignedUrlParam } from "./msg-types.js";
+import { MethodSignedUrlParam, MsgWithConnAuth, MsgWithTenantLedger, SignedUrlParam } from "./msg-types.js";
 
 export interface PreSignedMsg extends MsgWithTenantLedger<MsgWithConnAuth> {
+  readonly methodParams: MethodSignedUrlParam;
   readonly params: SignedUrlParam;
 }
 
@@ -31,7 +32,7 @@ export async function calculatePreSignedUrl(psm: PreSignedMsg, env: PreSignedEnv
   // const psm = ipsm as PreSignedConnMsg;
 
   // verify if you are not overriding
-  let store: string = psm.params.store;
+  let store: string = psm.methodParams.store;
   if (psm.params.index?.length) {
     store = `${store}-${psm.params.index}`;
   }
@@ -65,7 +66,7 @@ export async function calculatePreSignedUrl(psm: PreSignedMsg, env: PreSignedEnv
   const signedUrl = await a4f
     .sign(
       new Request(opUrl.toString(), {
-        method: psm.params.method,
+        method: psm.methodParams.method,
       }),
       {
         aws: {

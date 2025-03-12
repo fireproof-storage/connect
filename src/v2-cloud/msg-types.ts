@@ -108,7 +108,7 @@ type MsgWithOptionalConn<T extends MsgBase = MsgBase> = T & { readonly conn?: QS
 
 export type MsgWithOptionalConnAuth<T extends MsgBase = MsgBase> = MsgWithOptionalConn<T> & { readonly auth: AuthType };
 
-export type MsgWithTenantLedger<T extends MsgBase> = T & { readonly tenant: TenantLedger };
+export type MsgWithTenantLedger<T extends MsgWithOptionalConnAuth> = T & { readonly tenant: TenantLedger };
 
 export interface ErrorMsg extends MsgBase {
   readonly type: "error";
@@ -482,8 +482,6 @@ export function buildReqClose(sthis: NextId, auth: AuthType, conn: QSId): ReqClo
 }
 
 export interface SignedUrlParam {
-  readonly method: HttpMethods;
-  readonly store: FPStoreTypes;
   // base path
   readonly path?: string;
   // name of the file
@@ -492,7 +490,17 @@ export interface SignedUrlParam {
   readonly index?: string;
 }
 
-export type ReqSignedUrlParam = Omit<SignedUrlParam, "method" | "store">;
+export interface MethodSignedUrlParam {
+  readonly method: HttpMethods;
+  readonly store: FPStoreTypes;
+}
+
+// export type ReqSignedUrlParam = Omit<SignedUrlParam, "method" | "store">;
+export interface ReqSignedUrlParam {
+  readonly auth: AuthType;
+  readonly methodParam: MethodSignedUrlParam;
+  readonly params: SignedUrlParam;
+}
 
 export interface UpdateReqRes<Q extends MsgBase, S extends MsgBase> {
   req: Q;
@@ -530,9 +538,13 @@ export function MsgIsTenantLedger<T extends MsgBase>(msg: T): msg is MsgWithTena
   return !!t && !!t.tenant && !!t.ledger;
 }
 
-export interface ReqSignedUrl extends MsgWithTenantLedger<MsgWithOptionalConn> {
+export interface ReqSignedUrl extends ReqSignedUrlWithoutMethodParams {
   // readonly type: "reqSignedUrl";
-  readonly params: ReqSignedUrlParam;
+  readonly methodParams: MethodSignedUrlParam;
+}
+
+export interface ReqSignedUrlWithoutMethodParams extends MsgWithTenantLedger<MsgWithOptionalConnAuth> {
+  readonly params: SignedUrlParam;
 }
 
 export interface GwCtx {
@@ -550,20 +562,22 @@ export interface GwCtxConn {
 export function buildReqSignedUrl<T extends ReqSignedUrl>(
   sthis: NextId,
   type: string,
-  params: ReqSignedUrlParam,
+  rparam: ReqSignedUrlParam,
   gwCtx: GwCtx
 ): T {
   return {
     tid: sthis.nextId().str,
     type,
+    auth: rparam.auth,
     version: VERSION,
     ...gwCtx,
-    params,
+    params: rparam.params,
   } as T;
 }
 
 export interface ResSignedUrl extends MsgWithTenantLedger<MsgWithConn> {
   // readonly type: "resSignedUrl";
+  readonly methodParams: MethodSignedUrlParam;
   readonly params: SignedUrlParam;
   readonly signedUrl: string;
 }
@@ -571,6 +585,7 @@ export interface ResSignedUrl extends MsgWithTenantLedger<MsgWithConn> {
 export interface ResOptionalSignedUrl extends MsgWithTenantLedger<MsgWithConn> {
   // readonly type: "resSignedUrl";
   readonly params: SignedUrlParam;
+  readonly methodParams: MethodSignedUrlParam;
   readonly signedUrl?: string;
 }
 
@@ -588,8 +603,6 @@ export interface MsgTypesCtx {
 //   };
 // }
 
-
-
 export interface MsgTypesCtxSync {
   readonly sthis: SuperThis;
   readonly logger: Logger;
@@ -600,9 +613,11 @@ export function resAuth(msg: MsgBase): Promise<AuthType> {
   return msg.auth ? Promise.resolve(msg.auth) : Promise.reject(new Error("No Auth"));
 }
 
-export async function buildRes<Q extends MsgWithTenantLedger<MsgWithConn<ReqSignedUrl>>, S extends ResSignedUrl>(
-  method: SignedUrlParam["method"],
-  store: FPStoreTypes,
+export async function buildRes<
+  Q extends MsgWithTenantLedger<MsgWithConn<ReqSignedUrlWithoutMethodParams>>,
+  S extends ResSignedUrl,
+>(
+  methodParams: MethodSignedUrlParam,
   type: string,
   msgCtx: MsgTypesCtx,
   req: Q,
@@ -612,10 +627,9 @@ export async function buildRes<Q extends MsgWithTenantLedger<MsgWithConn<ReqSign
     type: "reqSignedUrl",
     auth: await resAuth(req),
     version: req.version,
+    methodParams,
     params: {
       ...req.params,
-      method,
-      store,
     },
     conn: req.conn,
     tenant: req.tenant,
@@ -628,6 +642,7 @@ export async function buildRes<Q extends MsgWithTenantLedger<MsgWithConn<ReqSign
   return {
     ...req,
     params: psm.params,
+    methodParams,
     type,
     signedUrl: rSignedUrl.Ok().toString(),
   } as unknown as MsgWithError<S>;

@@ -12,6 +12,7 @@ import {
   MsgWithError,
   ResOptionalSignedUrl,
   ReqOpen,
+  MethodSignedUrlParam,
 } from "./msg-types.js";
 import {
   MsgIsResGetData,
@@ -77,10 +78,12 @@ async function refURL(sp: ResOptionalSignedUrl) {
 describe("Connection", () => {
   const sthis = ensureSuperThis();
   const msgP = defaultMsgParams(sthis, { hasPersistent: true });
+  let auth: MockJWK;
   // let privEnvJWK: string
 
   beforeAll(async () => {
     sthis.env.sets((await resolveToml("D1")).env as unknown as Record<string, string>);
+    auth = await mockJWK();
     // privEnvJWK = await jwk2env(keyPair.privateKey, sthis);
   });
 
@@ -93,25 +96,18 @@ describe("Connection", () => {
     const port = +(process.env.FP_WRANGLER_PORT || 0) || 1024 + Math.floor(Math.random() * (65536 - 1024));
     const my = defaultGestalt(msgP, { id: "FP-Universal-Client" });
 
-    const styles: (ReturnType<typeof wsStyle> | ReturnType<typeof httpStyle>)[] = [];
-    let auth: MockJWK
+    const styles: { name: string; action: () => ReturnType<typeof wsStyle> | ReturnType<typeof httpStyle> }[] = [
+      // force multiple lines
+      { name: "http", action: () => httpStyle(sthis, auth.applyAuthToURI, port, msgP, my) },
+      { name: "ws", action: () => wsStyle(sthis, auth.applyAuthToURI, port, msgP, my) },
+    ];
 
-    beforeAll(async () => {
-      auth = await mockJWK();
-      
-      styles.push(
-        ...[
-          // force multiple lines
-          httpStyle(sthis, auth.applyAuthToURI, port, msgP, my),
-          wsStyle(sthis, auth.applyAuthToURI, port, msgP, my),
-        ]
-      );
-    });
-
-    describe.each(styles)(`${honoServer.name} - $name`, (style) => {
+    describe.each(styles)(`${honoServer.name} - $name`, (styleFn) => {
+      let style: ReturnType<typeof wsStyle> | ReturnType<typeof httpStyle>;
       let server: HonoServer;
       let qOpen: ReqOpen;
       beforeAll(async () => {
+        style = styleFn.action();
         const app = new Hono();
         qOpen = buildReqOpen(sthis, auth.authType, { reqId: "req-open-test" });
         server = await honoServer
@@ -122,6 +118,7 @@ describe("Connection", () => {
         // console.log("closing server");
         await server.close();
       });
+
       it(`conn refused`, async () => {
         const rC = await applyStart(style.connRefused.open());
         expect(rC.isErr()).toBeTruthy();
@@ -139,7 +136,7 @@ describe("Connection", () => {
         beforeEach(async () => {
           const rC = await style.ok
             .open()
-            .then((r) => MsgConnected.connect(auth.applyAuthToURI('http://test'), r, { reqId: "req-open-testx" }));
+            .then((r) => MsgConnected.connect(auth.authType, r, { reqId: "req-open-testx" }));
           expect(rC.isOk()).toBeTruthy();
           c = rC.Ok().attachAuth(() => Promise.resolve(Result.Ok(auth.authType)));
           expect(c.conn).toEqual({
@@ -167,11 +164,13 @@ describe("Connection", () => {
           }
           expect(r).toEqual({
             message: "unexpected message",
+            auth: auth.authType,
             tid: "test",
             type: "error",
             version: "FP-MSG-1.0",
             src: {
               tid: "test",
+              auth: auth.authType,
               type: "kaputt",
               version: "FP-MSG-1.0",
             },
@@ -195,6 +194,7 @@ describe("Connection", () => {
           }
           expect(r).toEqual({
             conn: { ...c.conn, resId: r.conn?.resId },
+            auth: auth.authType,
             tid: req.tid,
             type: "resOpen",
             version: "FP-MSG-1.0",
@@ -203,7 +203,7 @@ describe("Connection", () => {
       });
 
       it("open", async () => {
-        const rC = await Msger.connect(sthis, auth.applyAuthToURI(`http://localhost:${port}/fp`), msgP, {
+        const rC = await Msger.connect(sthis, auth.authType, `http://localhost:${port}/fp`, msgP, {
           reqId: "req-open-testy",
         });
         expect(rC.isOk()).toBeTruthy();
@@ -217,13 +217,13 @@ describe("Connection", () => {
           my,
           remote: style.remoteGestalt,
         });
-        await c.close((await c.msgConnAuth()).Ok());  
+        await c.close((await c.msgConnAuth()).Ok());
       });
       describe(`${honoServer.name} - Msgs`, () => {
         let gwCtx: GwCtx;
         let conn: MsgConnectedAuth;
         beforeAll(async () => {
-          const rC = await Msger.connect(sthis, auth.applyAuthToURI(`http://localhost:${port}/fp`), msgP, qOpen.conn);
+          const rC = await Msger.connect(sthis, auth.authType, `http://localhost:${port}/fp`, msgP, qOpen.conn);
           expect(rC.isOk()).toBeTruthy();
           conn = rC.Ok().attachAuth(() => Promise.resolve(Result.Ok(auth.authType)));
           gwCtx = {
@@ -248,15 +248,19 @@ describe("Connection", () => {
           expect(res.conn).toEqual({ ...qOpen.conn, resId: res.conn.resId });
         });
 
-        function sup() {
+        function sup(mp: MethodSignedUrlParam) {
           return {
-            path: "test/me",
-            key: "key-test",
+            auth: auth.authType,
+            methodParam: mp,
+            params: {
+              path: "test/me",
+              key: "key-test",
+            },
           } satisfies ReqSignedUrlParam;
         }
         describe("Data", async () => {
           it("Get", async () => {
-            const sp = sup();
+            const sp = sup({ method: "GET", store: "data" });
             const res = await conn.request(buildReqGetData(sthis, sp, gwCtx), { waitFor: MsgIsResGetData });
             if (MsgIsResGetData(res)) {
               // expect(res.params).toEqual(sp);
@@ -266,7 +270,7 @@ describe("Connection", () => {
             }
           });
           it("Put", async () => {
-            const sp = sup();
+            const sp = sup({ method: "PUT", store: "data" });
             const res = await conn.request(buildReqPutData(sthis, sp, gwCtx), { waitFor: MsgIsResPutData });
             if (MsgIsResPutData(res)) {
               // expect(res.params).toEqual(sp);
@@ -276,7 +280,7 @@ describe("Connection", () => {
             }
           });
           it("Del", async () => {
-            const sp = sup();
+            const sp = sup({ method: "DELETE", store: "data" });
             const res = await conn.request(buildReqDelData(sthis, sp, gwCtx), { waitFor: MsgIsResDelData });
             if (MsgIsResDelData(res)) {
               // expect(res.params).toEqual(sp);
@@ -289,12 +293,12 @@ describe("Connection", () => {
 
         describe("Meta", async () => {
           it("bind stop", async () => {
-            const sp = sup();
+            const sp = sup({ method: "GET", store: "meta" });
             expect(conn.raw.activeBinds.size).toBe(0);
             const streams: ReadableStream<MsgWithError<EventGetMeta>>[] = Array(5)
               .fill(0)
               .map(() => {
-                return conn.bind<EventGetMeta, BindGetMeta>(buildBindGetMeta(sthis, auth.authType, sp, gwCtx), {
+                return conn.bind<EventGetMeta, BindGetMeta>(buildBindGetMeta(sthis, auth.authType, sp.params, gwCtx), {
                   waitFor: MsgIsEventGetMeta,
                 });
               });
@@ -319,8 +323,8 @@ describe("Connection", () => {
           });
 
           it("Get", async () => {
-            const sp = sup();
-            const res = await conn.request(buildBindGetMeta(sthis, auth.authType, sp, gwCtx), {
+            const sp = sup({ method: "GET", store: "meta" });
+            const res = await conn.request(buildBindGetMeta(sthis, auth.authType, sp.params, gwCtx), {
               waitFor: MsgIsEventGetMeta,
             });
             if (MsgIsEventGetMeta(res)) {
@@ -331,13 +335,13 @@ describe("Connection", () => {
             }
           });
           it("Put", async () => {
-            const sp = sup();
+            const sp = sup({ method: "PUT", store: "meta" });
             const metas = Array(5)
               .fill({ cid: "x", parents: [], data: "MomRkYXRho" })
               .map((data) => {
                 return { ...data, cid: sthis.timeOrderedNextId().str };
               });
-            const res = await conn.request(buildReqPutMeta(sthis, auth.authType, sp, metas, gwCtx), {
+            const res = await conn.request(buildReqPutMeta(sthis, auth.authType, sp.params, metas, gwCtx), {
               waitFor: MsgIsResPutMeta,
             });
             if (MsgIsResPutMeta(res)) {
@@ -348,9 +352,9 @@ describe("Connection", () => {
             }
           });
           it("Del", async () => {
-            const sp = sup();
+            const sp = sup({ method: "DELETE", store: "meta" });
             const res = await conn.request<ResDelMeta, ReqDelMeta>(
-              buildReqDelMeta(sthis, auth.authType, sp, gwCtx),
+              buildReqDelMeta(sthis, auth.authType, sp.params, gwCtx),
               {
                 waitFor: MsgIsResDelMeta,
               }
@@ -365,7 +369,7 @@ describe("Connection", () => {
         });
         describe("WAL", async () => {
           it("Get", async () => {
-            const sp = sup();
+            const sp = sup({ method: "GET", store: "wal" });
             const res = await conn.request(buildReqGetWAL(sthis, sp, gwCtx), { waitFor: MsgIsResGetWAL });
             if (MsgIsResGetWAL(res)) {
               // expect(res.params).toEqual(sp);
@@ -375,7 +379,7 @@ describe("Connection", () => {
             }
           });
           it("Put", async () => {
-            const sp = sup();
+            const sp = sup({ method: "PUT", store: "wal" });
             const res = await conn.request(buildReqPutWAL(sthis, sp, gwCtx), { waitFor: MsgIsResPutWAL });
             if (MsgIsResPutWAL(res)) {
               // expect(res.params).toEqual(sp);
@@ -385,7 +389,7 @@ describe("Connection", () => {
             }
           });
           it("Del", async () => {
-            const sp = sup();
+            const sp = sup({ method: "DELETE", store: "wal" });
             const res = await conn.request(buildReqDelWAL(sthis, sp, gwCtx), { waitFor: MsgIsResDelWAL });
             if (MsgIsResDelWAL(res)) {
               // expect(res.params).toEqual(sp);

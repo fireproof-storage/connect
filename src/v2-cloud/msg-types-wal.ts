@@ -41,7 +41,13 @@ export function buildResGetWAL(
   req: MsgWithTenantLedger<MsgWithConnAuth<ReqGetWAL>>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResGetWAL>> {
-  return buildRes<MsgWithTenantLedger<MsgWithConnAuth<ReqGetWAL>>, ResGetWAL>("GET", "wal", "resGetWAL", msgCtx, req, ctx);
+  return buildRes<MsgWithTenantLedger<MsgWithConnAuth<ReqGetWAL>>, ResGetWAL>(
+    { method: "GET", store: "wal" },
+    "resGetWAL",
+    msgCtx,
+    req,
+    ctx
+  );
 }
 
 export interface ReqPutWAL extends Omit<ReqSignedUrl, "type"> {
@@ -70,7 +76,13 @@ export function buildResPutWAL(
   req: MsgWithTenantLedger<MsgWithConnAuth<ReqPutWAL>>,
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResPutWAL>> {
-  return buildRes<MsgWithTenantLedger<MsgWithConnAuth<ReqPutWAL>>, ResPutWAL>("PUT", "wal", "resPutWAL", msgCtx, req, ctx);
+  return buildRes<MsgWithTenantLedger<MsgWithConnAuth<ReqPutWAL>>, ResPutWAL>(
+    { method: "PUT", store: "wal" },
+    "resPutWAL",
+    msgCtx,
+    req,
+    ctx
+  );
 }
 
 export interface ReqDelWAL extends Omit<ReqSignedUrl, "type"> {
@@ -99,8 +111,7 @@ export function buildResDelWAL(
   ctx: CalculatePreSignedUrl
 ): Promise<MsgWithError<ResDelWAL>> {
   return buildRes<MsgWithTenantLedger<MsgWithConnAuth<ReqDelWAL>>, ResDelWAL>(
-    "DELETE",
-    "wal",
+    { method: "DELETE", store: "wal" },
     "resDelWAL",
     msgCtx,
     req,

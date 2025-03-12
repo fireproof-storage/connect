@@ -30,3 +30,4 @@ smoke/react/package.json
 
 # Local PartyKit folder
 .partykit
+.dev.vars*

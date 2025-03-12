@@ -126,9 +126,11 @@ abstract class BaseGateway {
         ledger: params.name,
       },
       // tenant: conn.tenant,
-      params: {
+      methodParams: {
         method,
         store,
+      },
+      params: {
         ...params,
         key: params.key,
       },
@@ -392,8 +394,8 @@ interface ConnectionItem {
 }
 
 interface AuthedConnection {
-  readonly conn: Result<MsgConnectedAuth>; 
-  readonly citem: ConnectionItem 
+  readonly conn: Result<MsgConnectedAuth>;
+  readonly citem: ConnectionItem;
 }
 
 // const keyedConnections = new KeyedResolvOnce<Connection>();
@@ -404,16 +406,15 @@ interface Subscription {
   readonly unsub: () => void;
 }
 function connectionURI(uri: URI): URI {
-  return uri.build().delParam("authJWK").URI();
+  return uri.build().delParam("authJWK").delParam("key").delParam("store").URI();
 }
-
 
 const subscriptions = new Map<string, Subscription[]>();
 // const doServerSubscribe = new KeyedResolvOnce();
 export class FireproofCloudGateway implements bs.Gateway {
   readonly logger: Logger;
   readonly sthis: SuperThis;
-  readonly #connectionURIs = new Map< string, ConnectionItem >();
+  readonly #connectionURIs = new Map<string, ConnectionItem>();
 
   constructor(sthis: SuperThis) {
     this.sthis = sthis;
@@ -498,14 +499,17 @@ export class FireproofCloudGateway implements bs.Gateway {
     const matchURI = connectionURI(uri);
     let bestMatch: ConnectionItem | undefined;
     for (const ci of this.#connectionURIs.values()) {
-      const mci = ci.uri.match(matchURI); 
+      const mci = ci.uri.match(matchURI);
       if (mci.score >= ci.matchRes.score) {
-        bestMatch = ci; 
+        bestMatch = ci;
         break;
       }
     }
     if (!bestMatch) {
-      return { conn: this.logger.Error().Url(matchURI).Msg("No connection found").ResultError(), citem: {} as ConnectionItem };
+      return {
+        conn: this.logger.Error().Url(matchURI).Msg("No connection found").ResultError(),
+        citem: {} as ConnectionItem,
+      };
     }
     const conn = await bestMatch.connection.once(async () => {
       const rParams = uri.getParamsResult({
@@ -546,7 +550,7 @@ export class FireproofCloudGateway implements bs.Gateway {
       if (cUrl.pathname === "/") {
         cUrl = cUrl.build().pathname("/fp").URI();
       }
-      return Msger.connect(this.sthis, cUrl, qOpen);
+      return Msger.connect(this.sthis, rAuth.Ok(), cUrl, qOpen);
     });
     if (conn.isErr()) {
       return { conn: Result.Err(conn), citem: bestMatch };

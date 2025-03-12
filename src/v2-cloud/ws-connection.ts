@@ -33,12 +33,7 @@ export class WSConnection extends MsgRawConnectionBase implements MsgRawConnecti
 
   readonly id: string;
 
-  constructor(
-    sthis: SuperThis,
-    ws: WebSocket,
-    msgP: MsgerParamsWithEnDe,
-    exGestalt: ExchangedGestalt
-  ) {
+  constructor(sthis: SuperThis, ws: WebSocket, msgP: MsgerParamsWithEnDe, exGestalt: ExchangedGestalt) {
     super(sthis, exGestalt);
     this.id = sthis.nextId().str;
     this.logger = ensureLogger(sthis, "WSConnection");

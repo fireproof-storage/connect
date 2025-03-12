@@ -21,12 +21,7 @@ export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnec
 
   readonly #onMsg = new Map<string, OnMsgFn>();
 
-  constructor(
-    sthis: SuperThis,
-    uris: URI[],
-    msgP: MsgerParamsWithEnDe,
-    exGestalt: ExchangedGestalt
-  ) {
+  constructor(sthis: SuperThis, uris: URI[], msgP: MsgerParamsWithEnDe, exGestalt: ExchangedGestalt) {
     super(sthis, exGestalt);
     this.logger = ensureLogger(sthis, "HttpConnection");
     // this.msgParam = msgP;

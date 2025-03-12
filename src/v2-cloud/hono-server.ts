@@ -138,7 +138,7 @@ export abstract class HonoServerBase implements HonoServerImpl {
   // }
 
   async handleReqPutMeta(ctx: MsgDispatcherCtx, msg: MsgWithConnAuth<ReqPutMeta>): Promise<MsgWithError<ResPutMeta>> {
-    const rUrl = await buildRes("PUT", "meta", "resPutMeta", ctx, msg, this);
+    const rUrl = await buildRes({ method: "PUT", store: "meta" }, "resPutMeta", ctx, msg, this);
     if (MsgIsError(rUrl)) {
       return rUrl;
     }
@@ -150,7 +150,7 @@ export abstract class HonoServerBase implements HonoServerImpl {
   }
 
   async handleReqDelMeta(ctx: MsgDispatcherCtx, msg: MsgWithConnAuth<ReqDelMeta>): Promise<MsgWithError<ResDelMeta>> {
-    const rUrl = await buildRes("DELETE", "meta", "resDelMeta", ctx, msg, this);
+    const rUrl = await buildRes({ method: "DELETE", store: "meta" }, "resDelMeta", ctx, msg, this);
     if (MsgIsError(rUrl)) {
       return rUrl;
     }
@@ -165,7 +165,7 @@ export abstract class HonoServerBase implements HonoServerImpl {
     msg: MsgWithConnAuth<BindGetMeta>,
     gwCtx: GwCtx = msg
   ): Promise<MsgWithError<EventGetMeta>> {
-    const rMsg = await buildRes("GET", "meta", "eventGetMeta", ctx, msg, this);
+    const rMsg = await buildRes({ method: "GET", store: "meta" }, "eventGetMeta", ctx, msg, this);
     if (MsgIsError(rMsg)) {
       return rMsg;
     }
