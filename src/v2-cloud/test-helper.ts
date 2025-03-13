@@ -338,6 +338,12 @@ export function CFHonoServerFactory(sthis: SuperThis) {
   };
 }
 
+export function applyBackend(backend: "DO" | "D1", fn: (uri: CoerceURI) => URI): (uri: CoerceURI) => URI {
+  return (uri) => {
+    return fn(BuildURI.from(uri).setParam("backendMode", backend).URI());
+  };
+}
+
 // export async function mockGetAuthFactory(pk: string, factoryTp: TokenForParam, sthis: SuperThis): Promise<AuthFactory> {
 //   const sts = await SessionTokenService.create(
 //     {
