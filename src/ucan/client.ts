@@ -153,11 +153,16 @@ export function service(server: Server): ConnectionView<Service> {
       });
 
       if (!response.ok) throw new Error(`HTTP Request failed. ${"POST"} ${url} → ${response.status}`);
-      const buffer = response.ok ? await response.arrayBuffer() : new Uint8Array();
+      const buffer = response.ok ? new Uint8Array(await response.arrayBuffer()) : new Uint8Array();
 
+      // console.log("response", response.headers);
       return {
-        headers: response.headers.entries ? Object.fromEntries(response.headers.entries()) : {},
-        body: new Uint8Array(buffer),
+        headers:
+          "entries" in response.headers
+            ? Object.fromEntries((response.headers as unknown as Map<string, string>).entries())
+            : {},
+        // headers: {},
+        body: buffer,
       };
     },
   };

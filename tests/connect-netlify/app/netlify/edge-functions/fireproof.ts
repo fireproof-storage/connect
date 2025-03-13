@@ -1,3 +1,4 @@
+import { to_blob } from "@adviser/cement";
 import { getStore } from "@netlify/blobs";
 
 // eslint-disable-next-line no-console
@@ -18,7 +19,7 @@ export default async (req: Request) => {
   if (req.method === "PUT") {
     if (carId) {
       const carFiles = getStore("cars");
-      const carArrayBuffer = new Uint8Array(await req.arrayBuffer());
+      const carArrayBuffer = to_blob(await req.arrayBuffer());
       await carFiles.set(carId, carArrayBuffer);
       return new Response(JSON.stringify({ ok: true }), { status: 201 });
     } else if (metaDb) {
