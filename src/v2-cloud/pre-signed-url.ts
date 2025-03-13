@@ -77,5 +77,6 @@ export async function calculatePreSignedUrl(psm: PreSignedMsg, env: PreSignedEnv
       }
     )
     .then((res) => res.url);
+  // console.log("opUrl", opUrl.toString(), psm.methodParams.method, signedUrl, env.aws);
   return Result.Ok(URI.from(signedUrl));
 }

@@ -1,6 +1,6 @@
 name = "fireproof-cloud"
 main = "server.ts"
-compatibility_date = "2024-04-19"
+compatibility_date = "2025-02-24"
 compatibility_flags = ["nodejs_compat"]
 # upload_source_maps = true
 
@@ -38,8 +38,8 @@ SECRET_ACCESS_KEY = "minioadmin"
 FP_DEBUG = "FPMetaGroups"
 #FP_FORMAT = "yaml"
 # TEST_DATE = "20241121T225359Z"
-FP_PROTOCOL = "http"
-CF_BACKEND_MODE = "DURABLE_OBJECT"
+# FP_PROTOCOL = "http"
+# CF_BACKEND_MODE = "DURABLE_OBJECT"
 
 # [env.test.services]
 # bindings = [
@@ -70,7 +70,7 @@ SECRET_ACCESS_KEY = "minioadmin"
 FP_DEBUG = "FPMetaGroups"
 #FP_FORMAT = "yaml"
 # TEST_DATE = "20241121T225359Z"
-FP_PROTOCOL = "http"
+# FP_PROTOCOL = "http"
 
 [[env.test-reqRes-D1.d1_databases]]
 binding = "FP_BACKEND_D1"

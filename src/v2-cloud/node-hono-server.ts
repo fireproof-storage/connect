@@ -16,6 +16,7 @@ import { defaultMsgParams, jsonEnDe } from "./msger.js";
 import {
   defaultGestalt,
   Gestalt,
+  isProtocolCapabilities,
   MsgBase,
   MsgerParams,
   MsgIsWithConn,
@@ -26,6 +27,8 @@ import {
 import { SQLDatabase } from "./meta-merger/abstract-sql.js";
 import { WSRoom } from "./ws-room.js";
 import { ConnItem } from "./msg-dispatch.js";
+import { SessionTokenService } from "../sts-service/sts-service.js";
+import { portRandom } from "./test-utils.js";
 
 interface ServerType {
   close(fn: () => void): void;
@@ -166,7 +169,7 @@ export class NodeHonoFactory implements HonoServerFactory {
     this._wsRoom = new NodeWSRoom(sthis);
   }
 
-  inject(
+  async inject(
     c: Context,
     // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     fn: (rt: ExposeCtxItemWithImpl<NodeWSRoom>) => Promise<Response | void>
@@ -180,24 +183,30 @@ export class NodeHonoFactory implements HonoServerFactory {
 
     const id = sthis.nextId(12).str;
 
-    const fpProtocol = sthis.env.get("FP_PROTOCOL");
+    const protocolCapabilities = URI.from(c.req.url)
+      .getParam("capabilities", "reqRes,stream")
+      .split(",")
+      .filter((s) => isProtocolCapabilities(s));
     const msgP =
       this.params.msgP ??
       defaultMsgParams(sthis, {
         hasPersistent: true,
-        protocolCapabilities: fpProtocol ? (fpProtocol === "ws" ? ["stream"] : ["reqRes"]) : ["reqRes", "stream"],
+        protocolCapabilities,
       });
     const gestalt =
       this.params.gs ??
       defaultGestalt(msgP, {
-        id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
+        id: "FP-Storage-Backend", // fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
       });
 
+    const stsService = await SessionTokenService.createFromEnv();
     const ctx: ExposeCtxItem<NodeWSRoom> = {
       id,
       sthis,
       logger,
       wsRoom: this._wsRoom,
+      port: portRandom(),
+      stsService,
       gestalt,
       ende,
       dbFactory: () => this.params.sql,

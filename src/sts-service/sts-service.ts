@@ -53,9 +53,10 @@ export class SessionTokenService {
 
   static async generateKeyPair(
     alg = "ES256",
-    options: GenerateKeyPairOptions = { extractable: true }
+    options: GenerateKeyPairOptions = { extractable: true },
+    generateKeyPairFN = (alg: string, options: GenerateKeyPairOptions) => generateKeyPair(alg, options)
   ): Promise<KeysResult> {
-    const material = await generateKeyPair(alg, options);
+    const material = await generateKeyPairFN(alg, options);
     return {
       material,
       strings: {
@@ -109,7 +110,10 @@ export class SessionTokenService {
   }
 
   async validate(token: string): Promise<Result<JWTVerifyResult<FPCloudClaim>>> {
-    return exception2Result(() => jwtVerify<FPCloudClaim>(token, this.#key));
+    return exception2Result(async () => {
+      const ret = await jwtVerify<FPCloudClaim>(token, this.#key);
+      return ret;
+    });
   }
 
   // async getEnvKey(): Promise<string> {

@@ -20,6 +20,7 @@ export default defineConfig({
     ],
     globals: true,
     setupFiles: "./setup.v2-cloud.ts",
+    globalSetup: "./globalSetup.v2-cloud.ts",
     testTimeout: 25000,
     //    poolOptions: {
     //      workers: { wrangler: { configPath: './src/cloud/backend/wrangler.toml' } },

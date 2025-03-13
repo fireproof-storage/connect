@@ -59,7 +59,8 @@ export function buildMsgDispatcher(
       match: MsgIsReqGestalt,
       isNotConn: true,
       fn: (ctx, msg: ReqGestalt) => {
-        const resGestalt = buildResGestalt(msg, ctx.gestalt);
+        const resGestalt = buildResGestalt(msg, ctx.gestalt, msg.auth);
+        // console.log(">>>>>>>>>>>>>>", resGestalt);
         return resGestalt;
       },
     },

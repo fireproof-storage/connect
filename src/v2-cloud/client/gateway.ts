@@ -225,6 +225,7 @@ class DataGateway extends BaseGateway implements StoreTypeGateway {
       return this.logger.Error().Err(rResSignedUrl).Msg("Error in buildResSignedUrl").ResultError();
     }
     const { signedUrl: uploadUrl } = rResSignedUrl;
+    // console.log("putConn", { uploadUrl });
     return this.putObject(uri, uploadUrl, body, conn);
   }
   async delConn(uri: URI, conn: AuthedConnection): Promise<Result<void>> {

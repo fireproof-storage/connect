@@ -12,6 +12,9 @@ import {
   EnDeCoder,
   Gestalt,
   MsgWithConnAuth,
+  FPCloudAuthType,
+  AuthType,
+  isAuthTypeFPCloudJWK,
 } from "./msg-types.js";
 import { MsgDispatcher, MsgDispatcherCtx, Promisable, WSConnection } from "./msg-dispatch.js";
 import { WSContext, WSContextInit, WSMessageReceive } from "hono/ws";
@@ -35,6 +38,7 @@ import { CFExposeCtxItem } from "./backend/cf-hono-server.js";
 import { metaMerger } from "./meta-merger/meta-merger.js";
 import { SuperThis } from "@fireproof/core";
 import { SQLDatabase } from "./meta-merger/abstract-sql.js";
+import { SessionTokenService } from "../sts-service/sts-service.js";
 
 // export interface RunTimeParams {
 //   readonly sthis: SuperThis;
@@ -54,9 +58,11 @@ export class WSContextWithId<T> extends WSContext<T> {
 
 export interface ExposeCtxItem<T extends WSRoom> {
   readonly sthis: SuperThis;
+  readonly port: number;
   readonly wsRoom: T;
   readonly logger: Logger;
   readonly ende: EnDeCoder;
+  readonly stsService: SessionTokenService;
   readonly gestalt: Gestalt;
   readonly dbFactory: () => SQLDatabase;
   // readonly metaMerger: MetaMerger;
@@ -75,6 +81,8 @@ export interface WSEventsConnId<T> {
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 export type ConnMiddleware = (conn: WSConnection, c: Context, next: Next) => Promise<Response | void>;
 export interface HonoServerImpl {
+  validateAuth(ctx: MsgDispatcherCtx, auth: AuthType): Promise<Result<FPCloudAuthType>>;
+
   start(ctx: CFExposeCtxItem): Promise<HonoServerImpl>;
   // gestalt(): Gestalt;
   // getConnected(): Connected[];
@@ -125,6 +133,24 @@ export abstract class HonoServerBase implements HonoServerImpl {
     createEvents: (c: Context) => WSEventsConnId<unknown> | Promise<WSEventsConnId<unknown>>
   ): ConnMiddleware;
 
+  async validateAuth(ctx: MsgDispatcherCtx, auth: AuthType): Promise<Result<FPCloudAuthType>> {
+    if (!isAuthTypeFPCloudJWK(auth)) {
+      return Promise.resolve(Result.Err("Only fp-cloud-jwt is supported"));
+    }
+    // console.log("validateAuth-0", auth.params.jwk, ctx.stsService);
+    const rAuth = await ctx.stsService.validate(auth.params.jwk);
+    // console.log("validateAuth-1", auth.params.jwk, ctx.stsService, rAuth);
+    if (rAuth.isErr()) {
+      return Result.Err(rAuth);
+    }
+    return Result.Ok({
+      type: "fp-cloud",
+      params: {
+        claim: rAuth.Ok().payload,
+        jwk: auth.params.jwk,
+      },
+    });
+  }
   // abstract getConnected(): Connected[];
 
   start(ctx: ExposeCtxItem<WSRoom>, drop = false): Promise<HonoServerImpl> {
@@ -212,7 +238,7 @@ export interface HonoServerFactory<T extends WSRoom = WSRoom> {
   inject(c: Context, fn: (rt: ExposeCtxItemWithImpl<T>) => Promise<Response | void>): Promise<Response | void>;
 
   start(app: Hono): Promise<void>;
-  serve(app: Hono, port?: number): Promise<void>;
+  serve(app: Hono, port: number): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -230,19 +256,23 @@ class NoBackChannel implements MsgDispatcherCtx {
     this.ctx = ctx;
     this.impl = ctx.impl;
     this.id = ctx.id;
+    this.port = ctx.port;
     this.sthis = ctx.sthis;
     this.logger = ctx.logger;
     this.ende = ctx.ende;
     this.gestalt = ctx.gestalt;
     this.dbFactory = ctx.dbFactory;
+    this.stsService = ctx.stsService;
   }
   readonly impl: HonoServerImpl;
+  readonly port: number;
   readonly sthis: SuperThis;
   readonly logger: Logger;
   readonly ende: EnDeCoder;
   readonly gestalt: Gestalt;
   readonly dbFactory: () => SQLDatabase;
   readonly id: string;
+  readonly stsService: SessionTokenService;
 
   get ws(): WSContextWithId<unknown> {
     return {
@@ -277,14 +307,14 @@ export class HonoServer {
   }
 
   /* only for testing */
-  async once(app: Hono, port?: number): Promise<HonoServer> {
+  async once(app: Hono, port: number): Promise<HonoServer> {
     this.register(app);
     await this.factory.start(app);
     await this.factory.serve(app, port);
     return this;
   }
 
-  async serve(app: Hono, port?: number): Promise<HonoServer> {
+  async serve(app: Hono, port: number): Promise<HonoServer> {
     await this.factory.serve(app, port);
     return this;
   }

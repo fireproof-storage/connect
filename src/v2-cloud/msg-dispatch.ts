@@ -1,10 +1,22 @@
 import { SuperThis } from "@fireproof/core";
-import { MsgBase, buildErrorMsg, MsgWithError, QSId, MsgWithConnAuth } from "./msg-types.js";
+import {
+  MsgBase,
+  buildErrorMsg,
+  MsgWithError,
+  QSId,
+  MsgWithConnAuth,
+  isAuthTypeFPCloud,
+  FPJWKCloudAuthType,
+  MsgIsError,
+  isAuthTypeFPCloudJWK,
+  AuthType,
+} from "./msg-types.js";
 
 import { PreSignedMsg } from "./pre-signed-url.js";
 import { ExposeCtxItemWithImpl, HonoServerImpl, WSContextWithId } from "./hono-server.js";
 import { UnReg } from "./msger.js";
 import { WSRoom } from "./ws-room.js";
+import { SessionTokenService } from "../sts-service/sts-service.js";
 
 export interface MsgContext {
   calculatePreSignedUrl(p: PreSignedMsg): Promise<string>;
@@ -50,6 +62,7 @@ export interface ConnectionInfo {
 export interface MsgDispatcherCtx extends ExposeCtxItemWithImpl<WSRoom> {
   readonly id: string;
   readonly impl: HonoServerImpl;
+  readonly stsService: SessionTokenService;
   // readonly auth: AuthFactory;
   readonly ws: WSContextWithId<unknown>;
 }
@@ -104,23 +117,65 @@ export class MsgDispatcher {
   }
 
   send(ctx: MsgDispatcherCtx, msg: MsgBase) {
+    const isError = MsgIsError(msg);
     const str = ctx.ende.encode(msg);
     ctx.ws.send(str);
-    return new Response(str);
+    return new Response(str, {
+      status: isError ? 500 : 200,
+      statusText: isError ? "error" : "ok",
+    });
+  }
+
+  async validateConn<T extends MsgBase>(
+    ctx: MsgDispatcherCtx,
+    msg: T,
+    fn: (msg: MsgWithConnAuth<T>) => Promisable<MsgWithError<MsgBase>>
+  ): Promise<Response> {
+    if (!ctx.wsRoom.isConnected(msg)) {
+      return this.send(ctx, buildErrorMsg(ctx, { ...msg }, new Error("dispatch missing connection")));
+      // return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("non open connection")));
+    }
+    // console.log("validateConn-1");
+    const r = await this.validateAuth(ctx, msg, (msg) => fn(msg));
+    return Promise.resolve(this.send(ctx, r));
+  }
+
+  async validateAuth<T extends MsgBase>(
+    ctx: MsgDispatcherCtx,
+    msg: T,
+    fn: (msg: T) => Promisable<MsgWithError<MsgBase>>
+  ): Promise<MsgWithError<MsgBase>> {
+    if (msg.auth) {
+      // console.log("validateAuth-1", msg.auth);
+      const rAuth = await ctx.impl.validateAuth(ctx, msg.auth);
+      if (rAuth.isErr()) {
+        return buildErrorMsg(ctx, msg, rAuth.Err());
+      }
+      const sMsg = await fn({
+        ...msg,
+        auth: rAuth.Ok(),
+      });
+      switch (true) {
+        case isAuthTypeFPCloudJWK(sMsg.auth):
+          return sMsg;
+        case isAuthTypeFPCloud(sMsg.auth):
+          return {
+            ...sMsg,
+            auth: {
+              type: "fp-cloud-jwk",
+              params: {
+                jwk: sMsg.auth.params.jwk,
+              },
+            } satisfies FPJWKCloudAuthType as AuthType, // send me to hell ts
+          };
+        default:
+          return buildErrorMsg(ctx, msg, new Error("unexpected auth"));
+      }
+    }
+    return buildErrorMsg(ctx, msg, new Error("missing auth"));
   }
 
   async dispatch(ctx: MsgDispatcherCtx, msg: MsgBase): Promise<Response> {
-    const validateConn = async <T extends MsgBase>(
-      msg: T,
-      fn: (msg: MsgWithConnAuth<T>) => Promisable<MsgWithError<MsgBase>>
-    ): Promise<Response> => {
-      if (!ctx.wsRoom.isConnected(msg)) {
-        return this.send(ctx, buildErrorMsg(ctx, { ...msg }, new Error("dispatch missing connection")));
-        // return send(buildErrorMsg(this.sthis, this.logger, msg, new Error("non open connection")));
-      }
-      const r = await fn(msg);
-      return Promise.resolve(this.send(ctx, r));
-    };
     try {
       // console.log("dispatch-1", msg);
       const found = Array.from(this.items.values()).find((item) => item.match(msg));
@@ -129,11 +184,11 @@ export class MsgDispatcher {
         return this.send(ctx, buildErrorMsg(ctx, msg, new Error("unexpected message")));
       }
       if (!found.isNotConn) {
-        // console.log("dispatch-3", msg);
-        return validateConn(msg, (msg) => found.fn(ctx, msg));
+        // console.log("dispatch-3");
+        return this.validateConn(ctx, msg, (msg) => found.fn(ctx, msg));
       }
       // console.log("dispatch-4", msg);
-      return this.send(ctx, await found.fn(ctx, msg));
+      return this.send(ctx, await this.validateAuth(ctx, msg, (msg) => found.fn(ctx, msg)));
     } catch (e) {
       return this.send(ctx, buildErrorMsg(ctx, msg, e as Error));
     }

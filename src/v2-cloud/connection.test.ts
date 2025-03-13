@@ -1,5 +1,5 @@
 import { ensureSuperThis } from "@fireproof/core";
-import { Result, URI } from "@adviser/cement";
+import { BuildURI, CoerceURI, Result, URI } from "@adviser/cement";
 import {
   buildReqGestalt,
   buildReqOpen,
@@ -57,7 +57,7 @@ import {
 } from "./msg-type-meta.js";
 
 async function refURL(sp: ResOptionalSignedUrl) {
-  const { env } = await resolveToml("D1");
+  const { env } = await resolveToml();
   return (
     await calculatePreSignedUrl(sp, {
       storageUrl: URI.from(env.STORAGE_URL),
@@ -75,6 +75,12 @@ async function refURL(sp: ResOptionalSignedUrl) {
     .asObj();
 }
 
+function applyBackend(backend: "DO" | "D1", fn: (uri: CoerceURI) => URI): (uri: CoerceURI) => URI {
+  return (uri) => {
+    return fn(BuildURI.from(uri).setParam("backendMode", backend).URI());
+  };
+}
+
 describe("Connection", () => {
   const sthis = ensureSuperThis();
   const msgP = defaultMsgParams(sthis, { hasPersistent: true });
@@ -82,7 +88,7 @@ describe("Connection", () => {
   // let privEnvJWK: string
 
   beforeAll(async () => {
-    sthis.env.sets((await resolveToml("D1")).env as unknown as Record<string, string>);
+    sthis.env.sets((await resolveToml()).env as unknown as Record<string, string>);
     auth = await mockJWK();
     // privEnvJWK = await jwk2env(keyPair.privateKey, sthis);
   });
@@ -90,17 +96,31 @@ describe("Connection", () => {
   describe.each([
     // force multiple lines
     NodeHonoServerFactory(),
-    CFHonoServerFactory("DO"),
-    CFHonoServerFactory("D1"),
+    CFHonoServerFactory(sthis),
   ])("$name - Connection", (honoServer) => {
-    const port = +(process.env.FP_WRANGLER_PORT || 0) || 1024 + Math.floor(Math.random() * (65536 - 1024));
+    const port = honoServer.port;
+    // const port = +(process.env.FP_WRANGLER_PORT || 0) || 1024 + Math.floor(Math.random() * (65536 - 1024));
     const my = defaultGestalt(msgP, { id: "FP-Universal-Client" });
 
-    const styles: { name: string; action: () => ReturnType<typeof wsStyle> | ReturnType<typeof httpStyle> }[] = [
-      // force multiple lines
-      { name: "http", action: () => httpStyle(sthis, auth.applyAuthToURI, port, msgP, my) },
-      { name: "ws", action: () => wsStyle(sthis, auth.applyAuthToURI, port, msgP, my) },
-    ];
+    const styles: { name: string; action: () => ReturnType<typeof wsStyle> | ReturnType<typeof httpStyle> }[] =
+      honoServer.name === "NodeHonoServer"
+        ? [
+            // force multiple lines
+            { name: "http", action: () => httpStyle(sthis, auth.applyAuthToURI, port, msgP, my) },
+            { name: "ws", action: () => wsStyle(sthis, auth.applyAuthToURI, port, msgP, my) },
+          ]
+        : [
+            {
+              name: "http-DO",
+              action: () => httpStyle(sthis, applyBackend("DO", auth.applyAuthToURI), port, msgP, my),
+            },
+            { name: "ws-DO", action: () => wsStyle(sthis, applyBackend("DO", auth.applyAuthToURI), port, msgP, my) },
+            {
+              name: "http-D1",
+              action: () => httpStyle(sthis, applyBackend("D1", auth.applyAuthToURI), port, msgP, my),
+            },
+            { name: "ws-D1", action: () => wsStyle(sthis, applyBackend("D1", auth.applyAuthToURI), port, msgP, my) },
+          ];
 
     describe.each(styles)(`${honoServer.name} - $name`, (styleFn) => {
       let style: ReturnType<typeof wsStyle> | ReturnType<typeof httpStyle>;
@@ -183,7 +203,10 @@ describe("Connection", () => {
           if (!MsgIsResGestalt(r)) {
             assert.fail("expected MsgError", JSON.stringify(r));
           }
-          expect(r.gestalt).toEqual(c.exchangedGestalt?.remote);
+          expect(r.gestalt).toEqual({
+            ...c.exchangedGestalt?.remote,
+            id: r.gestalt.id,
+          });
         });
 
         it("openConnection", async () => {
@@ -203,7 +226,7 @@ describe("Connection", () => {
       });
 
       it("open", async () => {
-        const rC = await Msger.connect(sthis, auth.authType, `http://localhost:${port}/fp`, msgP, {
+        const rC = await Msger.connect(sthis, auth.authType, style.ok.url("fp"), msgP, {
           reqId: "req-open-testy",
         });
         expect(rC.isOk()).toBeTruthy();
@@ -215,7 +238,7 @@ describe("Connection", () => {
         expect(c.raw).toBeInstanceOf(style.cInstance);
         expect(c.exchangedGestalt).toEqual({
           my,
-          remote: style.remoteGestalt,
+          remote: { ...style.remoteGestalt, id: c.exchangedGestalt.remote.id },
         });
         await c.close((await c.msgConnAuth()).Ok());
       });

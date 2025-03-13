@@ -22,13 +22,12 @@ import {
   buildReqClose,
   MsgIsResClose,
   AuthFactory,
-  FPCloudAuthType,
   AuthType,
+  FPJWKCloudAuthType,
 } from "./msg-types.js";
 import { SuperThis } from "@fireproof/core";
 import { HttpConnection } from "./http-connection.js";
 import { WSConnection } from "./ws-connection.js";
-import { SessionTokenService } from "../sts-service/sts-service.js";
 
 // const headers = {
 //     "Content-Type": "application/json",
@@ -122,24 +121,24 @@ export async function applyStart(prC: Promise<Result<MsgRawConnection>>): Promis
   return rC;
 }
 
-export async function authTypeFromUri(logger: Logger, curi: CoerceURI): Promise<Result<FPCloudAuthType>> {
+export async function authTypeFromUri(logger: Logger, curi: CoerceURI): Promise<Result<FPJWKCloudAuthType>> {
   const uri = URI.from(curi);
   const authJWK = uri.getParam("authJWK");
   if (!authJWK) {
     return logger.Error().Url(uri).Msg("authJWK is required").ResultError();
   }
-  const sts = await SessionTokenService.createFromEnv();
-  const fpc = await sts.validate(authJWK);
-  if (fpc.isErr()) {
-    return logger.Error().Err(fpc).Msg("Invalid authJWK").ResultError();
-  }
+  // const sts = await SessionTokenService.createFromEnv();
+  // const fpc = await sts.validate(authJWK);
+  // if (fpc.isErr()) {
+  //   return logger.Error().Err(fpc).Msg("Invalid authJWK").ResultError();
+  // }
   return Result.Ok({
-    type: "fp-cloud",
+    type: "fp-cloud-jwk",
     params: {
-      ...fpc.Ok().payload,
+      // claim: fpc.Ok().payload,
       jwk: authJWK,
     },
-  } satisfies FPCloudAuthType);
+  } satisfies FPJWKCloudAuthType);
 }
 
 export class MsgConnected {
@@ -321,7 +320,7 @@ export class Msger {
       waitFor: MsgIsResGestalt,
     });
     if (!MsgIsResGestalt(resGestalt)) {
-      return Result.Err(new Error("Invalid Gestalt"));
+      return sthis.logger.Error().Any({ resGestalt }).Msg("should be ResGestalt").ResultError();
     }
     await hc.close(resGestalt /* as MsgWithConnAuth */);
     const exGt = { my: gs, remote: resGestalt.gestalt } satisfies ExchangedGestalt;

@@ -134,20 +134,25 @@ export class HttpConnection extends MsgRawConnectionBase implements MsgRawConnec
     }
     const res = rRes.Ok();
     if (!res.ok) {
-      return this.toMsg(
-        buildErrorMsg(
-          this,
-          req,
-          this.logger
-            .Error()
-            .Url(url)
-            .Str("status", res.status.toString())
-            .Str("statusText", res.statusText)
-            .Msg("HTTP Error")
-            .AsError(),
-          await res.text()
-        )
-      );
+      const data = new Uint8Array(await res.arrayBuffer());
+      const ret = await exception2Result(async () => this.msgP.ende.decode(data) as S);
+      if (ret.isErr() || !MsgIsError(ret.Ok())) {
+        return this.toMsg(
+          buildErrorMsg(
+            this,
+            req,
+            this.logger
+              .Error()
+              .Url(url)
+              .Str("status", res.status.toString())
+              .Str("statusText", res.statusText)
+              .Msg("HTTP Error")
+              .AsError(),
+            await res.text()
+          )
+        );
+      }
+      return this.toMsg(ret.Ok());
     }
     const data = new Uint8Array(await res.arrayBuffer());
     const ret = await exception2Result(async () => this.msgP.ende.decode(data) as S);

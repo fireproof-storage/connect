@@ -39,6 +39,14 @@ export interface AuthType {
   readonly type: "ucan" | "error" | "fp-cloud-jwk" | "fp-cloud";
 }
 
+export function isAuthTypeFPCloudJWK(a: AuthType): a is FPJWKCloudAuthType {
+  return a.type === "fp-cloud-jwk";
+}
+
+export function isAuthTypeFPCloud(a: AuthType): a is FPCloudAuthType {
+  return a.type === "fp-cloud";
+}
+
 export interface UCanAuth extends AuthType {
   readonly type: "ucan";
   readonly params: {
@@ -54,7 +62,10 @@ export interface FPJWKCloudAuthType extends AuthType {
 
 export interface FPCloudAuthType extends AuthType {
   readonly type: "fp-cloud";
-  readonly params: TokenForParam;
+  readonly params: {
+    readonly claim: TokenForParam;
+    readonly jwk: string; // for reply
+  };
 }
 
 export type AuthFactory = (tp?: Partial<TokenForParam>) => Promise<Result<AuthType>>;
@@ -132,6 +143,11 @@ export type FPStoreTypes = "meta" | "data" | "wal";
 // reqRes is http
 // stream is WebSocket
 export type ProtocolCapabilities = "reqRes" | "stream";
+
+export function isProtocolCapabilities(s: string): s is ProtocolCapabilities {
+  const x = s.trim();
+  return x === "reqRes" || x === "stream";
+}
 
 export interface Gestalt {
   /**
@@ -362,7 +378,7 @@ export interface ResGestalt extends MsgBase {
   readonly gestalt: Gestalt;
 }
 
-export function buildResGestalt(req: ReqGestalt, gestalt: Gestalt, auth?: AuthType): ResGestalt | ErrorMsg {
+export function buildResGestalt(req: ReqGestalt, gestalt: Gestalt, auth: AuthType): ResGestalt | ErrorMsg {
   return {
     tid: req.tid,
     auth: auth || req.auth,

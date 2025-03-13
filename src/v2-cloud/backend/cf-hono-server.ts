@@ -15,6 +15,7 @@ import {
   defaultGestalt,
   EnDeCoder,
   Gestalt,
+  isProtocolCapabilities,
   MsgBase,
   MsgIsWithConn,
   MsgWithConnAuth,
@@ -31,6 +32,8 @@ import { Env } from "./env.js";
 import { WSRoom } from "../ws-room.js";
 import { FPBackendDurableObject, FPRoomDurableObject } from "./server.js";
 import { ConnItem } from "../msg-dispatch.js";
+import { SessionTokenService } from "../../sts-service/sts-service.js";
+import { portForLocalTest } from "../test-utils.js";
 
 // const startedChs = new KeyedResolvOnce<CFHonoServer>();
 
@@ -276,14 +279,16 @@ export class CFExposeCtx {
     id: string,
     sthis: SuperThis,
     logger: Logger,
+    port: number,
     ende: EnDeCoder,
     gs: Gestalt,
+    stsService: SessionTokenService,
     dbFactory: () => SQLDatabase,
     wsRoom: CFWSRoom
   ): CFExposeCtxItem {
     // const ctx = new CFExposeCtx(id, sthis, logger, ende, gs, db, wsRoom);
     env.FP_EXPOSE_CTX = env.FP_EXPOSE_CTX ?? new CFExposeCtx();
-    return env.FP_EXPOSE_CTX.attach(id, sthis, logger, ende, gs, dbFactory, wsRoom);
+    return env.FP_EXPOSE_CTX.attach(id, sthis, logger, port, ende, gs, stsService, dbFactory, wsRoom);
   }
 
   private constructor() {
@@ -302,12 +307,14 @@ export class CFExposeCtx {
     id: string,
     sthis: SuperThis,
     logger: Logger,
+    port: number,
     ende: EnDeCoder,
     gestalt: Gestalt,
+    stsService: SessionTokenService,
     dbFactory: () => SQLDatabase,
     wsRoom: CFWSRoom
   ) {
-    const item = { id, sthis, logger, ende, gestalt, dbFactory, wsRoom };
+    const item = { id, sthis, logger, ende, gestalt, dbFactory, wsRoom, stsService, port };
     this.#ctxs.set(id, item);
     return item;
   }
@@ -338,20 +345,24 @@ export class CFHonoFactory implements HonoServerFactory {
 
     const logger = ensureLogger(sthis, `CFHono[${id}-${URI.from(c.req.url).pathname}]`);
     const ende = jsonEnDe(sthis);
-    const fpProtocol = sthis.env.get("FP_PROTOCOL");
+    const reqURI = URI.from(c.req.url);
+    const protocolCapabilities = reqURI
+      .getParam("capabilities", "reqRes,stream")
+      .split(",")
+      .filter((s) => isProtocolCapabilities(s));
     const msgP = defaultMsgParams(sthis, {
       hasPersistent: true,
-      protocolCapabilities: fpProtocol ? (fpProtocol === "ws" ? ["stream"] : ["reqRes"]) : ["reqRes", "stream"],
+      protocolCapabilities,
     });
     const gs = defaultGestalt(msgP, {
-      id: fpProtocol ? (fpProtocol === "http" ? "HTTP-server" : "WS-server") : "FP-CF-Server",
+      id: "FP-Storage-CF-Backend",
     });
-
-    const cfBackendMode = c.env.CF_BACKEND_MODE && c.env.CF_BACKEND_MODE === "DURABLE_OBJECT" ? "DURABLE_OBJECT" : "D1";
+    const cfBackendMode = reqURI.getParam("backendMode", "D1");
+    const port = portForLocalTest(sthis);
     let db: () => SQLDatabase;
     // let cfBackendKey: string;
     switch (cfBackendMode) {
-      case "DURABLE_OBJECT":
+      case "DO":
         // const cfBackendKey = c.env.CF_BACKEND_KEY ?? "FP_BACKEND_DO";
         // console.log("DO-CF_BACKEND_KEY", cfBackendKey, c.env[cfBackendKey]);
         db = () => new CFDObjSQLDatabase(getBackendDurableObject(c.env, id));
@@ -374,8 +385,10 @@ export class CFHonoFactory implements HonoServerFactory {
       // break;
     }
 
+    const stsService = await SessionTokenService.createFromEnv();
+
     const wsRoom = new CFWSRoom(sthis);
-    const item = CFExposeCtx.attach(c.env, id, sthis, logger, ende, gs, db, wsRoom);
+    const item = CFExposeCtx.attach(c.env, id, sthis, logger, port, ende, gs, stsService, db, wsRoom);
     // wsRoom.applyGetWebSockets(c.env.FP_EXPOSE_CTX.getWebSockets);
 
     // TODO WE NEED TO START THE DURABLE OBJECT

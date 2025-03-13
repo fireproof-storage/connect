@@ -13,11 +13,10 @@ describe("test multiple connections", () => {
   describe.each([
     // dummy
     NodeHonoServerFactory(),
-    CFHonoServerFactory("D1"),
-    CFHonoServerFactory("DO"),
-  ])("$name - Gateway", ({ factory }) => {
+    CFHonoServerFactory(sthis),
+  ])("$name - Gateway", ({ factory, port }) => {
     const msgP = defaultMsgParams(sthis, { hasPersistent: true });
-    const port = +(process.env.FP_WRANGLER_PORT || 0) || 1024 + Math.floor(Math.random() * (65536 - 1024));
+
     const my = defaultGestalt(msgP, { id: "FP-Universal-Client" });
     let stype;
     const connections = 3;
@@ -28,16 +27,6 @@ describe("test multiple connections", () => {
 
     beforeAll(async () => {
       auth = await mockJWK();
-      // const pair = await SessionTokenService.generateKeyPair();
-      // authFactory = await mockGetAuthFactory(
-      //   pair.strings.privateKey,
-      //   {
-      //     userId: "hello",
-      //     tenants: [],
-      //     ledgers: [],
-      //   },
-      //   sthis
-      // );
       stype = wsStyle(sthis, auth.applyAuthToURI, port, msgP, my);
 
       const app = new Hono();

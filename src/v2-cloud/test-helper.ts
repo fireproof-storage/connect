@@ -1,6 +1,6 @@
-import { BuildURI, CoerceURI, Future, Result, URI } from "@adviser/cement";
-import { SuperThis } from "@fireproof/core";
-import { $, fs, sleep } from "zx";
+import { BuildURI, CoerceURI, Future, Result, UnPromisify, URI } from "@adviser/cement";
+import { ensureSuperThis, SuperThis } from "@fireproof/core";
+import { $, fs } from "zx";
 import { HttpConnection } from "./http-connection.js";
 import {
   MsgerParams,
@@ -27,15 +27,40 @@ import { HonoServer } from "./hono-server.js";
 import { NodeHonoFactory } from "./node-hono-server.js";
 import { CFHonoFactory } from "./backend/cf-hono-server.js";
 import { BetterSQLDatabase } from "./meta-merger/bettersql-abstract-sql.js";
-import { envKeyDefaults, KeysResult, SessionTokenService, TokenForParam } from "../sts-service/sts-service.js";
+import { env2jwk, envKeyDefaults, KeysResult, SessionTokenService, TokenForParam } from "../sts-service/sts-service.js";
+import { GenerateKeyPairOptions } from "jose/key/generate/keypair";
+import { portForLocalTest, portRandom } from "./test-utils.js";
 
 export interface MockJWK {
   keys: KeysResult;
   authType: FPJWKCloudAuthType;
   applyAuthToURI: (uri: CoerceURI) => URI;
 }
-export async function mockJWK(claim: Partial<TokenForParam> = {}): Promise<MockJWK> {
-  const keys = await SessionTokenService.generateKeyPair();
+export async function mockJWK(claim: Partial<TokenForParam> = {}, sthis = ensureSuperThis()): Promise<MockJWK> {
+  // that could be solved better now with globalSetup.v2-cloud.ts
+  const publicJWK = await env2jwk(
+    "zeWndr5LEoaySgKSo2aZniYqaZvsKKu1RhfpL2R3hjarNgfXfN7CvR1cAiT74TMB9MQtMvh4acC759Xf8rTwCgxXvGHCBjHngThNtYpK2CoysiAMRJFUi9irMY9H7WApJkfxB15n8ss8iaEojcGB7voQVyk2T6aFPRnNdkoB6v5zk",
+    "ES256",
+    sthis
+  );
+  const privateJWK = await env2jwk(
+    "z33KxHvFS3jLz72v9DeyGBqo79qkbpv5KNP43VKUKSh1fcLb629pFTFyiJEosZ9jCrr8r9TE44KXCPZ2z1FeWGsV1N5gKjGWmZvubUwNHPynxNjCYy4GeYoQ8ukBiKjcPG22pniWCnRMwZvueUBkVk6NdtNY1uwyPk2HAGTsfrw5CBJvTcYsaFeG11SKZ9Q55Xk1W2p4gtZQHzkYHdfQQhgZ73Ttq7zmFoms73kh7MsudYzErx",
+    "ES256",
+    sthis
+  );
+
+  const keys = await SessionTokenService.generateKeyPair(
+    "ES256",
+    {
+      extractable: true,
+    },
+    (_alg: string, _options: GenerateKeyPairOptions) => {
+      return Promise.resolve({
+        privateKey: privateJWK,
+        publicKey: publicJWK,
+      });
+    }
+  );
 
   const sts = await SessionTokenService.create({
     token: keys.strings.privateKey,
@@ -75,12 +100,20 @@ export function httpStyle(
     remoteGestalt: remote,
     cInstance: HttpConnection,
     ok: {
-      url: () => URI.from(`http://127.0.0.1:${port}/fp`),
+      url: (path = "fp") =>
+        BuildURI.from(`http://127.0.0.1:${port}`)
+          .pathname(path)
+          .setParam("capabilities", remote.protocolCapabilities.join(","))
+          .URI(),
       open: () =>
         applyStart(
           Msger.openHttp(
             sthis,
-            [URI.from(`http://localhost:${port}/fp`)],
+            [
+              BuildURI.from(`http://127.0.0.1:${port}/fp`)
+                .setParam("capabilities", remote.protocolCapabilities.join(","))
+                .URI(),
+            ],
             {
               ...msgP,
               // protocol: "http",
@@ -157,12 +190,20 @@ export function wsStyle(
     remoteGestalt: remote,
     cInstance: WSConnection,
     ok: {
-      url: () => URI.from(`http://127.0.0.1:${port}/ws`),
+      url: (path = "ws") =>
+        BuildURI.from(`http://127.0.0.1:${port}`)
+          .pathname(path)
+          .setParam("capabilities", remote.protocolCapabilities.join(","))
+          .URI(),
       open: () =>
         applyStart(
           Msger.openWS(
             sthis,
-            applyAuthToURI(URI.from(`http://localhost:${port}/ws`)),
+            applyAuthToURI(
+              BuildURI.from(`http://127.0.0.1:${port}/ws`)
+                .setParam("capabilities", remote.protocolCapabilities.join(","))
+                .URI()
+            ),
             {
               ...msgP,
               // protocol: "ws",
@@ -203,7 +244,7 @@ export function wsStyle(
   };
 }
 
-export async function resolveToml(backend: "D1" | "DO") {
+export async function resolveToml() {
   const tomlFile = "src/v2-cloud/backend/wrangler.toml";
   const tomeStr = await fs.readFile(tomlFile, "utf-8");
   const wranglerFile = toml.parse(tomeStr) as unknown as {
@@ -211,15 +252,16 @@ export async function resolveToml(backend: "D1" | "DO") {
   };
   return {
     tomlFile,
-    env: wranglerFile.env[`test-reqRes-${backend}`].vars,
+    env: wranglerFile.env[`test`].vars,
   };
 }
 
 export function NodeHonoServerFactory() {
   return {
     name: "NodeHonoServer",
+    port: portRandom(),
     factory: async (sthis: SuperThis, msgP: MsgerParams, remoteGestalt: Gestalt, _port: number, pubEnvJWK: string) => {
-      const { env } = await resolveToml("D1");
+      const { env } = await resolveToml();
       sthis.env.set(envKeyDefaults.PUBLIC, pubEnvJWK);
       sthis.env.sets(env as unknown as Record<string, string>);
       const nhf = new NodeHonoFactory(sthis, {
@@ -232,52 +274,66 @@ export function NodeHonoServerFactory() {
   };
 }
 
+export type BackendParams = UnPromisify<ReturnType<typeof setupBackend>>;
+
+export async function setupBackend(
+  sthis: SuperThis,
+  // backend: "D1" | "DO",
+  // key: string,
+  port = portRandom()
+): Promise<{ port: number; pid: number; envName: string }> {
+  const envName = `test`;
+  if (process.env.FP_WRANGLER_PORT) {
+    return Promise.resolve({ port: +process.env.FP_WRANGLER_PORT, pid: 0, envName });
+  }
+  const { tomlFile } = await resolveToml();
+  $.verbose = !!process.env.FP_DEBUG;
+  const auth = await mockJWK({}, sthis);
+  await writeEnvFile(sthis, tomlFile, envName, auth.keys.strings.publicKey);
+  // .dev.vars.<environment-name>
+  const runningWrangler = $`
+            wrangler dev -c ${tomlFile} --port ${port} --env ${envName} --no-show-interactive-dev-session --no-live-reload &
+            waitPid=$!
+            echo "PID:$waitPid"
+            wait $waitPid`;
+  const waitReady = new Future();
+  let pid: number | undefined;
+  runningWrangler.stdout.on("data", (chunk) => {
+    // console.log(">>", chunk.toString())
+    const mightPid = chunk.toString().match(/PID:(\d+)/)?.[1];
+    if (mightPid) {
+      pid = +mightPid;
+    }
+    if (chunk.includes("Starting local serv")) {
+      waitReady.resolve(true);
+    }
+  });
+  runningWrangler.stderr.on("data", (chunk) => {
+    // eslint-disable-next-line no-console
+    console.error("!!", chunk.toString());
+  });
+  await waitReady.asPromise();
+  return { port, pid: pid || 0, envName };
+}
+
 async function writeEnvFile(sthis: SuperThis, tomlFile: string, env: string, envJWK: string) {
   const fname = sthis.pathOps.join(sthis.pathOps.dirname(tomlFile), `.dev.vars.${env}`);
   // console.log("Writing to", fname);
   await fs.writeFile(fname, `${envKeyDefaults.PUBLIC}=${envJWK}\n`);
 }
 
-export function CFHonoServerFactory(backend: "D1" | "DO") {
+export function CFHonoServerFactory(sthis: SuperThis) {
   return {
-    name: `CFHonoServer(${backend})`,
-    factory: async (sthis: SuperThis, _msgP: MsgerParams, remoteGestalt: Gestalt, port: number, pubEnvJWK: string) => {
-      if (process.env.FP_WRANGLER_PORT) {
-        return new HonoServer(new CFHonoFactory());
-      }
-      const { tomlFile } = await resolveToml(backend);
-      $.verbose = !!process.env.FP_DEBUG;
-      const envName = `test-${remoteGestalt.protocolCapabilities[0]}-${backend}`;
-      await writeEnvFile(sthis, tomlFile, envName, pubEnvJWK);
-      // .dev.vars.<environment-name>
-      const runningWrangler = $`
-                wrangler dev -c ${tomlFile} --port ${port} --env ${envName} --no-show-interactive-dev-session --no-live-reload &
-                waitPid=$!
-                echo "PID:$waitPid"
-                wait $waitPid`;
-      const waitReady = new Future();
-      let pid: number | undefined;
-      runningWrangler.stdout.on("data", (chunk) => {
-        // console.log(">>", chunk.toString())
-        const mightPid = chunk.toString().match(/PID:(\d+)/)?.[1];
-        if (mightPid) {
-          pid = +mightPid;
-        }
-        if (chunk.includes("Starting local serv")) {
-          waitReady.resolve(true);
-        }
-      });
-      runningWrangler.stderr.on("data", (chunk) => {
-        // eslint-disable-next-line no-console
-        console.error("!!", chunk.toString());
-      });
-      await waitReady.asPromise();
-      await sleep(300);
-      return new HonoServer(
-        new CFHonoFactory(() => {
-          if (pid) process.kill(pid);
-        })
-      );
+    name: `CFHonoServer`,
+    port: portForLocalTest(sthis),
+    factory: async (
+      _sthis: SuperThis,
+      _msgP: MsgerParams,
+      _remoteGestalt: Gestalt,
+      _port: number,
+      _pubEnvJWK: string
+    ) => {
+      return new HonoServer(new CFHonoFactory());
     },
   };
 }
