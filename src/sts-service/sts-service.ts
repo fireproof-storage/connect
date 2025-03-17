@@ -4,12 +4,8 @@ import { exportJWK, importJWK, JWTPayload, JWTVerifyResult, jwtVerify, SignJWT }
 import { generateKeyPair, GenerateKeyPairOptions } from "jose/key/generate/keypair";
 import { base58btc } from "multiformats/bases/base58";
 
-interface BaseTokenParam {
-  readonly alg: string; // defaults ES256
-  readonly issuer: string;
-  readonly audience: string;
-  readonly validFor: number;
-}
+
+
 interface SessionTokenServiceParam extends Partial<BaseTokenParam> {
   readonly token: string; // env encoded jwk
 }
@@ -29,13 +25,6 @@ export async function env2jwk(env: string, alg: string, sthis = ensureSuperThis(
   return importJWK(inJWT, alg, { extractable: true }) as Promise<CryptoKey>;
 }
 
-export interface FPCloudClaim extends JWTPayload {
-  readonly userId: string;
-  readonly tenants: { readonly id: string; readonly role: string }[];
-  readonly ledgers: { readonly id: string; readonly role: string; readonly right: string }[];
-}
-
-export type TokenForParam = FPCloudClaim & Partial<BaseTokenParam>;
 
 export const envKeyDefaults = {
   SECRET: "CLOUD_SESSION_TOKEN_SECRET",
