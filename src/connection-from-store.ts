@@ -1,5 +1,5 @@
-import { BuildURI, runtimeFn } from "@adviser/cement";
-import { bs, Database, SuperThis } from "@fireproof/core";
+import { BuildURI, CoerceURI, runtimeFn, URI } from "@adviser/cement";
+import { bs, Database, ensureLogger, SuperThis } from "@fireproof/core";
 
 // export interface StoreOptions {
 //   readonly data: bs.DataStore;
@@ -7,71 +7,63 @@ import { bs, Database, SuperThis } from "@fireproof/core";
 //   readonly wal: bs.WALState;
 // }
 
-// export class ConnectionFromStore extends bs.ConnectionBase {
-//   stores?: {
-//     readonly data: bs.DataStore;
-//     readonly meta: bs.MetaStore;
-//   } = undefined;
+export class ConnectionFromStore extends bs.ConnectionBase {
+  stores?: {
+    readonly data: bs.DataStore;
+    readonly meta: bs.MetaStore;
+  } = undefined;
 
-//   // readonly urlData: URI;
-//   // readonly urlMeta: URI;
+  // readonly urlData: URI;
+  // readonly urlMeta: URI;
 
-//   readonly sthis: SuperThis;
-//   constructor(sthis: SuperThis, url: URI) {
-//     const logger = ensureLogger(sthis, "ConnectionFromStore", {
-//       url: () => url.toString(),
-//       this: 1,
-//       log: 1,
-//     });
-//     super(url, logger);
-//     this.sthis = sthis;
-//     // this.urlData = url;
-//     // this.urlMeta = url;
-//   }
-//   async onConnect(): Promise<void> {
-//     this.logger.Debug().Msg("onConnect-start");
-//     // const stores = {
-//     //   base: this.url,
-//     //   // data: this.urlData,
-//     //   // meta: this.urlMeta,
-//     // };
-//     const rName = this.url.getParamResult("name");
-//     if (rName.isErr()) {
-//       throw this.logger.Error().Err(rName).Msg("missing Parameter").AsError();
-//     }
-//     const storeRuntime = bs.toStoreRuntime(this.sthis);
-//     const loader: bs.StoreFactoryItem = {
-//       url: this.url,
-//       loader: {
-//         ebOpts: {
-//           logger: this.logger,
-//           storeUrls: {
-//             data: this.url,
-//             meta: this.url,
-//             file: this.url,
-//             wal: this.url,
-//           },
-//           // store: { stores },
-//           storeRuntime,
-//         } as bs.Loadable["ebOpts"],
-//         sthis: this.sthis,
-//       } as bs.Loadable,
-//     };
+  readonly sthis: SuperThis;
+  constructor(sthis: SuperThis, url: URI) {
+    const logger = ensureLogger(sthis, "ConnectionFromStore", {
+      url: () => url.toString(),
+      this: 1,
+      log: 1,
+    });
+    super(url, logger);
+    this.sthis = sthis;
+    // this.urlData = url;
+    // this.urlMeta = url;
+  }
+  async onConnect(): Promise<void> {
+    this.logger.Debug().Msg("onConnect-start");
+    const stores = {
+      base: this.url,
+      // data: this.urlData,
+      // meta: this.urlMeta,
+    };
+    const rName = this.url.getParamResult("name");
+    if (rName.isErr()) {
+      throw this.logger.Error().Err(rName).Msg("missing Parameter").AsError();
+    }
+    const storeRuntime = bs.toStoreRuntime({ stores }, this.sthis);
+    const loader = {
+      name: rName.Ok(),
+      ebOpts: {
+        logger: this.logger,
+        store: { stores },
+        storeRuntime,
+      },
+      sthis: this.sthis,
+    } as bs.Loadable;
 
-//     this.stores = {
-//       data: await storeRuntime.makeDataStore(loader),
-//       meta: await storeRuntime.makeMetaStore(loader),
-//     };
-//     // await this.stores.data.start();
-//     // await this.stores.meta.start();
-//     this.logger.Debug().Msg("onConnect-done");
-//     return;
-//   }
-// }
+    this.stores = {
+      data: await storeRuntime.makeDataStore(loader),
+      meta: await storeRuntime.makeMetaStore(loader),
+    };
+    // await this.stores.data.start();
+    // await this.stores.meta.start();
+    this.logger.Debug().Msg("onConnect-done");
+    return;
+  }
+}
 
-// export function connectionFactory(sthis: SuperThis, iurl: CoerceURI): bs.ConnectionBase {
-//   return new ConnectionFromStore(sthis, URI.from(iurl));
-// }
+export function connectionFactory(sthis: SuperThis, iurl: CoerceURI): bs.ConnectionBase {
+  return new ConnectionFromStore(sthis, URI.from(iurl));
+}
 
 export function makeKeyBagUrlExtractable(sthis: SuperThis) {
   let base = sthis.env.get("FP_KEYBAG_URL");
