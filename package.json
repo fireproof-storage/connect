@@ -78,7 +78,7 @@
     "typescript-eslint": "^8.26.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.0.8",
-    "wait-on": "^8.0.2",
+    "wait-on": "^8.0.3",
     "wrangler": "^3.112.0",
     "zx": "^8.4.0"
   },
@@ -130,7 +130,7 @@
     "partysocket": "^1.0.3",
     "path": "^0.12.7",
     "util": "^0.12.5",
-    "wait-on": "^8.0.2",
+    "wait-on": "^8.0.3",
     "ws": "^8.18.1"
   },
   "exports": {
