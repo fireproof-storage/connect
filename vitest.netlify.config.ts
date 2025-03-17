@@ -8,7 +8,7 @@ export default defineConfig({
     include: [
       "src/netlify/*test.?(c|m)[jt]s?(x)",
       "src/connector.test.ts",
-      // "node_modules/@fireproof/core/tests/**/*test.?(c|m)[jt]s?(x)"
+      //    "node_modules/@fireproof/core/tests/**/*test.?(c|m)[jt]s?(x)"
     ],
     exclude: [
       "node_modules/@fireproof/core/tests/react/**",

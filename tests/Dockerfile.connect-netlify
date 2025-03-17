@@ -1,13 +1,31 @@
 FROM node:20-slim AS base
+
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN npm install -g corepack@latest
 RUN corepack enable
-RUN apt update && apt install -y git unzip curl
-RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh && deno upgrade 1.44.4
+RUN apt update && apt install -y git unzip curl gpg wget
+
+RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh && deno upgrade 1.46.3
+#RUN install -dm 755 /etc/apt/keyrings
+#RUN wget -qO - https://mise.jdx.dev/gpg-key.pub | gpg --dearmor | tee /etc/apt/keyrings/mise-archive-keyring.gpg 1> /dev/null
+#RUN echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.gpg arch=arm64] https://mise.jdx.dev/deb stable main" | tee /etc/apt/sources.list.d/mise.list
+#RUN apt update
+#RUN apt install -y mise
+#RUN mise use -g deno@1.46
+
+WORKDIR /app
+RUN git clone https://github.com/netlify/cli -b hk/ipv6-loopback --depth 1 && \
+    cd cli && \
+    npm i && \
+    npm run build
+
+#RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh && deno upgrade 1.44.4
 #-- --no-modify-path --yes
 COPY src/netlify /usr/src/app/src/netlify
 COPY tests/connect-netlify/app /usr/src/app/tests/connect-netlify/app
+
 WORKDIR /usr/src/app/tests/connect-netlify/app
-RUN rm -rf node_modules && pnpm install && pnpm run copy-server && pnpm install -g netlify-cli
-CMD pnpm dev --no-open
+RUN rm -rf node_modules && pnpm install && pnpm run copy-server # && pnpm install -g netlify-cli
+CMD ["node", "/app/cli/bin/run.js", "dev", "--no-open", "--functions-loopback=::1"]
+
