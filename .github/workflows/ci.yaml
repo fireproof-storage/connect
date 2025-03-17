@@ -11,16 +11,22 @@ env:
 jobs:
   quality-checks:
     name: Quality Checks
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2204-arm
+    # runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
           run_install: false
           version: 10
+          cache: "pnpm"
+
+      - uses: actions/checkout@v4
+
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 20
+          cache: pnpm
 
       #- uses: actions/checkout@v4
       #  with:
