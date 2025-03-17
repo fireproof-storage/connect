@@ -1,6 +1,12 @@
 import waitOn from "wait-on";
 const opts = {
-  resources: ["http://localhost:8888/", "http://localhost:1999/", "http://localhost:8787/", "http://localhost:9000/"],
+  resources: [
+    "http://localhost:8888/",
+    "http://localhost:1999/",
+    "http://localhost:8787/",
+    "http://localhost:9000/",
+    "http://localhost:1968",
+  ],
   delay: 0, // initial delay in ms, default 0
   interval: 500, // poll interval in ms, default 250ms
   simultaneous: 4, // limit to 1 connection per resource at a time

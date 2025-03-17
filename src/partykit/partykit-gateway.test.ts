@@ -3,7 +3,6 @@ import { registerPartyKitStoreProtocol } from "./gateway.js";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Future, URI } from "@adviser/cement";
 import { smokeDB } from "../../tests/helper.js";
-// import { storageURL } from "../connector.test.js";
 
 // has to leave
 // interface ExtendedGateway extends bs.Gateway {

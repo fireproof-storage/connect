@@ -143,7 +143,8 @@ services:
 
   wait-for-ready:
     image: curlimages/curl
-    command: "sh -c 'while [ ! -e healthy ] ; do curl -f http://netlify:8888 > netlify && curl -f http://minio:9000/minio/health/live > minio && curl -f http://ucan:8787/health > ucan && curl -f http://partykit:1999 > partykit && curl -f http://v1-cloud:1998/health > v1-cloud && echo ready > ready ; ls; sleep 5; done ; sleep 60'"
+    # curl -f \"http://netlify:8888/fireproof?health=1\" > netlify &&
+    command: "sh -c 'while [ ! -e healthy ] ; do curl -f http://minio:9000/minio/health/live > minio && curl -f http://ucan:8787/health > ucan && curl -f http://partykit:1999 > partykit && curl -f http://v1-cloud:1998/health > v1-cloud && echo ready > ready ; ls; sleep 5; done ; sleep 60'"
     depends_on:
       netlify:
         condition: service_started
