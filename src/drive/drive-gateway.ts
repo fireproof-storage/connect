@@ -65,30 +65,31 @@ export class GDriveGateway implements bs.Gateway {
   }
 
   async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
-    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
-    const rParams = url.getParamsResult("auth", "name");
+    const rParams = url.getParamsResult("auth", "name", "store");
     if (rParams.isErr()) {
       return this.logger.Error().Url(url).Err(rParams).Msg("Put Error").ResultError();
     }
-    const { auth } = rParams.Ok();
+    const { auth, store } = rParams.Ok();
     let { name } = rParams.Ok();
     const index = url.getParam("index");
-    if (!index) {
+    if (index) {
       name += `-${index}`;
     }
-    const fileId = await this.#search(name, auth);
-    if (fileId.Err()) {
+    const fileId = await this.#search(name, auth, store);
+    if (fileId.isErr()) {
       if (isNotFoundError(fileId.Err())) {
-        const done = await this.#insert(name, body, auth, pathPart);
+        const fileData = new Blob([body], { type: "application/octet-stream" });
+
+        const done = await this.#insert(name, body, auth, store);
         if (done.isErr()) {
           return done;
         }
         return Result.Ok(undefined);
       }
     }
-    const fileMetadata = await this.#get(fileId.Ok(), pathPart, auth);
-    const fileData = new Blob([body], { type: "application/json" });
-    const done = await this.#update(fileId.Ok(), fileMetadata, fileData, auth, pathPart);
+    const fileData = new Blob([body], { type: "application/octet-stream" });
+
+    const done = await this.#update(fileId.Ok(), fileData, auth, store);
     if (done.isErr()) {
       return done;
     }
@@ -101,9 +102,9 @@ export class GDriveGateway implements bs.Gateway {
       Authorization: `Bearer ${auth}`,
     };
     try {
-      const response = await fetch(url + fileId, {
+      const response = await fetch(BuildURI.from(url).appendRelative('drive/v3/files') + fileId, {
         method: "DELETE",
-        headers: headers,
+        headers
       });
       return await response.json();
     } catch (err) {
@@ -111,7 +112,7 @@ export class GDriveGateway implements bs.Gateway {
     }
   }
 
-  async #get(fileId: string, type: "data" | "wal" | "meta", auth: string): Promise<Result<Uint8Array>> {
+  async #get(fileId: string, auth: string): Promise<Result<Uint8Array>> {
     let response;
     let headers;
     const url = BuildURI.from(this.params.driveURL);
@@ -119,57 +120,50 @@ export class GDriveGateway implements bs.Gateway {
       Authorization: `Bearer ${auth}`,
       "Content-Type": "application/json",
     };
-    if (type == "meta") {
-      response = await fetch(url + fileId, {
-        method: "GET",
-        headers,
-      });
-      return Result.Ok(new Uint8Array(await response.arrayBuffer()));
-    } else {
-      headers = {
-        Authorization: `Bearer ${auth}`,
-      };
-      response = await fetch(url.appendRelative(fileId).setParam("alt", "media").toString(), {
-        method: "GET",
-        headers,
-      });
-      return Result.Ok(new Uint8Array(await response.arrayBuffer()));
-    }
+
+    headers = {
+      Authorization: `Bearer ${auth}`,
+    };
+    response = await fetch(url.appendRelative(`drive/v3/files/${fileId}`).setParam("alt", "media").toString(), {
+      method: "GET",
+      headers,
+    });
+    return Result.Ok(new Uint8Array(await response.arrayBuffer()));
+
   }
 
   async get(url: URI): Promise<bs.GetResult> {
-    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
-    const rParams = url.getParamsResult("auth", "name");
+    const rParams = url.getParamsResult("auth", "name", "store");
     if (rParams.isErr()) {
       return Result.Err(rParams.Err());
     }
     let { name } = rParams.Ok();
-    const { auth } = rParams.Ok();
+    const { auth, store } = rParams.Ok();
 
     const index = url.getParam("index");
     if (index) {
       name += `-${index}`;
     }
-    const fileId = await this.#search(name, auth);
-    if (fileId.Err()) {
+    const fileId = await this.#search(name, auth, store);
+    if (fileId.isErr()) {
       return Result.Err(fileId.Err());
     }
-    const response = await this.#get(fileId.Ok(), pathPart, auth);
+    const response = await this.#get(fileId.Ok(), auth);
     return response;
   }
 
   async delete(url: URI): Promise<bs.VoidResult> {
-    const rParams = url.getParamsResult("auth", "name");
+    const rParams = url.getParamsResult("auth", "name", "store");
     if (rParams.isErr()) {
       return Result.Err(rParams.Err());
     }
-    const { auth } = rParams.Ok();
+    const { auth, store } = rParams.Ok();
     let { name } = rParams.Ok();
     const index = url.getParam("index");
     if (index) {
       name += `-${index}`;
     }
-    const fileId = await this.#search(name, auth);
+    const fileId = await this.#search(name, auth, store);
     if (fileId.isErr()) {
       return fileId;
     }
@@ -212,35 +206,22 @@ export class GDriveGateway implements bs.Gateway {
 
   async #update(
     fileId: string,
-    fileMetadata: object,
     fileData: Blob,
     auth: string,
-    store: "data" | "wal" | "meta"
+    store: string
   ): Promise<Result<string>> {
     const url = BuildURI.from(this.params.driveURL);
-    const boundary = "-------" + this.sthis.nextId(16).str;
+
     const headers = {
       Authorization: `Bearer ${auth}`,
-      "Content-Type": `multipart/related; boundary="${boundary}"`,
+      "Content-Type": `fireproof/${store}`,
     };
     const response = await fetch(
-      url.appendRelative(fileId).setParam("uploadType", "multipart").setParam("fields", "id").toString(),
+      url.appendRelative(`upload/drive/v3/files/${fileId}`).setParam("uploadType", "media").toString(),
       {
         method: "PATCH",
         headers,
-        body: new ReadableStream({
-          start: (controller) => {
-            controller.enqueue(this.sthis.txt.encode(`--${boundary}\r\n`));
-            controller.enqueue(this.sthis.txt.encode("Content-Type: application/json\r\n\r\n"));
-            controller.enqueue(this.sthis.txt.encode(JSON.stringify(fileMetadata) + "\r\n"));
-            controller.enqueue(this.sthis.txt.encode(`--${boundary}\r\n`));
-            controller.enqueue(this.sthis.txt.encode(`Content-Type: fireproof/${store}\r\n\r\n`));
-            controller.enqueue(fileData.arrayBuffer());
-            controller.enqueue(this.sthis.txt.encode("\r\n"));
-            controller.enqueue(this.sthis.txt.encode(`--${boundary}--\r\n`));
-            controller.close();
-          },
-        }),
+        body: fileData
       }
     );
     if (!response.ok) {
@@ -261,7 +242,7 @@ export class GDriveGateway implements bs.Gateway {
     form.append("file", file);
     try {
       const response = await fetch(
-        url.setParam("uploadType", "multipart").setParam("supportsAllDrives", "true").toString(),
+        url.appendRelative('upload/drive/v3/files').setParam("uploadType", "multipart").setParam("supportsAllDrives", "true").toString(),
         {
           method: "POST",
           headers: { Authorization: "Bearer " + auth },
@@ -274,10 +255,10 @@ export class GDriveGateway implements bs.Gateway {
       return this.logger.Error().Any({ auth, store }).Err(err).Msg("Insert Error").ResultError();
     }
   }
-  async #search(fileName: string, auth: string): Promise<Result<string>> {
+  async #search(fileName: string, auth: string, store: string): Promise<Result<string>> {
     try {
       const response = await fetch(
-        BuildURI.from("https://www.googleapis.com/drive/v3/files").setParam("q=name", `"${fileName}"`).toString(),
+        BuildURI.from("https://www.googleapis.com/drive/v3/files").setParam("q=mimeType", `"fireproof/${store}" and name="${fileName}"`).toString(),
         {
           headers: {
             Authorization: "Bearer " + auth,
@@ -305,19 +286,41 @@ export class GDriveGateway implements bs.Gateway {
 //   return num.toString();
 // }
 
+export class GDriveTestStore implements bs.TestGateway {
+  readonly logger: Logger;
+  readonly sthis: SuperThis;
+  readonly gateway: bs.Gateway;
+
+  constructor(sthis: SuperThis, gw: bs.Gateway) {
+    this.sthis = ensureSuperLog(sthis, "GDriveTestStore");
+    this.logger = this.sthis.logger;
+    this.gateway = gw;
+  }
+
+  async get(iurl: URI, key: string): Promise<Uint8Array> {
+    const url = iurl.build().setParam("key", key).URI();
+    const buffer = await this.gateway.get(url);
+    return buffer.Ok();
+  }
+}
+
 const onceregisterGDriveStoreProtocol = new KeyedResolvOnce<() => void>();
-export function registerGDriveStoreProtocol(protocol = "gdrive:") {
+export function registerGDriveStoreProtocol(protocol = "gdrive:", overrideBaseURL?: string) {
   return onceregisterGDriveStoreProtocol.get(protocol).once(() => {
     URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
       protocol,
-      defaultURI: (): URI => {
-        return URI.from("gdrive://");
-      },
+      overrideBaseURL,
       gateway: async (sthis): Promise<bs.Gateway> => {
         return new GDriveGateway(sthis, {
-          driveURL: "https://www.googleapis.com/upload/drive/v3/files/",
+          driveURL: "https://www.googleapis.com/",
         });
+      },
+      test: async (sthis: SuperThis) => {
+        const gateway = new GDriveGateway(sthis, {
+          driveURL: "https://www.googleapis.com/",
+        });
+        return new GDriveTestStore(sthis, gateway);
       },
     });
   });
