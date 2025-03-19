@@ -1,4 +1,5 @@
 import { Database } from "@fireproof/core";
+import {expect} from "vitest"
 
 export async function smokeDB(db: Database) {
   const ran = db.sthis.nextId().str;

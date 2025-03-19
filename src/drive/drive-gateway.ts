@@ -2,6 +2,7 @@ import { BuildURI, KeyedResolvOnce, Logger, Result, URI } from "@adviser/cement"
 import { bs, getStore, SuperThis, ensureSuperLog, NotFoundError, isNotFoundError } from "@fireproof/core";
 
 interface GDriveGatewayParams {
+  readonly auth: string;
   readonly driveURL: string;
 }
 
@@ -65,115 +66,109 @@ export class GDriveGateway implements bs.Gateway {
   }
 
   async put(url: URI, body: Uint8Array): Promise<bs.VoidResult> {
-    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
-    const rParams = url.getParamsResult("auth", "name");
+    const rParams = url.getParamsResult("name", "store");
     if (rParams.isErr()) {
       return this.logger.Error().Url(url).Err(rParams).Msg("Put Error").ResultError();
     }
-    const { auth } = rParams.Ok();
+    const { store } = rParams.Ok();
     let { name } = rParams.Ok();
     const index = url.getParam("index");
-    if (!index) {
+    if (index) {
       name += `-${index}`;
     }
-    const fileId = await this.#search(name, auth);
-    if (fileId.Err()) {
+    const fileId = await this.#search(name, this.#toStore(store));
+    if (fileId.isErr()) {
       if (isNotFoundError(fileId.Err())) {
-        const done = await this.#insert(name, body, auth, pathPart);
+        const fileData = new Blob([body], { type: "application/octet-stream" });
+
+        const done = await this.#insert(name, body, this.#toStore(store));
         if (done.isErr()) {
           return done;
         }
         return Result.Ok(undefined);
       }
     }
-    const fileMetadata = await this.#get(fileId.Ok(), pathPart, auth);
-    const fileData = new Blob([body], { type: "application/json" });
-    const done = await this.#update(fileId.Ok(), fileMetadata, fileData, auth, pathPart);
+    const fileData = new Blob([body], { type: "application/octet-stream" });
+
+    const done = await this.#update(fileId.Ok(), fileData, this.#toStore(store));
     if (done.isErr()) {
       return done;
     }
     return Result.Ok(undefined);
   }
 
-  async #delete(fileId: string, auth: string): Promise<Result<unknown>> {
+  async #delete(fileId: string): Promise<Result<unknown>> {
     const url = this.params.driveURL;
     const headers = {
-      Authorization: `Bearer ${auth}`,
+      Authorization: `Bearer ${this.params.auth}`,
     };
     try {
-      const response = await fetch(url + fileId, {
+      const response = await fetch(BuildURI.from(url).appendRelative('drive').appendRelative('v3').appendRelative('files').appendRelative(fileId).toString(), {
         method: "DELETE",
-        headers: headers,
+        headers
       });
       return await response.json();
     } catch (err) {
-      return this.logger.Error().Url(url).Any("init", auth).Err(err).Msg("Could not delete").ResultError();
+      return this.logger.Error().Url(url).Any("init", this.params.auth).Err(err).Msg("Could not delete").ResultError();
     }
   }
 
-  async #get(fileId: string, type: "data" | "wal" | "meta", auth: string): Promise<Result<Uint8Array>> {
+  async #get(fileId: string): Promise<Result<Uint8Array>> {
     let response;
     let headers;
     const url = BuildURI.from(this.params.driveURL);
     headers = {
-      Authorization: `Bearer ${auth}`,
+      Authorization: `Bearer ${this.params.auth}`,
       "Content-Type": "application/json",
     };
-    if (type == "meta") {
-      response = await fetch(url + fileId, {
-        method: "GET",
-        headers,
-      });
-      return Result.Ok(new Uint8Array(await response.arrayBuffer()));
-    } else {
-      headers = {
-        Authorization: `Bearer ${auth}`,
-      };
-      response = await fetch(url.appendRelative(fileId).setParam("alt", "media").toString(), {
-        method: "GET",
-        headers,
-      });
-      return Result.Ok(new Uint8Array(await response.arrayBuffer()));
-    }
+
+    headers = {
+      Authorization: `Bearer ${this.params.auth}`,
+    };
+    response = await fetch(url.appendRelative('drive').appendRelative('v3').appendRelative('files').appendRelative(fileId).setParam("alt", "media").toString(), {
+      method: "GET",
+      headers,
+    });
+    return Result.Ok(new Uint8Array(await response.arrayBuffer()));
+
   }
 
   async get(url: URI): Promise<bs.GetResult> {
-    const { pathPart } = getStore(url, this.sthis, (...args) => args.join("/"));
-    const rParams = url.getParamsResult("auth", "name");
+    const rParams = url.getParamsResult("name", "store");
     if (rParams.isErr()) {
       return Result.Err(rParams.Err());
     }
     let { name } = rParams.Ok();
-    const { auth } = rParams.Ok();
+    const { store } = rParams.Ok();
 
     const index = url.getParam("index");
     if (index) {
       name += `-${index}`;
     }
-    const fileId = await this.#search(name, auth);
-    if (fileId.Err()) {
+    const fileId = await this.#search(name, this.#toStore(store));
+    if (fileId.isErr()) {
       return Result.Err(fileId.Err());
     }
-    const response = await this.#get(fileId.Ok(), pathPart, auth);
+    const response = await this.#get(fileId.Ok());
     return response;
   }
 
   async delete(url: URI): Promise<bs.VoidResult> {
-    const rParams = url.getParamsResult("auth", "name");
+    const rParams = url.getParamsResult("name", "store");
     if (rParams.isErr()) {
       return Result.Err(rParams.Err());
     }
-    const { auth } = rParams.Ok();
+    const { store } = rParams.Ok();
     let { name } = rParams.Ok();
     const index = url.getParam("index");
     if (index) {
       name += `-${index}`;
     }
-    const fileId = await this.#search(name, auth);
+    const fileId = await this.#search(name, this.#toStore(store));
     if (fileId.isErr()) {
       return fileId;
     }
-    return await this.#delete(fileId.Ok(), auth);
+    return await this.#delete(fileId.Ok());
   }
 
   async subscribe(url: URI, callback: (msg: Uint8Array) => void): Promise<bs.UnsubscribeResult> {
@@ -212,43 +207,29 @@ export class GDriveGateway implements bs.Gateway {
 
   async #update(
     fileId: string,
-    fileMetadata: object,
     fileData: Blob,
-    auth: string,
     store: "data" | "wal" | "meta"
   ): Promise<Result<string>> {
     const url = BuildURI.from(this.params.driveURL);
-    const boundary = "-------" + this.sthis.nextId(16).str;
+
     const headers = {
-      Authorization: `Bearer ${auth}`,
-      "Content-Type": `multipart/related; boundary="${boundary}"`,
+      Authorization: `Bearer ${this.params.auth}`,
+      "Content-Type": `fireproof/${store}`,
     };
     const response = await fetch(
-      url.appendRelative(fileId).setParam("uploadType", "multipart").setParam("fields", "id").toString(),
+      url.appendRelative('upload').appendRelative('drive').appendRelative('v3').appendRelative('files').appendRelative(fileId).setParam("uploadType", "media").toString(),
       {
         method: "PATCH",
         headers,
-        body: new ReadableStream({
-          start: (controller) => {
-            controller.enqueue(this.sthis.txt.encode(`--${boundary}\r\n`));
-            controller.enqueue(this.sthis.txt.encode("Content-Type: application/json\r\n\r\n"));
-            controller.enqueue(this.sthis.txt.encode(JSON.stringify(fileMetadata) + "\r\n"));
-            controller.enqueue(this.sthis.txt.encode(`--${boundary}\r\n`));
-            controller.enqueue(this.sthis.txt.encode(`Content-Type: fireproof/${store}\r\n\r\n`));
-            controller.enqueue(fileData.arrayBuffer());
-            controller.enqueue(this.sthis.txt.encode("\r\n"));
-            controller.enqueue(this.sthis.txt.encode(`--${boundary}--\r\n`));
-            controller.close();
-          },
-        }),
+        body: fileData
       }
     );
     if (!response.ok) {
-      return this.logger.Error().Any({ auth, store }).Msg("Insert Error").ResultError();
+      return this.logger.Error().Any({ store }).Msg("Insert Error").ResultError();
     }
     return Result.Ok(fileId);
   }
-  async #insert(fileName: string, content: Uint8Array, auth: string, store: string): Promise<Result<string>> {
+  async #insert(fileName: string, content: Uint8Array, store: "data" | "wal" | "meta"): Promise<Result<string>> {
     const url = BuildURI.from(this.params.driveURL);
     const mime = `fireproof/${store}`;
     const file = new Blob([content], { type: mime });
@@ -261,26 +242,26 @@ export class GDriveGateway implements bs.Gateway {
     form.append("file", file);
     try {
       const response = await fetch(
-        url.setParam("uploadType", "multipart").setParam("supportsAllDrives", "true").toString(),
+        url.appendRelative('upload/drive/v3/files').setParam("uploadType", "multipart").setParam("supportsAllDrives", "true").toString(),
         {
           method: "POST",
-          headers: { Authorization: "Bearer " + auth },
+          headers: { Authorization: "Bearer " + this.params.auth },
           body: form,
         }
       );
       const jsonRes = (await response.json()) as { id: string };
       return Result.Ok(jsonRes.id);
     } catch (err) {
-      return this.logger.Error().Any({ auth, store }).Err(err).Msg("Insert Error").ResultError();
+      return this.logger.Error().Any({ store }).Err(err).Msg("Insert Error").ResultError();
     }
   }
-  async #search(fileName: string, auth: string): Promise<Result<string>> {
+  async #search(fileName: string, store: "data" | "wal" | "meta"): Promise<Result<string>> {
     try {
       const response = await fetch(
-        BuildURI.from("https://www.googleapis.com/drive/v3/files").setParam("q=name", `"${fileName}"`).toString(),
+        BuildURI.from("https://www.googleapis.com/drive/v3/files").setParam("q=mimeType", `"fireproof/${store}" and name="${fileName}"`).toString(),
         {
           headers: {
-            Authorization: "Bearer " + auth,
+            Authorization: "Bearer " + this.params.auth,
           },
         }
       );
@@ -293,8 +274,12 @@ export class GDriveGateway implements bs.Gateway {
       }
       return Result.Err(new NotFoundError("File not found"));
     } catch (err) {
-      return this.logger.Error().Any({ auth, fileName }).Err(err).Msg("Fetch Error").ResultError();
+      return this.logger.Error().Any({ fileName }).Err(err).Msg("Fetch Error").ResultError();
     }
+  }
+  #toStore(s: string): "data" | "wal" | "meta" {
+    if (["data", "wal", "meta"].includes(s)) { return s as "data"|"wal"|"meta" }
+    throw new Error(`unknown Store:${s}`)
   }
 }
 // function generateRandom21DigitNumber() {
@@ -305,20 +290,24 @@ export class GDriveGateway implements bs.Gateway {
 //   return num.toString();
 // }
 
+
+
 const onceregisterGDriveStoreProtocol = new KeyedResolvOnce<() => void>();
-export function registerGDriveStoreProtocol(protocol = "gdrive:") {
+export function registerGDriveStoreProtocol(protocol = "gdrive:", auth: string) {
   return onceregisterGDriveStoreProtocol.get(protocol).once(() => {
     URI.protocolHasHostpart(protocol);
     return bs.registerStoreProtocol({
-      protocol,
+      protocol: protocol,
+      isDefault: false,
       defaultURI: (): URI => {
         return URI.from("gdrive://");
       },
       gateway: async (sthis): Promise<bs.Gateway> => {
         return new GDriveGateway(sthis, {
-          driveURL: "https://www.googleapis.com/upload/drive/v3/files/",
+          auth: auth,
+          driveURL: "https://www.googleapis.com/",
         });
-      },
+      }      
     });
   });
 }
