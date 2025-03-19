@@ -100,7 +100,7 @@
     "@aws-sdk/s3-request-presigner": "^3.750.0",
     "@cloudflare/vitest-pool-workers": "^0.7.4",
     "@cloudflare/workers-types": "^4.20250224.0",
-    "@fireproof/core": "0.19.122",
+    "@fireproof/core": "0.20.0-dev-preview-50",
     "@fireproof/vendor": "~2.0.0",
     "@ipld/dag-ucan": "^3.4.5",
     "@jspm/core": "^2.1.0",
@@ -134,17 +134,6 @@
     "wait-on": "^8.0.2",
     "webdriverio": "^9.10.1",
     "ws": "^8.18.0"
-  },
-  "exports":{
-    "./ucan": {
-      "browser": "./dist/ucan/web/index.js",
-      "node": "./dist/ucan/index.js",
-      "require": "./dist/ucan/index.cjs",
-      "script": "./dist/ucan/web/index.global.js",
-      "types": "./dist/ucan/index.d.ts"
-    },
-    "./drive": "./dist/tsc/src/drive/index.js",
-    "./drive-gateway": "./dist/tsc/src/drive/drive-gateway.js"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
