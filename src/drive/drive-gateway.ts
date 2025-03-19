@@ -76,12 +76,12 @@ export class GDriveGateway implements bs.Gateway {
     if (index) {
       name += `-${index}`;
     }
-    const fileId = await this.#search(name, store);
+    const fileId = await this.#search(name, this.#toStore(store));
     if (fileId.isErr()) {
       if (isNotFoundError(fileId.Err())) {
         const fileData = new Blob([body], { type: "application/octet-stream" });
 
-        const done = await this.#insert(name, body, store);
+        const done = await this.#insert(name, body, this.#toStore(store));
         if (done.isErr()) {
           return done;
         }
@@ -90,7 +90,7 @@ export class GDriveGateway implements bs.Gateway {
     }
     const fileData = new Blob([body], { type: "application/octet-stream" });
 
-    const done = await this.#update(fileId.Ok(), fileData, store);
+    const done = await this.#update(fileId.Ok(), fileData, this.#toStore(store));
     if (done.isErr()) {
       return done;
     }
@@ -103,7 +103,7 @@ export class GDriveGateway implements bs.Gateway {
       Authorization: `Bearer ${this.params.auth}`,
     };
     try {
-      const response = await fetch(BuildURI.from(url).appendRelative('drive/v3/files') + fileId, {
+      const response = await fetch(BuildURI.from(url).appendRelative('drive').appendRelative('v3').appendRelative('files').appendRelative(fileId).toString(), {
         method: "DELETE",
         headers
       });
@@ -125,7 +125,7 @@ export class GDriveGateway implements bs.Gateway {
     headers = {
       Authorization: `Bearer ${this.params.auth}`,
     };
-    response = await fetch(url.appendRelative(`drive/v3/files/${fileId}`).setParam("alt", "media").toString(), {
+    response = await fetch(url.appendRelative('drive').appendRelative('v3').appendRelative('files').appendRelative(fileId).setParam("alt", "media").toString(), {
       method: "GET",
       headers,
     });
@@ -145,7 +145,7 @@ export class GDriveGateway implements bs.Gateway {
     if (index) {
       name += `-${index}`;
     }
-    const fileId = await this.#search(name, store);
+    const fileId = await this.#search(name, this.#toStore(store));
     if (fileId.isErr()) {
       return Result.Err(fileId.Err());
     }
@@ -164,7 +164,7 @@ export class GDriveGateway implements bs.Gateway {
     if (index) {
       name += `-${index}`;
     }
-    const fileId = await this.#search(name, store);
+    const fileId = await this.#search(name, this.#toStore(store));
     if (fileId.isErr()) {
       return fileId;
     }
@@ -208,7 +208,7 @@ export class GDriveGateway implements bs.Gateway {
   async #update(
     fileId: string,
     fileData: Blob,
-    store: string
+    store: "data" | "wal" | "meta"
   ): Promise<Result<string>> {
     const url = BuildURI.from(this.params.driveURL);
 
@@ -217,7 +217,7 @@ export class GDriveGateway implements bs.Gateway {
       "Content-Type": `fireproof/${store}`,
     };
     const response = await fetch(
-      url.appendRelative(`upload/drive/v3/files/${fileId}`).setParam("uploadType", "media").toString(),
+      url.appendRelative('upload').appendRelative('drive').appendRelative('v3').appendRelative('files').appendRelative(fileId).setParam("uploadType", "media").toString(),
       {
         method: "PATCH",
         headers,
@@ -229,7 +229,7 @@ export class GDriveGateway implements bs.Gateway {
     }
     return Result.Ok(fileId);
   }
-  async #insert(fileName: string, content: Uint8Array, store: string): Promise<Result<string>> {
+  async #insert(fileName: string, content: Uint8Array, store: "data" | "wal" | "meta"): Promise<Result<string>> {
     const url = BuildURI.from(this.params.driveURL);
     const mime = `fireproof/${store}`;
     const file = new Blob([content], { type: mime });
@@ -255,7 +255,7 @@ export class GDriveGateway implements bs.Gateway {
       return this.logger.Error().Any({ store }).Err(err).Msg("Insert Error").ResultError();
     }
   }
-  async #search(fileName: string, store: string): Promise<Result<string>> {
+  async #search(fileName: string, store: "data" | "wal" | "meta"): Promise<Result<string>> {
     try {
       const response = await fetch(
         BuildURI.from("https://www.googleapis.com/drive/v3/files").setParam("q=mimeType", `"fireproof/${store}" and name="${fileName}"`).toString(),
@@ -276,6 +276,10 @@ export class GDriveGateway implements bs.Gateway {
     } catch (err) {
       return this.logger.Error().Any({ fileName }).Err(err).Msg("Fetch Error").ResultError();
     }
+  }
+  #toStore(s: string): "data" | "wal" | "meta" {
+    if (["data", "wal", "meta"].includes(s)) { return s as "data"|"wal"|"meta" }
+    throw new Error(`unknown Store:${s}`)
   }
 }
 // function generateRandom21DigitNumber() {
