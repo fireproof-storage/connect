@@ -97,7 +97,7 @@
     "@cloudflare/vitest-pool-workers": "^0.8.0",
     "@cloudflare/workers-types": "^4.20250313.0",
     "@fireproof/core": "0.20.0-dev-preview-53",
-    "@fireproof/vendor": "~2.0.0",
+    "@fireproof/vendor": "~2.0.2",
     "@ipld/dag-ucan": "^3.4.5",
     "@jspm/core": "^2.1.0",
     "@netlify/blobs": "^8.1.1",
