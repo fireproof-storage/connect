@@ -95,7 +95,7 @@
     "@aws-sdk/lib-dynamodb": "^3.758.0",
     "@aws-sdk/s3-request-presigner": "^3.758.0",
     "@cloudflare/vitest-pool-workers": "^0.8.0",
-    "@cloudflare/workers-types": "^4.20250313.0",
+    "@cloudflare/workers-types": "^4.20250321.0",
     "@fireproof/core": "0.20.0-dev-preview-53",
     "@fireproof/vendor": "~2.0.0",
     "@ipld/dag-ucan": "^3.4.5",
