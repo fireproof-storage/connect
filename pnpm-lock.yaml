@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@adviser/cement':
-        specifier: ^0.4.3
-        version: 0.4.3(typescript@5.8.2)
+        specifier: ^0.4.4
+        version: 0.4.4(typescript@5.8.2)
       '@aws-sdk/client-dynamodb':
         specifier: ^3.767.0
         version: 3.767.0
@@ -34,7 +34,7 @@ importers:
         version: 4.20250313.0
       '@fireproof/core':
         specifier: 0.20.0-dev-preview-53
-        version: 0.20.0-dev-preview-53(@adviser/cement@0.4.3(typescript@5.8.2))(@fireproof/vendor@2.0.1)(react@18.3.1)
+        version: 0.20.0-dev-preview-53(@adviser/cement@0.4.4(typescript@5.8.2))(@fireproof/vendor@2.0.1)(react@18.3.1)
       '@fireproof/vendor':
         specifier: ~2.0.0
         version: 2.0.1
@@ -210,8 +210,8 @@ importers:
 
 packages:
 
-  '@adviser/cement@0.4.3':
-    resolution: {integrity: sha512-eXslhYG4EbWTqkhvc8nTgfYwvdqACWuE7UQCi/myl//G4QeAfimL3cQxz6hSb4ZiLffdKq690NSUezNLObfJew==}
+  '@adviser/cement@0.4.4':
+    resolution: {integrity: sha512-JEh7ttPe0RjcbKOSTek6ehSJT/xeUH8AqwHq6Fud66ixtPop5uU41eCCpblrB0wYQvYVOnsxtQDjrQoTlUDElg==}
     engines: {node: '>=20'}
 
   '@aws-crypto/crc32@5.2.0':
@@ -4005,7 +4005,7 @@ packages:
 
 snapshots:
 
-  '@adviser/cement@0.4.3(typescript@5.8.2)':
+  '@adviser/cement@0.4.4(typescript@5.8.2)':
     dependencies:
       ts-essentials: 10.0.4(typescript@5.8.2)
       yaml: 2.7.0
@@ -4955,9 +4955,9 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fireproof/core@0.20.0-dev-preview-53(@adviser/cement@0.4.3(typescript@5.8.2))(@fireproof/vendor@2.0.1)(react@18.3.1)':
+  '@fireproof/core@0.20.0-dev-preview-53(@adviser/cement@0.4.4(typescript@5.8.2))(@fireproof/vendor@2.0.1)(react@18.3.1)':
     dependencies:
-      '@adviser/cement': 0.4.3(typescript@5.8.2)
+      '@adviser/cement': 0.4.4(typescript@5.8.2)
       '@fireproof/vendor': 2.0.1
       '@ipld/car': 5.4.0
       '@ipld/dag-cbor': 9.2.2
