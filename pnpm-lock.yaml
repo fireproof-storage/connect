@@ -142,8 +142,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       '@types/aws-lambda':
-        specifier: ^8.10.147
-        version: 8.10.147
+        specifier: ^8.10.149
+        version: 8.10.149
       '@types/better-sqlite3':
         specifier: ^7.6.12
         version: 7.6.12
@@ -1559,8 +1559,8 @@ packages:
   '@storacha/one-webcrypto@1.0.1':
     resolution: {integrity: sha512-bD+vWmcgsEBqU0Dz04BR43SA03bBoLTAY29vaKasY9Oe8cb6XIP0/vkm0OS2UwKC13c8uRgFW4rjJUgDCNLejQ==}
 
-  '@types/aws-lambda@8.10.147':
-    resolution: {integrity: sha512-nD0Z9fNIZcxYX5Mai2CTmFD7wX7UldCkW2ezCF8D1T5hdiLsnTWDGRpfRYntU6VjTdLQjOvyszru7I1c1oCQew==}
+  '@types/aws-lambda@8.10.149':
+    resolution: {integrity: sha512-NXSZIhfJjnXqJgtS7IwutqIF/SOy1Wz5Px4gUY1RWITp3AYTyuJS4xaXr/bIJY1v15XMzrJ5soGnPM+7uigZjA==}
 
   '@types/better-sqlite3@7.6.12':
     resolution: {integrity: sha512-fnQmj8lELIj7BSrZQAdBMHEHX8OZLYIHXqAKT1O7tDfLxaINzf00PMjw22r3N/xXh0w/sGHlO6SVaCQ2mj78lg==}
@@ -5601,7 +5601,7 @@ snapshots:
 
   '@storacha/one-webcrypto@1.0.1': {}
 
-  '@types/aws-lambda@8.10.147': {}
+  '@types/aws-lambda@8.10.149': {}
 
   '@types/better-sqlite3@7.6.12':
     dependencies:
