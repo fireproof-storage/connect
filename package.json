@@ -51,7 +51,7 @@
   ],
   "license": "Apache-2.0 OR MIT",
   "devDependencies": {
-    "@eslint/js": "^9.22.0",
+    "@eslint/js": "^9.25.0",
     "@ipld/car": "^5.4.0",
     "@ipld/dag-cbor": "^9.2.2",
     "@smithy/types": "^4.1.0",
