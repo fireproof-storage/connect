@@ -116,7 +116,7 @@
     "assert": "^2.1.0",
     "aws-lambda": "^1.0.7",
     "aws4fetch": "^1.0.20",
-    "better-sqlite3": "^11.9.0",
+    "better-sqlite3": "^11.10.0",
     "events": "^3.3.0",
     "idb-keyval": "^6.2.1",
     "is-deep-strict-equal-x": "^1.1.2",
