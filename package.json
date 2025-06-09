@@ -66,7 +66,7 @@
     "esbuild-plugin-replace": "^1.4.0",
     "esbuild-plugin-resolve": "^2.0.0",
     "eslint": "^9.22.0",
-    "partyserver": "^0.0.65",
+    "partyserver": "^0.0.72",
     "prettier": "^3.5.3",
     "semver": "^7.7.1",
     "std-env": "^3.8.1",
