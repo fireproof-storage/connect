@@ -61,7 +61,7 @@
     "@types/ws": "^8.18.0",
     "@typescript-eslint/typescript-estree": "^8.26.1",
     "@web3-storage/access": "^20.2.0",
-    "cborg": "^4.2.8",
+    "cborg": "^4.2.12",
     "esbuild": "^0.25.1",
     "esbuild-plugin-replace": "^1.4.0",
     "esbuild-plugin-resolve": "^2.0.0",
