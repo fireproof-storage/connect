@@ -28,7 +28,7 @@ importers:
         version: 3.758.0
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.8.0
-        version: 0.8.0(@cloudflare/workers-types@4.20250313.0)(@vitest/runner@3.0.8)(@vitest/snapshot@3.0.8)(vitest@3.0.8(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0))
+        version: 0.8.0(@cloudflare/workers-types@4.20250313.0)(@vitest/runner@3.0.8)(@vitest/snapshot@3.0.8)(vitest@3.0.8(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0))
       '@cloudflare/workers-types':
         specifier: ^4.20250313.0
         version: 4.20250313.0
@@ -148,8 +148,8 @@ importers:
         specifier: ^7.6.12
         version: 7.6.12
       '@types/node':
-        specifier: ^22.13.10
-        version: 22.13.10
+        specifier: ^24.0.3
+        version: 24.0.3
       '@types/ws':
         specifier: ^8.18.0
         version: 8.18.0
@@ -197,10 +197,10 @@ importers:
         version: 8.26.1(eslint@9.22.0)(typescript@5.8.2)
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.8.2)(vite@6.2.1(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0))
+        version: 5.1.4(typescript@5.8.2)(vite@6.2.1(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0))
       vitest:
         specifier: ^3.0.8
-        version: 3.0.8(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0)
+        version: 3.0.8(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0)
       wrangler:
         specifier: ^4.0.0
         version: 4.0.0(@cloudflare/workers-types@4.20250313.0)
@@ -1574,8 +1574,8 @@ packages:
   '@types/minimatch@3.0.5':
     resolution: {integrity: sha512-Klz949h02Gz2uZCMGwDUSDS1YBlTdDDgbWHi+81l29tQALUtvz4rAYi5uoVhE5Lagoq6DeqAUlbrHvW/mXDgdQ==}
 
-  '@types/node@22.13.10':
-    resolution: {integrity: sha512-I6LPUvlRH+O6VRUqYOcMudhaIdUVWfsjnZavnsraHvpBwaEyMN29ry+0UVJhImYL16xsscu0aske3yA+uPOWfw==}
+  '@types/node@24.0.3':
+    resolution: {integrity: sha512-R4I/kzCYAdRLzfiCabn9hxWfbuHS573x+r0dJMkkzThEa7pbrcDWK+9zu3e7aBOouf+rQAciqPFMnxwr0aWgKg==}
 
   '@types/retry@0.12.2':
     resolution: {integrity: sha512-XISRgDJ2Tc5q4TRqvgJtzsRkFYNJzZrhTdtMoGVBttwzzQJkPnS3WWTFc7kuDRoPtPakl+T+OfdEUjYJj7Jbow==}
@@ -3734,8 +3734,8 @@ packages:
   uint8arrays@5.1.0:
     resolution: {integrity: sha512-vA6nFepEmlSKkMBnLBaUMVvAC4G3CTmO58C12y4sq6WPDOR7mOFYOi7GlrQ4djeSbP6JG9Pv9tJDM97PedRSww==}
 
-  undici-types@6.20.0:
-    resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
+  undici-types@7.8.0:
+    resolution: {integrity: sha512-9UJ2xGDvQ43tYyVMpuHlsgApydB8ZKfVYTsLDhXkFL/6gfkp+U8xTGdh8pMJv1SpZna0zxG1DwsKZsreLbXBxw==}
 
   undici@5.28.4:
     resolution: {integrity: sha512-72RFADWFqKmUb2hmmvNODKL3p9hcB6Gt2DOQMis1SEBaV6a4MH8soBvzg+95CYhCKPFedut2JY9bMfrDl9D23g==}
@@ -4624,7 +4624,7 @@ snapshots:
     optionalDependencies:
       workerd: 1.20250310.0
 
-  '@cloudflare/vitest-pool-workers@0.8.0(@cloudflare/workers-types@4.20250313.0)(@vitest/runner@3.0.8)(@vitest/snapshot@3.0.8)(vitest@3.0.8(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0))':
+  '@cloudflare/vitest-pool-workers@0.8.0(@cloudflare/workers-types@4.20250313.0)(@vitest/runner@3.0.8)(@vitest/snapshot@3.0.8)(vitest@3.0.8(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0))':
     dependencies:
       '@vitest/runner': 3.0.8
       '@vitest/snapshot': 3.0.8
@@ -4634,7 +4634,7 @@ snapshots:
       esbuild: 0.24.2
       miniflare: 4.20250310.0
       semver: 7.7.1
-      vitest: 3.0.8(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0)
+      vitest: 3.0.8(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0)
       wrangler: 4.0.0(@cloudflare/workers-types@4.20250313.0)
       zod: 3.24.2
     transitivePeerDependencies:
@@ -5605,7 +5605,7 @@ snapshots:
 
   '@types/better-sqlite3@7.6.12':
     dependencies:
-      '@types/node': 22.13.10
+      '@types/node': 24.0.3
 
   '@types/estree@1.0.6': {}
 
@@ -5613,9 +5613,9 @@ snapshots:
 
   '@types/minimatch@3.0.5': {}
 
-  '@types/node@22.13.10':
+  '@types/node@24.0.3':
     dependencies:
-      undici-types: 6.20.0
+      undici-types: 7.8.0
 
   '@types/retry@0.12.2': {}
 
@@ -5623,7 +5623,7 @@ snapshots:
 
   '@types/ws@8.18.0':
     dependencies:
-      '@types/node': 22.13.10
+      '@types/node': 24.0.3
 
   '@typescript-eslint/eslint-plugin@8.26.1(@typescript-eslint/parser@8.26.1(eslint@9.22.0)(typescript@5.8.2))(eslint@9.22.0)(typescript@5.8.2)':
     dependencies:
@@ -5757,13 +5757,13 @@ snapshots:
       chai: 5.2.0
       tinyrainbow: 2.0.0
 
-  '@vitest/mocker@3.0.8(vite@6.2.1(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0))':
+  '@vitest/mocker@3.0.8(vite@6.2.1(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0))':
     dependencies:
       '@vitest/spy': 3.0.8
       estree-walker: 3.0.3
       magic-string: 0.30.17
     optionalDependencies:
-      vite: 6.2.1(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0)
+      vite: 6.2.1(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0)
 
   '@vitest/pretty-format@3.0.8':
     dependencies:
@@ -7781,7 +7781,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 22.13.10
+      '@types/node': 24.0.3
       long: 5.3.1
 
   protons-runtime@5.5.0:
@@ -8314,7 +8314,7 @@ snapshots:
     dependencies:
       multiformats: 13.3.2
 
-  undici-types@6.20.0: {}
+  undici-types@7.8.0: {}
 
   undici@5.28.4:
     dependencies:
@@ -8375,13 +8375,13 @@ snapshots:
 
   varint@6.0.0: {}
 
-  vite-node@3.0.8(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0):
+  vite-node@3.0.8(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0):
     dependencies:
       cac: 6.7.14
       debug: 4.4.0
       es-module-lexer: 1.6.0
       pathe: 2.0.3
-      vite: 6.2.1(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0)
+      vite: 6.2.1(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -8396,32 +8396,32 @@ snapshots:
       - tsx
       - yaml
 
-  vite-tsconfig-paths@5.1.4(typescript@5.8.2)(vite@6.2.1(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0)):
+  vite-tsconfig-paths@5.1.4(typescript@5.8.2)(vite@6.2.1(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0)):
     dependencies:
       debug: 4.3.7
       globrex: 0.1.2
       tsconfck: 3.1.4(typescript@5.8.2)
     optionalDependencies:
-      vite: 6.2.1(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0)
+      vite: 6.2.1(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  vite@6.2.1(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0):
+  vite@6.2.1(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0):
     dependencies:
       esbuild: 0.25.1
       postcss: 8.5.3
       rollup: 4.35.0
     optionalDependencies:
-      '@types/node': 22.13.10
+      '@types/node': 24.0.3
       fsevents: 2.3.3
       tsx: 4.19.3
       yaml: 2.7.0
 
-  vitest@3.0.8(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0):
+  vitest@3.0.8(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0):
     dependencies:
       '@vitest/expect': 3.0.8
-      '@vitest/mocker': 3.0.8(vite@6.2.1(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0))
+      '@vitest/mocker': 3.0.8(vite@6.2.1(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0))
       '@vitest/pretty-format': 3.0.8
       '@vitest/runner': 3.0.8
       '@vitest/snapshot': 3.0.8
@@ -8437,11 +8437,11 @@ snapshots:
       tinyexec: 0.3.2
       tinypool: 1.0.2
       tinyrainbow: 2.0.0
-      vite: 6.2.1(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0)
-      vite-node: 3.0.8(@types/node@22.13.10)(tsx@4.19.3)(yaml@2.7.0)
+      vite: 6.2.1(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0)
+      vite-node: 3.0.8(@types/node@24.0.3)(tsx@4.19.3)(yaml@2.7.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 22.13.10
+      '@types/node': 24.0.3
     transitivePeerDependencies:
       - jiti
       - less
