@@ -130,8 +130,8 @@ importers:
         version: 8.18.1
     devDependencies:
       '@eslint/js':
-        specifier: ^9.22.0
-        version: 9.22.0
+        specifier: ^9.31.0
+        version: 9.31.0
       '@ipld/car':
         specifier: ^5.4.0
         version: 5.4.0
@@ -968,6 +968,10 @@ packages:
     resolution: {integrity: sha512-vLFajx9o8d1/oL2ZkpMYbkLv8nDB6yaIwFNt7nI4+I80U/z03SxmfOMsLbvWr3p7C+Wnoh//aOu2pQW8cS0HCQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
+  '@eslint/js@9.31.0':
+    resolution: {integrity: sha512-LOm5OVt7D4qiKCqoiPbA7LWmI+tbw1VbTUowBcUMgQSuM6poJufkFkYDcQpo5KfgD39TnNySV26QjOh7VFpSyw==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
   '@eslint/object-schema@2.1.6':
     resolution: {integrity: sha512-RBMg5FRL0I0gs51M/guSAj5/e14VQ4tpZnQNWwuDT66P14I43ItmPfIZRhO9fUVIPOAQXU47atlywZ/czoqFPA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -1685,16 +1689,20 @@ packages:
 
   '@web3-storage/access@20.1.1':
     resolution: {integrity: sha512-W2C9sn8NTWw7zIUVzEk5MtwWQLFsOREF6Ju6VK+MYcuAkQ6yVll6Q7YtB5zLPwu29xJ7KIR6e5KzbDNSXHSfrA==}
+    deprecated: Web3.storage became storacha.network, please upgrade to @storacha/access
 
   '@web3-storage/access@20.2.0':
     resolution: {integrity: sha512-9neJwHf2AYia2e1KoyIdMn+UiKGJJBqMgmdB4enhnAlGDZcYBMtyqFba4vet4s3rBTm4hzdaIZsL85vpYiHC/g==}
+    deprecated: Web3.storage became storacha.network, please upgrade to @storacha/access
 
   '@web3-storage/blob-index@1.0.5':
     resolution: {integrity: sha512-mhzupWeRfxLljoULcagU++mOmQOriCBMKniUhsmrCXrtRV8voF7op/ymqix1f9uX1M5iB93YXcfxAVBwGWWKoA==}
     engines: {node: '>=16.15'}
+    deprecated: Web3.storage became storacha.network, please upgrade to @storacha/blob-index
 
   '@web3-storage/capabilities@18.1.0':
     resolution: {integrity: sha512-jgZtymt2jJtER3SPsE0yoRSf1BzNo1hQIir6hfY3QlooxTwdETzPbF1rBs5El7BCCMHhQfB9hiLRniTIhnX4wA==}
+    deprecated: Web3.storage became storacha.network, please upgrade to @storacha/capabilities
 
   '@web3-storage/clock@0.4.1':
     resolution: {integrity: sha512-VHAyvbl7ZrNls6yltS5Djuwjz9Rw0rcA8tpv7qQp1WoheY00YBdqa8gjR1V4egVkqV1ZugGA06XH+ug0OhGXDg==}
@@ -1705,9 +1713,11 @@ packages:
   '@web3-storage/did-mailto@2.1.0':
     resolution: {integrity: sha512-TRmfSXj1IhtX3ESurSNOylZSBKi0z/VJNoMLpof+AVRdovgZjjocpiePQTs2pfHKqHTHfJXc9AboWyK4IKTWMw==}
     engines: {node: '>=16.15'}
+    deprecated: Web3.storage became storacha.network, please upgrade to @storacha/did-mailto
 
   '@web3-storage/filecoin-client@3.3.5':
     resolution: {integrity: sha512-3JFKnHFizlljRSJyyCdNN3Np4MN5riBvjAXweqNmu4s2sChMB8kopnCkAFoMeEom9r7ZAnBAkMO3Wacjs6Nlcw==}
+    deprecated: Web3.storage became storacha.network, please upgrade to @storacha/filecoin-client
 
   '@web3-storage/pail@0.5.0':
     resolution: {integrity: sha512-BUuunK6ZQQfNvECB2st0G7/rd0Vfsn6jFg01tfMLEsitFJWI9J503ixKJ8jWpoNW/3juJ32HQpo8ar3pmgG5uA==}
@@ -1719,10 +1729,12 @@ packages:
 
   '@web3-storage/upload-client@17.1.4':
     resolution: {integrity: sha512-jfVEcF7bVouxPy7kd1K5m6BaKeFzcH9zyyWC0CArByWLnKhuPhZ7+ykry3lwn82JIFXbEtmI563ewNuAAibieg==}
+    deprecated: Web3.storage became storacha.network, please upgrade to @storacha/upload-client
 
   '@web3-storage/w3up-client@17.2.0':
     resolution: {integrity: sha512-EZdlJKGJtqAq+2BScekOeXkPtpcqiQKUAe94Ww4IHvlP6nm7L932+zTynYkQE0kKnspKH6qiqrv7SUP3oIUxnQ==}
     engines: {node: '>=18'}
+    deprecated: Web3.storage became storacha.network, please upgrade to @storacha/client
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -4945,6 +4957,8 @@ snapshots:
       - supports-color
 
   '@eslint/js@9.22.0': {}
+
+  '@eslint/js@9.31.0': {}
 
   '@eslint/object-schema@2.1.6': {}
 
